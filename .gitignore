@@ -8,6 +8,9 @@ Thumbs.db
 *~
 *.swp
 *.swo
+# Windows / editor temp next to native libs
+*.TMP
+**/bin/**/~*
 
 # Python (addons, MCP tools, editor scripts)
 __pycache__/
