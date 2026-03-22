@@ -149,13 +149,13 @@ func _build_shop_catalog() -> Array[ShopItemData]:
 	var repair: ShopItemData = ShopItemData.new()
 	repair.item_id = "tower_repair"
 	repair.display_name = "Tower Repair Kit"
-	repair.gold_cost = 75
+	repair.gold_cost = 50
 	repair.material_cost = 0
 	catalog.append(repair)
 	var mana: ShopItemData = ShopItemData.new()
 	mana.item_id = "mana_draught"
 	mana.display_name = "Mana Draught"
-	mana.gold_cost = 50
+	mana.gold_cost = 20
 	mana.material_cost = 0
 	catalog.append(mana)
 	return catalog

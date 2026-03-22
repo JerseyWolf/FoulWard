@@ -24,8 +24,8 @@ func before_test() -> void:
 	EconomyManager.add_building_material(50)
 	_shop_manager = ShopManager.new()
 	_shop_manager.shop_catalog = [
-		_make_item("tower_repair", 75, 0),
-		_make_item("mana_draught", 50, 0),
+		_make_item("tower_repair", 50, 0),
+		_make_item("mana_draught", 20, 0),
 	]
 	add_child(_shop_manager)
 
@@ -43,7 +43,7 @@ func after_test() -> void:
 func test_purchase_item_deducts_gold() -> void:
 	var gold_before: int = EconomyManager.get_gold()
 	_shop_manager.purchase_item("mana_draught")
-	assert_int(EconomyManager.get_gold()).is_equal(gold_before - 50)
+	assert_int(EconomyManager.get_gold()).is_equal(gold_before - 20)
 
 
 func test_purchase_item_insufficient_gold_fails() -> void:
@@ -81,7 +81,7 @@ func test_can_purchase_returns_true_when_affordable() -> void:
 
 func test_can_purchase_returns_false_when_insufficient_gold() -> void:
 	EconomyManager.reset_to_defaults()
-	EconomyManager.spend_gold(950)
+	EconomyManager.spend_gold(951)
 	assert_bool(_shop_manager.can_purchase("tower_repair")).is_false()
 
 
@@ -117,12 +117,12 @@ func test_purchase_tower_repair_graceful_when_tower_absent() -> void:
 	assert_bool(result).is_true()
 
 
-func test_purchase_tower_repair_deducts_75_gold() -> void:
+func test_purchase_tower_repair_deducts_50_gold() -> void:
 	EconomyManager.reset_to_defaults()
 	EconomyManager.add_gold(500)
 	var gold_before: int = EconomyManager.get_gold()
 	_shop_manager.purchase_item("tower_repair")
-	assert_int(EconomyManager.get_gold()).is_equal(gold_before - 75)
+	assert_int(EconomyManager.get_gold()).is_equal(gold_before - 50)
 
 # ---------------------------------------------------------------------------
 # get_available_items tests

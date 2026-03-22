@@ -36,6 +36,11 @@
 [ext_resource type="Resource" path="res://resources/spell_data/shockwave.tres" id="16_fuf3a"]
 [ext_resource type="Script" uid="uid://dwrewkv7itq4c" path="res://scripts/resources/research_node_data.gd" id="18_pibwh"]
 [ext_resource type="Resource" path="res://resources/research_data/base_structures_tree.tres" id="19_c6pm6"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_anti_air.tres" id="25_raa"]
+[ext_resource type="Resource" path="res://resources/research_data/arrow_tower_plus_damage.tres" id="26_atd"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_shield_generator.tres" id="27_usg"]
+[ext_resource type="Resource" path="res://resources/research_data/fire_brazier_plus_range.tres" id="28_fbr"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_archer_barracks.tres" id="29_uab"]
 [ext_resource type="Script" uid="uid://cymimirt7rukp" path="res://scripts/resources/shop_item_data.gd" id="21_fv21b"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_tower_repair.tres" id="22_tel4y"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_mana_draught.tres" id="23_qkpxi"]
@@ -136,7 +141,7 @@ spell_registry = Array[ExtResource("15_kmb1v")]([ExtResource("16_fuf3a")])
 
 [node name="ResearchManager" type="Node" parent="Managers" unique_id=1112433558]
 script = ExtResource("6_researchmanager")
-research_nodes = Array[ExtResource("18_pibwh")]([ExtResource("19_c6pm6")])
+research_nodes = Array[ExtResource("18_pibwh")]([ExtResource("19_c6pm6"), ExtResource("25_raa"), ExtResource("26_atd"), ExtResource("27_usg"), ExtResource("28_fbr"), ExtResource("29_uab")])
 
 [node name="ShopManager" type="Node" parent="Managers" unique_id=587576636]
 script = ExtResource("7_shopmanager")

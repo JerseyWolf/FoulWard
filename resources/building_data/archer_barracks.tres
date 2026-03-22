@@ -18,7 +18,9 @@ upgraded_range = 0.0
 damage_type = 0
 targets_air = false
 targets_ground = false
-is_locked = false
-unlock_research_id = ""
+is_locked = true
+unlock_research_id = "unlock_archer_barracks"
+research_damage_boost_id = ""
+research_range_boost_id = ""
 color = Color(0.8, 0.7, 0.3, 1.0)
 

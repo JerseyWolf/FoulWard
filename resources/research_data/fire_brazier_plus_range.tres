@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ResearchNodeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/research_node_data.gd" id="1_researchnodedata"]
+
+[resource]
+script = ExtResource("1_researchnodedata")
+node_id = "fire_brazier_plus_range"
+display_name = "Fire Brazier +Range"
+research_cost = 1
+prerequisite_ids = []
+description = "Fire Brazier uses upgraded range tier without building upgrade"

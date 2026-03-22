@@ -6,6 +6,6 @@
 script = ExtResource("1_shopitemdata")
 item_id = "tower_repair"
 display_name = "Tower Repair Kit"
-gold_cost = 75
+gold_cost = 50
 material_cost = 0
 description = "Restore tower to full HP"
