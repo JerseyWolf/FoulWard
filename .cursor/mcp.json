@@ -52,7 +52,8 @@
         "@modelcontextprotocol/server-github"
       ],
       "env": {
-        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
+        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin",
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_PERSONAL_ACCESS_TOKEN}"
       },
       "envFile": "${userHome}/.cursor/github-mcp.env"
     }

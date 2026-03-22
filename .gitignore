@@ -23,6 +23,9 @@ venv/
 MCPs/godot-mcp-pro-v1.6.1/server/node_modules/
 tools/mcp-support/node_modules/
 
+# Local MCP secrets (never commit real tokens)
+.cursor/github-mcp.env
+
 # Generated test / tool logs
 reports/
 tools/gdunit_out.txt
