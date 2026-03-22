@@ -2,6 +2,15 @@
 
 Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md` for earlier work.
 
+## Handoff (Ubuntu / new chat)
+
+- **`FULL_PROJECT_SUMMARY.md`** — Project purpose, directory map, systems, tests, MVP status pointer.
+- **`CURRENT_STATUS.md`** — Recreate this workspace: Godot, GdUnit command, Cursor MCP path rewrites, `npm install` locations.
+
+**Wrap-up note:** MVP shop (four items), research tree, mission-start consumables, and HexGrid shop placement/repair are **complete** in code; Phase **6** playtest checklist remains **manual**. No half-finished code paths left open from the last implementation batch—next work is polish, tuning, or Phase 6 verification.
+
+**Last synced commit (when this section was written):** see `git log -1` on `main` (should include shop + handoff docs).
+
 ## Filename corrections (prompt vs repo)
 
 | Prompt | Actual |
@@ -12,8 +21,8 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 
 ## Git (Phase 1 deliverable)
 
-- **Commit:** `7845f78` — `Autonomous Session 2 — Phase 1 complete (1A–1C)`
-- **Branch:** `main` — pushed to `origin`
+- **Branch:** `main` — push to `origin` after each milestone.
+- **Older reference commit:** `7845f78` — `Autonomous Session 2 — Phase 1 complete (1A–1C)` (historical).
 
 ## Phase checklist
 
@@ -72,7 +81,7 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 ## Next steps (for a follow-up)
 
 1. Deeper pass on remainder of `docs/OUTPUT_AUDIT.txt` if any items still differ from code.
-2. **Phase 2:** Editor play or MCP `play_scene`; avoid relying on headless main until crash is understood.
-3. **Phases 3–4:** Tune `.tres` + small HUD/QoL polish aligned with MVP spec.
-4. **Phases 5–6:** SimBot mission script + tick through the 12 checks above.
-5. **Remaining Phase 3:** Optional enemy stat tuning in `resources/enemy_data/*.tres` if TTK feels off in playtests.
+2. **Phase 2:** Editor play (F5) or MCP `play_scene`; headless main still unreliable on some Windows setups—expect **Linux editor** to be the reference for full loop.
+3. **Phase 4:** HUD copy polish (e.g. `[B] Build Mode` reminder), briefing “press any key” style if desired.
+4. **Phase 5–6:** SimBot mission script expansion + tick through the **12 checks** in this file (manual).
+5. **Balance:** Optional enemy stat tuning in `resources/enemy_data/*.tres` from playtest feel.
