@@ -106,16 +106,42 @@ func get_building_data() -> BuildingData:
 
 ## Returns the currently effective damage value (base or upgraded).
 func get_effective_damage() -> float:
+	if _building_data == null:
+		return 0.0
 	if _is_upgraded:
+		return _building_data.upgraded_damage
+	if _has_research_damage_boost():
 		return _building_data.upgraded_damage
 	return _building_data.damage
 
 
 ## Returns the currently effective attack range (base or upgraded).
 func get_effective_range() -> float:
+	if _building_data == null:
+		return 0.0
 	if _is_upgraded:
 		return _building_data.upgraded_range
+	if _has_research_range_boost():
+		return _building_data.upgraded_range
 	return _building_data.attack_range
+
+
+func _has_research_damage_boost() -> bool:
+	if _building_data.research_damage_boost_id == "":
+		return false
+	var rm: ResearchManager = get_node_or_null("/root/Main/Managers/ResearchManager") as ResearchManager
+	if rm == null:
+		return false
+	return rm.is_unlocked(_building_data.research_damage_boost_id)
+
+
+func _has_research_range_boost() -> bool:
+	if _building_data.research_range_boost_id == "":
+		return false
+	var rm: ResearchManager = get_node_or_null("/root/Main/Managers/ResearchManager") as ResearchManager
+	if rm == null:
+		return false
+	return rm.is_unlocked(_building_data.research_range_boost_id)
 
 # ---------------------------------------------------------------------------
 # Private – combat loop

@@ -6,6 +6,6 @@
 script = ExtResource("1_shopitemdata")
 item_id = "mana_draught"
 display_name = "Mana Draught"
-gold_cost = 50
+gold_cost = 20
 material_cost = 0
 description = "Start next mission at full mana"

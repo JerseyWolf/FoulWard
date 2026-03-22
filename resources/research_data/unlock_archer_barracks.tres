@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ResearchNodeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/research_node_data.gd" id="1_researchnodedata"]
+
+[resource]
+script = ExtResource("1_researchnodedata")
+node_id = "unlock_archer_barracks"
+display_name = "Archer Barracks"
+research_cost = 3
+prerequisite_ids = []
+description = "Unlock the Archer Barracks building"

@@ -20,5 +20,7 @@ targets_air = false
 targets_ground = true
 is_locked = false
 unlock_research_id = ""
+research_damage_boost_id = ""
+research_range_boost_id = "fire_brazier_plus_range"
 color = Color(0.9, 0.3, 0.0, 1.0)
 

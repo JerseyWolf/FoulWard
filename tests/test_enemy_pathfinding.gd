@@ -80,12 +80,14 @@ func test_take_damage_triggers_health_depleted_at_zero() -> void:
 	data.max_hp = 50
 	data.armor_type = Types.ArmorType.UNARMORED
 	data.damage_immunities = []
-	var enemy := _create_enemy(data)
-
-	var monitor := monitor_signals(enemy.health_component, false)
+	var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
+	add_child(enemy)
+	var depleted_box: Array[int] = [0]
+	# Connect before initialize() so this runs before EnemyBase._on_health_depleted (queue_free).
+	enemy.health_component.health_depleted.connect(func() -> void: depleted_box[0] += 1)
+	enemy.initialize(data)
 	enemy.take_damage(50.0, Types.DamageType.PHYSICAL)
-	await get_tree().process_frame
-	await assert_signal(monitor).is_emitted("health_depleted")
+	assert_int(depleted_box[0]).is_equal(1)
 
 # --- on_health_depleted effects ------------------------------------
 
@@ -113,7 +115,7 @@ func test_on_health_depleted_removes_from_enemies_group() -> void:
 
 	assert_bool(enemy.is_in_group("enemies")).is_true()
 	enemy.take_damage(999.0, Types.DamageType.PHYSICAL)
-	await await_idle_frame()
+	# remove_from_group runs synchronously in _on_health_depleted before queue_free().
 	assert_bool(enemy.is_in_group("enemies")).is_false()
 
 func test_on_health_depleted_calls_queue_free() -> void:

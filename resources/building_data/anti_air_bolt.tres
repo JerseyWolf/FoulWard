@@ -18,7 +18,9 @@ upgraded_range = 24.0
 damage_type = 0
 targets_air = true
 targets_ground = false
-is_locked = false
-unlock_research_id = ""
+is_locked = true
+unlock_research_id = "unlock_anti_air"
+research_damage_boost_id = ""
+research_range_boost_id = ""
 color = Color(0.2, 0.5, 0.9, 1.0)
 

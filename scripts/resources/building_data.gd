@@ -37,6 +37,10 @@ extends Resource
 @export var is_locked: bool = false
 ## ID of the research node that unlocks this building. Empty string = always available.
 @export var unlock_research_id: String = ""
+## If set, unlocking this node grants upgraded_damage while the building is not upgraded.
+@export var research_damage_boost_id: String = ""
+## If set, unlocking this node grants upgraded_range while the building is not upgraded.
+@export var research_range_boost_id: String = ""
 ## MVP cube color for this building type.
 @export var color: Color = Color.GRAY
 ## Targeting strategy this building uses to select its next attack target.
