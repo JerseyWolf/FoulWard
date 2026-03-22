@@ -53,7 +53,8 @@
       ],
       "env": {
         "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
-      }
+      },
+      "envFile": "${userHome}/.cursor/github-mcp.env"
     }
   }
 }
