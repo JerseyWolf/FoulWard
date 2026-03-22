@@ -32,6 +32,7 @@ func start_new_game() -> void:
 	EconomyManager.reset_to_defaults()
 	_transition_to(Types.GameState.COMBAT)
 	SignalBus.mission_started.emit(current_mission)
+	_apply_shop_mission_start_consumables()
 	_begin_mission_wave_sequence()
 
 func start_next_mission() -> void:
@@ -45,6 +46,7 @@ func start_next_mission() -> void:
 func start_wave_countdown() -> void:
 	assert(game_state == Types.GameState.MISSION_BRIEFING, "start_wave_countdown called from invalid state")
 	_transition_to(Types.GameState.COMBAT)
+	_apply_shop_mission_start_consumables()
 	# Single source of truth for countdown duration: WaveManager emits wave_countdown_started.
 	_begin_mission_wave_sequence()
 
@@ -78,6 +80,13 @@ func get_current_wave() -> int:
 	return current_wave
 
 # ── Private helpers ────────────────────────────────────────────────────────────
+
+func _apply_shop_mission_start_consumables() -> void:
+	var shop: ShopManager = get_node_or_null("/root/Main/Managers/ShopManager") as ShopManager
+	if shop == null:
+		return
+	shop.apply_mission_start_consumables()
+
 
 func _begin_mission_wave_sequence() -> void:
 	var wave_manager: WaveManager = get_node_or_null(

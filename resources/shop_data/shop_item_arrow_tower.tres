@@ -1,0 +1,11 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_data.gd" id="1_shopitemdata"]
+
+[resource]
+script = ExtResource("1_shopitemdata")
+item_id = "arrow_tower_placed"
+display_name = "Arrow Tower (placed)"
+gold_cost = 40
+material_cost = 2
+description = "Auto-place an Arrow Tower on the first empty hex next mission"

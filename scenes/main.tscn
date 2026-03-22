@@ -44,6 +44,8 @@
 [ext_resource type="Script" uid="uid://cymimirt7rukp" path="res://scripts/resources/shop_item_data.gd" id="21_fv21b"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_tower_repair.tres" id="22_tel4y"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_mana_draught.tres" id="23_qkpxi"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_building_repair.tres" id="30_br"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_arrow_tower.tres" id="31_at"]
 [ext_resource type="Script" path="res://ui/mission_briefing.gd" id="24_missionbrief"]
 
 [sub_resource type="PlaneMesh" id="GroundMesh"]
@@ -145,7 +147,7 @@ research_nodes = Array[ExtResource("18_pibwh")]([ExtResource("19_c6pm6"), ExtRes
 
 [node name="ShopManager" type="Node" parent="Managers" unique_id=587576636]
 script = ExtResource("7_shopmanager")
-shop_catalog = Array[ExtResource("21_fv21b")]([ExtResource("22_tel4y"), ExtResource("23_qkpxi")])
+shop_catalog = Array[ExtResource("21_fv21b")]([ExtResource("22_tel4y"), ExtResource("23_qkpxi"), ExtResource("30_br"), ExtResource("31_at")])
 
 [node name="InputManager" type="Node" parent="Managers" unique_id=281699099]
 script = ExtResource("8_inputmanager")

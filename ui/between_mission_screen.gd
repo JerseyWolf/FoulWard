@@ -54,7 +54,12 @@ func _refresh_shop() -> void:
 	for item: ShopItemData in items:
 		var row: HBoxContainer = HBoxContainer.new()
 		var lbl: Label = Label.new()
-		lbl.text = "%s — %dg" % [item.display_name, item.gold_cost]
+		var price_text: String = "%s — %dg" % [item.display_name, item.gold_cost]
+		if item.material_cost > 0:
+			price_text = "%s — %dg + %dm" % [
+				item.display_name, item.gold_cost, item.material_cost
+			]
+		lbl.text = price_text
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var btn: Button = Button.new()
 		btn.text = "Buy"
