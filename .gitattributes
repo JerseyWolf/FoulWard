@@ -1,2 +1,29 @@
-# Normalize EOL for all files that Git considers text files.
+# Normalize EOL for all files that Git considers text files (consistent on Windows + Linux).
 * text=auto eol=lf
+
+# Godot & shell scripts — explicit LF (clone on Ubuntu matches editor)
+*.gd eol=lf
+*.gdshader eol=lf
+*.gdextension eol=lf
+*.tscn eol=lf
+*.tres eol=lf
+*.import eol=lf
+*.sh eol=lf
+*.ps1 eol=lf
+
+# Binary assets — do not apply EOL conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.glb binary
+*.gltf binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.zip binary
+*.bin binary

@@ -2,6 +2,20 @@
 .godot/
 /android/
 
+# Cross-platform / local OS & tool noise (safe on Windows + Ubuntu)
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+
+# Python (addons, MCP tools, editor scripts)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
 # Godot MCP Pro (npm install lives under MCPs/.../server)
 MCPs/godot-mcp-pro-v1.6.1/server/node_modules/
 tools/mcp-support/node_modules/
