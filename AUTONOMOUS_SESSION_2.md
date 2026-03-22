@@ -10,17 +10,37 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 | `scripts/simbot.gd` | `scripts/sim_bot.gd` |
 | `res://scenes/hexgrid/hexgrid.gd` | `res://scenes/hex_grid/hex_grid.gd` |
 
+## Git (Phase 1 deliverable)
+
+- **Commit:** `7845f78` — `Autonomous Session 2 — Phase 1 complete (1A–1C)`
+- **Branch:** `main` — pushed to `origin`
+
 ## Phase checklist
 
 - [x] **Phase 0** — Plan (Sequential Thinking MCP); codebase read; test run strategy
 - [x] **Phase 1A** — `unused_signal` on SignalBus (already present from Session 1)
-- [ ] **Phase 1B** — `docs/OUTPUT_AUDIT.txt` — apply only verified items (not fully re-audited this pass)
+- [x] **Phase 1B** — Spot-check `docs/OUTPUT_AUDIT.txt` (top fixes): **MISSION_BRIEFING** enum, **`is_alive()`** (not `is_dead()`), **public `health_component` / `navigation_agent`** on `EnemyBase` — already present in current sources; no duplicate patch applied
 - [x] **Phase 1C** — GdUnit: **289 test cases, 0 failures** (Godot headless + GdUnitCmdTool)
-- [ ] **Phase 2** — Core loop E2E (editor / Godot MCP Pro `play_scene` — not run; CLI headless used for tests only)
-- [ ] **Phase 3** — Balance `.tres` + economy + shockwave data
-- [ ] **Phase 4** — QoL HUD / UI / between-mission
-- [ ] **Phase 5** — SimBot mission loop + `tests/test_simulation_api.gd` coverage (suite passes; full mission loop not separately validated)
-- [ ] **Phase 6** — 12 verification checks + final screenshot/play
+- [ ] **Phase 2** — Core loop E2E: headless `--quit` / `--quit-after` on **main scene** hit **SIGSEGV** on this Windows/Godot 4.6 setup (likely editor/GPU/plugin interaction). **Recommendation:** validate loop in **editor** (F5) or Godot MCP **play_scene** when available
+- [ ] **Phase 3** — Balance `.tres` + economy + shockwave data (`resources/enemy_data/*.tres`, `resources/spell_data/shockwave.tres`, etc.)
+- [ ] **Phase 4** — QoL HUD / UI / between-mission (`ui/hud.gd`, `between_mission_screen`, build menu)
+- [ ] **Phase 5** — SimBot full mission loop beyond API/unit tests
+- [ ] **Phase 6** — 12 verification checks (see below) + screenshot/play capture
+
+### Phase 6 — twelve checks (template; tick when done)
+
+1. [ ] Main menu → start mission / new game
+2. [ ] Wave countdown → wave spawns enemies
+3. [ ] Tower weapons fire / damage applies
+4. [ ] Build mode enter/exit + time scale
+5. [ ] Hex grid place/sell building
+6. [ ] Sybil mana + shockwave cast
+7. [ ] Arnulf engages ground enemies
+8. [ ] Mission win path (waves cleared / mission_won)
+9. [ ] Mission fail path (tower destroyed)
+10. [ ] Between-mission / shop / research (as in MVP)
+11. [ ] No script errors in Output for a full run
+12. [ ] Performance acceptable (frame time / no runaway logs)
 
 ## MCP / tooling (this session)
 
@@ -46,7 +66,7 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 
 ## Next steps (for a follow-up)
 
-1. Optional: skim `docs/OUTPUT_AUDIT.txt` and apply only non-conflicting fixes.
-2. Phases 2–4: run main scene in editor (or Godot MCP Pro), balance data, HUD/QoL.
-3. Phase 5: extended SimBot / mission automation if required by spec.
-4. Phase 6: run the 12 manual/automated checks from the autonomous prompt.
+1. Deeper pass on remainder of `docs/OUTPUT_AUDIT.txt` if any items still differ from code.
+2. **Phase 2:** Editor play or MCP `play_scene`; avoid relying on headless main until crash is understood.
+3. **Phases 3–4:** Tune `.tres` + small HUD/QoL polish aligned with MVP spec.
+4. **Phases 5–6:** SimBot mission script + tick through the 12 checks above.
