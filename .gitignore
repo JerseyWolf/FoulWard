@@ -2,5 +2,13 @@
 .godot/
 /android/
 
-# GDAI MCP (commercial addon — vendor recommends not committing; see gdaimcp.com)
-addons/gdai-mcp-plugin-godot/
+# Godot MCP Pro (npm install lives under MCPs/.../server)
+MCPs/godot-mcp-pro-v1.6.1/server/node_modules/
+tools/mcp-support/node_modules/
+
+# Generated test / tool logs
+reports/
+tools/gdunit_out.txt
+tools/gdunit_err.txt
+tools/autotest_last_run.log
+tools/autotest_last_run.err

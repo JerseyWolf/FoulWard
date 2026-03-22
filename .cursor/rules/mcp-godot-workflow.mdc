@@ -1,0 +1,39 @@
+---
+description: Use Godot MCP Pro, GDAI MCP, and Sequential Thinking on every Foul Ward session
+alwaysApply: true
+---
+
+# MCP usage (required habit)
+
+This project is configured with three MCP servers in `.cursor/mcp.json`. **Use them proactively** instead of guessing when work touches Godot, architecture, or non-trivial reasoning.
+
+## When to use which
+
+1. **`sequential-thinking`** — Multi-step design, debugging hypotheses, tradeoffs, test planning, or anything where jumping to a conclusion risks mistakes. **Start here** for hard problems; break the work into explicit steps.
+
+2. **`godot-mcp-pro`** — Editor integration over WebSocket (default port **6505**). Scene/node/script edits, project inspection, running the game from the editor, batch operations, profiling, etc. **Requires the Godot editor open** with the **Godot MCP Pro** plugin enabled (`Project → Project Settings → Plugins`). Bottom panel should show MCP Pro status.
+
+3. **`gdai-mcp-godot`** — Alternative Godot bridge (HTTP on **3571** by default). Scene tree, scripts, debugger/output, screenshots. **Requires the Godot editor open** with the **GDAI MCP** plugin enabled. Install Python deps once: `pip install -r addons/gdai-mcp-plugin-godot/requirements-mcp.txt`.
+
+## Session checklist
+
+- Before asking the user to “check in the editor,” **prefer MCP tools** if the editor is running and servers are connected.
+- If an MCP call fails, note whether Godot is running and both plugins are enabled; fix env/ports before falling back to manual steps.
+- For refactors or new systems, use **sequential-thinking** to align with existing architecture docs under `docs/`.
+
+## GDAI MCP stdio rule (critical)
+
+- The Python bridge must **never** `print()` to **stdout** — only JSON-RPC may use stdout. Debug logs belong on **stderr**; otherwise Cursor shows `Unexpected token 'G'` and the server reconnects in a loop. After edits, run: `python tools/verify_gdai_mcp_stdio.py`
+
+## If Cursor shows “No tools” for GDAI or Sequential Thinking
+
+- **GDAI**: The plugin’s HTTP server must be up (`localhost:3571` by default). Until then the bridge exposes one stub tool (`gdai_bridge_status`). After opening Godot with GDAI enabled, run **MCP: Restart Servers** so `list_tools` can fetch the full set.
+- **Sequential Thinking**: Uses `node` + a local install under `tools/mcp-support/`. After clone, run `npm install` in that folder. Remove duplicate **sequential-thinking** entries in global Cursor MCP settings to avoid conflicts.
+- **Node**: `sequential-thinking` requires a working `node` on PATH for Cursor’s MCP process (same as `godot-mcp-pro`).
+
+## Ports (defaults)
+
+- Godot MCP Pro: `GODOT_MCP_PORT=6505`
+- GDAI MCP plugin / Python bridge: `GDAI_MCP_SERVER_PORT=3571`
+
+Do not assume Brady / legacy MCP; it has been removed from this repo.

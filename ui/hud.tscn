@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://ui/hud.gd" id="1_hud"]
 
 [node name="HUD" type="Control"]
+mouse_filter = 2
 script = ExtResource("1_hud")
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -15,10 +16,10 @@ offset_right = 300
 offset_bottom = 40
 
 [node name="GoldLabel" type="Label" parent="ResourceDisplay"]
-text = "Gold: 100"
+text = "Gold: 1000"
 
 [node name="MaterialLabel" type="Label" parent="ResourceDisplay"]
-text = "Mat: 10"
+text = "Mat: 50"
 
 [node name="ResearchLabel" type="Label" parent="ResourceDisplay"]
 text = "Res: 0"
@@ -83,8 +84,20 @@ offset_bottom = -10
 [node name="CrossbowLabel" type="Label" parent="WeaponPanel"]
 text = "Crossbow: READY"
 
+[node name="CrossbowReloadBar" type="ProgressBar" parent="WeaponPanel"]
+custom_minimum_size = Vector2(0, 10)
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
 [node name="MissileLabel" type="Label" parent="WeaponPanel"]
 text = "Missile: READY"
+
+[node name="MissileReloadBar" type="ProgressBar" parent="WeaponPanel"]
+custom_minimum_size = Vector2(0, 10)
+max_value = 100.0
+value = 100.0
+show_percentage = false
 
 [node name="BuildModeHint" type="Label" parent="."]
 anchor_left = 0.5

@@ -13,6 +13,8 @@ extends CharacterBody3D
 
 const TARGET_POSITION: Vector3 = Vector3.ZERO
 const FLYING_HEIGHT: float = 5.0
+## If the nav agent reports a next waypoint on top of us, normalized() would be zero — fall back to direct steering.
+const _MIN_NAV_STEP_SQ: float = 0.0004
 
 var _enemy_data: EnemyData = null
 var _attack_timer: float = 0.0
@@ -41,6 +43,10 @@ func initialize(enemy_data: EnemyData) -> void:
 	_enemy_data = enemy_data
 	_attack_timer = 0.0
 	_is_attacking = false
+	print("[Enemy] initialized: %s  hp=%d speed=%.1f flying=%s pos=(%.0f,%.0f,%.0f)" % [
+		enemy_data.display_name, enemy_data.max_hp, enemy_data.move_speed, enemy_data.is_flying,
+		global_position.x, global_position.y, global_position.z
+	])
 
 	health_component.max_hp = _enemy_data.max_hp
 	health_component.reset_to_max()
@@ -99,33 +105,57 @@ func _physics_process(delta: float) -> void:
 	else:
 		_move_ground(delta)
 
+
 # === MOVEMENT =======================================================
 
-func _move_ground(_delta: float) -> void:
-	# Guard for navigation map not yet synchronized (first frame after spawn).
-	# Credit (map_get_iteration_id guard):
-	#   Godot Docs NavigationAgents tutorial + community pattern.
-	var nav_map := navigation_agent.get_navigation_map()
-	if nav_map.is_valid():
-		if NavigationServer3D.map_get_iteration_id(nav_map) == 0:
-			return
-
-	navigation_agent.target_position = TARGET_POSITION
-
-	if navigation_agent.is_navigation_finished():
+func _move_ground(delta: float) -> void:
+	# Primary arrival check — switch to attacking once within range.
+	# This must come first so direct-steering enemies stop at the right distance.
+	if global_position.distance_to(TARGET_POSITION) <= _enemy_data.attack_range:
+		print("[Enemy] %s reached attack range — switching to attack" % _enemy_data.display_name)
 		_is_attacking = true
 		_attack_timer = 0.0
 		return
 
+	var nav_map: RID = navigation_agent.get_navigation_map()
+	# A NavRegion3D with no baked mesh may still give iteration_id > 0 in Godot 4.
+	# is_navigation_finished() then returns true immediately (no path computed),
+	# which previously set _is_attacking from the spawn point — enemies would
+	# "attack" the tower from 40 units away without moving.
+	# Solution: treat "finished but out of range" the same as "no navmesh" and
+	# fall back to direct vector steering in both cases.
+	var has_valid_nav: bool = (
+		nav_map.is_valid()
+		and NavigationServer3D.map_get_iteration_id(nav_map) > 0
+	)
+
+	if not has_valid_nav:
+		_move_direct(delta)
+		return
+
+	navigation_agent.target_position = TARGET_POSITION
+
+	if navigation_agent.is_navigation_finished():
+		# Nav reports "done" but the distance check above didn't fire, which means
+		# there is no walkable path (empty or unbaked navmesh). Use direct steering.
+		_move_direct(delta)
+		return
+
 	var next_pos: Vector3 = navigation_agent.get_next_path_position()
-	var direction: Vector3 = (next_pos - global_position).normalized()
+	var to_next: Vector3 = next_pos - global_position
+	if to_next.length_squared() < _MIN_NAV_STEP_SQ:
+		_move_direct(delta)
+		return
+
+	var direction: Vector3 = to_next.normalized()
 	velocity = direction * _enemy_data.move_speed
 	move_and_slide()
 
-	# Backup arrival check in case navmesh confirmation is delayed.
-	if global_position.distance_to(TARGET_POSITION) <= _enemy_data.attack_range:
-		_is_attacking = true
-		_attack_timer = 0.0
+
+func _move_direct(_delta: float) -> void:
+	var direction: Vector3 = (TARGET_POSITION - global_position).normalized()
+	velocity = direction * _enemy_data.move_speed
+	move_and_slide()
 
 func _move_flying(_delta: float) -> void:
 	# Credit (constant-height + horizontal arrival):
@@ -166,8 +196,7 @@ func _attack_tower_ranged(delta: float) -> void:
 # === DEATH HANDLING ================================================
 
 func _on_health_depleted() -> void:
-	# Credit (signal + group removal + queue_free order):
-	#   FOUL WARD SYSTEMS_part3.md EnemyBase.on_health_depleted pseudocode.
+	print("[Enemy] DIED: %s  rewarding %d gold" % [_enemy_data.display_name, _enemy_data.gold_reward])
 	SignalBus.enemy_killed.emit(
 		_enemy_data.enemy_type,
 		global_position,

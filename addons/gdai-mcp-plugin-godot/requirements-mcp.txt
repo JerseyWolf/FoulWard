@@ -1,0 +1,4 @@
+# Python deps for gdai_mcp_server.py (MCP stdio bridge to the Godot editor plugin).
+# Install once: pip install -r requirements-mcp.txt
+mcp>=1.13.0
+httpx>=0.28.0

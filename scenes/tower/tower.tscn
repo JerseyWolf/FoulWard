@@ -1,7 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://tower_scene"]
+[gd_scene load_steps=7 format=3 uid="uid://tower_scene"]
 
 [ext_resource type="Script" path="res://scenes/tower/tower.gd" id="1_tower"]
 [ext_resource type="Script" path="res://scripts/health_component.gd" id="2_health"]
+[ext_resource type="Resource" path="res://resources/weapon_data/crossbow.tres" id="3_crossbow"]
+[ext_resource type="Resource" path="res://resources/weapon_data/rapid_missile.tres" id="4_rapid"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_tower"]
 size = Vector3(2.0, 2.0, 2.0)
@@ -17,6 +19,8 @@ script = ExtResource("1_tower")
 collision_layer = 1
 collision_mask = 0
 starting_hp = 500
+crossbow_data = ExtResource("3_crossbow")
+rapid_missile_data = ExtResource("4_rapid")
 
 [node name="TowerMesh" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_tower")

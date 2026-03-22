@@ -55,7 +55,11 @@ var is_upgraded: bool:
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
-	pass
+	if _building_data != null:
+		print("[Building] ready: %s at (%.1f,%.1f,%.1f)" % [
+			_building_data.display_name,
+			global_position.x, global_position.y, global_position.z
+		])
 
 
 func _physics_process(delta: float) -> void:
@@ -65,7 +69,7 @@ func _physics_process(delta: float) -> void:
 # Public API
 # ---------------------------------------------------------------------------
 
-## Called immediately after instantiation, before add_child.
+## Call after the node is in the scene tree (add_child) so child paths resolve.
 ## Configures visuals and stats from the provided BuildingData resource.
 func initialize(data: BuildingData) -> void:
 	_building_data = data
@@ -73,14 +77,21 @@ func initialize(data: BuildingData) -> void:
 	_attack_timer = 0.0
 	_current_target = null
 
-	# MVP visual: colored cube + label.
-	if _mesh != null:
+	# MVP visual: colored cube + label (use get_node — @onready is not set before _ready()).
+	var mesh_inst: MeshInstance3D = get_node_or_null("BuildingMesh") as MeshInstance3D
+	if mesh_inst != null:
 		var mat: StandardMaterial3D = StandardMaterial3D.new()
 		mat.albedo_color = data.color
-		_mesh.material_override = mat
+		mesh_inst.material_override = mat
 
-	if _label != null:
-		_label.text = data.display_name
+	var label_inst: Label3D = get_node_or_null("BuildingLabel") as Label3D
+	if label_inst != null:
+		label_inst.text = data.display_name
+
+	print("[Building] initialized: %s  dmg=%.0f range=%.1f fire_rate=%.2f  air=%s gnd=%s" % [
+		data.display_name, data.damage, data.attack_range, data.fire_rate,
+		data.targets_air, data.targets_ground
+	])
 
 
 ## Transitions the building from Basic to Upgraded tier.
@@ -144,7 +155,10 @@ func _combat_process(delta: float) -> void:
 ## MVP strategy: CLOSEST enemy to this building.
 ## Respects targets_air / targets_ground flags from BuildingData.
 func _find_target() -> EnemyBase:
-	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	var enemies: Array[Node] = tree.get_nodes_in_group("enemies")
 	var best_target: EnemyBase = null
 	var best_distance: float = INF
 	var effective_range: float = get_effective_range()
@@ -188,7 +202,15 @@ func _fire_at_target() -> void:
 	# Slow-firing Ballista (0.4/s) → speed 6; fast Poison Vat (1.5/s) → speed 22.5.
 	var proj_speed: float = _building_data.fire_rate * 15.0
 
-	# Per CONVENTIONS.md §7.3 – initialize before add_child when possible.
+	var dist: float = global_position.distance_to(_current_target.global_position)
+	print("[Building] %s fired → %s  dist=%.1f  target_y=%.1f" % [
+		_building_data.display_name,
+		_current_target.get_enemy_data().display_name if _current_target.get_enemy_data() != null else "?",
+		dist,
+		_current_target.global_position.y
+	])
+
+	_projectile_container.add_child(proj)
 	proj.initialize_from_building(
 		get_effective_damage(),
 		_building_data.damage_type,
@@ -197,6 +219,5 @@ func _fire_at_target() -> void:
 		_current_target.global_position,
 		_building_data.targets_air
 	)
-	_projectile_container.add_child(proj)
 	proj.add_to_group("projectiles")
 

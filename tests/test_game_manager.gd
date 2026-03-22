@@ -34,23 +34,21 @@ func test_start_new_game_transitions_to_combat() -> void:
 	assert_int(GameManager.get_game_state()).is_equal(Types.GameState.COMBAT)
 
 func test_start_new_game_emits_game_state_changed() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	GameManager.start_new_game()
-	await assert_signal(monitor).is_emitted("game_state_changed")
+	await assert_signal(monitor).is_emitted(
+		"game_state_changed", [Types.GameState.MAIN_MENU, Types.GameState.COMBAT]
+	)
 
 func test_start_new_game_emits_mission_started_with_1() -> void:
-	var received_mission: int = -1
-	SignalBus.mission_started.connect(
-		func(m: int) -> void: received_mission = m,
-		CONNECT_ONE_SHOT
-	)
+	var monitor := monitor_signals(SignalBus, false)
 	GameManager.start_new_game()
-	assert_int(received_mission).is_equal(1)
+	await assert_signal(monitor).is_emitted("mission_started", [1])
 
 func test_start_new_game_calls_economy_reset() -> void:
 	EconomyManager.add_gold(500)
 	GameManager.start_new_game()
-	assert_int(EconomyManager.get_gold()).is_equal(100)
+	assert_int(EconomyManager.get_gold()).is_equal(1000)
 
 # ════════════════════════════════════════════
 # start_next_mission
@@ -101,15 +99,17 @@ func test_enter_build_mode_from_wave_countdown_is_valid() -> void:
 
 func test_enter_build_mode_emits_build_mode_entered() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	GameManager.enter_build_mode()
 	await assert_signal(monitor).is_emitted("build_mode_entered")
 
 func test_enter_build_mode_emits_game_state_changed() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	GameManager.enter_build_mode()
-	await assert_signal(monitor).is_emitted("game_state_changed")
+	await assert_signal(monitor).is_emitted(
+		"game_state_changed", [Types.GameState.COMBAT, Types.GameState.BUILD_MODE]
+	)
 
 func test_enter_build_mode_game_state_changed_payload_old_is_combat() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
@@ -150,16 +150,18 @@ func test_exit_build_mode_sets_game_state_to_combat() -> void:
 func test_exit_build_mode_emits_build_mode_exited() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
 	GameManager.enter_build_mode()
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	GameManager.exit_build_mode()
 	await assert_signal(monitor).is_emitted("build_mode_exited")
 
 func test_exit_build_mode_emits_game_state_changed() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
 	GameManager.enter_build_mode()
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	GameManager.exit_build_mode()
-	await assert_signal(monitor).is_emitted("game_state_changed")
+	await assert_signal(monitor).is_emitted(
+		"game_state_changed", [Types.GameState.BUILD_MODE, Types.GameState.COMBAT]
+	)
 
 func test_exit_build_mode_game_state_changed_new_state_is_combat() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
@@ -190,9 +192,9 @@ func test_tower_destroyed_signal_transitions_to_mission_failed() -> void:
 
 func test_tower_destroyed_signal_emits_mission_failed() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	SignalBus.tower_destroyed.emit()
-	await assert_signal(monitor).is_emitted("mission_failed")
+	await assert_signal(monitor).is_emitted("mission_failed", [1])
 
 func test_tower_destroyed_signal_emits_mission_failed_with_correct_mission_number() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
@@ -207,9 +209,11 @@ func test_tower_destroyed_signal_emits_mission_failed_with_correct_mission_numbe
 
 func test_tower_destroyed_emits_game_state_changed() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	SignalBus.tower_destroyed.emit()
-	await assert_signal(monitor).is_emitted("game_state_changed")
+	await assert_signal(monitor).is_emitted(
+		"game_state_changed", [Types.GameState.COMBAT, Types.GameState.MISSION_FAILED]
+	)
 
 # ════════════════════════════════════════════
 # all_waves_cleared → resource award + mission_won
@@ -218,9 +222,9 @@ func test_tower_destroyed_emits_game_state_changed() -> void:
 func test_all_waves_cleared_emits_mission_won() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
 	GameManager.current_mission = 1
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	SignalBus.all_waves_cleared.emit()
-	await assert_signal(monitor).is_emitted("mission_won")
+	await assert_signal(monitor).is_emitted("mission_won", [1])
 
 func test_all_waves_cleared_emits_mission_won_with_correct_mission_number() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
@@ -238,14 +242,14 @@ func test_all_waves_cleared_awards_gold_50_times_mission_number() -> void:
 	GameManager.current_mission = 2
 	EconomyManager.reset_to_defaults()
 	SignalBus.all_waves_cleared.emit()
-	assert_int(EconomyManager.get_gold()).is_equal(200)
+	assert_int(EconomyManager.get_gold()).is_equal(1100)
 
 func test_all_waves_cleared_awards_3_building_material() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
 	GameManager.current_mission = 1
 	EconomyManager.reset_to_defaults()
 	SignalBus.all_waves_cleared.emit()
-	assert_int(EconomyManager.get_building_material()).is_equal(13)
+	assert_int(EconomyManager.get_building_material()).is_equal(53)
 
 func test_all_waves_cleared_awards_2_research_material() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
@@ -277,14 +281,16 @@ func test_all_waves_cleared_gold_scales_with_mission_number_mission_5() -> void:
 	GameManager.current_mission = 5
 	EconomyManager.reset_to_defaults()
 	SignalBus.all_waves_cleared.emit()
-	assert_int(EconomyManager.get_gold()).is_equal(350)
+	assert_int(EconomyManager.get_gold()).is_equal(1250)
 
 func test_all_waves_cleared_emits_game_state_changed() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
 	GameManager.current_mission = 1
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	SignalBus.all_waves_cleared.emit()
-	await assert_signal(monitor).is_emitted("game_state_changed")
+	await assert_signal(monitor).is_emitted(
+		"game_state_changed", [Types.GameState.COMBAT, Types.GameState.BETWEEN_MISSIONS]
+	)
 
 # ════════════════════════════════════════════
 # get_* accessors
