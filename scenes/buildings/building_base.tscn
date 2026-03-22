@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3 uid="uid://building_base"]
+
+[ext_resource type="Script" path="res://scenes/buildings/building_base.gd" id="1_buildingbase"]
+[ext_resource type="Script" path="res://scripts/health_component.gd" id="2_healthcomponent"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_building"]
+size = Vector3(1.0, 1.0, 1.0)
+
+[sub_resource type="StandardMaterial3D" id="BuildingMat"]
+albedo_color = Color(0.5, 0.5, 0.5, 1.0)
+
+[node name="BuildingBase" type="Node3D"]
+script = ExtResource("1_buildingbase")
+
+[node name="BuildingMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_building")
+surface_material_override/0 = SubResource("BuildingMat")
+
+[node name="BuildingLabel" type="Label3D" parent="."]
+position = Vector3(0, 1.2, 0)
+pixel_size = 0.01
+text = "Building"
+font_size = 48
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_healthcomponent")
+max_hp = 200
+

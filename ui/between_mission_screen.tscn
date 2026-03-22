@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://betweenmission_scene"]
+
+[ext_resource type="Script" path="res://ui/between_mission_screen.gd" id="1_bms"]
+
+[node name="BetweenMissionScreen" type="Control"]
+script = ExtResource("1_bms")
+anchor_right = 1.0
+anchor_bottom = 1.0
+visible = false
+
+[node name="Background" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.1, 0.1, 0.95)
+
+[node name="TabContainer" type="TabContainer" parent="."]
+anchor_left = 0.1
+anchor_top = 0.05
+anchor_right = 0.9
+anchor_bottom = 0.85
+
+[node name="ShopTab" type="Control" parent="TabContainer"]
+
+[node name="ShopList" type="VBoxContainer" parent="TabContainer/ShopTab"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="ResearchTab" type="Control" parent="TabContainer"]
+
+[node name="ResearchList" type="VBoxContainer" parent="TabContainer/ResearchTab"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="BuildingsTab" type="Control" parent="TabContainer"]
+
+[node name="BuildingsList" type="VBoxContainer" parent="TabContainer/BuildingsTab"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="NextMissionButton" type="Button" parent="."]
+anchor_left = 0.35
+anchor_top = 0.88
+anchor_right = 0.65
+anchor_bottom = 0.96
+text = "Next Mission"
+

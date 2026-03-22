@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_type = 5
+display_name = "Bat Swarm"
+max_hp = 40
+move_speed = 5.0
+damage = 8
+attack_range = 1.0
+attack_cooldown = 0.5
+armor_type = 3
+gold_reward = 8
+is_ranged = false
+is_flying = true
+color = Color(0.3, 0.0, 0.5, 1.0)
+damage_immunities = []
+

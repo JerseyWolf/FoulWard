@@ -1,0 +1,11 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_data.gd" id="1_shopitemdata"]
+
+[resource]
+script = ExtResource("1_shopitemdata")
+item_id = "tower_repair"
+display_name = "Tower Repair Kit"
+gold_cost = 75
+material_cost = 0
+description = "Restore tower to full HP"

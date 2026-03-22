@@ -1,0 +1,6 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# GDAI MCP (commercial addon — vendor recommends not committing; see gdaimcp.com)
+addons/gdai-mcp-plugin-godot/

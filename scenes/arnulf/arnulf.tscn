@@ -1,0 +1,69 @@
+[gd_scene load_steps=8 format=3 uid="uid://arnulf_scene"]
+
+; arnulf.tscn — Arnulf AI melee companion scene for FOUL WARD.
+; Scene tree matches ARCHITECTURE.md §2.
+;
+; Collision layers (CONVENTIONS.md §16):
+;   Arnulf CharacterBody3D : collision_layer = 4 (Layer 3, bitmask bit 2)
+;   DetectionArea           : collision_mask  = 2 (Layer 2 = Enemies)
+;   AttackArea              : collision_mask  = 2 (Layer 2 = Enemies)
+
+[ext_resource type="Script" path="res://scenes/arnulf/arnulf.gd" id="1_arnulf"]
+[ext_resource type="Script" path="res://scripts/health_component.gd" id="2_health"]
+
+[sub_resource type="BoxMesh" id="1_mesh"]
+size = Vector3(1.0, 1.5, 1.0)
+
+[sub_resource type="BoxShape3D" id="2_collision"]
+size = Vector3(1.0, 1.5, 1.0)
+
+[sub_resource type="SphereShape3D" id="3_detection_shape"]
+radius = 25.0
+
+[sub_resource type="SphereShape3D" id="4_attack_shape"]
+radius = 2.0
+
+[node name="Arnulf" type="CharacterBody3D"]
+script = ExtResource("1_arnulf")
+collision_layer = 4
+collision_mask = 0
+
+[node name="ArnulfMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("1_mesh")
+
+[node name="ArnulfCollision" type="CollisionShape3D" parent="."]
+shape = SubResource("2_collision")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 1.0
+target_desired_distance = 1.5
+avoidance_enabled = true
+radius = 0.5
+
+[node name="DetectionArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitoring = true
+monitorable = false
+
+[node name="DetectionShape" type="CollisionShape3D" parent="DetectionArea"]
+shape = SubResource("3_detection_shape")
+
+[node name="AttackArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitoring = true
+monitorable = false
+
+[node name="AttackShape" type="CollisionShape3D" parent="AttackArea"]
+shape = SubResource("4_attack_shape")
+
+[node name="ArnulfLabel" type="Label3D" parent="."]
+text = "ARNULF"
+position = Vector3(0, 1.5, 0)
+pixel_size = 0.01
+billboard = 2
+

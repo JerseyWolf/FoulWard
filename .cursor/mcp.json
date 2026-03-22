@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "godot": {
+      "command": "npx",
+      "args": ["-y", "@coding-solo/godot-mcp"],
+      "cwd": "D:/Projects/Foul Ward/foul_ward_godot/foul-ward",
+      "env": {
+        "DEBUG": "true",
+        "GODOT_PATH": "D:/Apps/Godot/godot.exe"
+      }
+    },
+    "gdai-mcp": {
+      "command": "C:/Users/jerzy/.local/bin/uv.exe",
+      "args": [
+        "run",
+        "D:/Projects/Foul Ward/foul_ward_godot/foul-ward/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"
+      ]
+    }
+  }
+}

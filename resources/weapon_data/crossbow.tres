@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/weapon_data.gd" id="1_weapondata"]
+
+[resource]
+script = ExtResource("1_weapondata")
+weapon_slot = 0
+display_name = "Crossbow"
+damage = 50.0
+projectile_speed = 30.0
+reload_time = 2.5
+burst_count = 1
+burst_interval = 0.0
+can_target_flying = false
+

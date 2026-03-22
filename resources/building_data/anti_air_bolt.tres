@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="BuildingData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_type = 6
+display_name = "Anti-Air Bolt"
+gold_cost = 70
+material_cost = 3
+upgrade_gold_cost = 100
+upgrade_material_cost = 4
+damage = 30.0
+upgraded_damage = 50.0
+fire_rate = 1.2
+attack_range = 20.0
+upgraded_range = 24.0
+damage_type = 0
+targets_air = true
+targets_ground = false
+is_locked = false
+unlock_research_id = ""
+color = Color(0.2, 0.5, 0.9, 1.0)
+

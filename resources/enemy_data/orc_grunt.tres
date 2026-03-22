@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_type = 0
+display_name = "Orc Grunt"
+max_hp = 80
+move_speed = 3.0
+damage = 15
+attack_range = 1.5
+attack_cooldown = 1.2
+armor_type = 0
+gold_reward = 10
+is_ranged = false
+is_flying = false
+color = Color(0.2, 0.6, 0.1, 1.0)
+damage_immunities = []
+

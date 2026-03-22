@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+; shockwave.tres — Shockwave spell data resource for FOUL WARD.
+; Ground-only magical AoE — hits all non-flying enemies on the battlefield.
+;
+; Credit: Foul Ward SYSTEMS_part3.md §9.2 and CONVENTIONS.md §4.4
+;   Internal project document — Foul Ward team.
+
+[ext_resource type="Script" path="res://scripts/resources/spell_data.gd" id="1_spell_data"]
+
+[resource]
+script = ExtResource("1_spell_data")
+spell_id = "shockwave"
+display_name = "Shockwave"
+mana_cost = 50
+cooldown = 60.0
+damage = 30.0
+radius = 100.0
+; Types.DamageType.MAGICAL = 2
+damage_type = 2
+hits_flying = false
+

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="BuildingData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_type = 7
+display_name = "Shield Generator"
+gold_cost = 120
+material_cost = 6
+upgrade_gold_cost = 0
+upgrade_material_cost = 0
+damage = 0.0
+upgraded_damage = 0.0
+fire_rate = 0.0
+attack_range = 0.0
+upgraded_range = 0.0
+damage_type = 0
+targets_air = false
+targets_ground = false
+is_locked = false
+unlock_research_id = ""
+color = Color(0.0, 0.8, 0.8, 1.0)
+

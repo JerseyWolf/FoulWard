@@ -1,0 +1,37 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/enemies/enemy_base.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/health_component.gd" id="3"]
+
+[sub_resource type="CapsuleShape3D" id="1"]
+radius = 0.5
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="2"]
+albedo_color = Color(0.4, 0.8, 0.4, 1.0)
+
+[node name="EnemyBase" type="CharacterBody3D"]
+script = ExtResource("1")
+collision_layer = 2
+collision_mask = 1
+
+[node name="EnemyMesh" type="MeshInstance3D" parent="."]
+material_override = SubResource("2")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="EnemyCollision" type="CollisionShape3D" parent="."]
+shape = SubResource("1")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("3")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+target_desired_distance = 1.5
+path_desired_distance = 0.5
+avoidance_enabled = true
+radius = 0.5
+
+[node name="EnemyLabel" type="Label3D" parent="."]
+text = "Enemy"
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+

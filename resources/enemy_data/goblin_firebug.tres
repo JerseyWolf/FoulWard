@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_type = 2
+display_name = "Goblin Firebug"
+max_hp = 60
+move_speed = 4.0
+damage = 20
+attack_range = 1.2
+attack_cooldown = 0.8
+armor_type = 0
+gold_reward = 15
+is_ranged = false
+is_flying = false
+color = Color(0.9, 0.4, 0.0, 1.0)
+damage_immunities = [1]
+

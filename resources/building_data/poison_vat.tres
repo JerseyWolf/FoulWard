@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="BuildingData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_type = 3
+display_name = "Poison Vat"
+gold_cost = 55
+material_cost = 2
+upgrade_gold_cost = 80
+upgrade_material_cost = 3
+damage = 10.0
+upgraded_damage = 18.0
+fire_rate = 1.5
+attack_range = 10.0
+upgraded_range = 12.0
+damage_type = 3
+targets_air = false
+targets_ground = true
+is_locked = false
+unlock_research_id = ""
+color = Color(0.2, 0.7, 0.1, 1.0)
+

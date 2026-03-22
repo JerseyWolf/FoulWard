@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="BuildingData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_type = 2
+display_name = "Magic Obelisk"
+gold_cost = 80
+material_cost = 4
+upgrade_gold_cost = 120
+upgrade_material_cost = 5
+damage = 25.0
+upgraded_damage = 45.0
+fire_rate = 0.6
+attack_range = 18.0
+upgraded_range = 22.0
+damage_type = 2
+targets_air = false
+targets_ground = true
+is_locked = false
+unlock_research_id = ""
+color = Color(0.5, 0.0, 0.8, 1.0)
+

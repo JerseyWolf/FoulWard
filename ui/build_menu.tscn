@@ -1,0 +1,38 @@
+[gd_scene load_steps=2 format=3 uid="uid://buildmenu_scene"]
+
+[ext_resource type="Script" path="res://ui/build_menu.gd" id="1_buildmenu"]
+
+[node name="BuildMenu" type="Control"]
+script = ExtResource("1_buildmenu")
+anchor_right = 1.0
+anchor_bottom = 1.0
+visible = false
+
+[node name="Background" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.5)
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200
+offset_top = -220
+offset_right = 200
+offset_bottom = 220
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+
+[node name="SlotLabel" type="Label" parent="Panel/VBox"]
+text = "Slot 0 — Choose Building:"
+horizontal_alignment = 1
+
+[node name="BuildingContainer" type="GridContainer" parent="Panel/VBox"]
+columns = 2
+
+[node name="CloseButton" type="Button" parent="Panel/VBox"]
+text = "Close / Exit Build Mode"
+

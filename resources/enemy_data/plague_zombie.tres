@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_type = 3
+display_name = "Plague Zombie"
+max_hp = 120
+move_speed = 1.5
+damage = 12
+attack_range = 1.5
+attack_cooldown = 2.0
+armor_type = 2
+gold_reward = 12
+is_ranged = false
+is_flying = false
+color = Color(0.5, 0.7, 0.2, 1.0)
+damage_immunities = [3]
+

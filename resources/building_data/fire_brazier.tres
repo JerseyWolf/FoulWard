@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="BuildingData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_type = 1
+display_name = "Fire Brazier"
+gold_cost = 60
+material_cost = 3
+upgrade_gold_cost = 90
+upgrade_material_cost = 4
+damage = 15.0
+upgraded_damage = 28.0
+fire_rate = 0.8
+attack_range = 12.0
+upgraded_range = 14.0
+damage_type = 1
+targets_air = false
+targets_ground = true
+is_locked = false
+unlock_research_id = ""
+color = Color(0.9, 0.3, 0.0, 1.0)
+

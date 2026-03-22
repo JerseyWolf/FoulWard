@@ -1,0 +1,101 @@
+[gd_scene load_steps=2 format=3 uid="uid://hud_scene"]
+
+[ext_resource type="Script" path="res://ui/hud.gd" id="1_hud"]
+
+[node name="HUD" type="Control"]
+script = ExtResource("1_hud")
+anchor_right = 1.0
+anchor_bottom = 1.0
+visible = false
+
+[node name="ResourceDisplay" type="HBoxContainer" parent="."]
+offset_left = 10
+offset_top = 10
+offset_right = 300
+offset_bottom = 40
+
+[node name="GoldLabel" type="Label" parent="ResourceDisplay"]
+text = "Gold: 100"
+
+[node name="MaterialLabel" type="Label" parent="ResourceDisplay"]
+text = "Mat: 10"
+
+[node name="ResearchLabel" type="Label" parent="ResourceDisplay"]
+text = "Res: 0"
+
+[node name="WaveDisplay" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150
+offset_top = 10
+offset_right = 150
+offset_bottom = 70
+
+[node name="WaveLabel" type="Label" parent="WaveDisplay"]
+text = "Wave 0 / 10"
+horizontal_alignment = 1
+
+[node name="CountdownLabel" type="Label" parent="WaveDisplay"]
+text = "30"
+horizontal_alignment = 1
+visible = false
+
+[node name="TowerHPBar" type="ProgressBar" parent="."]
+offset_left = 10
+offset_top = 50
+offset_right = 200
+offset_bottom = 75
+max_value = 500.0
+value = 500.0
+show_percentage = false
+
+[node name="SpellPanel" type="HBoxContainer" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10
+offset_top = -60
+offset_right = 320
+offset_bottom = -10
+
+[node name="ManaBar" type="ProgressBar" parent="SpellPanel"]
+custom_minimum_size = Vector2(150, 30)
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="SpellButton" type="Button" parent="SpellPanel"]
+text = "Shockwave"
+disabled = true
+
+[node name="CooldownLabel" type="Label" parent="SpellPanel"]
+text = "Shockwave: READY"
+
+[node name="WeaponPanel" type="VBoxContainer" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -200
+offset_top = -80
+offset_right = -10
+offset_bottom = -10
+
+[node name="CrossbowLabel" type="Label" parent="WeaponPanel"]
+text = "Crossbow: READY"
+
+[node name="MissileLabel" type="Label" parent="WeaponPanel"]
+text = "Missile: READY"
+
+[node name="BuildModeHint" type="Label" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -100
+offset_top = -40
+offset_right = 100
+offset_bottom = -10
+text = "[B] Build Mode"
+horizontal_alignment = 1
+visible = false
+
