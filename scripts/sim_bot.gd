@@ -22,7 +22,10 @@ var _hex_grid: HexGrid = null
 
 ## Activates the bot. Resolves node refs, connects observation signals,
 ## then starts a new game. All refs use get_node_or_null (never crashes).
+## Safe to call once; second call is ignored until `deactivate()`.
 func activate() -> void:
+	if _is_active:
+		return
 	_is_active = true
 
 	_tower = get_node_or_null("/root/Main/Tower") as Tower
@@ -38,6 +41,25 @@ func activate() -> void:
 	SignalBus.mission_started.connect(_on_mission_started)
 
 	GameManager.start_new_game()
+
+
+## Disconnects observation signals so `activate()` can run again (tests / tooling).
+func deactivate() -> void:
+	if not _is_active:
+		return
+	_is_active = false
+	if SignalBus.wave_cleared.is_connected(_on_wave_cleared):
+		SignalBus.wave_cleared.disconnect(_on_wave_cleared)
+	if SignalBus.mission_won.is_connected(_on_mission_won):
+		SignalBus.mission_won.disconnect(_on_mission_won)
+	if SignalBus.mission_failed.is_connected(_on_mission_failed):
+		SignalBus.mission_failed.disconnect(_on_mission_failed)
+	if SignalBus.all_waves_cleared.is_connected(_on_all_waves_cleared):
+		SignalBus.all_waves_cleared.disconnect(_on_all_waves_cleared)
+	if SignalBus.game_state_changed.is_connected(_on_game_state_changed):
+		SignalBus.game_state_changed.disconnect(_on_game_state_changed)
+	if SignalBus.mission_started.is_connected(_on_mission_started):
+		SignalBus.mission_started.disconnect(_on_mission_started)
 
 
 func bot_enter_build_mode() -> void:

@@ -23,8 +23,8 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 - [x] **Phase 1C** — GdUnit: **289 test cases, 0 failures** (Godot headless + GdUnitCmdTool)
 - [ ] **Phase 2** — Core loop E2E: headless `--quit` / `--quit-after` on **main scene** hit **SIGSEGV** on this Windows/Godot 4.6 setup (likely editor/GPU/plugin interaction). **Recommendation:** validate loop in **editor** (F5) or Godot MCP **play_scene** when available
 - [ ] **Phase 3** — Balance `.tres` + economy + shockwave data (`resources/enemy_data/*.tres`, `resources/spell_data/shockwave.tres`, etc.)
-- [ ] **Phase 4** — QoL HUD / UI / between-mission (`ui/hud.gd`, `between_mission_screen`, build menu)
-- [ ] **Phase 5** — SimBot full mission loop beyond API/unit tests
+- [x] **Phase 4 (partial)** — Mission briefing: `UIManager` shows `UI/MissionBriefing` on `MISSION_BRIEFING` (was lumped with HUD); `main.tscn` attaches `mission_briefing.gd` + **BEGIN** button. HUD/build/between-mission unchanged in this pass.
+- [x] **Phase 5 (partial)** — SimBot: `activate()` idempotent; new `deactivate()` disconnects SignalBus observers; `test_simulation_api` asserts `deactivate` + calls it before free.
 - [ ] **Phase 6** — 12 verification checks (see below) + screenshot/play capture
 
 ### Phase 6 — twelve checks (template; tick when done)
@@ -59,6 +59,9 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 - **`scenes/projectiles/projectile_base.gd`:** Removed “arrival tolerance = miss” path; added overlap scan + **PhysicsDirectSpaceState3D.intersect_shape** fallback for headless; `_apply_damage_to_enemy` returns bool; `_hit_processed` guard; `monitoring = true`.
 - **`scenes/buildings/building_base.gd`:** `get_node_or_null` for `BuildingMesh` / `BuildingLabel` / `HealthComponent` so bare `BuildingBase.new()` in tests does not error.
 - **`tests/`:** Replaced fragile `CONNECT_ONE_SHOT` + lambda patterns with `monitor_signals` + `await assert_signal(monitor)...` where needed; fixed **economy** tests that used **exact** spend/can_afford amounts that were still **affordable** (e.g. spend 50 of 50 gold); fixed `test_simulation_api` expected gold after `before_test` adds 1000 gold (`2010` after +10); fixed wave countdown assertions for first-wave **3s**; fixed `test_wave_manager` countdown delta test to avoid clamp-to-zero; merged/removed duplicate game manager signal tests; **simulation API** `tower_damaged` uses typed args `[450, 500]`.
+- **`ui/ui_manager.gd`:** `MISSION_BRIEFING` state shows mission briefing panel only (not HUD).
+- **`scenes/main.tscn`:** `MissionBriefing` uses `mission_briefing.gd`; added **BeginButton** child.
+- **`scripts/sim_bot.gd`:** Guard duplicate `activate()`; `deactivate()` clears SignalBus connections.
 
 ## Read-only docs (do not edit for gameplay)
 

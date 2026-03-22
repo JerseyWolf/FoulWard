@@ -15,6 +15,7 @@ extends Control
 	"/root/Main/UI/BetweenMissionScreen"
 )
 @onready var _main_menu: Control = get_node("/root/Main/UI/MainMenu")
+@onready var _mission_briefing: Control = get_node("/root/Main/UI/MissionBriefing")
 @onready var _end_screen: Control = get_node("/root/Main/UI/EndScreen")
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -38,13 +39,16 @@ func _apply_state(state: Types.GameState) -> void:
 	_build_menu.hide()
 	_between_mission_screen.hide()
 	_main_menu.hide()
+	_mission_briefing.hide()
 	_end_screen.hide()
 
 	match state:
 		Types.GameState.MAIN_MENU:
 			_main_menu.show()
 
-		Types.GameState.MISSION_BRIEFING, \
+		Types.GameState.MISSION_BRIEFING:
+			_mission_briefing.show()
+
 		Types.GameState.COMBAT, \
 		Types.GameState.WAVE_COUNTDOWN:
 			_hud.show()
