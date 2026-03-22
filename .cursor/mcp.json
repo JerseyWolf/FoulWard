@@ -33,6 +33,27 @@
       "env": {
         "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
       }
+    },
+    "filesystem-workspace": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/jerzy-wolf/workspace"
+      ],
+      "env": {
+        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
+      }
     }
   }
 }
