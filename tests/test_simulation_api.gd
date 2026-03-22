@@ -328,12 +328,14 @@ func test_sim_bot_activate_does_not_crash() -> void:
 	add_child(sim_bot)
 	sim_bot.activate()
 	await get_tree().process_frame
+	sim_bot.deactivate()
 	sim_bot.queue_free()
 
 
 func test_sim_bot_has_all_public_methods() -> void:
 	var sim_bot: SimBot = SimBot.new()
 	assert_bool(sim_bot.has_method("activate")).is_true()
+	assert_bool(sim_bot.has_method("deactivate")).is_true()
 	assert_bool(sim_bot.has_method("bot_enter_build_mode")).is_true()
 	assert_bool(sim_bot.has_method("bot_exit_build_mode")).is_true()
 	assert_bool(sim_bot.has_method("bot_place_building")).is_true()

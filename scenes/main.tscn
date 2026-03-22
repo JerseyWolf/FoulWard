@@ -39,6 +39,7 @@
 [ext_resource type="Script" uid="uid://cymimirt7rukp" path="res://scripts/resources/shop_item_data.gd" id="21_fv21b"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_tower_repair.tres" id="22_tel4y"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_mana_draught.tres" id="23_qkpxi"]
+[ext_resource type="Script" path="res://ui/mission_briefing.gd" id="24_missionbrief"]
 
 [sub_resource type="PlaneMesh" id="GroundMesh"]
 size = Vector2(120, 120)
@@ -188,6 +189,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("24_missionbrief")
 
 [node name="Background" type="ColorRect" parent="UI/MissionBriefing" unique_id=2128238404]
 layout_mode = 0
@@ -204,6 +206,21 @@ anchor_bottom = 0.6
 theme_override_font_sizes/font_size = 96
 text = "MISSION 1"
 horizontal_alignment = 1
+
+[node name="BeginButton" type="Button" parent="UI/MissionBriefing" unique_id=933858124]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = 80.0
+offset_right = 80.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "BEGIN"
 
 [node name="EndScreen" type="Control" parent="UI" unique_id=1075513404]
 visible = false
