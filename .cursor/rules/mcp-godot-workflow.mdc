@@ -13,7 +13,7 @@ This project is configured with **MCP servers** in `.cursor/mcp.json` (core: **s
 
 2. **`godot-mcp-pro`** — Editor integration over WebSocket (default port **6505**). Scene/node/script edits, project inspection, running the game from the editor, batch operations, profiling, etc. **Requires the Godot editor open** with the **Godot MCP Pro** plugin enabled (`Project → Project Settings → Plugins`). Bottom panel should show MCP Pro status.
 
-3. **`gdai-mcp-godot`** — Alternative Godot bridge (HTTP on **3571** by default). Scene tree, scripts, debugger/output, screenshots. **Requires the Godot editor open** with the **GDAI MCP** plugin enabled. Install Python deps once: `pip install -r addons/gdai-mcp-plugin-godot/requirements-mcp.txt`.
+3. **`gdai-mcp-godot`** — Bridges to Godot’s **HTTP API** on **3571** (served **inside the editor** by the GDAI GDExtension, not by Cursor). **Requires Godot open** with **GDAI MCP** enabled; `uv run …/gdai_mcp_server.py` only proxies MCP. **Do not** keep a second GDAI copy under `res://MCPs/.../addons/` — use **`addons/gdai-mcp-plugin-godot/`** only (`MCPs/gdaimcp/README.md`). Python deps: `pip install -r addons/gdai-mcp-plugin-godot/requirements-mcp.txt` if needed.
 
 ## Session checklist
 

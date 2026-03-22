@@ -95,12 +95,12 @@ The repo ships **`.cursor/mcp.json`** with **Linux-friendly** absolute paths (ex
 | Server | What you need |
 |--------|----------------|
 | `godot-mcp-pro` | Node, `npm install` under `MCPs/godot-mcp-pro-v1.6.1/server`, **Godot** open, plugin on, **6505** |
-| `gdai-mcp-godot` | `uv`, **Godot** open, GDAI plugin, **3571** |
+| `gdai-mcp-godot` | `uv`, **Godot editor open** on this project, GDAI plugin enabled; HTTP on **3571** is served **by Godot** (not by Cursor). Avoid duplicate GDAI copies under `res://` (only `addons/gdai-mcp-plugin-godot/`). |
 | `sequential-thinking` | `npm install` in `tools/mcp-support` |
 | `filesystem-workspace` | `npx` (may download first run); `PATH` in `mcp.json` |
 | `github` | **`GITHUB_PERSONAL_ACCESS_TOKEN`** via **`~/.cursor/github-mcp.env`** or shell env |
 
-Vendor snapshot (no duplicate addon trees): **`MCPs/gdaimcp/addons/gdai-mcp-plugin-godot/`** mirrors **`addons/gdai-mcp-plugin-godot/`** (full plugin including `bin/` + `gdai_mcp_server.py` on `main`).
+**GDAI vendor:** keep a **single** addon tree at **`addons/gdai-mcp-plugin-godot/`** only. See **`MCPs/gdaimcp/README.md`** (duplicate copies under `MCPs/.../addons/` break the GDExtension and the **3571** bridge).
 
 **Example shape** (paths must match your machine):
 
