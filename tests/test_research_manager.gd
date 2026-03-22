@@ -58,9 +58,9 @@ func test_unlock_node_spends_research_material() -> void:
 
 
 func test_unlock_node_emits_research_unlocked() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	_research_manager.unlock_node("unlock_ballista")
-	await assert_signal(monitor).is_emitted("research_unlocked")
+	await assert_signal(monitor).is_emitted("research_unlocked", ["unlock_ballista"])
 
 
 func test_unlock_node_fails_when_prereq_not_met() -> void:

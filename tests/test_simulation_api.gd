@@ -1,4 +1,4 @@
-﻿# tests/test_simulation_api.gd
+# tests/test_simulation_api.gd
 # The most important test file in the project.
 # Proves the entire public API is callable and returns correct types
 # with NO UI nodes, NO CanvasLayer, NO InputManager in the scene tree.
@@ -192,14 +192,14 @@ func _build_eight_building_data() -> Array[BuildingData]:
 func test_economy_manager_add_gold_returns_correct_amount() -> void:
 	EconomyManager.reset_to_defaults()
 	EconomyManager.add_gold(150)
-	assert_int(EconomyManager.get_gold()).is_equal(150)
+	assert_int(EconomyManager.get_gold()).is_equal(1150)
 
 
 func test_economy_manager_spend_gold_deducts_amount() -> void:
 	EconomyManager.reset_to_defaults()
 	EconomyManager.add_gold(200)
 	EconomyManager.spend_gold(75)
-	assert_int(EconomyManager.get_gold()).is_equal(125)
+	assert_int(EconomyManager.get_gold()).is_equal(1125)
 
 
 func test_economy_manager_can_afford_returns_bool() -> void:
@@ -281,7 +281,7 @@ func test_take_damage_reduces_hp() -> void:
 
 
 func test_take_damage_full_depletes_emits_tower_destroyed() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	_tower.take_damage(500)
 	await assert_signal(monitor).is_emitted("tower_destroyed")
 
@@ -315,7 +315,7 @@ func test_is_weapon_ready_false_during_reload() -> void:
 
 
 func test_tower_damaged_signal_emitted_on_take_damage() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	_tower.take_damage(50)
 	await assert_signal(monitor).is_emitted("tower_damaged")
 
@@ -346,25 +346,27 @@ func test_sim_bot_has_all_public_methods() -> void:
 # ═════════════════════════════════════════════════════════════════════════
 
 func test_resource_changed_emitted_after_add_gold() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	EconomyManager.add_gold(10)
-	await assert_signal(monitor).is_emitted("resource_changed")
+	await assert_signal(monitor).is_emitted(
+		"resource_changed", [Types.ResourceType.GOLD, 1010]
+	)
 
 
 func test_tower_damaged_emitted_after_take_damage() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	_tower.take_damage(10)
-	await assert_signal(monitor).is_emitted("tower_damaged")
+	await assert_signal(monitor).is_emitted("tower_damaged", [490, 500])
 
 
 func test_research_unlocked_emitted_after_unlock_node() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	_research_manager.unlock_node("unlock_ballista")
-	await assert_signal(monitor).is_emitted("research_unlocked")
+	await assert_signal(monitor).is_emitted("research_unlocked", ["unlock_ballista"])
 
 
 func test_shop_item_purchased_emitted_after_purchase() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	_shop_manager.purchase_item("mana_draught")
-	await assert_signal(monitor).is_emitted("shop_item_purchased")
+	await assert_signal(monitor).is_emitted("shop_item_purchased", ["mana_draught"])
 

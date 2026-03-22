@@ -48,7 +48,7 @@ func test_purchase_item_deducts_gold() -> void:
 
 func test_purchase_item_insufficient_gold_fails() -> void:
 	EconomyManager.reset_to_defaults()
-	EconomyManager.spend_gold(90)
+	EconomyManager.spend_gold(990)
 	assert_int(EconomyManager.get_gold()).is_equal(10)
 	var result: bool = _shop_manager.purchase_item("tower_repair")
 	assert_bool(result).is_false()
@@ -61,15 +61,15 @@ func test_purchase_item_returns_false_for_unknown_id() -> void:
 
 
 func test_purchase_item_emits_shop_item_purchased() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	_shop_manager.purchase_item("mana_draught")
-	await assert_signal(monitor).is_emitted("shop_item_purchased")
+	await assert_signal(monitor).is_emitted("shop_item_purchased", ["mana_draught"])
 
 
 func test_purchase_item_emits_correct_item_id() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	_shop_manager.purchase_item("mana_draught")
-	await assert_signal(monitor).is_emitted_with_parameters("shop_item_purchased", ["mana_draught"])
+	await assert_signal(monitor).is_emitted("shop_item_purchased", ["mana_draught"])
 
 # ---------------------------------------------------------------------------
 # can_purchase tests
@@ -81,7 +81,7 @@ func test_can_purchase_returns_true_when_affordable() -> void:
 
 func test_can_purchase_returns_false_when_insufficient_gold() -> void:
 	EconomyManager.reset_to_defaults()
-	EconomyManager.spend_gold(100)
+	EconomyManager.spend_gold(950)
 	assert_bool(_shop_manager.can_purchase("tower_repair")).is_false()
 
 

@@ -24,8 +24,11 @@ extends Node
 # EXPORTS
 # ---------------------------------------------------------------------------
 
-## Seconds of countdown before each wave.
+## Seconds of countdown before each wave (waves after the first).
 @export var wave_countdown_duration: float = 30.0
+
+## Countdown only for wave 1 so “Start Game” leads to enemies quickly.
+@export var first_wave_countdown_seconds: float = 3.0
 
 ## Maximum number of waves per mission.
 @export var max_waves: int = 10
@@ -61,6 +64,7 @@ var _is_sequence_running: bool = false
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	print("[WaveManager] _ready: enemy_data_registry size=%d" % enemy_data_registry.size())
 	assert(
 		enemy_data_registry.size() == 6,
 		"WaveManager: enemy_data_registry must have exactly 6 entries, got %d"
@@ -94,6 +98,7 @@ func _process_countdown(delta: float) -> void:
 
 ## Begins the wave sequence for a mission. Starts countdown for wave 1.
 func start_wave_sequence() -> void:
+	print("[WaveManager] start_wave_sequence")
 	assert(
 		not _is_sequence_running,
 		"WaveManager: start_wave_sequence() called while already running."
@@ -165,10 +170,14 @@ func clear_all_enemies() -> void:
 
 func _begin_countdown_for_next_wave() -> void:
 	_current_wave += 1
-	_countdown_remaining = wave_countdown_duration
+	var duration: float = (
+		first_wave_countdown_seconds if _current_wave == 1 else wave_countdown_duration
+	)
+	_countdown_remaining = duration
 	_is_counting_down = true
 	_is_wave_active = false
-	SignalBus.wave_countdown_started.emit(_current_wave, wave_countdown_duration)
+	print("[WaveManager] countdown started: wave=%d duration=%.1fs" % [_current_wave, duration])
+	SignalBus.wave_countdown_started.emit(_current_wave, duration)
 
 
 ## Wave formula: N enemies of EACH of the 6 types → total = N × 6.
@@ -188,6 +197,11 @@ func _spawn_wave(wave_number: int) -> void:
 	for enemy_data: EnemyData in enemy_data_registry:
 		for i: int in range(wave_number):
 			var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
+
+			# add_child BEFORE initialize so @onready vars (health_component,
+			# navigation_agent) are resolved before initialize() tries to use them.
+			_enemy_container.add_child(enemy)
+
 			enemy.initialize(enemy_data)
 
 			var spawn_marker: Marker3D = \
@@ -202,11 +216,10 @@ func _spawn_wave(wave_number: int) -> void:
 			if enemy_data.is_flying:
 				enemy.global_position.y = 5.0
 
-			_enemy_container.add_child(enemy)
-			enemy.add_to_group("enemies")
 			total_spawned += 1
 
 	_is_wave_active = true
+	print("[WaveManager] wave %d spawned: %d enemies total" % [wave_number, total_spawned])
 	SignalBus.wave_started.emit(wave_number, total_spawned)
 
 # ---------------------------------------------------------------------------
@@ -229,10 +242,12 @@ func _check_wave_cleared() -> void:
 	if get_living_enemy_count() > 0:
 		return
 	_is_wave_active = false
+	print("[WaveManager] wave %d cleared!" % _current_wave)
 	SignalBus.wave_cleared.emit(_current_wave)
 
 	if _current_wave >= max_waves:
 		_is_sequence_running = false
+		print("[WaveManager] all waves cleared for this mission!")
 		SignalBus.all_waves_cleared.emit()
 	else:
 		_begin_countdown_for_next_wave()

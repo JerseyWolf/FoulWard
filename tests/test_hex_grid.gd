@@ -1,4 +1,4 @@
-﻿# tests/test_hex_grid.gd
+# tests/test_hex_grid.gd
 # GdUnit4 test suite for HexGrid.
 # Tests slot initialization, placement, selling, upgrading, and persistence.
 
@@ -130,7 +130,7 @@ func test_all_slot_positions_at_y_zero() -> void:
 
 func test_place_building_insufficient_gold_fails() -> void:
 	EconomyManager.reset_to_defaults()
-	EconomyManager.spend_gold(90)  # leave only 10 gold
+	EconomyManager.spend_gold(990)  # leave only 10 gold
 	_hex_grid = _create_hex_grid()
 	_hex_grid.building_data_registry = _make_building_data_registry()
 	add_child(_hex_grid)
@@ -156,9 +156,11 @@ func test_place_building_emits_building_placed_signal() -> void:
 	_hex_grid.building_data_registry = _make_building_data_registry()
 	add_child(_hex_grid)
 	await get_tree().process_frame
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	SignalBus.building_placed.emit(0, Types.BuildingType.ARROW_TOWER)
-	await assert_signal(monitor).is_emitted("building_placed")
+	await assert_signal(monitor).is_emitted(
+		"building_placed", [0, Types.BuildingType.ARROW_TOWER]
+	)
 
 # ---------------------------------------------------------------------------
 # Sell tests
@@ -235,9 +237,11 @@ func test_upgrade_unoccupied_slot_fails() -> void:
 
 
 func test_upgrade_emits_building_upgraded() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	SignalBus.building_upgraded.emit(0, Types.BuildingType.ARROW_TOWER)
-	await assert_signal(monitor).is_emitted("building_upgraded")
+	await assert_signal(monitor).is_emitted(
+		"building_upgraded", [0, Types.BuildingType.ARROW_TOWER]
+	)
 
 # ---------------------------------------------------------------------------
 # State query tests

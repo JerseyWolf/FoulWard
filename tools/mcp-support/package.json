@@ -1,0 +1,7 @@
+{
+  "name": "foul-ward-mcp-support",
+  "private": true,
+  "dependencies": {
+    "@modelcontextprotocol/server-sequential-thinking": "2025.12.18"
+  }
+}

@@ -28,6 +28,9 @@ const RING3_COUNT: int = 6
 const RING3_RADIUS: float = 18.0
 const TOTAL_SLOTS: int = 24
 
+## Max horizontal distance from a click (XZ) to a slot center to count as "that slot".
+const SLOT_PICK_MAX_DISTANCE: float = 4.0
+
 const BuildingScene: PackedScene = preload("res://scenes/buildings/building_base.tscn")
 
 # ---------------------------------------------------------------------------
@@ -36,6 +39,9 @@ const BuildingScene: PackedScene = preload("res://scenes/buildings/building_base
 
 ## Must have exactly 8 entries, one per Types.BuildingType enum value.
 @export var building_data_registry: Array[BuildingData] = []
+
+## Which hex is targeted for the next build (driven by BuildMenu). -1 = none.
+var _build_highlight_slot: int = -1
 
 # ---------------------------------------------------------------------------
 # Private state
@@ -46,7 +52,8 @@ const BuildingScene: PackedScene = preload("res://scenes/buildings/building_base
 var _slots: Array[Dictionary] = []
 
 # ASSUMPTION: BuildingContainer at /root/Main/BuildingContainer per ARCHITECTURE.md §2.
-@onready var _building_container: Node3D = get_node("/root/Main/BuildingContainer")
+# In GdUnit/headless tests there is no Main scene — create a child container so placement still works.
+var _building_container: Node3D = null
 
 # ASSUMPTION: ResearchManager at /root/Main/Managers/ResearchManager.
 # If null (unit test context), all buildings are treated as unlocked.
@@ -57,12 +64,19 @@ var _research_manager = null
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	_building_container = get_node_or_null("/root/Main/BuildingContainer") as Node3D
+	if _building_container == null:
+		var c: Node3D = Node3D.new()
+		c.name = "BuildingContainer"
+		add_child(c)
+		_building_container = c
+	print("[HexGrid] _ready: building_data_registry size=%d" % building_data_registry.size())
 	SignalBus.build_mode_entered.connect(_on_build_mode_entered)
 	SignalBus.build_mode_exited.connect(_on_build_mode_exited)
 	SignalBus.research_unlocked.connect(_on_research_unlocked)
 
-	# ASSUMPTION: ResearchManager may not be present in unit test scenes.
 	_research_manager = get_node_or_null("/root/Main/Managers/ResearchManager")
+	print("[HexGrid] _ready: ResearchManager found=%s" % (str(_research_manager != null)))
 
 	assert(building_data_registry.size() == 8,
 		"HexGrid: building_data_registry must have exactly 8 entries, got %d"
@@ -70,6 +84,7 @@ func _ready() -> void:
 
 	_initialize_slots()
 	_set_slots_visible(false)
+	print("[HexGrid] _ready: %d slots initialized" % _slots.size())
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -78,25 +93,38 @@ func _ready() -> void:
 ## Places a building of building_type on the given slot.
 ## Returns true on success, false on any validation failure.
 func place_building(slot_index: int, building_type: Types.BuildingType) -> bool:
+	print("[HexGrid] place_building: slot=%d type=%d  gold=%d/%d mat=%d/%d" % [
+		slot_index, building_type,
+		EconomyManager.get_gold(), 0,
+		EconomyManager.get_building_material(), 0
+	])
 	if not _is_valid_index(slot_index):
 		push_warning("HexGrid.place_building: invalid slot_index %d" % slot_index)
+		print("[HexGrid] place_building FAILED: invalid slot %d" % slot_index)
 		return false
 
 	var slot: Dictionary = _slots[slot_index]
 
 	if slot["is_occupied"]:
 		push_warning("HexGrid.place_building: slot %d already occupied" % slot_index)
+		print("[HexGrid] place_building FAILED: slot %d already occupied" % slot_index)
 		return false
 
 	var building_data: BuildingData = get_building_data(building_type)
 	if building_data == null:
 		push_error("HexGrid.place_building: no BuildingData for type %d" % building_type)
+		print("[HexGrid] place_building FAILED: no BuildingData for type %d" % building_type)
 		return false
 
 	if not is_building_unlocked(building_type):
+		print("[HexGrid] place_building FAILED: building type %d is locked" % building_type)
 		return false
 
 	if not EconomyManager.can_afford(building_data.gold_cost, building_data.material_cost):
+		print("[HexGrid] place_building FAILED: cannot afford cost=%dg %dm  have=%dg %dm" % [
+			building_data.gold_cost, building_data.material_cost,
+			EconomyManager.get_gold(), EconomyManager.get_building_material()
+		])
 		return false
 
 	# Spend resources.
@@ -106,15 +134,19 @@ func place_building(slot_index: int, building_type: Types.BuildingType) -> bool:
 	assert(mat_spent, "HexGrid: spend_building_material failed after can_afford returned true")
 
 	var building: BuildingBase = BuildingScene.instantiate() as BuildingBase
-	# Per CONVENTIONS.md §7.3 – call initialize() before add_child when possible.
-	building.initialize(building_data)
 	_building_container.add_child(building)
 	building.global_position = slot["world_pos"]
+	building.initialize(building_data)
 	building.add_to_group("buildings")
 
 	slot["building"] = building
 	slot["is_occupied"] = true
 
+	print("[HexGrid] place_building SUCCESS: slot=%d type=%d at pos=(%.1f,%.1f,%.1f)  remaining gold=%d mat=%d" % [
+		slot_index, building_type,
+		slot["world_pos"].x, slot["world_pos"].y, slot["world_pos"].z,
+		EconomyManager.get_gold(), EconomyManager.get_building_material()
+	])
 	SignalBus.building_placed.emit(slot_index, building_type)
 	return true
 
@@ -254,6 +286,34 @@ func get_slot_position(slot_index: int) -> Vector3:
 		"HexGrid.get_slot_position: invalid slot_index %d" % slot_index)
 	return _slots[slot_index]["world_pos"]
 
+
+## Returns the slot index whose center is nearest to [param world_pos] on XZ, or -1 if too far.
+## Used when UI blocks Area3D picking — InputManager resolves the slot from a ground click.
+func get_nearest_slot_index(world_pos: Vector3) -> int:
+	var best_i: int = -1
+	var best_d2: float = INF
+	for i: int in range(TOTAL_SLOTS):
+		var wp: Vector3 = _slots[i]["world_pos"]
+		var dx: float = wp.x - world_pos.x
+		var dz: float = wp.z - world_pos.z
+		var d2: float = dx * dx + dz * dz
+		if d2 < best_d2:
+			best_d2 = d2
+			best_i = i
+	var max_d: float = SLOT_PICK_MAX_DISTANCE
+	if best_d2 <= max_d * max_d:
+		return best_i
+	return -1
+
+
+## Updates the highlighted ring tile for build mode (each slot has its own material instance).
+func set_build_slot_highlight(slot_index: int) -> void:
+	if not _is_valid_index(slot_index):
+		return
+	_build_highlight_slot = slot_index
+	_apply_build_slot_highlights()
+
+
 # ---------------------------------------------------------------------------
 # Private – slot initialisation
 # ---------------------------------------------------------------------------
@@ -293,6 +353,15 @@ func _initialize_slots() -> void:
 			slot_node.input_ray_pickable = true
 			slot_node.monitoring = false
 			slot_node.monitorable = false
+			slot_node.input_event.connect(_on_hex_slot_input.bind(i))
+			# Scene file shares one material across all SlotMesh — duplicate per slot for highlights.
+			var mesh_inst: MeshInstance3D = slot_node.get_node_or_null("SlotMesh") as MeshInstance3D
+			if mesh_inst != null:
+				var shared: Material = mesh_inst.material_override
+				if shared == null:
+					shared = mesh_inst.get_surface_override_material(0)
+				if shared != null:
+					mesh_inst.material_override = shared.duplicate() as Material
 
 
 ## Computes world positions for a ring of count slots at radius, offset by angle_offset_degrees.
@@ -319,6 +388,32 @@ func _set_slots_visible(visible: bool) -> void:
 		var mesh: MeshInstance3D = slot_node.get_node_or_null("SlotMesh") as MeshInstance3D
 		if mesh != null:
 			mesh.visible = visible
+	if visible:
+		_apply_build_slot_highlights()
+
+
+func _apply_build_slot_highlights() -> void:
+	for i: int in range(TOTAL_SLOTS):
+		var slot_node: Area3D = get_node_or_null("HexSlot_%02d" % i) as Area3D
+		if slot_node == null:
+			continue
+		var mesh: MeshInstance3D = slot_node.get_node_or_null("SlotMesh") as MeshInstance3D
+		if mesh == null:
+			continue
+		var mat: StandardMaterial3D = mesh.material_override as StandardMaterial3D
+		if mat == null:
+			mat = StandardMaterial3D.new()
+			mesh.material_override = mat
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		var is_selected: bool = i == _build_highlight_slot
+		if is_selected:
+			mat.albedo_color = Color(1.0, 0.92, 0.15, 0.92)
+			mat.emission_enabled = true
+			mat.emission = Color(0.4, 0.35, 0.05)
+		else:
+			mat.albedo_color = Color(0.12, 0.55, 1.0, 0.82)
+			mat.emission_enabled = true
+			mat.emission = Color(0.08, 0.2, 0.35)
 
 # ---------------------------------------------------------------------------
 # Private – validation
@@ -332,10 +427,14 @@ func _is_valid_index(slot_index: int) -> bool:
 # ---------------------------------------------------------------------------
 
 func _on_build_mode_entered() -> void:
+	print("[HexGrid] build_mode_entered: showing %d slot tiles" % TOTAL_SLOTS)
+	_build_highlight_slot = 0
 	_set_slots_visible(true)
 
 
 func _on_build_mode_exited() -> void:
+	print("[HexGrid] build_mode_exited: hiding slot tiles")
+	_build_highlight_slot = -1
 	_set_slots_visible(false)
 
 
@@ -343,3 +442,25 @@ func _on_research_unlocked(_node_id: String) -> void:
 	# No cache to invalidate – is_building_unlocked() checks live state each call.
 	# Hook reserved for future UI refresh (e.g., glow newly unlocked slots).
 	pass
+
+
+func _on_hex_slot_input(
+		slot_index: int,
+		_camera: Node,
+		event: InputEvent,
+		_event_position: Vector3,
+		_normal: Vector3,
+		_shape_idx: int
+) -> void:
+	var mb: InputEventMouseButton = event as InputEventMouseButton
+	if mb == null or not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
+		return
+	var state: Types.GameState = GameManager.get_game_state()
+	print("[HexGrid] hex slot %d clicked  game_state=%s" % [slot_index, Types.GameState.keys()[state]])
+	if state != Types.GameState.BUILD_MODE:
+		return
+	var build_menu: BuildMenu = get_node_or_null("/root/Main/UI/BuildMenu") as BuildMenu
+	if build_menu == null:
+		print("[HexGrid] ERROR: BuildMenu not found at /root/Main/UI/BuildMenu")
+		return
+	build_menu.open_for_slot(slot_index)

@@ -67,7 +67,9 @@ func test_initialize_from_weapon_computes_direction() -> void:
 
 	var proj := _create_projectile()
 	proj.initialize_from_weapon(weapon, Vector3.ZERO, Vector3(10, 0, 0))
-	assert_vector3(proj._direction).is_equal_approx(Vector3(1, 0, 0), 0.001)
+	assert_vector(proj._direction).is_equal_approx(
+		Vector3(1, 0, 0), Vector3(0.001, 0.001, 0.001)
+	)
 	proj.queue_free()
 
 # --- initialize_from_building --------------------------------------

@@ -60,11 +60,11 @@ func _spawn_enemy(is_flying: bool, armor_type: Types.ArmorType,
 # SETUP / TEARDOWN
 # ---------------------------------------------------------------------------
 
-func before_each() -> void:
+func before_test() -> void:
 	_spell_manager = _build_spell_manager()
 
 
-func after_each() -> void:
+func after_test() -> void:
 	for node: Node in get_tree().get_nodes_in_group("enemies"):
 		node.remove_from_group("enemies")
 		if is_instance_valid(node):
@@ -129,11 +129,11 @@ func test_cast_spell_starts_cooldown() -> void:
 
 func test_cast_spell_emits_spell_cast_signal() -> void:
 	_spell_manager.set_mana_to_full()
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 
 	_spell_manager.cast_spell("shockwave")
 
-	assert_signal(monitor).is_emitted(SignalBus, "spell_cast")
+	await assert_signal(SignalBus).is_emitted("spell_cast", ["shockwave"])
 
 # ---------------------------------------------------------------------------
 # TEST: Mana regen increases mana over time
@@ -161,18 +161,18 @@ func test_mana_capped_at_max() -> void:
 # ---------------------------------------------------------------------------
 
 func test_mana_changed_signal_only_on_integer_change() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 
 	# 10 × 0.016 δ × 5 regen = 0.8 mana → int still 0 → NO signal.
 	for _i: int in range(10):
 		_spell_manager._tick_mana_regen(0.016)
 
-	assert_signal(monitor).is_not_emitted(SignalBus, "mana_changed")
+	await assert_signal(SignalBus).is_not_emitted("mana_changed")
 
 	# 1 full second at 5/sec = +5 mana → integer crosses 0 → signal fires.
 	_spell_manager._tick_mana_regen(1.0)
 
-	assert_signal(monitor).is_emitted(SignalBus, "mana_changed")
+	await assert_signal(SignalBus).is_emitted("mana_changed", [5, 100])
 
 # ---------------------------------------------------------------------------
 # TEST: Cooldown decrements with delta
@@ -197,11 +197,11 @@ func test_cooldown_decrements_with_delta() -> void:
 func test_spell_ready_signal_on_cooldown_expiry() -> void:
 	_spell_manager.set_mana_to_full()
 	_spell_manager.cast_spell("shockwave")
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 
 	_spell_manager._tick_cooldowns(61.0)
 
-	assert_signal(monitor).is_emitted(SignalBus, "spell_ready")
+	await assert_signal(SignalBus).is_emitted("spell_ready", ["shockwave"])
 	assert_float(_spell_manager.get_cooldown_remaining("shockwave")).is_equal(0.0)
 
 # ---------------------------------------------------------------------------
@@ -259,10 +259,10 @@ func test_shockwave_respects_damage_immunity() -> void:
 
 func test_set_mana_to_full_sets_max() -> void:
 	assert_that(_spell_manager.get_current_mana()).is_equal(0)
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 
 	_spell_manager.set_mana_to_full()
 
 	assert_that(_spell_manager.get_current_mana()).is_equal(_spell_manager.max_mana)
-	assert_signal(monitor).is_emitted(SignalBus, "mana_changed")
+	await assert_signal(SignalBus).is_emitted("mana_changed", [100, 100])
 

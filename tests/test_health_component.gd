@@ -40,12 +40,12 @@ func test_take_damage_clamps_to_zero_not_negative() -> void:
 	assert_int(_component.current_hp).is_equal(0)
 
 func test_take_damage_emits_health_changed() -> void:
-	var monitor := monitor_signals(_component)
+	var monitor := monitor_signals(_component, false)
 	_component.take_damage(10.0)
-	await assert_signal(monitor).is_emitted("health_changed")
+	await assert_signal(monitor).is_emitted("health_changed", [90, 100])
 
 func test_take_damage_to_zero_emits_health_depleted() -> void:
-	var monitor := monitor_signals(_component)
+	var monitor := monitor_signals(_component, false)
 	_component.take_damage(100.0)
 	await assert_signal(monitor).is_emitted("health_depleted")
 
@@ -62,7 +62,7 @@ func test_take_damage_health_depleted_emitted_exactly_once_not_twice() -> void:
 
 func test_take_damage_when_dead_does_not_emit_health_changed() -> void:
 	_component.take_damage(100.0)
-	var monitor := monitor_signals(_component)
+	var monitor := monitor_signals(_component, false)
 	_component.take_damage(50.0)
 	assert_signal(monitor).is_not_emitted("health_changed")
 
@@ -72,7 +72,7 @@ func test_take_damage_when_dead_hp_stays_at_zero() -> void:
 	assert_int(_component.current_hp).is_equal(0)
 
 func test_take_damage_partial_does_not_emit_health_depleted() -> void:
-	var monitor := monitor_signals(_component)
+	var monitor := monitor_signals(_component, false)
 	_component.take_damage(50.0)
 	assert_signal(monitor).is_not_emitted("health_depleted")
 
@@ -111,9 +111,9 @@ func test_heal_at_full_hp_stays_at_max() -> void:
 
 func test_heal_emits_health_changed() -> void:
 	_component.take_damage(20.0)
-	var monitor := monitor_signals(_component)
+	var monitor := monitor_signals(_component, false)
 	_component.heal(10)
-	await assert_signal(monitor).is_emitted("health_changed")
+	await assert_signal(monitor).is_emitted("health_changed", [90, 100])
 
 func test_heal_does_not_revive_dead_entity() -> void:
 	_component.take_damage(100.0)
@@ -144,9 +144,9 @@ func test_reset_to_max_sets_is_alive_true_after_death() -> void:
 
 func test_reset_to_max_emits_health_changed() -> void:
 	_component.take_damage(50.0)
-	var monitor := monitor_signals(_component)
+	var monitor := monitor_signals(_component, false)
 	_component.reset_to_max()
-	await assert_signal(monitor).is_emitted("health_changed")
+	await assert_signal(monitor).is_emitted("health_changed", [100, 100])
 
 func test_reset_to_max_allows_health_depleted_to_fire_again() -> void:
 	_component.take_damage(100.0)
@@ -157,9 +157,9 @@ func test_reset_to_max_allows_health_depleted_to_fire_again() -> void:
 	assert_int(count).is_equal(1)
 
 func test_reset_to_max_on_full_hp_still_emits_health_changed() -> void:
-	var monitor := monitor_signals(_component)
+	var monitor := monitor_signals(_component, false)
 	_component.reset_to_max()
-	await assert_signal(monitor).is_emitted("health_changed")
+	await assert_signal(monitor).is_emitted("health_changed", [100, 100])
 
 func test_reset_to_max_full_cycle_damage_reset_damage() -> void:
 	_component.take_damage(100.0)

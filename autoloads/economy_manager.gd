@@ -1,11 +1,11 @@
-﻿## economy_manager.gd
+## economy_manager.gd
 ## Owns gold, building_material, and research_material resource counters for FOUL WARD.
 ## Simulation API: all public methods callable without UI nodes present.
 
 extends Node
 
-const DEFAULT_GOLD: int = 100
-const DEFAULT_BUILDING_MATERIAL: int = 10
+const DEFAULT_GOLD: int = 1000
+const DEFAULT_BUILDING_MATERIAL: int = 50
 const DEFAULT_RESEARCH_MATERIAL: int = 0
 
 var gold: int = DEFAULT_GOLD

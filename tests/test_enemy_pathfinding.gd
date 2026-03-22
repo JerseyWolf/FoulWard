@@ -82,8 +82,9 @@ func test_take_damage_triggers_health_depleted_at_zero() -> void:
 	data.damage_immunities = []
 	var enemy := _create_enemy(data)
 
-	var monitor := monitor_signals(enemy.health_component)
+	var monitor := monitor_signals(enemy.health_component, false)
 	enemy.take_damage(50.0, Types.DamageType.PHYSICAL)
+	await get_tree().process_frame
 	await assert_signal(monitor).is_emitted("health_depleted")
 
 # --- on_health_depleted effects ------------------------------------
@@ -97,9 +98,11 @@ func test_on_health_depleted_emits_enemy_killed_signal() -> void:
 	data.damage_immunities = []
 	var enemy := _create_enemy(data)
 
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	enemy.take_damage(999.0, Types.DamageType.PHYSICAL)
-	await assert_signal(monitor).is_emitted("enemy_killed")
+	await assert_signal(monitor).is_emitted(
+		"enemy_killed", [Types.EnemyType.ORC_GRUNT, Vector3.ZERO, 10]
+	)
 
 func test_on_health_depleted_removes_from_enemies_group() -> void:
 	var data := EnemyData.new()

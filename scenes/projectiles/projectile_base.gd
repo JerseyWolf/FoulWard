@@ -27,7 +27,7 @@ var _distance_traveled: float = 0.0
 var _lifetime: float = 0.0
 var _targets_air_only: bool = false
 
-@onready var _mesh: MeshInstance3D = get_node_or_null("ProjectileMesh")
+var _mesh: MeshInstance3D = null
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -97,16 +97,20 @@ func _configure_collision(_targets_air_only_flag: bool) -> void:
 	# any enemy body on layer 2.
 
 func _configure_visuals(is_standard_size: bool) -> void:
+	# Resolve lazily so this works whether called before or after add_child.
+	# get_node_or_null() traverses the instantiated subtree, not the scene tree.
+	if _mesh == null:
+		_mesh = get_node_or_null("ProjectileMesh") as MeshInstance3D
 	if _mesh == null:
 		return
 	var mat := StandardMaterial3D.new()
 
 	if is_standard_size:
-		# Building projectiles or crossbow bolt.
-		_mesh.scale = Vector3(0.3, 0.3, 0.3)
+		# Building projectiles or crossbow bolt (large enough to read at isometric scale).
+		_mesh.scale = Vector3(1.1, 1.1, 1.1)
 	else:
 		# Rapid missile (small + fast look).
-		_mesh.scale = Vector3(0.15, 0.15, 0.15)
+		_mesh.scale = Vector3(0.55, 0.55, 0.55)
 
 	match _damage_type:
 		Types.DamageType.PHYSICAL:

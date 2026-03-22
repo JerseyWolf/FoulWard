@@ -45,11 +45,11 @@ func _spawn_enemy(pos: Vector3, is_flying: bool = false) -> EnemyBase:
 # SETUP / TEARDOWN
 # ---------------------------------------------------------------------------
 
-func before_each() -> void:
+func before_test() -> void:
 	_arnulf = _create_arnulf()
 
 
-func after_each() -> void:
+func after_test() -> void:
 	if is_instance_valid(_arnulf):
 		_arnulf.queue_free()
 	await get_tree().process_frame
@@ -142,21 +142,23 @@ func test_attack_deals_correct_damage() -> void:
 # ---------------------------------------------------------------------------
 
 func test_health_depleted_transitions_to_downed() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 
 	_arnulf.health_component.take_damage(float(_arnulf.max_hp))
 
 	assert_that(_arnulf.get_current_state()).is_equal(Types.ArnulfState.DOWNED)
-	assert_signal(monitor).is_emitted(SignalBus, "arnulf_incapacitated")
-	assert_signal(monitor).is_emitted(SignalBus, "arnulf_state_changed")
+	await assert_signal(SignalBus).is_emitted("arnulf_incapacitated")
+	await assert_signal(SignalBus).is_emitted(
+		"arnulf_state_changed", [Types.ArnulfState.DOWNED]
+	)
 
 
 func test_arnulf_incapacitated_signal_emitted_on_downed() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 
 	_arnulf._transition_to_state(Types.ArnulfState.DOWNED)
 
-	assert_signal(monitor).is_emitted(SignalBus, "arnulf_incapacitated")
+	await assert_signal(SignalBus).is_emitted("arnulf_incapacitated")
 
 # ---------------------------------------------------------------------------
 # TEST: Recovery timer respects delta

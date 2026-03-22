@@ -182,16 +182,6 @@ func _apply_shockwave(spell_data: SpellData) -> void:
 		if not spell_data.hits_flying and enemy.get_enemy_data().is_flying:
 			continue
 
-		var enemy_data: EnemyData = enemy.get_enemy_data()
-
-		if spell_data.damage_type in enemy_data.damage_immunities:
-			continue
-
-		var final_damage: float = DamageCalculator.calculate_damage(
-			spell_data.damage,
-			spell_data.damage_type,
-			enemy_data.armor_type
-		)
-		# ASSUMPTION: EnemyBase.health_component is a public field (Phase 2 fix applied).
-		enemy.health_component.take_damage(final_damage)
+		# Single path: EnemyBase.take_damage applies immunities + armor matrix.
+		enemy.take_damage(spell_data.damage, spell_data.damage_type)
 

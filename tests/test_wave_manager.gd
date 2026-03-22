@@ -69,11 +69,11 @@ func _build_six_enemy_data() -> Array[EnemyData]:
 # SETUP / TEARDOWN
 # ---------------------------------------------------------------------------
 
-func before_each() -> void:
+func before_test() -> void:
 	_wave_manager = _build_wave_manager()
 
 
-func after_each() -> void:
+func after_test() -> void:
 	if is_instance_valid(_wave_manager):
 		_wave_manager.clear_all_enemies()
 		_wave_manager.queue_free()
@@ -88,14 +88,14 @@ func after_each() -> void:
 # ---------------------------------------------------------------------------
 
 func test_start_wave_sequence_triggers_countdown() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 
 	_wave_manager.start_wave_sequence()
 
 	assert_that(_wave_manager.is_counting_down()).is_true()
 	assert_float(_wave_manager.get_countdown_remaining()).is_equal(30.0)
 	assert_that(_wave_manager.get_current_wave_number()).is_equal(1)
-	assert_signal(monitor).is_emitted(SignalBus, "wave_countdown_started")
+	await assert_signal(SignalBus).is_emitted("wave_countdown_started", [1, 3.0])
 
 
 func test_countdown_decrements_with_delta() -> void:
@@ -147,7 +147,7 @@ func test_force_spawn_wave_skips_countdown() -> void:
 # ---------------------------------------------------------------------------
 
 func test_all_waves_cleared_emitted_after_wave_10() -> void:
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 	_wave_manager.force_spawn_wave(10)
 	await get_tree().process_frame
 
@@ -155,8 +155,8 @@ func test_all_waves_cleared_emitted_after_wave_10() -> void:
 	_wave_manager._check_wave_cleared()
 	await get_tree().process_frame
 
-	assert_signal(monitor).is_emitted(SignalBus, "wave_cleared")
-	assert_signal(monitor).is_emitted(SignalBus, "all_waves_cleared")
+	await assert_signal(SignalBus).is_emitted("wave_cleared", [10])
+	await assert_signal(SignalBus).is_emitted("all_waves_cleared")
 	assert_that(_wave_manager.is_wave_active()).is_false()
 
 # ---------------------------------------------------------------------------
@@ -192,12 +192,12 @@ func test_check_wave_cleared_uses_call_deferred() -> void:
 	_wave_manager.force_spawn_wave(1)
 	await get_tree().process_frame
 
-	var monitor := monitor_signals(SignalBus)
+	var monitor := monitor_signals(SignalBus, false)
 
 	# Emit 5 of 6 kills — enemies still in group, wave must NOT clear yet.
 	for i: int in range(5):
 		SignalBus.enemy_killed.emit(Types.EnemyType.ORC_GRUNT, Vector3.ZERO, 5)
 	await get_tree().process_frame
 
-	assert_signal(monitor).is_not_emitted(SignalBus, "wave_cleared")
+	await assert_signal(SignalBus).is_not_emitted("wave_cleared")
 

@@ -1,4 +1,4 @@
-﻿# ui/hud.gd
+# ui/hud.gd
 # HUD — pure display. Never modifies game state.
 # Uses _process (never _physics_process) to stay responsive at
 # Engine.time_scale = 0.1 (build mode).
@@ -17,8 +17,12 @@ extends Control
 @onready var _mana_bar: ProgressBar = $SpellPanel/ManaBar
 @onready var _cooldown_label: Label = $SpellPanel/CooldownLabel
 @onready var _crossbow_label: Label = $WeaponPanel/CrossbowLabel
+@onready var _crossbow_reload_bar: ProgressBar = $WeaponPanel/CrossbowReloadBar
 @onready var _missile_label: Label = $WeaponPanel/MissileLabel
+@onready var _missile_reload_bar: ProgressBar = $WeaponPanel/MissileReloadBar
 @onready var _build_mode_hint: Label = $BuildModeHint
+
+@onready var _tower: Tower = get_node("/root/Main/Tower")
 
 var _countdown_seconds: float = 0.0
 var _is_counting_down: bool = false
@@ -52,6 +56,8 @@ func _process(delta: float) -> void:
 			_countdown_seconds = 0.0
 			_is_counting_down = false
 		_countdown_label.text = "%.0f" % _countdown_seconds
+
+	_update_weapon_hud()
 
 # ── Signal handlers ───────────────────────────────────────────────────────
 
@@ -110,8 +116,41 @@ func _on_build_mode_exited() -> void:
 	_build_mode_hint.hide()
 
 
-## Updates weapon readiness display.
-## POST-MVP: connect to dedicated weapon_ready / weapon_reloading signals.
+func _update_weapon_hud() -> void:
+	var state: Types.GameState = GameManager.get_game_state()
+	if state != Types.GameState.COMBAT and state != Types.GameState.WAVE_COUNTDOWN:
+		return
+	if _tower == null or not is_instance_valid(_tower):
+		return
+
+	var cb_rem: float = _tower.get_crossbow_reload_remaining_seconds()
+	var cb_total: float = _tower.get_crossbow_reload_total_seconds()
+	if cb_rem <= 0.001:
+		_crossbow_label.text = "Crossbow: READY"
+		_crossbow_reload_bar.value = 100.0
+	else:
+		var pct_ready: float = 100.0 * (1.0 - cb_rem / maxf(cb_total, 0.001))
+		_crossbow_label.text = "Crossbow: reload %.1fs (%.0f%%)" % [cb_rem, pct_ready]
+		_crossbow_reload_bar.value = pct_ready
+
+	var burst_left: int = _tower.get_rapid_missile_burst_remaining()
+	var burst_total: int = _tower.get_rapid_missile_burst_total()
+	var rm_rem: float = _tower.get_rapid_missile_reload_remaining_seconds()
+	var rm_total: float = _tower.get_rapid_missile_reload_total_seconds()
+
+	if burst_left > 0:
+		_missile_label.text = "Missile: burst %d / %d shots left" % [burst_left, burst_total]
+		_missile_reload_bar.value = 100.0 * (float(burst_left) / float(max(1, burst_total)))
+	elif rm_rem <= 0.001:
+		_missile_label.text = "Missile: READY — burst %d shots" % burst_total
+		_missile_reload_bar.value = 100.0
+	else:
+		var pct: float = 100.0 * (1.0 - rm_rem / maxf(rm_total, 0.001))
+		_missile_label.text = "Missile: reload %.1fs — next burst %d shots" % [rm_rem, burst_total]
+		_missile_reload_bar.value = pct
+
+
+## Legacy hook — HUD now polls Tower each frame in _process.
 func update_weapon_display(
 		crossbow_ready: bool,
 		missile_ready: bool

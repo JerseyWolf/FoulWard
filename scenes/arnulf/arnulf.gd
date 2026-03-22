@@ -1,4 +1,4 @@
-﻿# arnulf.gd
+# arnulf.gd
 # Arnulf is the fully AI-controlled melee companion in FOUL WARD.
 # He patrols near the tower, chases the closest enemy to TOWER_CENTER,
 # attacks at melee range, and revives himself after being downed.
@@ -40,8 +40,8 @@ extends CharacterBody3D
 ## Seconds between attacks.
 @export var attack_cooldown: float = 1.0
 
-## Radius of patrol/detection area (distance from tower center).
-@export var patrol_radius: float = 25.0
+## Max distance from tower center for chase targeting. Must exceed spawn ring (~40) or Arnulf never engages.
+@export var patrol_radius: float = 55.0
 
 ## Seconds to recover after incapacitation.
 @export var recovery_time: float = 3.0
@@ -56,6 +56,9 @@ const TOWER_CENTER: Vector3 = Vector3.ZERO
 
 ## Where Arnulf stands when idle (adjacent to tower base).
 const HOME_POSITION: Vector3 = Vector3(2.0, 0.0, 0.0)
+
+## Same issue as EnemyBase: nav next waypoint can match position → normalized() is zero.
+const _MIN_NAV_STEP_SQ: float = 0.0004
 
 # ---------------------------------------------------------------------------
 # STATE
@@ -84,6 +87,7 @@ var _kill_counter: int = 0
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	print("[Arnulf] _ready: hp=%d move_speed=%.1f patrol_radius=%.0f" % [max_hp, move_speed, patrol_radius])
 	health_component.max_hp = max_hp
 	health_component.reset_to_max()
 	health_component.health_depleted.connect(_on_health_depleted)
@@ -140,7 +144,10 @@ func _process_idle(_delta: float) -> void:
 	if dist_to_home > 1.0:
 		navigation_agent.target_position = HOME_POSITION
 		var next_pos: Vector3 = navigation_agent.get_next_path_position()
-		var direction: Vector3 = (next_pos - global_position).normalized()
+		var to_next: Vector3 = next_pos - global_position
+		if to_next.length_squared() < _MIN_NAV_STEP_SQ:
+			to_next = HOME_POSITION - global_position
+		var direction: Vector3 = to_next.normalized()
 		velocity = direction * move_speed
 		move_and_slide()
 	else:
@@ -173,7 +180,10 @@ func _process_chase(_delta: float) -> void:
 	# Credit: Godot Docs NavigationAgent3D per-frame target_position update pattern.
 	navigation_agent.target_position = _chase_target.global_position
 	var next_pos: Vector3 = navigation_agent.get_next_path_position()
-	var direction: Vector3 = (next_pos - global_position).normalized()
+	var to_next: Vector3 = next_pos - global_position
+	if to_next.length_squared() < _MIN_NAV_STEP_SQ:
+		to_next = _chase_target.global_position - global_position
+	var direction: Vector3 = to_next.normalized()
 	velocity = direction * move_speed
 	move_and_slide()
 	# ATTACK transition is handled by AttackArea.body_entered signal.
@@ -221,6 +231,10 @@ func _process_recovering() -> void:
 # ---------------------------------------------------------------------------
 
 func _transition_to_state(new_state: Types.ArnulfState) -> void:
+	print("[Arnulf] state → %s  (target=%s)" % [
+		Types.ArnulfState.keys()[new_state],
+		_chase_target.get_enemy_data().display_name if is_instance_valid(_chase_target) and _chase_target != null else "none"
+	])
 	_current_state = new_state
 
 	match new_state:
