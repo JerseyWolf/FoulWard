@@ -12,6 +12,7 @@ Use this checklist to match **Godot + Cursor + optional MCP** setup after clonin
 | **Godot 4.6+** | Project targets **4.6** (`project.godot` → `config/features`). Install [Godot for Linux](https://godotengine.org/download/linux/) or distro package if version matches. |
 | **Node.js (LTS)** | For MCP servers that use `node` (Godot MCP Pro build, Sequential Thinking). |
 | **Python 3** | For `addons/gdai-mcp-plugin-godot/gdai_mcp_server.py` (GDAI MCP). |
+| **`uv`** | [Recommended by GDAI](https://gdaimcp.com/docs/installation): run the MCP bridge with `uv run …/gdai_mcp_server.py` (`.cursor/mcp.json` uses this). Install via [uv install guide](https://docs.astral.sh/uv/getting-started/installation/) (binary ends up in `~/.local/bin/uv`). |
 
 Optional: `rg` (ripgrep) for fast search; same as most dev setups.
 
@@ -75,15 +76,16 @@ The **canonical** Godot MCP addon used by the **project** is under **`addons/god
 
 ## 6. Cursor: MCP configuration (match “tools access”)
 
-The repo may contain **`.cursor/mcp.json`**. Entries use **absolute Windows paths** from an earlier machine; on Ubuntu you must **rewrite** paths to your clone.
+The repo ships **`.cursor/mcp.json`** with **Linux-friendly** absolute paths (example: `/home/you/workspace/FoulWard/...`). After cloning, **replace** those paths with your real **`$REPO`** if your home or folder name differs.
 
-1. Open **Cursor Settings → MCP** (or edit **`.cursor/mcp.json`** in the project).
-2. For each server, set:
-   - **`command`** — `node`, `python`, or full path if needed.
-   - **`args`** — First argument must be the script under **`$REPO/...`** using **Linux paths**.
-   - **`cwd`** — Usually **`$REPO`** or `tools/mcp-support` for sequential-thinking.
+1. Install **Node** (for `godot-mcp-pro` + sequential-thinking) and **`uv`** (for GDAI), then run **`npm install`** in `tools/mcp-support` and `MCPs/godot-mcp-pro-v1.6.1/server` (see §5).
+2. Open **Cursor Settings → MCP** — Cursor loads **project** `.cursor/mcp.json` when this folder is the workspace. Use **MCP: Restart Servers** after edits.
+3. **GDAI** uses **`uv run`** → `addons/gdai-mcp-plugin-godot/gdai_mcp_server.py` (same pattern as [GDAI docs](https://gdaimcp.com/docs/installation)). Ensure **`~/.local/bin`** is on `PATH` for MCP (the checked-in `env.PATH` includes it).
+4. **Godot**: open **`$REPO`** in the editor, enable **GDAI MCP** + **Godot MCP** under **Project → Project Settings → Plugins**, and keep the editor running while using MCP tools that talk to the game.
 
-**Example pattern** (adjust filenames to match your tree):
+Vendor snapshot (no duplicate addon trees): **`MCPs/gdaimcp/addons/gdai-mcp-plugin-godot/`** mirrors **`addons/gdai-mcp-plugin-godot/`** (full plugin including `bin/` + `gdai_mcp_server.py` on `main`).
+
+**Example shape** (paths must match your machine):
 
 ```json
 {
@@ -95,8 +97,8 @@ The repo may contain **`.cursor/mcp.json`**. Entries use **absolute Windows path
       "env": { "GODOT_MCP_PORT": "6505" }
     },
     "gdai-mcp-godot": {
-      "command": "python3",
-      "args": ["/home/you/FoulWard/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"],
+      "command": "/home/you/.local/bin/uv",
+      "args": ["run", "/home/you/FoulWard/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"],
       "cwd": "/home/you/FoulWard",
       "env": { "GDAI_MCP_SERVER_PORT": "3571" }
     },
@@ -108,9 +110,6 @@ The repo may contain **`.cursor/mcp.json`**. Entries use **absolute Windows path
   }
 }
 ```
-
-3. Restart Cursor after saving.
-4. Godot **editor** may need to be running with the **MCP plugins enabled** for some tools to attach to the running game.
 
 **Security:** Do not commit API keys into `mcp.json`. Keep secrets in environment or Cursor’s user config if a server requires them.
 

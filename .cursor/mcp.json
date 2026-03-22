@@ -3,29 +3,36 @@
     "godot-mcp-pro": {
       "command": "node",
       "args": [
-        "D:/Projects/Foul Ward/foul_ward_godot/foul-ward/MCPs/godot-mcp-pro-v1.6.1/server/build/index.js"
+        "/home/jerzy-wolf/workspace/FoulWard/MCPs/godot-mcp-pro-v1.6.1/server/build/index.js"
       ],
-      "cwd": "D:/Projects/Foul Ward/foul_ward_godot/foul-ward",
+      "cwd": "/home/jerzy-wolf/workspace/FoulWard",
       "env": {
-        "GODOT_MCP_PORT": "6505"
+        "GODOT_MCP_PORT": "6505",
+        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
       }
     },
     "gdai-mcp-godot": {
-      "command": "python",
+      "command": "/home/jerzy-wolf/.local/bin/uv",
       "args": [
-        "D:/Projects/Foul Ward/foul_ward_godot/foul-ward/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"
+        "run",
+        "/home/jerzy-wolf/workspace/FoulWard/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"
       ],
-      "cwd": "D:/Projects/Foul Ward/foul_ward_godot/foul-ward",
+      "cwd": "/home/jerzy-wolf/workspace/FoulWard",
       "env": {
-        "GDAI_MCP_SERVER_PORT": "3571"
+        "GDAI_MCP_SERVER_PORT": "3571",
+        "GODOT_PROJECT_DIR": "/home/jerzy-wolf/workspace/FoulWard",
+        "PATH": "/home/jerzy-wolf/.local/bin:/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
       }
     },
     "sequential-thinking": {
       "command": "node",
       "args": [
-        "D:/Projects/Foul Ward/foul_ward_godot/foul-ward/tools/mcp-support/node_modules/@modelcontextprotocol/server-sequential-thinking/dist/index.js"
+        "/home/jerzy-wolf/workspace/FoulWard/tools/mcp-support/node_modules/@modelcontextprotocol/server-sequential-thinking/dist/index.js"
       ],
-      "cwd": "D:/Projects/Foul Ward/foul_ward_godot/foul-ward/tools/mcp-support"
+      "cwd": "/home/jerzy-wolf/workspace/FoulWard/tools/mcp-support",
+      "env": {
+        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
+      }
     }
   }
 }
