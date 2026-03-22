@@ -1,3 +1,1 @@
-bin/
-gdai_mcp_plugin.gdextension*
-*.py
+# This repo tracks the full addon including gdai_mcp_server.py, .gdextension, and bin/ (see MCPs/gdaimcp for vendor snapshot).
