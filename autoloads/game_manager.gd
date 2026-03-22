@@ -40,14 +40,13 @@ func start_next_mission() -> void:
 	print("[GameManager] start_next_mission: now mission=%d" % current_mission)
 	_transition_to(Types.GameState.MISSION_BRIEFING)
 	SignalBus.mission_started.emit(current_mission)
-	_begin_mission_wave_sequence()
+	# Wave sequence starts in start_wave_countdown() after briefing (MVP: player confirms).
 
 func start_wave_countdown() -> void:
 	assert(game_state == Types.GameState.MISSION_BRIEFING, "start_wave_countdown called from invalid state")
-	var old: Types.GameState = game_state
-	game_state = Types.GameState.COMBAT
-	SignalBus.game_state_changed.emit(old, Types.GameState.COMBAT)
-	SignalBus.wave_countdown_started.emit(current_wave + 1, 5.0)
+	_transition_to(Types.GameState.COMBAT)
+	# Single source of truth for countdown duration: WaveManager emits wave_countdown_started.
+	_begin_mission_wave_sequence()
 
 func enter_build_mode() -> void:
 	print("[GameManager] enter_build_mode: from=%s" % Types.GameState.keys()[game_state])

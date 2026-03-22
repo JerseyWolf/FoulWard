@@ -55,7 +55,7 @@ func _process(delta: float) -> void:
 		if _countdown_seconds < 0.0:
 			_countdown_seconds = 0.0
 			_is_counting_down = false
-		_countdown_label.text = "%.0f" % _countdown_seconds
+		_countdown_label.text = "Next wave: %.0fs" % _countdown_seconds
 
 	_update_weapon_hud()
 
