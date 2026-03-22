@@ -83,7 +83,22 @@ The repo ships **`.cursor/mcp.json`** with **Linux-friendly** absolute paths (ex
 3. **GDAI** uses **`uv run`** → `addons/gdai-mcp-plugin-godot/gdai_mcp_server.py` (same pattern as [GDAI docs](https://gdaimcp.com/docs/installation)). Ensure **`~/.local/bin`** is on `PATH` for MCP (the checked-in `env.PATH` includes it).
 4. **Godot**: open **`$REPO`** in the editor, enable **GDAI MCP** + **Godot MCP** under **Project → Project Settings → Plugins**, and keep the editor running while using MCP tools that talk to the game.
 5. **Filesystem** (`filesystem-workspace`): `npx` runs `@modelcontextprotocol/server-filesystem` with your **workspace parent** as the allowed root (checked-in default: `/home/jerzy-wolf/workspace` — change in `.cursor/mcp.json` to match your machine).
-6. **GitHub** (`github`): `npx` runs `@modelcontextprotocol/server-github`. Put your fine-grained PAT in **`~/.cursor/github-mcp.env`** as `GITHUB_PERSONAL_ACCESS_TOKEN=...` (see `.cursor/github-mcp.env.example`). The project `mcp.json` loads that file via **`envFile`** — nothing secret is committed. Then **MCP: Restart Servers**.
+6. **GitHub** (`github`): `npx` runs `@modelcontextprotocol/server-github`. **Cursor has no separate “MCP secrets” form for stdio servers** — use **`env` / `envFile` in `mcp.json`** (see [Cursor MCP](https://cursor.com/docs/mcp)) or **`~/.cursor/mcp.json`** for global tools.
+
+   - **Recommended:** create **`~/.cursor/github-mcp.env`** with `GITHUB_PERSONAL_ACCESS_TOKEN=ghp_...` and `chmod 600` it. The project references **`envFile`: `${userHome}/.cursor/github-mcp.env`**. Template: **`.cursor/github-mcp.env.example`**.
+   - **Alternate:** `export GITHUB_PERSONAL_ACCESS_TOKEN=...` before starting Cursor; `mcp.json` also passes **`${env:GITHUB_PERSONAL_ACCESS_TOKEN}`**.
+
+   Then **MCP: Restart Servers**.
+
+**All five MCPs — what each needs:**
+
+| Server | What you need |
+|--------|----------------|
+| `godot-mcp-pro` | Node, `npm install` under `MCPs/godot-mcp-pro-v1.6.1/server`, **Godot** open, plugin on, **6505** |
+| `gdai-mcp-godot` | `uv`, **Godot** open, GDAI plugin, **3571** |
+| `sequential-thinking` | `npm install` in `tools/mcp-support` |
+| `filesystem-workspace` | `npx` (may download first run); `PATH` in `mcp.json` |
+| `github` | **`GITHUB_PERSONAL_ACCESS_TOKEN`** via **`~/.cursor/github-mcp.env`** or shell env |
 
 Vendor snapshot (no duplicate addon trees): **`MCPs/gdaimcp/addons/gdai-mcp-plugin-godot/`** mirrors **`addons/gdai-mcp-plugin-godot/`** (full plugin including `bin/` + `gdai_mcp_server.py` on `main`).
 
@@ -113,7 +128,7 @@ Vendor snapshot (no duplicate addon trees): **`MCPs/gdaimcp/addons/gdai-mcp-plug
 }
 ```
 
-**Security:** Do not commit API keys or PATs into `mcp.json`. The **GitHub** MCP needs **`GITHUB_PERSONAL_ACCESS_TOKEN`** only via environment or Cursor’s secret UI.
+**Security:** Do not commit API keys or PATs into `mcp.json`. The **GitHub** MCP reads the token from **`~/.cursor/github-mcp.env`** and/or **`${env:GITHUB_PERSONAL_ACCESS_TOKEN}`** — never from the repo.
 
 ---
 
