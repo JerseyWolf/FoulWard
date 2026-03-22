@@ -307,6 +307,12 @@ func _on_detection_area_body_entered(body: Node3D) -> void:
 
 	if _current_state == Types.ArnulfState.IDLE:
 		_chase_target = _find_closest_enemy_to_tower()
+		# Same-frame manual tests / physics not stepped: overlap list can be empty even though
+		# `body_entered` fired — fall back to the body that triggered this handler.
+		if _chase_target == null:
+			var dist_to_tower: float = enemy.global_position.distance_to(TOWER_CENTER)
+			if dist_to_tower <= patrol_radius:
+				_chase_target = enemy
 		if _chase_target != null:
 			_transition_to_state(Types.ArnulfState.CHASE)
 

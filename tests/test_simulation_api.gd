@@ -317,7 +317,7 @@ func test_is_weapon_ready_false_during_reload() -> void:
 func test_tower_damaged_signal_emitted_on_take_damage() -> void:
 	var monitor := monitor_signals(SignalBus, false)
 	_tower.take_damage(50)
-	await assert_signal(monitor).is_emitted("tower_damaged")
+	await assert_signal(monitor).is_emitted("tower_damaged", [450, 500])
 
 # ═════════════════════════════════════════════════════════════════════════
 # TEST GROUP 3: SimBot activates without UI (2 tests)
@@ -349,7 +349,7 @@ func test_resource_changed_emitted_after_add_gold() -> void:
 	var monitor := monitor_signals(SignalBus, false)
 	EconomyManager.add_gold(10)
 	await assert_signal(monitor).is_emitted(
-		"resource_changed", [Types.ResourceType.GOLD, 1010]
+		"resource_changed", [Types.ResourceType.GOLD, 2010]
 	)
 
 

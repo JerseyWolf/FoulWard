@@ -54,11 +54,12 @@ func test_take_damage_to_zero_sets_is_alive_false() -> void:
 	assert_bool(_component.is_alive()).is_false()
 
 func test_take_damage_health_depleted_emitted_exactly_once_not_twice() -> void:
-	var count: int = 0
-	_component.health_depleted.connect(func() -> void: count += 1)
+	var monitor := monitor_signals(_component, false)
 	_component.take_damage(100.0)
+	await assert_signal(monitor).is_emitted("health_depleted")
+	var monitor2 := monitor_signals(_component, false)
 	_component.take_damage(100.0)
-	assert_int(count).is_equal(1)
+	assert_signal(monitor2).is_not_emitted("health_depleted")
 
 func test_take_damage_when_dead_does_not_emit_health_changed() -> void:
 	_component.take_damage(100.0)
@@ -151,10 +152,9 @@ func test_reset_to_max_emits_health_changed() -> void:
 func test_reset_to_max_allows_health_depleted_to_fire_again() -> void:
 	_component.take_damage(100.0)
 	_component.reset_to_max()
-	var count: int = 0
-	_component.health_depleted.connect(func() -> void: count += 1)
+	var monitor := monitor_signals(_component, false)
 	_component.take_damage(100.0)
-	assert_int(count).is_equal(1)
+	await assert_signal(monitor).is_emitted("health_depleted")
 
 func test_reset_to_max_on_full_hp_still_emits_health_changed() -> void:
 	var monitor := monitor_signals(_component, false)
@@ -190,32 +190,20 @@ func test_is_alive_true_after_reset_to_max() -> void:
 # ════════════════════════════════════════════
 
 func test_health_changed_payload_current_hp_correct_after_damage() -> void:
-	var received_hp: int = -1
-	_component.health_changed.connect(
-		func(cur: int, _max: int) -> void: received_hp = cur,
-		CONNECT_ONE_SHOT
-	)
+	var monitor := monitor_signals(_component, false)
 	_component.take_damage(25.0)
-	assert_int(received_hp).is_equal(75)
+	await assert_signal(monitor).is_emitted("health_changed", [75, 100])
 
 func test_health_changed_payload_max_hp_correct() -> void:
-	var received_max: int = -1
-	_component.health_changed.connect(
-		func(_cur: int, mx: int) -> void: received_max = mx,
-		CONNECT_ONE_SHOT
-	)
+	var monitor := monitor_signals(_component, false)
 	_component.take_damage(10.0)
-	assert_int(received_max).is_equal(100)
+	await assert_signal(monitor).is_emitted("health_changed", [90, 100])
 
 func test_health_changed_payload_after_heal_correct() -> void:
 	_component.take_damage(50.0)
-	var received_hp: int = -1
-	_component.health_changed.connect(
-		func(cur: int, _max: int) -> void: received_hp = cur,
-		CONNECT_ONE_SHOT
-	)
+	var monitor := monitor_signals(_component, false)
 	_component.heal(20)
-	assert_int(received_hp).is_equal(70)
+	await assert_signal(monitor).is_emitted("health_changed", [70, 100])
 
 # ════════════════════════════════════════════
 # max_hp export integration

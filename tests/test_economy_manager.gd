@@ -36,13 +36,11 @@ func test_add_gold_emits_gold_resource_type() -> void:
 	)
 
 func test_add_gold_emits_correct_new_amount() -> void:
-	var received_amount: int = -1
-	SignalBus.resource_changed.connect(
-		func(_rt: Types.ResourceType, amt: int) -> void: received_amount = amt,
-		CONNECT_ONE_SHOT
-	)
+	var monitor := monitor_signals(SignalBus, false)
 	EconomyManager.add_gold(40)
-	assert_int(received_amount).is_equal(1040)
+	await assert_signal(monitor).is_emitted(
+		"resource_changed", [Types.ResourceType.GOLD, 1040]
+	)
 
 # ════════════════════════════════════════════
 # spend_gold
@@ -57,7 +55,7 @@ func test_spend_gold_sufficient_deducts_correct_amount() -> void:
 	assert_int(EconomyManager.get_gold()).is_equal(940)
 
 func test_spend_gold_insufficient_returns_false() -> void:
-	var result: bool = EconomyManager.spend_gold(200)
+	var result: bool = EconomyManager.spend_gold(2000)
 	assert_bool(result).is_false()
 
 func test_spend_gold_insufficient_balance_unchanged() -> void:
@@ -105,13 +103,11 @@ func test_add_building_material_emits_resource_changed() -> void:
 	)
 
 func test_add_building_material_emits_correct_resource_type() -> void:
-	var received_type: int = -1
-	SignalBus.resource_changed.connect(
-		func(rt: Types.ResourceType, _amt: int) -> void: received_type = rt,
-		CONNECT_ONE_SHOT
-	)
+	var monitor := monitor_signals(SignalBus, false)
 	EconomyManager.add_building_material(1)
-	assert_int(received_type).is_equal(Types.ResourceType.BUILDING_MATERIAL)
+	await assert_signal(monitor).is_emitted(
+		"resource_changed", [Types.ResourceType.BUILDING_MATERIAL, 51]
+	)
 
 # ════════════════════════════════════════════
 # spend_building_material
@@ -126,7 +122,7 @@ func test_spend_building_material_sufficient_deducts_amount() -> void:
 	assert_int(EconomyManager.get_building_material()).is_equal(47)
 
 func test_spend_building_material_insufficient_returns_false() -> void:
-	var result: bool = EconomyManager.spend_building_material(50)
+	var result: bool = EconomyManager.spend_building_material(51)
 	assert_bool(result).is_false()
 
 func test_spend_building_material_insufficient_balance_unchanged() -> void:
@@ -166,13 +162,11 @@ func test_add_research_material_emits_resource_changed() -> void:
 	)
 
 func test_add_research_material_emits_correct_resource_type() -> void:
-	var received_type: int = -1
-	SignalBus.resource_changed.connect(
-		func(rt: Types.ResourceType, _amt: int) -> void: received_type = rt,
-		CONNECT_ONE_SHOT
-	)
+	var monitor := monitor_signals(SignalBus, false)
 	EconomyManager.add_research_material(1)
-	assert_int(received_type).is_equal(Types.ResourceType.RESEARCH_MATERIAL)
+	await assert_signal(monitor).is_emitted(
+		"resource_changed", [Types.ResourceType.RESEARCH_MATERIAL, 1]
+	)
 
 # ════════════════════════════════════════════
 # spend_research_material
@@ -212,22 +206,22 @@ func test_can_afford_exact_gold_and_material_returns_true() -> void:
 	assert_bool(EconomyManager.can_afford(100, 10)).is_true()
 
 func test_can_afford_one_gold_under_returns_false() -> void:
-	assert_bool(EconomyManager.can_afford(101, 0)).is_false()
+	assert_bool(EconomyManager.can_afford(1001, 0)).is_false()
 
 func test_can_afford_one_material_under_returns_false() -> void:
-	assert_bool(EconomyManager.can_afford(0, 11)).is_false()
+	assert_bool(EconomyManager.can_afford(0, 51)).is_false()
 
 func test_can_afford_zero_costs_always_returns_true() -> void:
 	assert_bool(EconomyManager.can_afford(0, 0)).is_true()
 
 func test_can_afford_both_insufficient_returns_false() -> void:
-	assert_bool(EconomyManager.can_afford(200, 20)).is_false()
+	assert_bool(EconomyManager.can_afford(2000, 60)).is_false()
 
 func test_can_afford_gold_ok_material_insufficient_returns_false() -> void:
-	assert_bool(EconomyManager.can_afford(50, 20)).is_false()
+	assert_bool(EconomyManager.can_afford(50, 51)).is_false()
 
 func test_can_afford_gold_insufficient_material_ok_returns_false() -> void:
-	assert_bool(EconomyManager.can_afford(200, 5)).is_false()
+	assert_bool(EconomyManager.can_afford(2000, 5)).is_false()
 
 func test_can_afford_after_spending_reflects_new_balance() -> void:
 	EconomyManager.spend_gold(990)

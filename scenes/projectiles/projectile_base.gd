@@ -14,7 +14,6 @@ class_name ProjectileBase
 extends Area3D
 
 const MAX_LIFETIME: float = 5.0
-const ARRIVAL_TOLERANCE: float = 0.5
 
 var _damage: float = 0.0
 var _damage_type: Types.DamageType = Types.DamageType.PHYSICAL
@@ -29,8 +28,12 @@ var _targets_air_only: bool = false
 
 var _mesh: MeshInstance3D = null
 
+## Prevents double application when both overlap scan and body_entered run same frame.
+var _hit_processed: bool = false
+
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+	monitoring = true
 
 # === PUBLIC INITIALIZATION PATHS ===================================
 
@@ -130,6 +133,8 @@ func _configure_visuals(is_standard_size: bool) -> void:
 func _physics_process(delta: float) -> void:
 	# Credit (straight-line, distance_traveled + tolerance + lifetime checks):
 	#   FOUL WARD SYSTEMS_part2.md §6.5 ProjectileBase.physics_process.
+	if _hit_processed:
+		return
 	_lifetime += delta
 	if _lifetime >= MAX_LIFETIME:
 		queue_free()
@@ -137,20 +142,22 @@ func _physics_process(delta: float) -> void:
 
 	var movement: Vector3 = _direction * _speed * delta
 	global_position += movement
+	force_update_transform()
 	_distance_traveled += movement.length()
-
-	if _distance_traveled >= _max_travel_distance:
-		queue_free()
+	# Headless / manual _physics_process: physics server may not run, so body_entered
+	# never fires — resolve overlaps here (same rules as _on_body_entered).
+	if _try_hit_overlapping_enemy():
 		return
 
-	var dist_to_target := global_position.distance_to(_target_position)
-	if dist_to_target <= ARRIVAL_TOLERANCE:
+	if _distance_traveled >= _max_travel_distance:
 		queue_free()
 		return
 
 # === COLLISION HANDLER =============================================
 
 func _on_body_entered(body: Node3D) -> void:
+	if _hit_processed:
+		return
 	var enemy := body as EnemyBase
 	if enemy == null:
 		return
@@ -161,18 +168,57 @@ func _on_body_entered(body: Node3D) -> void:
 	if not enemy.health_component.is_alive():
 		return
 
-	_apply_damage_to_enemy(enemy)
-	queue_free()
+	if _apply_damage_to_enemy(enemy):
+		_hit_processed = true
+		queue_free()
+
+
+func _try_hit_overlapping_enemy() -> bool:
+	for body: Node3D in get_overlapping_bodies():
+		if _try_damage_enemy_body(body):
+			return true
+	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state \
+		if get_world_3d() != null else null
+	if space == null:
+		return false
+	var sphere := SphereShape3D.new()
+	sphere.radius = 0.4
+	var params := PhysicsShapeQueryParameters3D.new()
+	params.shape = sphere
+	params.transform = global_transform
+	params.collide_with_areas = false
+	params.collide_with_bodies = true
+	params.collision_mask = 2
+	for r: Dictionary in space.intersect_shape(params, 8):
+		var collider: Variant = r.get("collider", null)
+		var node3: Node3D = collider as Node3D
+		if _try_damage_enemy_body(node3):
+			return true
+	return false
+
+
+func _try_damage_enemy_body(body: Node3D) -> bool:
+	var enemy := body as EnemyBase
+	if enemy == null or not is_instance_valid(enemy):
+		return false
+	if not enemy.health_component.is_alive():
+		return false
+	if _apply_damage_to_enemy(enemy):
+		_hit_processed = true
+		queue_free()
+		return true
+	return false
 
 # === DAMAGE APPLICATION ============================================
 
-func _apply_damage_to_enemy(enemy: EnemyBase) -> void:
+## Returns true if at least one point of damage was applied (not fully immunized).
+func _apply_damage_to_enemy(enemy: EnemyBase) -> bool:
 	# Credit (damage_immunities + DamageCalculator):
 	#   FOUL WARD SYSTEMS_part1/2/3 EnemyBase & ProjectileBase.apply_damage_to_enemy.
 	var enemy_data := enemy.get_enemy_data()
 
 	if _damage_type in enemy_data.damage_immunities:
-		return
+		return false
 
 	var final_damage: float = DamageCalculator.calculate_damage(
 		_damage,
@@ -180,4 +226,5 @@ func _apply_damage_to_enemy(enemy: EnemyBase) -> void:
 		enemy_data.armor_type
 	)
 	enemy.health_component.take_damage(final_damage)
+	return true
 
