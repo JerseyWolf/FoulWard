@@ -90,13 +90,70 @@ func _ready() -> void:
 # Public API
 # ---------------------------------------------------------------------------
 
-## Places a building of building_type on the given slot.
+## Places a building of building_type on the given slot (charges gold + material).
 ## Returns true on success, false on any validation failure.
 func place_building(slot_index: int, building_type: Types.BuildingType) -> bool:
-	print("[HexGrid] place_building: slot=%d type=%d  gold=%d/%d mat=%d/%d" % [
-		slot_index, building_type,
-		EconomyManager.get_gold(), 0,
-		EconomyManager.get_building_material(), 0
+	return _try_place_building(slot_index, building_type, true)
+
+
+## Shop voucher: places first available [param building_type] without spending resources.
+## Uses lowest empty slot index. Returns false if no slot or validation fails.
+func place_building_shop_free(building_type: Types.BuildingType) -> bool:
+	var empty: Array[int] = get_empty_slots()
+	if empty.is_empty():
+		return false
+	empty.sort()
+	return _try_place_building(empty[0], building_type, false)
+
+
+## Returns true if any placed building has less than max HP (alive).
+func has_any_damaged_building() -> bool:
+	for slot: Dictionary in _slots:
+		if not slot["is_occupied"]:
+			continue
+		var building: BuildingBase = slot["building"] as BuildingBase
+		if not is_instance_valid(building):
+			continue
+		var hc: HealthComponent = building.get_node_or_null("HealthComponent") as HealthComponent
+		if hc == null:
+			continue
+		if not hc.is_alive():
+			continue
+		if hc.current_hp < hc.max_hp:
+			return true
+	return false
+
+
+## Restores the first damaged building (lowest slot index) to full HP. Returns true if one was repaired.
+func repair_first_damaged_building() -> bool:
+	for i: int in range(TOTAL_SLOTS):
+		var slot: Dictionary = _slots[i]
+		if not slot["is_occupied"]:
+			continue
+		var building: BuildingBase = slot["building"] as BuildingBase
+		if not is_instance_valid(building):
+			continue
+		var hc: HealthComponent = building.get_node_or_null("HealthComponent") as HealthComponent
+		if hc == null:
+			continue
+		if not hc.is_alive():
+			continue
+		if hc.current_hp >= hc.max_hp:
+			continue
+		hc.reset_to_max()
+		print("[HexGrid] repair_first_damaged_building: slot %d repaired to full HP" % i)
+		return true
+	return false
+
+
+func _try_place_building(
+		slot_index: int,
+		building_type: Types.BuildingType,
+		charge_resources: bool
+) -> bool:
+	print("[HexGrid] place_building: slot=%d type=%d charge=%s  gold=%d mat=%d" % [
+		slot_index, building_type, str(charge_resources),
+		EconomyManager.get_gold(), EconomyManager.get_building_material()
 	])
 	if not _is_valid_index(slot_index):
 		push_warning("HexGrid.place_building: invalid slot_index %d" % slot_index)
@@ -120,18 +177,18 @@ func place_building(slot_index: int, building_type: Types.BuildingType) -> bool:
 		print("[HexGrid] place_building FAILED: building type %d is locked" % building_type)
 		return false
 
-	if not EconomyManager.can_afford(building_data.gold_cost, building_data.material_cost):
-		print("[HexGrid] place_building FAILED: cannot afford cost=%dg %dm  have=%dg %dm" % [
-			building_data.gold_cost, building_data.material_cost,
-			EconomyManager.get_gold(), EconomyManager.get_building_material()
-		])
-		return false
+	if charge_resources:
+		if not EconomyManager.can_afford(building_data.gold_cost, building_data.material_cost):
+			print("[HexGrid] place_building FAILED: cannot afford cost=%dg %dm  have=%dg %dm" % [
+				building_data.gold_cost, building_data.material_cost,
+				EconomyManager.get_gold(), EconomyManager.get_building_material()
+			])
+			return false
 
-	# Spend resources.
-	var gold_spent: bool = EconomyManager.spend_gold(building_data.gold_cost)
-	assert(gold_spent, "HexGrid: spend_gold failed after can_afford returned true")
-	var mat_spent: bool = EconomyManager.spend_building_material(building_data.material_cost)
-	assert(mat_spent, "HexGrid: spend_building_material failed after can_afford returned true")
+		var gold_spent: bool = EconomyManager.spend_gold(building_data.gold_cost)
+		assert(gold_spent, "HexGrid: spend_gold failed after can_afford returned true")
+		var mat_spent: bool = EconomyManager.spend_building_material(building_data.material_cost)
+		assert(mat_spent, "HexGrid: spend_building_material failed after can_afford returned true")
 
 	var building: BuildingBase = BuildingScene.instantiate() as BuildingBase
 	_building_container.add_child(building)

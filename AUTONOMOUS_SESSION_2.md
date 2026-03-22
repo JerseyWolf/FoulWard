@@ -22,7 +22,7 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 - [x] **Phase 1B** — Spot-check `docs/OUTPUT_AUDIT.txt` (top fixes): **MISSION_BRIEFING** enum, **`is_alive()`** (not `is_dead()`), **public `health_component` / `navigation_agent`** on `EnemyBase` — already present in current sources; no duplicate patch applied
 - [x] **Phase 1C** — GdUnit: **289 test cases, 0 failures** (re-run after Phase 3 + `test_enemy_pathfinding` fix)
 - [ ] **Phase 2** — Core loop E2E: headless `--quit` / `--quit-after` on **main scene** hit **SIGSEGV** on this Windows/Godot 4.6 setup (likely editor/GPU/plugin interaction). **Recommendation:** validate loop in **editor** (F5) or Godot MCP **play_scene** when available
-- [x] **Phase 3 (partial)** — Shop prices aligned to MVP (Tower Repair **50g**, Mana Draught **20g**); **6** Base Structures research nodes in `main.tscn` with `.tres` costs **2 / 2 / 1 / 3 / 1 / 3**; Anti-Air / Shield Gen / Archer Barracks locked behind research; Arrow Tower +Damage & Fire Brazier +Range grant upgraded stats via `research_*_boost_id` on `BuildingData`. Shockwave + economy defaults already matched spec (50 mana, 60s CD, 5/s regen, 1000/50/0 start).
+- [x] **Phase 3 (partial)** — Full MVP **four** shop items: Tower Repair **50g**, Building Repair **30g**, Arrow Tower voucher **40g + 2 mat**, Mana Draught **20g**; `ShopManager` + `HexGrid` (`place_building_shop_free`, `repair_first_damaged_building`); `GameManager` calls `apply_mission_start_consumables()` when entering COMBAT (mana draught + prepaid Arrow Tower). **6** Base Structures research nodes; locked buildings + research stat boosts; shockwave + economy defaults per spec.
 - [x] **Phase 4 (partial)** — Mission briefing: `UIManager` shows `UI/MissionBriefing` on `MISSION_BRIEFING` (was lumped with HUD); `main.tscn` attaches `mission_briefing.gd` + **BEGIN** button. HUD/build/between-mission unchanged in this pass.
 - [x] **Phase 5 (partial)** — SimBot: `activate()` idempotent; new `deactivate()` disconnects SignalBus observers; `test_simulation_api` asserts `deactivate` + calls it before free.
 - [ ] **Phase 6** — 12 verification checks (see below) + screenshot/play capture
@@ -63,6 +63,7 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 - **`scenes/main.tscn`:** `MissionBriefing` uses `mission_briefing.gd`; added **BeginButton** child.
 - **`scripts/sim_bot.gd`:** Guard duplicate `activate()`; `deactivate()` clears SignalBus connections.
 - **Phase 3 (this pass):** `BuildingData` / `BuildingBase` research damage & range boosts; six `resources/research_data/*.tres` + `main.tscn` `ResearchManager` list; shop `.tres` MVP gold costs; **`tests/test_enemy_pathfinding.gd`** health_depleted test uses pre-`initialize` connect + array ref (GDScript closure).
+- **Phase 3 (shop completion):** `shop_item_building_repair.tres`, `shop_item_arrow_tower.tres`; `HexGrid._try_place_building` + shop free placement / building repair; `GameManager._apply_shop_mission_start_consumables`; between-mission shop labels show `+ N mat` when `material_cost > 0`.
 
 ## Read-only docs (do not edit for gameplay)
 
@@ -74,4 +75,4 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 2. **Phase 2:** Editor play or MCP `play_scene`; avoid relying on headless main until crash is understood.
 3. **Phases 3–4:** Tune `.tres` + small HUD/QoL polish aligned with MVP spec.
 4. **Phases 5–6:** SimBot mission script + tick through the 12 checks above.
-5. **Remaining Phase 3:** Optional enemy stat tuning in `resources/enemy_data/*.tres` if TTK feels off in playtests; add Building Repair + Arrow Tower shop items when implementing effects in `ShopManager`.
+5. **Remaining Phase 3:** Optional enemy stat tuning in `resources/enemy_data/*.tres` if TTK feels off in playtests.
