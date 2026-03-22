@@ -5,7 +5,7 @@ alwaysApply: true
 
 # MCP usage (required habit)
 
-This project is configured with three MCP servers in `.cursor/mcp.json`. **Use them proactively** instead of guessing when work touches Godot, architecture, or non-trivial reasoning.
+This project is configured with **MCP servers** in `.cursor/mcp.json` (core: **sequential-thinking**, **godot-mcp-pro**, **gdai-mcp-godot**; also **filesystem-workspace**, **github**). **Use the core three proactively** instead of guessing when work touches Godot, architecture, or non-trivial reasoning. **GitHub** requires **`GITHUB_PERSONAL_ACCESS_TOKEN`** in the environment (never commit it).
 
 ## When to use which
 
