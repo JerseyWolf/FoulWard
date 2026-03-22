@@ -93,7 +93,8 @@ func test_start_wave_sequence_triggers_countdown() -> void:
 	_wave_manager.start_wave_sequence()
 
 	assert_that(_wave_manager.is_counting_down()).is_true()
-	assert_float(_wave_manager.get_countdown_remaining()).is_equal(30.0)
+	# Wave 1 uses first_wave_countdown_seconds (default 3) so "Start Game" reaches combat quickly.
+	assert_float(_wave_manager.get_countdown_remaining()).is_equal(3.0)
 	assert_that(_wave_manager.get_current_wave_number()).is_equal(1)
 	await assert_signal(SignalBus).is_emitted("wave_countdown_started", [1, 3.0])
 
@@ -102,9 +103,9 @@ func test_countdown_decrements_with_delta() -> void:
 	_wave_manager.start_wave_sequence()
 	var initial: float = _wave_manager.get_countdown_remaining()
 
-	_wave_manager._process_countdown(5.0)
+	_wave_manager._process_countdown(2.0)
 
-	assert_float(_wave_manager.get_countdown_remaining()).is_equal(initial - 5.0)
+	assert_float(_wave_manager.get_countdown_remaining()).is_equal(initial - 2.0)
 
 # ---------------------------------------------------------------------------
 # TEST: Wave scaling formula

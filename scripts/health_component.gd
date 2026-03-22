@@ -48,3 +48,8 @@ func reset_to_max() -> void:
 func is_alive() -> bool:
 	return _is_alive
 
+
+## Current HP (int). Used by tests and UI; prefer `current_hp` when reading from same class.
+func get_current_hp() -> int:
+	return current_hp
+
