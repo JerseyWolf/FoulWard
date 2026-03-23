@@ -3,35 +3,35 @@
     "godot-mcp-pro": {
       "command": "node",
       "args": [
-        "/home/jerzy-wolf/workspace/FoulWard/MCPs/godot-mcp-pro-v1.6.1/server/build/index.js"
+        "/home/jerzy-wolf/workspace/foul-ward/FoulWard/MCPs/godot-mcp-pro-v1.6.1/server/build/index.js"
       ],
-      "cwd": "/home/jerzy-wolf/workspace/FoulWard",
+      "cwd": "/home/jerzy-wolf/workspace/foul-ward/FoulWard",
       "env": {
         "GODOT_MCP_PORT": "6505",
-        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
+        "PATH": "/home/jerzy-wolf/.local/bin:/usr/bin:/usr/local/bin:/bin"
       }
     },
     "gdai-mcp-godot": {
       "command": "/home/jerzy-wolf/.local/bin/uv",
       "args": [
         "run",
-        "/home/jerzy-wolf/workspace/FoulWard/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"
+        "/home/jerzy-wolf/workspace/foul-ward/FoulWard/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"
       ],
-      "cwd": "/home/jerzy-wolf/workspace/FoulWard",
+      "cwd": "/home/jerzy-wolf/workspace/foul-ward/FoulWard",
       "env": {
         "GDAI_MCP_SERVER_PORT": "3571",
-        "GODOT_PROJECT_DIR": "/home/jerzy-wolf/workspace/FoulWard",
-        "PATH": "/home/jerzy-wolf/.local/bin:/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
+        "GODOT_PROJECT_DIR": "/home/jerzy-wolf/workspace/foul-ward/FoulWard",
+        "PATH": "/home/jerzy-wolf/.local/bin:/usr/bin:/usr/local/bin:/bin"
       }
     },
     "sequential-thinking": {
       "command": "node",
       "args": [
-        "/home/jerzy-wolf/workspace/FoulWard/tools/mcp-support/node_modules/@modelcontextprotocol/server-sequential-thinking/dist/index.js"
+        "/home/jerzy-wolf/workspace/foul-ward/FoulWard/tools/mcp-support/node_modules/@modelcontextprotocol/server-sequential-thinking/dist/index.js"
       ],
-      "cwd": "/home/jerzy-wolf/workspace/FoulWard/tools/mcp-support",
+      "cwd": "/home/jerzy-wolf/workspace/foul-ward/FoulWard/tools/mcp-support",
       "env": {
-        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
+        "PATH": "/home/jerzy-wolf/.local/bin:/usr/bin:/usr/local/bin:/bin"
       }
     },
     "filesystem-workspace": {
@@ -42,7 +42,7 @@
         "/home/jerzy-wolf/workspace"
       ],
       "env": {
-        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin"
+        "PATH": "/home/jerzy-wolf/.local/bin:/usr/bin:/usr/local/bin:/bin"
       }
     },
     "github": {
@@ -52,7 +52,7 @@
         "@modelcontextprotocol/server-github"
       ],
       "env": {
-        "PATH": "/home/jerzy-wolf/workspace/tools/node-v20/bin:/usr/local/bin:/usr/bin:/bin",
+        "PATH": "/home/jerzy-wolf/.local/bin:/usr/bin:/usr/local/bin:/bin",
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_PERSONAL_ACCESS_TOKEN}"
       },
       "envFile": "${userHome}/.cursor/github-mcp.env"

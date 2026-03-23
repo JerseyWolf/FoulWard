@@ -481,7 +481,7 @@ Public API:
 - `get_all_occupied_slots/get_empty_slots() -> Array[int]`
 - `clear_all_buildings()` — called on new game
 - `get_building_data(building_type) -> BuildingData`
-- `is_building_unlocked(building_type) -> bool`
+- `is_building_available(building_type) -> bool`
 
 Listens to: `build_mode_entered/exited` → shows/hides slot meshes. `research_unlocked` → hook for future UI refresh.
 

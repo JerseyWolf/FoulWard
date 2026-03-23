@@ -75,7 +75,7 @@ func can_purchase(item_id: String) -> bool:
 		"arrow_tower_placed":
 			if hex == null:
 				return false
-			return hex.has_empty_slot() and hex.is_building_unlocked(Types.BuildingType.ARROW_TOWER)
+			return hex.has_empty_slot() and hex.is_building_available(Types.BuildingType.ARROW_TOWER)
 		_:
 			return true
 
@@ -146,6 +146,10 @@ func _apply_effect(item_id: String) -> bool:
 
 		"mana_draught":
 			_mana_draught_pending = true
+			# Immediate feedback (between-mission shop); mission start still consumes flag via GameManager.
+			var spell: SpellManager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
+			if spell != null:
+				spell.set_mana_to_full()
 			return true
 
 		"arrow_tower_placed":

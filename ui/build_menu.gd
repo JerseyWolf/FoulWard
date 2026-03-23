@@ -58,7 +58,7 @@ func _refresh() -> void:
 			continue
 
 		var btn: Button = Button.new()
-		var is_unlocked: bool = _hex_grid.is_building_unlocked(bt)
+		var is_unlocked: bool = _hex_grid.is_building_available(bt)
 		var can_afford: bool = EconomyManager.can_afford(bd.gold_cost, bd.material_cost)
 
 		btn.text = "%s\n%dg %dm" % [bd.display_name, bd.gold_cost, bd.material_cost]

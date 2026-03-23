@@ -11,13 +11,13 @@
 class_name CallableDoubler
 
 
-const doubler_script :Script =  preload("res://addons/gdUnit4/src/doubler/CallableDoubler.gd")
+const doubler_script :Script = preload("res://addons/gdUnit4/src/doubler/CallableDoubler.gd")
 
 var _cb: Callable
 
 
 func _init(cb: Callable) -> void:
-	assert(cb!=null, "Invalid argument <cb> must not be null")
+	assert(cb != null, "Invalid argument <cb> must not be null")
 	_cb = cb
 
 ## --- helpers -----------------------------------------------------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ static func non_callable_functions(name: String) -> bool:
 
 ## Returns the list of supported Callable functions
 static func callable_functions() -> PackedStringArray:
-	var supported_functions :Array = doubler_script.get_script_method_list()\
+	var supported_functions: Array = doubler_script.get_script_method_list()\
 		.map(CallableDoubler.map_func_name)\
 		.filter(CallableDoubler.non_callable_functions)
 	# We manually add these functions that we cannot/may not overwrite in this class
@@ -58,20 +58,8 @@ static func callable_functions() -> PackedStringArray:
 ## Callable functions stubing
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 
-@warning_ignore("untyped_declaration")
-func bind(arg0=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg1=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg2=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg3=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg4=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg5=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg6=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg7=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg8=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg9=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE) -> Callable:
-	# save
-	var bind_values: Array = GdArrayTools.filter_value([arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9], GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE)
-	_cb = _cb.bindv(bind_values)
+func bind(...varargs: Array) -> Callable:
+	_cb = _cb.bindv(varargs)
 	return _cb
 
 
@@ -80,34 +68,19 @@ func bindv(caller_args: Array) -> Callable:
 	return _cb
 
 
-@warning_ignore("untyped_declaration", "native_method_override", "unused_parameter")
-func call(arg0=null,
-	arg1=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg2=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg3=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg4=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg5=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg6=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg7=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg8=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg9=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE) -> Variant:
-
-	# This is a placeholder function signanture without any functionallity!
-	# It is used by the function doubler to double function signature of Callable:call()
-	# The doubled function calls direct _cb.callv(<arguments>) see GdUnitSpyFunctionDoubler:TEMPLATE_CALLABLE_CALL template
-	assert(false)
-	return null
+@warning_ignore("native_method_override")
+func call(...varargs: Array) -> Variant:
+	return _cb.callv(varargs)
 
 
 # Is not supported, see class description
-#func call_deferred(a) -> void:
-#	pass
+#func call_deferred(...varargs: Array) -> void:
+#	return _cb.call_deferred(varargs)
 
 
 # Is not supported, see class description
-#func callv(a) -> void:
-#	pass
-
+#func callv(arguments: Array) -> Variant:
+#	return _cb.callv(arguments)
 
 
 func get_bound_arguments() -> Array:
@@ -150,59 +123,53 @@ func is_valid() -> bool:
 	return _cb.is_valid()
 
 
-@warning_ignore("untyped_declaration")
-func rpc(arg0=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg1=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg2=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg3=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg4=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg5=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg6=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg7=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg8=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg9=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE) -> void:
-
-	var args: Array = GdArrayTools.filter_value([arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9], GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE)
-	match args.size():
-		0: _cb.rpc(0)
-		1: _cb.rpc(args[0])
-		2: _cb.rpc(args[0], args[1])
-		3: _cb.rpc(args[0], args[1], args[2])
-		4: _cb.rpc(args[0], args[1], args[2], args[3])
-		5: _cb.rpc(args[0], args[1], args[2], args[3], args[4])
-		6: _cb.rpc(args[0], args[1], args[2], args[3], args[4], args[5])
-		7: _cb.rpc(args[0], args[1], args[2], args[3], args[4], args[5], args[6])
-		8: _cb.rpc(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
-		9: _cb.rpc(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])
-		10: _cb.rpc(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
+func rpc(...varargs: Array) -> void:
+	match varargs.size():
+		0:
+			_cb.rpc()
+		1:
+			_cb.rpc(varargs[0])
+		2:
+			_cb.rpc(varargs[0], varargs[1])
+		3:
+			_cb.rpc(varargs[0], varargs[1], varargs[2])
+		4:
+			_cb.rpc(varargs[0], varargs[1], varargs[2], varargs[3], varargs[4])
+		5:
+			_cb.rpc(varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5])
+		6:
+			_cb.rpc(varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5], varargs[6])
+		7:
+			_cb.rpc(varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5], varargs[6], varargs[7])
+		8:
+			_cb.rpc(varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5], varargs[6], varargs[7], varargs[8])
+		9:
+			_cb.rpc(varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5], varargs[6], varargs[7], varargs[8], varargs[9])
 
 
 @warning_ignore("untyped_declaration")
-func rpc_id(peer_id: int,
-	arg0=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg1=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg2=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg3=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg4=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg5=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg6=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg7=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg8=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE,
-	arg9=GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE) -> void:
-
-	var args: Array = GdArrayTools.filter_value([arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9], GdObjects.TYPE_VARARG_PLACEHOLDER_VALUE)
-	match args.size():
-		0: _cb.rpc_id(peer_id)
-		1: _cb.rpc_id(peer_id, args[0])
-		2: _cb.rpc_id(peer_id, args[0], args[1])
-		3: _cb.rpc_id(peer_id, args[0], args[1], args[2])
-		4: _cb.rpc_id(peer_id, args[0], args[1], args[2], args[3])
-		5: _cb.rpc_id(peer_id, args[0], args[1], args[2], args[3], args[4])
-		6: _cb.rpc_id(peer_id, args[0], args[1], args[2], args[3], args[4], args[5])
-		7: _cb.rpc_id(peer_id, args[0], args[1], args[2], args[3], args[4], args[5], args[6])
-		8: _cb.rpc_id(peer_id, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
-		9: _cb.rpc_id(peer_id, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])
-		10: _cb.rpc_id(peer_id, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
+func rpc_id(peer_id: int, ...varargs: Array) -> void:
+	match varargs.size():
+		0:
+			_cb.rpc_id(peer_id)
+		1:
+			_cb.rpc_id(peer_id, varargs[0])
+		2:
+			_cb.rpc_id(peer_id, varargs[0], varargs[1])
+		3:
+			_cb.rpc_id(peer_id, varargs[0], varargs[1], varargs[2])
+		4:
+			_cb.rpc_id(peer_id, varargs[0], varargs[1], varargs[2], varargs[3], varargs[4])
+		5:
+			_cb.rpc_id(peer_id, varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5])
+		6:
+			_cb.rpc_id(peer_id, varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5], varargs[6])
+		7:
+			_cb.rpc_id(peer_id, varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5], varargs[6], varargs[7])
+		8:
+			_cb.rpc_id(peer_id, varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5], varargs[6], varargs[7], varargs[8])
+		9:
+			_cb.rpc_id(peer_id, varargs[0], varargs[1], varargs[2], varargs[3], varargs[4], varargs[5], varargs[6], varargs[7], varargs[8], varargs[9])
 
 
 func unbind(argcount: int) -> Callable:

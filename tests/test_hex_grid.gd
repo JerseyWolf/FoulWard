@@ -148,7 +148,7 @@ func test_place_locked_building_null_safety() -> void:
 	add_child(_hex_grid)
 	await get_tree().process_frame
 	# With null research_manager, locked buildings are treated as unlocked (test context).
-	assert_bool(_hex_grid.is_building_unlocked(Types.BuildingType.BALLISTA)).is_true()
+	assert_bool(_hex_grid.is_building_available(Types.BuildingType.BALLISTA)).is_true()
 
 
 func test_place_building_emits_building_placed_signal() -> void:
