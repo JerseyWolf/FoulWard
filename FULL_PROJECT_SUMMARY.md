@@ -105,7 +105,7 @@ Detailed checklist: **`AUTONOMOUS_SESSION_2.md`**.
 
 **Largely in place:** wave scaling, damage matrix, economy, shop (four items), research tree (six nodes), mission briefing path, simulation API tests, SimBot activate/deactivate hygiene, git LF/binary attributes for Linux clones.
 
-**Still open / manual:** Phase **6** twelve playtest checks; optional enemy stat tuning; HUD polish; headless **main** scene on Windows was unreliable — prefer **editor F5** on Ubuntu for full loop validation.
+**Still open / manual:** Phase **6** twelve playtest checks; optional enemy stat tuning; HUD polish. **Phase 2** headless main-scene smoke is automated on Linux (`tools/smoke_main_scene.sh`, exit 0); on **Windows**, headless main may still be unreliable — prefer **editor F5** for full loop validation there.
 
 ---
 

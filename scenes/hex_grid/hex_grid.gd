@@ -173,7 +173,7 @@ func _try_place_building(
 		print("[HexGrid] place_building FAILED: no BuildingData for type %d" % building_type)
 		return false
 
-	if not is_building_unlocked(building_type):
+	if not is_building_available(building_type):
 		print("[HexGrid] place_building FAILED: building type %d is locked" % building_type)
 		return false
 
@@ -325,7 +325,7 @@ func get_building_data(building_type: Types.BuildingType) -> BuildingData:
 
 
 ## Returns whether the given building type is currently available to place.
-func is_building_unlocked(building_type: Types.BuildingType) -> bool:
+func is_building_available(building_type: Types.BuildingType) -> bool:
 	var building_data: BuildingData = get_building_data(building_type)
 	if building_data == null:
 		return false
@@ -496,7 +496,7 @@ func _on_build_mode_exited() -> void:
 
 
 func _on_research_unlocked(_node_id: String) -> void:
-	# No cache to invalidate – is_building_unlocked() checks live state each call.
+	# No cache to invalidate – is_building_available() checks live state each call.
 	# Hook reserved for future UI refresh (e.g., glow newly unlocked slots).
 	pass
 

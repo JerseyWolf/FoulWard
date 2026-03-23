@@ -52,6 +52,17 @@ godot --headless -s "addons/gdUnit4/bin/GdUnitCmdTool.gd" --ignoreHeadlessMode -
 - Expect **289** cases, **0** failures in the **Overall Summary** line.
 - If the process **crashes after** tests on some OSes, still trust the summary line when it printed.
 
+### Main scene smoke (Phase 2 E2E, headless)
+
+Optional quick check that **`res://scenes/main.tscn`** loads and runs briefly without crashing (separate from GdUnit):
+
+```bash
+cd "$REPO"
+./tools/smoke_main_scene.sh
+```
+
+Or set `GODOT=/path/to/Godot_v4.6.x` if the binary is not in `PATH` or `repo_root/Godot_*.x86_64`. Expect **exit code 0** on Linux. On some Windows setups a similar headless run may still fault; use **editor Run** for validation there.
+
 ---
 
 ## 5. Optional: MCP support npm dependencies

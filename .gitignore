@@ -2,6 +2,9 @@
 .godot/
 /android/
 
+# Optional local Godot editor binary (not part of the repo; set GODOT or PATH for smoke/tests)
+Godot_v*-stable_linux.x86_64
+
 # Cross-platform / local OS & tool noise (safe on Windows + Ubuntu)
 .DS_Store
 Thumbs.db
