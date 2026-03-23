@@ -10,7 +10,7 @@ extends Control
 var _selected_slot: int = -1
 
 @onready var _slot_label: Label = $Panel/VBox/SlotLabel
-@onready var _help_label: Label = $Panel/VBox/HelpLabel
+@onready var _help_label: Label = $Panel/VBox/HelpScroll/HelpLabel
 @onready var _building_container: GridContainer = $Panel/VBox/BuildingContainer
 @onready var _close_button: Button = $Panel/VBox/CloseButton
 
