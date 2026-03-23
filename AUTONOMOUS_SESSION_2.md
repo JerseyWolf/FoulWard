@@ -7,7 +7,7 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 - **`FULL_PROJECT_SUMMARY.md`** — Project purpose, directory map, systems, tests, MVP status pointer.
 - **`CURRENT_STATUS.md`** — Recreate this workspace: Godot, GdUnit command, Cursor MCP path rewrites, `npm install` locations.
 
-**Wrap-up note:** MVP shop (four items), research tree, mission-start consumables, and HexGrid shop placement/repair are **complete** in code; Phase **6** playtest checklist remains **manual**. No half-finished code paths left open from the last implementation batch—next work is polish, tuning, or Phase 6 verification.
+**Wrap-up note:** MVP shop (four items), research tree, mission-start consumables, and HexGrid shop placement/repair are **complete** in code; Phase **6** is **partially** logged (see table below). Remaining: full Sybil/Arnulf verification, between-mission loop, **sell UX** (logic exists; not wired), balance tuning.
 
 **Last synced commit (when this section was written):** see `git log -1` on `main` (should include shop + handoff docs).
 
@@ -34,22 +34,28 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 - [x] **Phase 3 (partial)** — Full MVP **four** shop items: Tower Repair **50g**, Building Repair **30g**, Arrow Tower voucher **40g + 2 mat**, Mana Draught **20g**; `ShopManager` + `HexGrid` (`place_building_shop_free`, `repair_first_damaged_building`); `GameManager` calls `apply_mission_start_consumables()` when entering COMBAT (mana draught + prepaid Arrow Tower). **6** Base Structures research nodes; locked buildings + research stat boosts; shockwave + economy defaults per spec.
 - [x] **Phase 4 (partial)** — Mission briefing: `UIManager` shows `UI/MissionBriefing` on `MISSION_BRIEFING` (was lumped with HUD); `main.tscn` attaches `mission_briefing.gd` + **BEGIN** button. HUD/build/between-mission unchanged in this pass.
 - [x] **Phase 5 (partial)** — SimBot: `activate()` idempotent; new `deactivate()` disconnects SignalBus observers; `test_simulation_api` asserts `deactivate` + calls it before free.
-- [ ] **Phase 6** — 12 verification checks (see below) + screenshot/play capture
+- [x] **Phase 6** — **partial** (manual playtest logged below; balance / full loop TBD)
 
-### Phase 6 — twelve checks (template; tick when done)
+### Phase 6 — twelve checks (playtest log)
 
-1. [ ] Main menu → start mission / new game
-2. [ ] Wave countdown → wave spawns enemies
-3. [ ] Tower weapons fire / damage applies
-4. [ ] Build mode enter/exit + time scale
-5. [ ] Hex grid place/sell building
-6. [ ] Sybil mana + shockwave cast
-7. [ ] Arnulf engages ground enemies
-8. [ ] Mission win path (waves cleared / mission_won)
-9. [ ] Mission fail path (tower destroyed)
-10. [ ] Between-mission / shop / research (as in MVP)
-11. [ ] No script errors in Output for a full run
-12. [ ] Performance acceptable (frame time / no runaway logs)
+Session notes (manual):
+
+| # | Check | Result |
+|---|--------|--------|
+| 1 | Main menu → start mission / new game | OK — menu starts game correctly |
+| 2 | Wave countdown → wave spawns enemies | OK |
+| 3 | Tower weapons fire / damage | OK — towers fire; not every tower type exhaustively tested |
+| 4 | Build mode enter/exit + time scale | OK |
+| 5 | Hex grid place / sell | **Place OK.** **Sell:** there is **no player-facing sell action wired yet** — `HexGrid.sell_building()` exists and is covered by tests, but **no UI or input** calls it in combat/build mode (MVP spec: *click occupied slot → sell* is **not** implemented). Follow-up: e.g. **Sell** button in build menu when slot is occupied, or **right-click** slot to sell. |
+| 6 | Sybil mana + shockwave | In testing |
+| 7 | Arnulf vs ground enemies | In testing |
+| 8 | Mission win (all waves) | Not reached — too many enemies / difficulty too high for a quick win (acceptable for now) |
+| 9 | Mission fail (tower destroyed) | OK |
+| 10 | Between-mission shop / research | Not reached yet |
+| 11 | No script errors full run | In testing |
+| 12 | Performance | Looks fine |
+
+**Phase 6 screenshot / capture:** optional; not attached in this log.
 
 ## MCP / tooling (this session)
 
@@ -83,5 +89,5 @@ Tracking the full autonomous prompt (Phases 0–6). See `AUTONOMOUS_SESSION_1.md
 1. ~~Deeper pass on remainder of `docs/OUTPUT_AUDIT.txt`~~ **(partial, this session)** — Aligned **HexGrid** public API with `docs/SYSTEMS_part3.md` / architecture table: `is_building_unlocked` → **`is_building_available`** (`hex_grid.gd`, `shop_manager.gd`, `build_menu.gd`, `tests/test_hex_grid.gd`, `docs/SUMMARY.md`). **Mana draught:** `ShopManager._apply_effect("mana_draught")` now calls **`SpellManager.set_mana_to_full()`** when `/root/Main/Managers/SpellManager` exists (immediate UI feedback; mission-start `consume_mana_draught_pending()` unchanged). Remaining OUTPUT_AUDIT items are either already in code from Session 2 (enemy/projectile/enum fixes) or intentionally skipped (e.g. **`spell_cast` → `spell_fired`** rename would touch `docs/ARCHITECTURE.md` / `CONVENTIONS.md` signal tables — read-only policy).
 2. **Phase 2:** Editor play (F5) or MCP `play_scene`; headless main still unreliable on some Windows setups—expect **Linux editor** to be the reference for full loop.
 3. **Phase 4:** HUD copy polish (e.g. `[B] Build Mode` reminder), briefing “press any key” style if desired.
-4. **Phase 5–6:** SimBot mission script expansion + tick through the **12 checks** in this file (manual).
+4. **Phase 6 follow-up:** Finish rows 6–7, 10–11 in the table; add **sell** UI/input (see row 5). SimBot mission script expansion optional.
 5. **Balance:** Optional enemy stat tuning in `resources/enemy_data/*.tres` from playtest feel.
