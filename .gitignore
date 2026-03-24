@@ -35,3 +35,6 @@ tools/gdunit_out.txt
 tools/gdunit_err.txt
 tools/autotest_last_run.log
 tools/autotest_last_run.err
+
+# Local repository dump exports for LLM context
+repo_dump_option_b_with_tests.txt
