@@ -8,6 +8,7 @@
 | DamageCalculator | `res://autoloads/damage_calculator.gd` | `-` | `-` |
 | EconomyManager | `res://autoloads/economy_manager.gd` | `-` | `resource_changed` |
 | GameManager | `res://autoloads/game_manager.gd` | `-` | `mission_started,build_mode_entered,game_state_changed,build_mode_exited,mission_won,mission_failed` |
+| EnchantmentManager | `res://autoloads/enchantment_manager.gd` | `-` | `enchantment_applied,enchantment_removed` |
 | AutoTestDriver | `res://autoloads/auto_test_driver.gd` | `-` | `-` |
 | GDAIMCPRuntime | `uid://dcne7ryelpxmn` | `-` | `-` |
 | MCPScreenshot | `res://addons/godot_mcp/mcp_screenshot_service.gd` | `-` | `-` |
@@ -38,6 +39,7 @@
 | `res://scripts/resources/shop_item_data.gd` | `ShopItemData` | `Resource` | `-` | `item_id:String,display_name:String,gold_cost:int,material_cost:int,description:String` | `-` | `-` | `-` |
 | `res://scripts/resources/spell_data.gd` | `SpellData` | `Resource` | `-` | `spell_id:String,display_name:String,mana_cost:int,cooldown:float,damage:float,radius:float,damage_type:Types.DamageType,hits_flying:bool` | `-` | `-` | `Types` |
 | `res://scripts/resources/weapon_data.gd` | `WeaponData` | `Resource` | `-` | `weapon_slot:Types.WeaponSlot,display_name:String,damage:float,projectile_speed:float,reload_time:float,burst_count:int,burst_interval:float,can_target_flying:bool,assist_angle_degrees:float,assist_max_distance:float,base_miss_chance:float,max_miss_angle_degrees:float` | `-` | `-` | `Types` |
+| `res://scripts/resources/enchantment_data.gd` | `EnchantmentData` | `Resource` | `-` | `enchantment_id:String,display_name:String,description:String,slot_type:String,has_damage_type_override:bool,damage_type_override:Types.DamageType,has_secondary_damage_type:bool,secondary_damage_type:Types.DamageType,damage_multiplier:float,effect_tags:Array[String],effect_data:Dictionary` | `-` | `-` | `Types` |
 | `res://scenes/arnulf/arnulf.gd` | `Arnulf` | `CharacterBody3D` | `get_current_state()->Types.ArnulfState,get_current_hp()->int,get_max_hp()->int,reset_for_new_mission()->void` | `max_hp:int,move_speed:float,attack_damage:float,attack_cooldown:float,patrol_radius:float,recovery_time:float` | `-` | `arnulf_recovered,arnulf_incapacitated,arnulf_state_changed` | `SignalBus,Types,EnemyBase,HealthComponent,NavigationAgent3D` |
 | `res://scenes/buildings/building_base.gd` | `BuildingBase` | `Node3D` | `initialize(data:BuildingData)->void,upgrade()->void,get_building_data()->BuildingData,get_effective_damage()->float,get_effective_range()->float` | `-` | `-` | `-` | `Types,BuildingData,EnemyBase,ProjectileBase,ResearchManager,HealthComponent` |
 | `res://scenes/enemies/enemy_base.gd` | `EnemyBase` | `CharacterBody3D` | `initialize(enemy_data:EnemyData)->void,take_damage(amount:float,damage_type:Types.DamageType)->void,get_enemy_data()->EnemyData` | `-` | `-` | `enemy_killed` | `SignalBus,Types,EnemyData,HealthComponent,Tower,NavigationAgent3D` |
@@ -109,6 +111,13 @@
   - `res://ui/between_mission_screen.tscn` now includes `TabContainer/WeaponsTab`
   - tests added in `res://tests/test_weapon_upgrade_manager.gd`
   - tower fallback regression added in `res://tests/test_simulation_api.gd`
+- Added Phase 4 enchantments:
+  - new autoload `EnchantmentManager`
+  - new resource class `EnchantmentData`
+  - new SignalBus signals `enchantment_applied`, `enchantment_removed`
+  - new tests `res://tests/test_enchantment_manager.gd`, `res://tests/test_tower_enchantments.gd`
+  - `ProjectileBase.initialize_from_weapon(...)` now accepts optional custom damage and damage type
+  - `Tower` now composes enchantment stats from `"elemental"` and `"power"` slots
 | `arnulf_incapacitated` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `arnulf_recovered` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `wave_countdown_started` | `(wave_number:int,seconds_remaining:float)` | `res://scripts/wave_manager.gd` |

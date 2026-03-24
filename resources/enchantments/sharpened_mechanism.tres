@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnchantmentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enchantment_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enchantment_id = "sharpened_mechanism"
+display_name = "Sharpened Mechanism"
+description = "Improved gearing and sharpened tips increase bolt lethality."
+slot_type = "power"
+has_damage_type_override = false
+damage_type_override = 0
+has_secondary_damage_type = false
+secondary_damage_type = 0
+damage_multiplier = 1.3
+effect_tags = Array[String]([])
+effect_data = {}

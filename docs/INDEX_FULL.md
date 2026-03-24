@@ -261,3 +261,18 @@ These sections describe the complete main-menu → mission → between-mission �
   - `BetweenMissionScreen` now has a Weapons tab and upgrade UI refresh logic
   - Added tests in `res://tests/test_weapon_upgrade_manager.gd` and a tower fallback regression in `res://tests/test_simulation_api.gd`
   - See `docs/PROMPT_3_IMPLEMENTATION.md` for full implementation notes.
+- Added two-slot enchantment system Phase 4:
+  - New autoload `EnchantmentManager` at `res://autoloads/enchantment_manager.gd`
+  - New resource class `EnchantmentData` at `res://scripts/resources/enchantment_data.gd`
+  - New resources in `res://resources/enchantments/`
+  - New SignalBus events:
+    - `enchantment_applied(weapon_slot: Types.WeaponSlot, slot_type: String, enchantment_id: String)`
+    - `enchantment_removed(weapon_slot: Types.WeaponSlot, slot_type: String)`
+  - `Tower` now layers enchantment multipliers/overrides from `"elemental"` + `"power"` slots before spawning projectiles.
+  - `ProjectileBase.initialize_from_weapon(...)` accepts optional custom damage + damage type while preserving old call behavior.
+  - `GameManager.start_new_game()` now resets enchantments.
+  - `BetweenMissionScreen` Weapons tab now includes enchantment apply/remove UI controls.
+  - Added tests:
+    - `res://tests/test_enchantment_manager.gd`
+    - `res://tests/test_tower_enchantments.gd`
+    - projectile regression in `res://tests/test_projectile_system.gd`

@@ -45,6 +45,7 @@ Date: 2026-03-24
 - # POST-MVP: Save/load persistence for weapon levels is not implemented.
 - # ASSUMPTION: Existing `BetweenMissionScreen` uses `TabContainer`; Weapons tab follows that structure.
 - # SOURCE: Godot Resource patterns, dynamic Resource `.get()`, and per-instance `duplicate()` usage are cited inline in new scripts.
+- Phase 4 continuation moved to `docs/PROMPT_4_IMPLEMENTATION.md`.
 - Safe cleanup performed:
   - Restored unintended `project.godot` autoload removals caused by headless tooling run.
   - Re-added:
@@ -52,3 +53,4 @@ Date: 2026-03-24
     - `MCPInputService="*res://addons/godot_mcp/mcp_input_service.gd"`
     - `MCPGameInspector="*res://addons/godot_mcp/mcp_game_inspector_service.gd"`
   - No gameplay/system behavior was changed by this cleanup.
+

@@ -58,6 +58,19 @@ func test_initialize_from_weapon_sets_correct_speed() -> void:
 	assert_float(proj._speed).is_equal_approx(42.0, 0.001)
 	proj.queue_free()
 
+
+func test_initialize_from_weapon_without_custom_values_uses_physical() -> void:
+	var weapon := WeaponData.new()
+	weapon.damage = 10.0
+	weapon.projectile_speed = 25.0
+	weapon.burst_count = 1
+	weapon.burst_interval = 0.0
+
+	var proj := _create_projectile()
+	proj.initialize_from_weapon(weapon, Vector3.ZERO, Vector3(10, 0, 0))
+	assert_int(int(proj._damage_type)).is_equal(int(Types.DamageType.PHYSICAL))
+	proj.queue_free()
+
 func test_initialize_from_weapon_computes_direction() -> void:
 	var weapon := WeaponData.new()
 	weapon.damage = 10.0

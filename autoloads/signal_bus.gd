@@ -86,3 +86,9 @@ signal mana_draught_consumed()
 # === WEAPONS ===
 @warning_ignore("unused_signal")
 signal weapon_upgraded(weapon_slot: Types.WeaponSlot, new_level: int)
+
+# === ENCHANTMENTS ===
+@warning_ignore("unused_signal")
+signal enchantment_applied(weapon_slot: Types.WeaponSlot, slot_type: String, enchantment_id: String)
+@warning_ignore("unused_signal")
+signal enchantment_removed(weapon_slot: Types.WeaponSlot, slot_type: String)

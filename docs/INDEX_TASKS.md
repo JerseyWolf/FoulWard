@@ -55,3 +55,13 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - `SignalBus.weapon_upgraded(...)`
   - `BetweenMissionScreen` Weapons tab
   - `res://tests/test_weapon_upgrade_manager.gd`
+- Added Phase 4 indexed artifacts:
+  - `res://autoloads/enchantment_manager.gd` (new autoload)
+  - `res://scripts/resources/enchantment_data.gd` (new resource class)
+  - `res://resources/enchantments/*.tres` (new enchantment data instances)
+  - `SignalBus.enchantment_applied(...)`, `SignalBus.enchantment_removed(...)`
+  - `Tower` projectile enchantment composition path updates
+  - `BetweenMissionScreen` enchantment apply/remove controls in `WeaponsTab`
+  - `res://tests/test_enchantment_manager.gd`
+  - `res://tests/test_tower_enchantments.gd`
+  - new regression in `res://tests/test_projectile_system.gd`

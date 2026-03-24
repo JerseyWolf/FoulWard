@@ -14,6 +14,16 @@ extends Control
 @onready var _research_list: VBoxContainer = $TabContainer/ResearchTab/ResearchList
 @onready var _buildings_list: VBoxContainer = $TabContainer/BuildingsTab/BuildingsList
 @onready var _weapons_tab: Control = $TabContainer/WeaponsTab
+@onready var _crossbow_enchant_label: Label = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/EnchantmentLabel
+@onready var _rapid_enchant_label: Label = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/EnchantmentLabel
+
+@onready var _crossbow_elemental_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/ApplyElementalButton
+@onready var _crossbow_power_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/ApplyPowerButton
+@onready var _crossbow_remove_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/RemoveAllButton
+
+@onready var _rapid_elemental_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/ApplyElementalButton
+@onready var _rapid_power_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/ApplyPowerButton
+@onready var _rapid_remove_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/RemoveAllButton
 
 @onready var _shop_manager: ShopManager = get_node(
 	"/root/Main/Managers/ShopManager"
@@ -32,6 +42,8 @@ func _ready() -> void:
 	_weapon_upgrade_manager = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
 	SignalBus.weapon_upgraded.connect(_on_weapon_upgraded)
 	SignalBus.resource_changed.connect(_on_resource_changed_weapons)
+	SignalBus.enchantment_applied.connect(_on_enchantment_applied)
+	SignalBus.enchantment_removed.connect(_on_enchantment_removed)
 	_refresh_weapons_tab()
 
 
@@ -139,10 +151,10 @@ func _on_next_mission_pressed() -> void:
 
 ## Refreshes the entire Weapons tab display. Called on show and after any upgrade.
 func _refresh_weapons_tab() -> void:
-	if _weapon_upgrade_manager == null:
-		return
-	_refresh_weapon_panel(Types.WeaponSlot.CROSSBOW)
-	_refresh_weapon_panel(Types.WeaponSlot.RAPID_MISSILE)
+	if _weapon_upgrade_manager != null:
+		_refresh_weapon_panel(Types.WeaponSlot.CROSSBOW)
+		_refresh_weapon_panel(Types.WeaponSlot.RAPID_MISSILE)
+	_refresh_weapon_enchantments()
 
 
 ## Refreshes the display panel for a single weapon slot.
@@ -240,3 +252,83 @@ func _on_weapon_upgraded(_weapon_slot: Types.WeaponSlot, _new_level: int) -> voi
 ## Called when resources change — refreshes button affordability states.
 func _on_resource_changed_weapons(_resource_type: Types.ResourceType, _new_amount: int) -> void:
 	_refresh_weapons_tab()
+
+
+func _on_enchantment_applied(_weapon_slot: Types.WeaponSlot, _slot_type: String, _enchantment_id: String) -> void:
+	_refresh_weapon_enchantments()
+
+
+func _on_enchantment_removed(_weapon_slot: Types.WeaponSlot, _slot_type: String) -> void:
+	_refresh_weapon_enchantments()
+
+
+func _refresh_weapon_enchantments() -> void:
+	_update_weapon_enchantment_display(Types.WeaponSlot.CROSSBOW, _crossbow_enchant_label)
+	_update_weapon_enchantment_display(Types.WeaponSlot.RAPID_MISSILE, _rapid_enchant_label)
+
+
+func _update_weapon_enchantment_display(weapon_slot: Types.WeaponSlot, label: Label) -> void:
+	if label == null:
+		return
+
+	var slots: Dictionary = EnchantmentManager.get_all_equipped_enchantments_for_weapon(weapon_slot)
+	var parts: Array[String] = []
+
+	for slot_type: String in ["elemental", "power"]:
+		var enchantment_id: String = slots.get(slot_type, "") as String
+		if enchantment_id == "":
+			parts.append("%s: None" % slot_type)
+		else:
+			var enchantment: EnchantmentData = EnchantmentManager.get_equipped_enchantment(weapon_slot, slot_type)
+			if enchantment == null:
+				parts.append("%s: None" % slot_type)
+			else:
+				parts.append("%s: %s" % [slot_type, enchantment.display_name])
+
+	label.text = ", ".join(parts)
+
+
+func on_apply_enchantment_button_pressed(weapon_slot: Types.WeaponSlot, slot_type: String, enchantment_id: String, gold_cost: int) -> void:
+	var success: bool = EnchantmentManager.try_apply_enchantment(weapon_slot, slot_type, enchantment_id, gold_cost)
+	if not success:
+		return
+	_refresh_weapon_enchantments()
+
+
+func on_remove_enchantment_button_pressed(weapon_slot: Types.WeaponSlot, slot_type: String) -> void:
+	EnchantmentManager.remove_enchantment(weapon_slot, slot_type)
+	_refresh_weapon_enchantments()
+
+
+func on_apply_crossbow_elemental_pressed() -> void:
+	var enchantment_id: String = "scorching_bolts"
+	var gold_cost: int = 0
+	on_apply_enchantment_button_pressed(Types.WeaponSlot.CROSSBOW, "elemental", enchantment_id, gold_cost)
+
+
+func on_apply_crossbow_power_pressed() -> void:
+	var enchantment_id: String = "sharpened_mechanism"
+	var gold_cost: int = 0
+	on_apply_enchantment_button_pressed(Types.WeaponSlot.CROSSBOW, "power", enchantment_id, gold_cost)
+
+
+func on_remove_crossbow_enchantments_pressed() -> void:
+	on_remove_enchantment_button_pressed(Types.WeaponSlot.CROSSBOW, "elemental")
+	on_remove_enchantment_button_pressed(Types.WeaponSlot.CROSSBOW, "power")
+
+
+func on_apply_rapid_elemental_pressed() -> void:
+	var enchantment_id: String = "toxic_payload"
+	var gold_cost: int = 0
+	on_apply_enchantment_button_pressed(Types.WeaponSlot.RAPID_MISSILE, "elemental", enchantment_id, gold_cost)
+
+
+func on_apply_rapid_power_pressed() -> void:
+	var enchantment_id: String = "sharpened_mechanism"
+	var gold_cost: int = 0
+	on_apply_enchantment_button_pressed(Types.WeaponSlot.RAPID_MISSILE, "power", enchantment_id, gold_cost)
+
+
+func on_remove_rapid_enchantments_pressed() -> void:
+	on_remove_enchantment_button_pressed(Types.WeaponSlot.RAPID_MISSILE, "elemental")
+	on_remove_enchantment_button_pressed(Types.WeaponSlot.RAPID_MISSILE, "power")

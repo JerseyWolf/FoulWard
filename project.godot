@@ -21,11 +21,9 @@ SignalBus="*res://autoloads/signal_bus.gd"
 DamageCalculator="*res://autoloads/damage_calculator.gd"
 EconomyManager="*res://autoloads/economy_manager.gd"
 GameManager="*res://autoloads/game_manager.gd"
+EnchantmentManager="*res://autoloads/enchantment_manager.gd"
 AutoTestDriver="*res://autoloads/auto_test_driver.gd"
 GDAIMCPRuntime="*uid://dcne7ryelpxmn"
-MCPScreenshot="*res://addons/godot_mcp/mcp_screenshot_service.gd"
-MCPInputService="*res://addons/godot_mcp/mcp_input_service.gd"
-MCPGameInspector="*res://addons/godot_mcp/mcp_game_inspector_service.gd"
 
 [display]
 
