@@ -25,8 +25,14 @@ extends Resource
 
 ## Marks this day as eligible for mini-boss schedule queries (WaveManager hook).
 @export var is_mini_boss_day: bool = false
+## Alias for data-driven mini-boss days (Prompt 10); WaveManager treats this like is_mini_boss_day.
+@export var is_mini_boss: bool = false
 ## TUNING: mark final day boss.
 @export var is_final_boss: bool = false
+## BossData.boss_id for final boss or repeat boss-attack days.
+@export var boss_id: String = ""
+## True when this day is a post–Day-50 boss strike on a held territory (Prompt 10).
+@export var is_boss_attack_day: bool = false
 
 ## TUNING: desired wave count for this day.
 @export var base_wave_count: int = 10

@@ -3,21 +3,21 @@ INDEXSHORT.md
 
 FOUL WARD — INDEXSHORT.md
 
-Compact repository reference. One-liner per file. Updated: 2026-03-24 (Prompt 9 factions + weighted waves).
-Source of truth: REPO_DUMP_AFTER_MVP.md; last full GdUnit run: 349 tests, 0 failures (see `docs/PROMPT_9_IMPLEMENTATION.md` for CLI notes).
+Compact repository reference. One-liner per file. Updated: 2026-03-24 (Prompt 10 bosses + Day 50 / post-loop hooks + GdUnit GameManager notes).
+Source of truth: REPO_DUMP_AFTER_MVP.md; last recorded full GdUnit run: 349 tests, 0 failures (Prompt 9 polish); **re-run** `./tools/run_gdunit.sh` after Prompt 10 (`docs/PROMPT_10_IMPLEMENTATION.md`). **Handoff:** `docs/PROBLEM_REPORT.md` lists files and log snippets for GdUnit / `mission_won` / `push_warning` work.
 AUTOLOADS (registered in project.godot, in init order)
 Autoload Name	Path	What it does
-SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. No logic, no state.
-CampaignManager	res://autoloads/campaign_manager.gd	Day/campaign progress; faction_registry + validate_day_configs; wraps mission flow; loads territory map into GameManager when config set.
+SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. Prompt 10: boss_spawned, boss_killed, campaign_boss_attempted. No logic, no state.
+CampaignManager	res://autoloads/campaign_manager.gd	Day/campaign progress; faction_registry + validate_day_configs; wraps mission flow; loads territory map into GameManager when config set. **Init order:** must load **before** GameManager in `project.godot` so `SignalBus.mission_won` runs `_on_mission_won` (day increment) before GameManager hub transition.
 DamageCalculator	res://autoloads/damage_calculator.gd	Stateless 4×4 damage-type × armor-type matrix. Pure function singleton.
 EconomyManager	res://autoloads/economy_manager.gd	Owns gold, building_material, research_material. Emits resource_changed.
-GameManager	res://autoloads/game_manager.gd	Owns game state, mission index, wave index, territory map runtime; mission rewards + territory bonuses.
+GameManager	res://autoloads/game_manager.gd	Owns game state, mission index, wave index, territory map runtime; mission rewards + territory bonuses. Prompt 10: final boss state, synthetic boss-attack days, held_territory_ids, prepare_next_campaign_day_if_needed / advance_to_next_day / get_day_config_for_index. `_begin_mission_wave_sequence`: Main→Managers→WaveManager via get_node_or_null; `push_warning` if absent (not `push_error` — GdUnit). Subscribes to `mission_won` for BETWEEN_MISSIONS / GAME_WON after CampaignManager (see `PROBLEM_REPORT.md`).
 AutoTestDriver	res://autoloads/auto_test_driver.gd	Headless smoke-test driver. Active only when --autotest flag is present.
 SCRIPTS (attached to Manager nodes in main.tscn under /root/Main/Managers/)
 Class Name	Path	What it does
 Types	res://scripts/types.gd	All enums and shared constants. Not an autoload; referenced as Types.XXX.
 HealthComponent	res://scripts/healthcomponent.gd	Reusable HP tracker. Emits local signals health_depleted, health_changed.
-WaveManager	res://scripts/wave_manager.gd	Spawns enemies per wave from FactionData-weighted roster (total N×6), countdown, wave signals; mini-boss info stub.
+WaveManager	res://scripts/wave_manager.gd	Spawns enemies per wave from FactionData-weighted roster (total N×6), countdown, wave signals. `_enemy_container` / `_spawn_points` via get_node_or_null(/root/Main/...); null-safe spawn. Prompt 10: boss_registry, ensure_boss_registry_loaded, set_day_context, boss wave on configured index + escorts.
 SpellManager	res://scripts/spellmanager.gd	Owns mana pool, spell cooldowns. Executes Shockwave AoE in MVP.
 ResearchManager	res://scripts/researchmanager.gd	Tracks unlocked research nodes. Gates locked buildings.
 ShopManager	res://scripts/shopmanager.gd	Processes shop purchases. Applies mission-start consumable effects.
@@ -31,6 +31,7 @@ Arnulf	res://scenes/arnulf/arnulf.gd	res://scenes/arnulf/arnulf.tscn	AI melee co
 HexGrid	res://scenes/hexgrid/hexgrid.gd	res://scenes/hexgrid/hexgrid.tscn	24-slot ring grid. Manages building placement, sell, upgrade.
 BuildingBase	res://scenes/buildings/buildingbase.gd	res://scenes/buildings/buildingbase.tscn	Base class for all 8 building types. Auto-targets and fires.
 EnemyBase	res://scenes/enemies/enemybase.gd	res://scenes/enemies/enemybase.tscn	Base class for all 6 enemy types. Nav, attack, die, reward.
+BossBase	res://scenes/bosses/boss_base.gd	res://scenes/bosses/boss_base.tscn	Prompt 10: extends EnemyBase; initialize_boss_data(BossData); emits boss_spawned / boss_killed.
 ProjectileBase	res://scenes/projectiles/projectilebase.gd	res://scenes/projectiles/projectilebase.tscn	Physics-driven projectile. Hits first valid enemy, self-destructs.
 UI SCRIPTS & SCENES
 Class Name	Script Path	Scene Path	What it does
@@ -50,12 +51,13 @@ WeaponData	res://scripts/resources/weapondata.gd	weapon_slot, display_name, dama
 SpellData	res://scripts/resources/spelldata.gd	spell_id, display_name, mana_cost, cooldown, damage, radius, damage_type, hits_flying
 ResearchNodeData	res://scripts/resources/researchnodedata.gd	node_id, display_name, research_cost, prerequisite_ids[], description
 ShopItemData	res://scripts/resources/shopitemdata.gd	item_id, display_name, gold_cost, material_cost, description
-TerritoryData	res://scripts/resources/territory_data.gd	territory_id, terrain_type, ownership, default_faction_id (POST-MVP), bonus_flat_gold_end_of_day, bonus_percent_gold_end_of_day, POST-MVP bonus hooks
+TerritoryData	res://scripts/resources/territory_data.gd	territory_id, terrain_type, ownership, default_faction_id (POST-MVP), is_secured, has_boss_threat, bonus_flat_gold_end_of_day, bonus_percent_gold_end_of_day, POST-MVP bonus hooks
 TerritoryMapData	res://scripts/resources/territory_map_data.gd	territories: Array[TerritoryData], get_territory_by_id, has_territory
 FactionRosterEntry	res://scripts/resources/faction_roster_entry.gd	enemy_type, base_weight, min_wave_index, max_wave_index, tier
-FactionData	res://scripts/resources/faction_data.gd	faction_id, display_name, description, roster[], mini_boss_ids, mini_boss_wave_hints, roster_tier, difficulty_offset; get_entries_for_wave, get_effective_weight_for_wave; BUILTIN_FACTION_RESOURCE_PATHS
-DayConfig	res://scripts/resources/day_config.gd	day_index, mission_index, territory_id, faction_id (default DEFAULT_MIXED), is_mini_boss_day, is_final_boss, display_name, wave/tuning multipliers
-CampaignConfig	res://scripts/resources/campaign_config.gd	campaign_id, display_name, day_configs, territory_map_resource_path, short-campaign flags
+FactionData	res://scripts/resources/faction_data.gd	faction_id, display_name, description, roster[], mini_boss_ids (BossData.boss_id strings), mini_boss_wave_hints, roster_tier, difficulty_offset; get_entries_for_wave, get_effective_weight_for_wave; BUILTIN_FACTION_RESOURCE_PATHS
+BossData	res://scripts/resources/boss_data.gd	boss_id, stats, escort_unit_ids, phase_count, is_mini_boss / is_final_boss, boss_scene; build_placeholder_enemy_data(); BUILTIN_BOSS_RESOURCE_PATHS
+DayConfig	res://scripts/resources/day_config.gd	day_index, mission_index, territory_id, faction_id (default DEFAULT_MIXED), is_mini_boss_day, is_mini_boss (alias), is_final_boss, boss_id, is_boss_attack_day, display_name, wave/tuning multipliers
+CampaignConfig	res://scripts/resources/campaign_config.gd	campaign_id, display_name, day_configs, starting_territory_ids, territory_map_resource_path, short-campaign flags
 RESOURCE FILES (.tres — actual data)
 Enemy Data
 File	enemy_type	armor_type	Notes
@@ -91,12 +93,21 @@ Faction data
 File	faction_id	Notes
 res://resources/faction_data_default_mixed.tres	DEFAULT_MIXED	Equal-weight six-type MVP mix
 res://resources/faction_data_orc_raiders.tres	ORC_RAIDERS	Orc-heavy roster + placeholder mini-boss id
-res://resources/faction_data_plague_cult.tres	PLAGUE_CULT	Undead/fire/flyer mix + placeholder mini-boss id
-TEST FILES (res://tests/, GdUnit4 framework; full run see PROMPT_9_IMPLEMENTATION.md)
+res://resources/faction_data_plague_cult.tres	PLAGUE_CULT	Undead/fire/flyer mix + mini-boss id (BossData)
+Boss data (Prompt 10)
+File	boss_id	Notes
+res://resources/bossdata_plague_cult_miniboss.tres	plague_cult_miniboss	Shared boss_base.tscn
+res://resources/bossdata_orc_warlord_miniboss.tres	orc_warlord	Shared boss_base.tscn
+res://resources/bossdata_final_boss.tres	final_boss	Day 50 / campaign boss
+TEST FILES (res://tests/, GdUnit4 framework; full run see PROMPT_9_IMPLEMENTATION.md / PROMPT_10_IMPLEMENTATION.md)
 File	What it covers
 testeconomymanager.gd	gold/material add/spend/reset, signal emission, transactions
 testdamagecalculator.gd	Full 4×4 matrix, boundary values, DoT stub
-testwavemanager.gd	Wave scaling, countdown, spawn count, faction-weighted composition, mini-boss hook, signal sequence
+testwavemanager.gd	Wave scaling, countdown, spawn count, faction-weighted composition, mini-boss hook, Prompt 10: regular day spawns no bosses
+testbossdata.gd	BossData load, BUILTIN paths, placeholder EnemyData build
+testbossbase.gd	BossBase init, nav present, kill → boss_killed
+testbosswaves.gd	Boss wave index + escorts + wave_cleared to max
+testfinalbossday.gd	Final-boss day / GameManager campaign hooks (see test file)
 testfactiondata.gd	Faction .tres load + roster→EnemyData; validate_day_configs on short campaign
 testspellmanager.gd	Mana regen, deduct, cooldown, shockwave AoE damage
 testarnulfstatemachine.gd	All state transitions, downed/recover cycle
@@ -175,6 +186,16 @@ SCENE TREE OVERVIEW (main.tscn)
   └── EndScreen (Control)
 
 LATEST CHANGES (2026-03-24)
+
+    - Prompt 10 fixes (`docs/PROMPT_10_FIXES.md`): WaveManager `get_node_or_null` for EnemyContainer/SpawnPoints; `test_wave_manager` / `test_boss_waves` add SpawnPoints to tree before Marker3D `global_position`; `WeaponLevelData` `.tres` `script_class` header; `test_campaign_manager` GdUnit `assert_that().is_not_null()`; `GameManager` `push_warning` + `mission_won` hub (`project.godot` CampaignManager before GameManager); `docs/PROBLEM_REPORT.md` for errors/snippets.
+- Prompt 10 mini-boss + campaign boss (`docs/PROMPT_10_IMPLEMENTATION.md`):
+  - `BossData` (`res://scripts/resources/boss_data.gd`), `.tres` bosses under `res://resources/bossdata_*.tres`.
+  - `BossBase` (`res://scenes/bosses/boss_base.{gd,tscn}`).
+  - `SignalBus`: `boss_spawned`, `boss_killed`, `campaign_boss_attempted`.
+  - `GameManager` / `CampaignManager`: Day 50 + synthetic boss-attack day flow; `get_day_config_for_index`; territory secure on mini-boss kill.
+  - `WaveManager`: `boss_registry`, `set_day_context`, `ensure_boss_registry_loaded`, boss wave + escorts (`Types.EnemyType.keys()` string match).
+  - `DayConfig`: `boss_id`, `is_mini_boss`, `is_boss_attack_day`; `CampaignConfig.starting_territory_ids`; `TerritoryData.is_secured`, `has_boss_threat`.
+  - Tests: `test_boss_data.gd`, `test_boss_base.gd`, `test_boss_waves.gd`, `test_final_boss_day.gd`; additions in `test_wave_manager.gd`.
 
 - Prompt 7 campaign/day layer added:
   - New autoload: `CampaignManager` (`res://autoloads/campaign_manager.gd`).

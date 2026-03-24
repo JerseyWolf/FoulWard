@@ -10,6 +10,8 @@ extends Resource
 @export var display_name: String = ""
 ## Ordered day configurations (index 0 => day 1).
 @export var day_configs: Array[DayConfig] = []
+## Optional campaign start territory IDs (world map / tooling). ASSUMPTION: may mirror TerritoryMapData.
+@export var starting_territory_ids: Array[String] = []
 
 ## Optional path to TerritoryMapData for this campaign. Empty = no territory layer (short MVP).
 ## ASSUMPTION: GameManager loads this at runtime when set.

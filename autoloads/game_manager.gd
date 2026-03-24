@@ -28,16 +28,51 @@ var game_state: Types.GameState = Types.GameState.MAIN_MENU
 ## Loaded from the active campaign's territory_map_resource_path when set; otherwise null.
 var territory_map: TerritoryMapData = null
 
+# --- Final boss / post–Day-50 loop (Prompt 10) --------------------------------
+var final_boss_id: String = ""
+var final_boss_day_index: int = 50
+var final_boss_active: bool = false
+var final_boss_defeated: bool = false
+var current_boss_threat_territory_id: String = ""
+## ASSUMPTION: populated from TerritoryMapData or tests; used for random boss strikes.
+var held_territory_ids: Array[String] = []
+## Runtime-only day config when current_day exceeds CampaignConfig.day_configs (boss repeat days).
+var _synthetic_boss_attack_day: DayConfig = null
+
 func _ready() -> void:
 	print("[GameManager] _ready: initial state=%s" % Types.GameState.keys()[game_state])
 	SignalBus.all_waves_cleared.connect(_on_all_waves_cleared)
 	SignalBus.tower_destroyed.connect(_on_tower_destroyed)
+	# Autoload order: CampaignManager before GameManager — connect second so day increments first on mission_won.
+	_connect_mission_won_transition_to_hub()
 	var shop: Node = get_node_or_null("/root/ShopManager")
 	var tower: Node = get_node_or_null("/root/Main/Tower")
 	if shop != null and tower != null and shop.has_method("initialize_tower"):
 		shop.initialize_tower(tower)
 		print("[GameManager] _ready: ShopManager wired to Tower")
 	reload_territory_map_from_active_campaign()
+	SignalBus.boss_killed.connect(_on_boss_killed)
+	_sync_held_territories_from_map()
+
+
+func _connect_mission_won_transition_to_hub() -> void:
+	if SignalBus.mission_won.is_connected(_on_mission_won_transition_to_hub):
+		return
+	SignalBus.mission_won.connect(_on_mission_won_transition_to_hub)
+
+
+## Runs after CampaignManager._on_mission_won (autoload order: CampaignManager before GameManager). Also used when tests emit mission_won without waves.
+func _on_mission_won_transition_to_hub(mission_number: int) -> void:
+	var campaign_len: int = CampaignManager.get_campaign_length()
+	var completed_day_index: int = mission_number
+	var is_final_day: bool = campaign_len > 0 and completed_day_index == campaign_len
+
+	if campaign_len == 0 and mission_number >= TOTAL_MISSIONS:
+		_transition_to(Types.GameState.GAME_WON)
+	elif is_final_day or final_boss_defeated:
+		_transition_to(Types.GameState.GAME_WON)
+	else:
+		_transition_to(Types.GameState.BETWEEN_MISSIONS)
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 
@@ -45,6 +80,7 @@ func start_new_game() -> void:
 	print("[GameManager] start_new_game: mission=1  gold=%d mat=%d" % [
 		EconomyManager.get_gold(), EconomyManager.get_building_material()
 	])
+	_reset_final_boss_campaign_state()
 	current_mission = 1
 	current_wave = 0
 	EconomyManager.reset_to_defaults()
@@ -61,6 +97,7 @@ func start_new_game() -> void:
 	# DEVIATION: CampaignManager owns day/campaign state and mission kickoff.
 	CampaignManager.start_new_campaign()
 	reload_territory_map_from_active_campaign()
+	_sync_held_territories_from_map()
 
 func start_next_mission() -> void:
 	# DEVIATION: next day is now owned by CampaignManager.
@@ -108,13 +145,48 @@ func get_current_day_index() -> int:
 	return CampaignManager.get_current_day()
 
 
+## Alias for tests / Prompt 10 (syncs with CampaignManager.current_day).
+var current_day_index: int:
+	get:
+		return CampaignManager.get_current_day()
+	set(value):
+		CampaignManager.current_day = value
+
+
+## Campaign timeline resource (same as CampaignManager.campaign_config).
+var campaign_config: CampaignConfig:
+	get:
+		return CampaignManager.campaign_config
+	set(value):
+		CampaignManager.set_active_campaign_config_for_test(value)
+
+
 func get_day_config_for_index(day_index: int) -> DayConfig:
 	var cfg: CampaignConfig = CampaignManager.campaign_config
 	if cfg == null:
 		return null
-	if day_index < 1 or day_index > cfg.day_configs.size():
-		return null
-	return cfg.day_configs[day_index - 1]
+	for d: DayConfig in cfg.day_configs:
+		if d != null and d.day_index == day_index:
+			return d
+	if day_index >= 1 and day_index <= cfg.day_configs.size():
+		return cfg.day_configs[day_index - 1]
+	if _synthetic_boss_attack_day != null and _synthetic_boss_attack_day.day_index == day_index:
+		return _synthetic_boss_attack_day
+	return null
+
+
+func get_synthetic_boss_day_config() -> DayConfig:
+	return _synthetic_boss_attack_day
+
+
+## Advances calendar by one day; after a failed final boss, assigns a random threatened territory.
+func advance_to_next_day() -> void:
+	CampaignManager.current_day += 1
+	var day: DayConfig = get_day_config_for_index(CampaignManager.current_day)
+	if final_boss_active and not final_boss_defeated:
+		if day == null:
+			day = _ensure_synthetic_boss_attack_day_config()
+		_assign_boss_attack_to_day(day)
 
 
 func get_current_day_config() -> DayConfig:
@@ -171,6 +243,7 @@ func reload_territory_map_from_active_campaign() -> void:
 		return
 	territory_map.invalidate_cache()
 	SignalBus.world_map_updated.emit()
+	_sync_held_territories_from_map()
 
 
 func apply_day_result_to_territory(day_config: DayConfig, was_won: bool) -> void:
@@ -185,6 +258,14 @@ func apply_day_result_to_territory(day_config: DayConfig, was_won: bool) -> void
 			"GameManager: DayConfig references unknown territory_id '%s'."
 			% day_config.territory_id
 		)
+		return
+
+	# Prompt 10 MVP: failing a final boss encounter does not permanently conquer territory.
+	if (
+			not was_won
+			and day_config.boss_id != ""
+			and (day_config.is_final_boss or day_config.is_boss_attack_day)
+	):
 		return
 
 	if was_won:
@@ -241,17 +322,33 @@ func _apply_shop_mission_start_consumables() -> void:
 
 
 func _begin_mission_wave_sequence() -> void:
-	var wave_manager: WaveManager = get_node_or_null(
-		"/root/Main/Managers/WaveManager"
-	) as WaveManager
+	var main: Node = get_tree().root.get_node_or_null("Main")
+	if main == null:
+		push_warning(
+			"GameManager: Main scene not found at /root/Main; skipping wave sequence (mission %d)."
+			% current_mission
+		)
+		return
+	var managers: Node = main.get_node_or_null("Managers")
+	if managers == null:
+		push_warning(
+			"GameManager: Managers node not found at /root/Main/Managers; skipping wave sequence (mission %d)."
+			% current_mission
+		)
+		return
+	var wave_manager: WaveManager = managers.get_node_or_null("WaveManager") as WaveManager
 	if wave_manager == null:
-		push_error("GameManager: WaveManager not found at /root/Main/Managers/WaveManager")
-		print("[GameManager] ERROR: WaveManager not found!")
+		push_warning(
+			"GameManager: WaveManager not found at /root/Main/Managers/WaveManager; skipping wave sequence (mission %d)."
+			% current_mission
+		)
 		return
 	print("[GameManager] _begin_mission_wave_sequence: mission=%d" % current_mission)
+	wave_manager.ensure_boss_registry_loaded()
+	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
+	_update_final_boss_tracking_from_day(day_cfg)
 	wave_manager.reset_for_new_mission()
 	# Apply day config after reset — reset clears per-day tuning (waves, faction, multipliers).
-	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
 	wave_manager.configure_for_day(day_cfg)
 	wave_manager.call_deferred("start_wave_sequence")
 
@@ -279,24 +376,147 @@ func _on_all_waves_cleared() -> void:
 	EconomyManager.add_gold(total_gold)
 	EconomyManager.add_building_material(3)
 	EconomyManager.add_research_material(2)
-	# Snapshot before mission_won: CampaignManager increments current_day on mission_won.
-	var campaign_len: int = CampaignManager.get_campaign_length()
+	# Snapshot before mission_won: CampaignManager may increment current_day on mission_won.
 	var completed_day_index: int = CampaignManager.get_current_day()
-	var is_final_day: bool = campaign_len > 0 and completed_day_index == campaign_len
+
+	if (
+			day_cfg != null
+			and day_cfg.boss_id != ""
+			and (day_cfg.is_final_boss or day_cfg.is_boss_attack_day)
+	):
+		final_boss_id = day_cfg.boss_id
+		final_boss_defeated = true
+		final_boss_active = false
+		_synthetic_boss_attack_day = null
+		SignalBus.campaign_boss_attempted.emit(completed_day_index, true)
 
 	SignalBus.mission_won.emit(current_mission)
-
-	# DEVIATION: When no campaign config (length 0), preserve legacy mission-count win condition.
-	if campaign_len == 0 and current_mission >= TOTAL_MISSIONS:
-		_transition_to(Types.GameState.GAME_WON)
-	elif is_final_day:
-		_transition_to(Types.GameState.GAME_WON)
-	else:
-		_transition_to(Types.GameState.BETWEEN_MISSIONS)
 
 func _on_tower_destroyed() -> void:
 	print("[GameManager] tower_destroyed → MISSION_FAILED")
 	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
-	apply_day_result_to_territory(day_cfg, false)
+	var completed_day_index: int = CampaignManager.get_current_day()
+	if (
+			day_cfg != null
+			and day_cfg.boss_id != ""
+			and (day_cfg.is_final_boss or day_cfg.is_boss_attack_day)
+			and not final_boss_defeated
+	):
+		final_boss_id = day_cfg.boss_id
+		final_boss_active = true
+		SignalBus.campaign_boss_attempted.emit(completed_day_index, false)
+	else:
+		apply_day_result_to_territory(day_cfg, false)
 	_transition_to(Types.GameState.MISSION_FAILED)
 	SignalBus.mission_failed.emit(current_mission)
+
+
+func prepare_next_campaign_day_if_needed() -> void:
+	if not final_boss_active or final_boss_defeated:
+		return
+	advance_to_next_day()
+
+
+## TEST-ONLY: resets Prompt 10 boss campaign fields without starting a new game.
+func reset_boss_campaign_state_for_test() -> void:
+	_reset_final_boss_campaign_state()
+
+
+func _reset_final_boss_campaign_state() -> void:
+	final_boss_id = ""
+	final_boss_day_index = 50
+	final_boss_active = false
+	final_boss_defeated = false
+	current_boss_threat_territory_id = ""
+	held_territory_ids.clear()
+	_synthetic_boss_attack_day = null
+
+
+func _sync_held_territories_from_map() -> void:
+	held_territory_ids.clear()
+	if territory_map == null:
+		return
+	for t: TerritoryData in territory_map.get_all_territories():
+		if t != null and t.is_controlled_by_player:
+			held_territory_ids.append(t.territory_id)
+
+
+func _update_final_boss_tracking_from_day(day_cfg: DayConfig) -> void:
+	if day_cfg == null:
+		return
+	if day_cfg.boss_id != "":
+		final_boss_id = day_cfg.boss_id
+	if day_cfg.is_final_boss:
+		final_boss_day_index = day_cfg.day_index
+
+
+func _ensure_synthetic_boss_attack_day_config() -> DayConfig:
+	var syn: DayConfig = DayConfig.new()
+	syn.day_index = CampaignManager.current_day
+	syn.mission_index = 5
+	syn.display_name = "Boss strike"
+	syn.description = "PLACEHOLDER: The campaign boss strikes again."
+	syn.faction_id = "PLAGUE_CULT"
+	syn.base_wave_count = 10
+	syn.enemy_hp_multiplier = 1.0
+	syn.enemy_damage_multiplier = 1.0
+	syn.gold_reward_multiplier = 1.0
+	syn.is_mini_boss_day = false
+	syn.is_mini_boss = false
+	syn.is_final_boss = true
+	syn.is_boss_attack_day = true
+	syn.boss_id = final_boss_id
+	_synthetic_boss_attack_day = syn
+	return syn
+
+
+func _assign_boss_attack_to_day(day_config: DayConfig) -> void:
+	if day_config == null:
+		return
+	if held_territory_ids.is_empty():
+		_sync_held_territories_from_map()
+	if held_territory_ids.is_empty():
+		return
+	var idx: int = randi() % held_territory_ids.size()
+	current_boss_threat_territory_id = held_territory_ids[idx]
+	day_config.territory_id = current_boss_threat_territory_id
+	day_config.is_boss_attack_day = true
+	day_config.is_final_boss = true
+	day_config.boss_id = final_boss_id
+	_mark_territory_boss_threat(current_boss_threat_territory_id, true)
+
+
+func _mark_territory_boss_threat(territory_id: String, threatened: bool) -> void:
+	if territory_map == null or territory_id == "":
+		return
+	var t: TerritoryData = territory_map.get_territory_by_id(territory_id)
+	if t == null:
+		return
+	t.has_boss_threat = threatened
+	SignalBus.territory_state_changed.emit(territory_id)
+
+
+func _on_boss_killed(boss_id: String) -> void:
+	var data: BossData = _get_boss_data(boss_id)
+	if data != null and data.is_mini_boss and data.associated_territory_id != "":
+		_mark_territory_secured(data.associated_territory_id)
+
+
+func _get_boss_data(boss_id: String) -> BossData:
+	for path: String in BossData.BUILTIN_BOSS_RESOURCE_PATHS:
+		var res: Resource = load(path)
+		if res is BossData:
+			var b: BossData = res as BossData
+			if b.boss_id == boss_id:
+				return b
+	return null
+
+
+func _mark_territory_secured(territory_id: String) -> void:
+	if territory_map == null or territory_id == "":
+		return
+	var t: TerritoryData = territory_map.get_territory_by_id(territory_id)
+	if t == null:
+		return
+	t.is_secured = true
+	SignalBus.territory_state_changed.emit(territory_id)

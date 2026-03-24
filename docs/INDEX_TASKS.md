@@ -109,3 +109,18 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - `INDEX_SHORT.md`, `INDEX_FULL.md`, `INDEX_MACHINE.md` updated
 - Pre-generation docs split (2026-03-24): **`docs/PRE_GENERATION_SPECIFICATION.md`** holds the full reference (signals, paths, project checklist, stubs); **`docs/PRE_GENERATION_VERIFICATION.md`** is the short checklist that links to it.
 - Prompt 9 polish (2026-03-24): **`INDEX_FULL.md`** — full **FactionRosterEntry** / **FactionData** field tables under CUSTOM RESOURCE TYPES; **`territory_data.gd`** — `# DEVIATION` on `terrain_type` vs Prompt 9 string sketch; **`PROMPT_9_IMPLEMENTATION.md`** / **`INDEX_SHORT.md`** — GdUnit count **349** tests.
+- Prompt 10 (2026-03-24) — mini-boss + campaign boss + Day 50 loop:
+  - **`docs/PROMPT_10_IMPLEMENTATION.md`** — status, file list, verification checklist.
+  - **`BossData`**, **`BossBase`**, **`res://resources/bossdata_*.tres`**
+  - **`SignalBus`**: `boss_spawned`, `boss_killed`, `campaign_boss_attempted`
+  - **`GameManager`** / **`CampaignManager`** / **`WaveManager`** boss APIs (see implementation doc).
+  - **`DayConfig`**: `boss_id`, `is_mini_boss`, `is_boss_attack_day`; **`CampaignConfig.starting_territory_ids`**; **`TerritoryData.is_secured`**, **`has_boss_threat`**
+  - Tests: **`test_boss_data.gd`**, **`test_boss_base.gd`**, **`test_boss_waves.gd`**, **`test_final_boss_day.gd`**; additions in **`test_wave_manager.gd`**
+  - **`INDEX_SHORT.md`**, **`INDEX_FULL.md`**, **`INDEX_MACHINE.md`**, **`INDEX_TASKS.md`** updated for Prompt 10 (**re-run** `./tools/run_gdunit.sh` locally to refresh counts).
+- Prompt 10 fixes (2026-03-24) — **`docs/PROMPT_10_FIXES.md`**:
+  - **`WaveManager`**: `get_node_or_null` for `/root/Main/EnemyContainer` and `/root/Main/SpawnPoints`; combined null guard in **`_spawn_wave`** and **`_spawn_boss_wave`**.
+  - **`test_wave_manager.gd`**, **`test_boss_waves.gd`**: spawn-point tree order + post-`add_child` injection of container refs.
+  - **`WeaponLevelData`** `.tres` **`script_class`** line; **`test_campaign_manager.gd`** assertion style.
+  - **`GameManager._begin_mission_wave_sequence`**: **`Main` → `Managers` → `WaveManager`** via **`get_node_or_null`**; soft skip (**`push_warning`** + return) when absent so suites like **`test_enchantment_manager`** do not require **`main.tscn`** (GdUnit error monitor); **`test_game_manager`** optional guard test.
+  - **`GameManager`** + **`project.godot`**: **`mission_won`** → **`_on_mission_won_transition_to_hub`**; autoload order **`CampaignManager`** before **`GameManager`**; **`test_campaign_manager`** **`mission_failed`** payload fix; **`docs/PROBLEM_REPORT.md`** (errors + files).
+  - Indexes updated (**`INDEX_SHORT`**, **`INDEX_FULL`**, **`INDEX_TASKS`**, **`INDEX_MACHINE`**).

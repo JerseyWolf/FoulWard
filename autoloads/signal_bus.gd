@@ -23,6 +23,14 @@ signal arnulf_incapacitated()
 @warning_ignore("unused_signal")
 signal arnulf_recovered()
 
+# === BOSSES (Prompt 10) ===
+@warning_ignore("unused_signal")
+signal boss_spawned(boss_id: String)
+@warning_ignore("unused_signal")
+signal boss_killed(boss_id: String)
+@warning_ignore("unused_signal")
+signal campaign_boss_attempted(day_index: int, success: bool)
+
 # === WAVES ===
 @warning_ignore("unused_signal")
 signal wave_countdown_started(wave_number: int, seconds_remaining: float)

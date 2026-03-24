@@ -58,6 +58,11 @@ func test_start_new_game_calls_economy_reset() -> void:
 	GameManager.start_new_game()
 	assert_int(EconomyManager.get_gold()).is_equal(1000)
 
+func test_begin_mission_wave_sequence_skips_gracefully_without_main_scene() -> void:
+	# Typical GdUnit tree has no /root/Main; must not crash or assert.
+	GameManager.call("_begin_mission_wave_sequence")
+	assert_bool(true).is_true()
+
 # ════════════════════════════════════════════
 # start_next_mission
 # ════════════════════════════════════════════

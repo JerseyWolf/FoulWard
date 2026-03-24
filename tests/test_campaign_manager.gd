@@ -7,7 +7,7 @@ func before_test() -> void:
 func test_start_new_game_initializes_day_one_for_short_campaign() -> void:
 	assert_int(CampaignManager.current_day).is_equal(1)
 	assert_bool(CampaignManager.campaign_completed).is_false()
-	assert_not_null(CampaignManager.current_day_config)
+	assert_that(CampaignManager.current_day_config).is_not_null()
 	assert_int(CampaignManager.current_day_config.day_index).is_equal(1)
 	assert_str(CampaignManager.campaign_id).is_equal("short_campaign_5_days")
 
@@ -22,7 +22,8 @@ func test_day_fail_repeats_same_day() -> void:
 	SignalBus.mission_won.emit(GameManager.get_current_mission())
 	assert_int(CampaignManager.current_day).is_equal(2)
 	var prev_fails: int = CampaignManager.failed_attempts_on_current_day
-	SignalBus.mission_failed.emit(GameManager.get_current_mission())
+	# Payload must match CampaignManager.current_day (GameManager mission index may lag until the next day starts).
+	SignalBus.mission_failed.emit(CampaignManager.get_current_day())
 	assert_int(CampaignManager.current_day).is_equal(2)
 	assert_int(CampaignManager.failed_attempts_on_current_day).is_equal(prev_fails + 1)
 
