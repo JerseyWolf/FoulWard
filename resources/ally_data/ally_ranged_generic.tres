@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AllyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/ally_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ally_id = "ally_ranged_generic"
+display_name = "Mercenary (Ranged)"
+description = "PLACEHOLDER narrative."
+ally_class = 1
+max_hp = 70
+move_speed = 4.0
+basic_attack_damage = 14.0
+attack_range = 10.0
+attack_cooldown = 1.1
+preferred_targeting = 0
+is_unique = false

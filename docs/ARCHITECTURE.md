@@ -13,7 +13,8 @@ Registered in `project.godot` in this exact order:
 | 1  | `res://autoloads/signal_bus.gd`          | `SignalBus`        | Central signal registry (no logic)       |
 | 2  | `res://autoloads/damage_calculator.gd`   | `DamageCalculator` | Stateless damage multiplier lookups      |
 | 3  | `res://autoloads/economy_manager.gd`     | `EconomyManager`   | Resource tracking + transactions         |
-| 4  | `res://autoloads/game_manager.gd`        | `GameManager`      | Mission state, session flow, game state  |
+| 4  | `res://autoloads/campaign_manager.gd`    | `CampaignManager`  | Campaign/day state, faction registry, **ally roster** (`current_ally_roster`); must load **before** `GameManager` so `mission_won` / `mission_failed` handlers run in order |
+| 5  | `res://autoloads/game_manager.gd`        | `GameManager`      | Mission state, session flow, territory; **spawns/cleans up generic allies** under `Main/AllyContainer` |
 
 `Types` is a `class_name` script at `res://scripts/types.gd` — NOT an autoload.
 It provides enums and constants via `Types.GameState`, `Types.DamageType`, etc.
@@ -71,6 +72,14 @@ Main (Node3D)                                  [main.tscn — root scene]
 ├── EnemyContainer (Node3D)                    [Runtime parent for spawned enemies]
 │   └── (enemies added at runtime)
 │
+├── AllyContainer (Node3D)                      [Runtime parent for generic allies spawned by GameManager]
+│   └── (AllyBase instances added at mission start)
+│
+├── AllySpawnPoints (Node3D)                    [Fixed spawn locations for allies (near tower)]
+│   ├── AllySpawnPoint_00 (Marker3D)
+│   ├── AllySpawnPoint_01 (Marker3D)
+│   └── AllySpawnPoint_02 (Marker3D)
+│
 ├── BuildingContainer (Node3D)                 [Runtime parent for placed buildings]
 │   └── BuildingBase (Node3D)                  [building_base.tscn — instanced at runtime per placed building]
 │       ├── BuildingMesh (MeshInstance3D)       [MVP cube placeholder, color driven by BuildingData.color]
@@ -120,6 +129,7 @@ Main (Node3D)                                  [main.tscn — root scene]
 Declares all cross-system signals as listed in CONVENTIONS.md §5. Contains zero logic —
 only signal declarations. Every system emits and connects through this singleton.
 Exists purely so systems never need direct references to each other.
+**Prompt 11:** ally lifecycle hooks: `ally_spawned`, `ally_downed`, `ally_recovered`, `ally_killed` (and POST-MVP `ally_state_changed`).
 
 **DamageCalculator** (`damage_calculator.gd`):
 Stateless utility. Holds the 4×4 damage multiplier matrix as a nested Dictionary.
@@ -132,11 +142,18 @@ All resource modifications go through this class's public methods. Every modific
 emits `SignalBus.resource_changed`. Provides `can_afford()` for pre-transaction checks.
 `reset_to_defaults()` resets all resources to starting values (called at session start).
 
+**CampaignManager** (`campaign_manager.gd`):
+Owns short-campaign / day progression, `DayConfig` resolution, faction registry validation,
+and **Prompt 11** `current_ally_roster` (which `AllyData` resources are fielded each mission).
+Connects to `mission_won` / `mission_failed` for day advancement (must register before `GameManager` in `project.godot`).
+
 **GameManager** (`game_manager.gd`):
 State machine for the overall game flow. Owns `current_mission`, `current_wave`,
 `game_state`. Transitions between states (MAIN_MENU → MISSION_BRIEFING → COMBAT →
 BETWEEN_MISSIONS → ... → GAME_WON). Coordinates mission start/end, calls
 `EconomyManager.reset_to_defaults()` on new game, awards post-mission resources.
+**Prompt 11:** instantiates `AllyBase` under `Main/AllyContainer` from `CampaignManager.current_ally_roster`
+when a mission enters combat (`start_mission_for_day`, `start_wave_countdown`); frees allies on mission win, tower loss, and `start_new_game` cleanup.
 Listens to: `all_waves_cleared`, `tower_destroyed`. Emits: `game_state_changed`,
 `mission_started`, `mission_won`, `mission_failed`.
 
@@ -153,6 +170,10 @@ projectile container node reference. Handles weapon reload timers internally.
 State machine with states: IDLE, PATROL, CHASE, ATTACK, DOWNED, RECOVERING.
 Uses NavigationAgent3D for pathfinding to enemies. DetectionArea triggers CHASE when
 enemies enter patrol radius. AttackArea triggers ATTACK when enemies are in melee range.
+**Prompt 11:** also emits generic `SignalBus.ally_*` with id `arnulf` alongside Arnulf-specific signals (`reset_for_new_mission` → `ally_spawned`; downed/recover → `ally_downed` / `ally_recovered`).
+
+**AllyBase** (`ally_base.gd` / `scenes/allies/ally_base.tscn`):
+Generic mercenary / ally CharacterBody3D: **CLOSEST** enemy targeting (`find_target` over `enemies` group), NavigationAgent3D chase, direct damage via `EnemyBase.take_damage`. Emits `ally_spawned` / `ally_killed` for campaign and UI.
 On HealthComponent `health_depleted`: transitions to DOWNED, waits 3 seconds, transitions
 to RECOVERING (sets HP to 50% of max), then returns to IDLE. Cycle repeats infinitely.
 Emits: `arnulf_state_changed`, `arnulf_incapacitated`, `arnulf_recovered` via SignalBus.

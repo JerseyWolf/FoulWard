@@ -1,0 +1,61 @@
+[gd_scene load_steps=8 format=3 uid="uid://ally_base_scene"]
+
+; AllyBase — generic ally placeholder (layer 3 friendly, mask ground for CharacterBody3D).
+; DetectionArea / AttackArea: mask layer 2 (Enemies).
+
+[ext_resource type="Script" path="res://scenes/allies/ally_base.gd" id="1_ally"]
+[ext_resource type="Script" path="res://scripts/health_component.gd" id="2_health"]
+
+[sub_resource type="BoxMesh" id="1_mesh"]
+size = Vector3(0.9, 1.2, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="mat_ally"]
+albedo_color = Color(0.2, 0.45, 0.95, 1)
+
+[sub_resource type="BoxShape3D" id="2_collision"]
+size = Vector3(0.9, 1.2, 0.9)
+
+[sub_resource type="SphereShape3D" id="3_detection_shape"]
+radius = 40.0
+
+[sub_resource type="SphereShape3D" id="4_attack_shape"]
+radius = 2.0
+
+[node name="AllyBase" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 32
+script = ExtResource("1_ally")
+
+[node name="AllyMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("1_mesh")
+material_override = SubResource("mat_ally")
+
+[node name="AllyCollision" type="CollisionShape3D" parent="."]
+shape = SubResource("2_collision")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.5
+target_desired_distance = 0.75
+avoidance_enabled = true
+radius = 0.5
+
+[node name="DetectionArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitoring = true
+monitorable = false
+
+[node name="DetectionShape" type="CollisionShape3D" parent="DetectionArea"]
+shape = SubResource("3_detection_shape")
+
+[node name="AttackArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitoring = true
+monitorable = false
+
+[node name="AttackShape" type="CollisionShape3D" parent="AttackArea"]
+shape = SubResource("4_attack_shape")

@@ -136,6 +136,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31, 0, -25)
 
 [node name="EnemyContainer" type="Node3D" parent="." unique_id=1398307004]
 
+[node name="AllyContainer" type="Node3D" parent="."]
+
+[node name="AllySpawnPoints" type="Node3D" parent="."]
+
+[node name="AllySpawnPoint_00" type="Marker3D" parent="AllySpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 4)
+
+[node name="AllySpawnPoint_01" type="Marker3D" parent="AllySpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 4)
+
+[node name="AllySpawnPoint_02" type="Marker3D" parent="AllySpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
 [node name="BuildingContainer" type="Node3D" parent="." unique_id=1261693534]
 
 [node name="ProjectileContainer" type="Node3D" parent="." unique_id=1596717683]

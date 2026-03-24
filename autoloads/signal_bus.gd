@@ -23,6 +23,19 @@ signal arnulf_incapacitated()
 @warning_ignore("unused_signal")
 signal arnulf_recovered()
 
+# === ALLIES ===
+@warning_ignore("unused_signal")
+signal ally_spawned(ally_id: String)
+@warning_ignore("unused_signal")
+signal ally_downed(ally_id: String)
+@warning_ignore("unused_signal")
+signal ally_recovered(ally_id: String)
+@warning_ignore("unused_signal")
+signal ally_killed(ally_id: String)
+# POST-MVP: detailed ally state tracking.
+@warning_ignore("unused_signal")
+signal ally_state_changed(ally_id: String, new_state: String)
+
 # === BOSSES (Prompt 10) ===
 @warning_ignore("unused_signal")
 signal boss_spawned(boss_id: String)
