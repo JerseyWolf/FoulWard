@@ -173,3 +173,14 @@ LATEST CHANGES (2026-03-24)
   - `BetweenMissionScreen` now includes a Weapons tab with upgrade controls
   - `Tower` now resolves effective damage/speed/reload/burst via manager with null-guard fallback
   - `docs/PROMPT_3_IMPLEMENTATION.md` records implementation details
+- Phase 4 two-slot enchantment system added:
+  - New autoload: `EnchantmentManager` (`res://autoloads/enchantment_manager.gd`)
+  - New resource class: `EnchantmentData` (`res://scripts/resources/enchantment_data.gd`)
+  - New resources: `res://resources/enchantments/{scorching_bolts,sharpened_mechanism,toxic_payload,arcane_focus}.tres`
+  - New SignalBus signals: `enchantment_applied(...)`, `enchantment_removed(...)`
+  - `Tower` now composes projectile damage + damage type using `"elemental"` and `"power"` enchantment slots
+  - `ProjectileBase.initialize_from_weapon(...)` now supports optional custom damage and damage type
+  - `GameManager.start_new_game()` resets enchantment state
+  - `BetweenMissionScreen` now includes enchantment apply/remove controls in Weapons tab
+  - Added tests: `res://tests/test_enchantment_manager.gd`, `res://tests/test_tower_enchantments.gd`
+  - Added projectile regression: `test_initialize_from_weapon_without_custom_values_uses_physical`

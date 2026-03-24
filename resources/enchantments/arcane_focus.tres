@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnchantmentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enchantment_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enchantment_id = "arcane_focus"
+display_name = "Arcane Focus"
+description = "Bolts channel arcane power, excelling against heavy armor."
+slot_type = "elemental"
+has_damage_type_override = true
+damage_type_override = 2
+has_secondary_damage_type = false
+secondary_damage_type = 0
+damage_multiplier = 0.9
+effect_tags = Array[String]([])
+effect_data = {}

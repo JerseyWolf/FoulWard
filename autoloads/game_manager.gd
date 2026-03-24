@@ -31,6 +31,7 @@ func start_new_game() -> void:
 	current_mission = 1
 	current_wave = 0
 	EconomyManager.reset_to_defaults()
+	EnchantmentManager.reset_to_defaults()
 	# Ensure research unlock state is reset for a new run.
 	# In dev mode, ResearchManager can choose to unlock all nodes to make
 	# content reachable for testing (e.g., tower availability).

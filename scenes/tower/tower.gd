@@ -84,7 +84,11 @@ func _physics_process(delta: float) -> void:
 	if _burst_remaining > 0:
 		_burst_timer -= delta
 		if _burst_timer <= 0.0:
-			_spawn_projectile(_build_effective_weapon_data(Types.WeaponSlot.RAPID_MISSILE), _burst_target)
+			var rapid_composed: Dictionary = _compose_projectile_stats(
+				Types.WeaponSlot.RAPID_MISSILE,
+				_build_effective_weapon_data(Types.WeaponSlot.RAPID_MISSILE)
+			)
+			_spawn_weapon_projectile(Types.WeaponSlot.RAPID_MISSILE, rapid_composed, global_position, _burst_target)
 			_burst_remaining -= 1
 			_burst_timer = rapid_missile_data.burst_interval
 
@@ -101,13 +105,11 @@ func fire_crossbow(target_position: Vector3) -> void:
 		return
 	var final_target: Vector3 = _resolve_manual_aim_target(crossbow_data, target_position)
 	print("[Tower] fire_crossbow → (%.1f,%.1f,%.1f)" % [final_target.x, final_target.y, final_target.z])
-	_spawn_projectile(_build_effective_weapon_data(Types.WeaponSlot.CROSSBOW), final_target)
+	var weapon_slot: Types.WeaponSlot = Types.WeaponSlot.CROSSBOW
+	var effective_data: WeaponData = _build_effective_weapon_data(weapon_slot)
+	var composed: Dictionary = _compose_projectile_stats(weapon_slot, effective_data)
+	_spawn_weapon_projectile(weapon_slot, composed, global_position, final_target)
 	_crossbow_reload_remaining = _get_effective_weapon_reload_time(Types.WeaponSlot.CROSSBOW)
-	SignalBus.projectile_fired.emit(
-		Types.WeaponSlot.CROSSBOW,
-		global_position,
-		final_target
-	)
 
 
 ## Starts a burst of rapid_missile_data.burst_count projectiles.
@@ -124,11 +126,6 @@ func fire_rapid_missile(target_position: Vector3) -> void:
 	_burst_remaining = _get_effective_weapon_burst_count(Types.WeaponSlot.RAPID_MISSILE)
 	_burst_timer = 0.0  # First shot fires this same physics frame.
 	_burst_target = final_target
-	SignalBus.projectile_fired.emit(
-		Types.WeaponSlot.RAPID_MISSILE,
-		global_position,
-		final_target
-	)
 
 
 ## Applies raw integer damage to the HealthComponent.
@@ -201,6 +198,58 @@ func _spawn_projectile(weapon_data: WeaponData, target_pos: Vector3) -> void:
 	_projectile_container.add_child(proj)
 	proj.initialize_from_weapon(weapon_data, global_position, target_pos)
 	proj.add_to_group("projectiles")
+
+
+func _compose_projectile_stats(weapon_slot: Types.WeaponSlot, weapon_data: WeaponData) -> Dictionary:
+	var final_damage: float = weapon_data.damage
+	var final_damage_type: Types.DamageType = Types.DamageType.PHYSICAL
+
+	# SOURCE: Community stat-container/status-effect patterns (base stat + slot modifiers).
+	var elemental_enchant: EnchantmentData = EnchantmentManager.get_equipped_enchantment(weapon_slot, "elemental")
+	if elemental_enchant != null:
+		if elemental_enchant.has_damage_type_override:
+			final_damage_type = elemental_enchant.damage_type_override
+		final_damage *= elemental_enchant.damage_multiplier
+
+	var power_enchant: EnchantmentData = EnchantmentManager.get_equipped_enchantment(weapon_slot, "power")
+	if power_enchant != null:
+		if power_enchant.has_damage_type_override:
+			final_damage_type = power_enchant.damage_type_override
+		final_damage *= power_enchant.damage_multiplier
+
+	return {
+		"damage": final_damage,
+		"damage_type": final_damage_type,
+	}
+
+
+func _spawn_weapon_projectile(
+	weapon_slot: Types.WeaponSlot,
+	composed: Dictionary,
+	origin: Vector3,
+	target_position: Vector3
+) -> void:
+	if _projectile_container == null:
+		push_warning("Tower._spawn_weapon_projectile: ProjectileContainer not found — skipping spawn.")
+		SignalBus.projectile_fired.emit(weapon_slot, origin, target_position)
+		return
+
+	var projectile: ProjectileBase = ProjectileScene.instantiate() as ProjectileBase
+	var damage: float = composed.get("damage", 0.0) as float
+	var damage_type_value: int = composed.get("damage_type", Types.DamageType.PHYSICAL) as int
+	var damage_type: Types.DamageType = damage_type_value as Types.DamageType
+	var weapon_data: WeaponData = crossbow_data if weapon_slot == Types.WeaponSlot.CROSSBOW else rapid_missile_data
+
+	_projectile_container.add_child(projectile)
+	projectile.initialize_from_weapon(
+		weapon_data,
+		origin,
+		target_position,
+		damage,
+		damage_type
+	)
+	projectile.add_to_group("projectiles")
+	SignalBus.projectile_fired.emit(weapon_slot, origin, target_position)
 
 
 ## Targets the nearest living enemy (ground or flying) and fires the crossbow.

@@ -47,12 +47,14 @@ func _ready() -> void:
 func initialize_from_weapon(
 	weapon_data: WeaponData,
 	origin: Vector3,
-	target_position: Vector3
+	target_position: Vector3,
+	custom_damage: float = -1.0,
+	custom_damage_type: Types.DamageType = Types.DamageType.PHYSICAL
 ) -> void:
 	# Credit (two-path initialization pattern, overshoot buffer):
 	#   FOUL WARD SYSTEMS_part2.md §6.5 initialize_from_weapon.
-	_damage = weapon_data.damage
-	_damage_type = Types.DamageType.PHYSICAL  # MVP: Florence weapons are PHYSICAL.
+	_damage = custom_damage if custom_damage >= 0.0 else weapon_data.damage
+	_damage_type = custom_damage_type
 	_speed = weapon_data.projectile_speed
 	_origin = origin
 	_target_position = target_position

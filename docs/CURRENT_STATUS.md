@@ -46,8 +46,10 @@ Open **`project.godot`** in Godot (or “Import” the folder). First open regen
 From **`$REPO`**:
 
 ```bash
-godot --headless -s "addons/gdUnit4/bin/GdUnitCmdTool.gd" --ignoreHeadlessMode -a "res://tests"
+./tools/run_gdunit.sh
 ```
+
+If your shell defines `godot` as a wrapper function that forces editor mode (for example appending `-e`), use the direct Godot binary path for CLI tests. Editor-mode wrappers inject `--editor` and break GdUnit CLI parsing.
 
 - Expect **289** cases, **0** failures in the **Overall Summary** line.
 - If the process **crashes after** tests on some OSes, still trust the summary line when it printed.

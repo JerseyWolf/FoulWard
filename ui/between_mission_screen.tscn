@@ -83,10 +83,53 @@ text = ""
 [node name="UpgradeButton" type="Button" parent="TabContainer/WeaponsTab/VBoxContainer/RapidMissilePanel"]
 text = "Upgrade"
 
+[node name="WeaponsPanel" type="VBoxContainer" parent="TabContainer/WeaponsTab/VBoxContainer"]
+
+[node name="Crossbow" type="HBoxContainer" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel"]
+
+[node name="NameLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow"]
+text = "Crossbow"
+
+[node name="EnchantmentLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow"]
+text = "elemental: None, power: None"
+
+[node name="ApplyElementalButton" type="Button" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow"]
+text = "Apply Elemental"
+
+[node name="ApplyPowerButton" type="Button" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow"]
+text = "Apply Power"
+
+[node name="RemoveAllButton" type="Button" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow"]
+text = "Remove"
+
+[node name="RapidMissile" type="HBoxContainer" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel"]
+
+[node name="NameLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile"]
+text = "Rapid Missile"
+
+[node name="EnchantmentLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile"]
+text = "elemental: None, power: None"
+
+[node name="ApplyElementalButton" type="Button" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile"]
+text = "Apply Elemental"
+
+[node name="ApplyPowerButton" type="Button" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile"]
+text = "Apply Power"
+
+[node name="RemoveAllButton" type="Button" parent="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile"]
+text = "Remove"
+
 [node name="NextMissionButton" type="Button" parent="."]
 anchor_left = 0.35
 anchor_top = 0.88
 anchor_right = 0.65
 anchor_bottom = 0.96
 text = "Next Mission"
+
+[connection signal="pressed" from="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/ApplyElementalButton" to="." method="on_apply_crossbow_elemental_pressed"]
+[connection signal="pressed" from="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/ApplyPowerButton" to="." method="on_apply_crossbow_power_pressed"]
+[connection signal="pressed" from="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/RemoveAllButton" to="." method="on_remove_crossbow_enchantments_pressed"]
+[connection signal="pressed" from="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/ApplyElementalButton" to="." method="on_apply_rapid_elemental_pressed"]
+[connection signal="pressed" from="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/ApplyPowerButton" to="." method="on_apply_rapid_power_pressed"]
+[connection signal="pressed" from="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/RemoveAllButton" to="." method="on_remove_rapid_enchantments_pressed"]
 
