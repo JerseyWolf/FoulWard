@@ -5,6 +5,7 @@
 extends Node
 
 const DEFAULT_SHORT_CAMPAIGN: CampaignConfig = preload("res://resources/campaigns/campaign_short_5_days.tres")
+const FactionDataType = preload("res://scripts/resources/faction_data.gd")
 
 var current_day: int = 1
 var campaign_length: int = 0
@@ -14,11 +15,15 @@ var failed_attempts_on_current_day: int = 0
 var current_day_config: DayConfig = null
 var campaign_config: CampaignConfig = null
 
+## Loaded from FactionData.BUILTIN_FACTION_RESOURCE_PATHS (String -> FactionData).
+var faction_registry: Dictionary = {}
+
 ## Assign the active campaign from the inspector.
 ## Default should be campaign_short_5_days.tres.
 @export var active_campaign_config: CampaignConfig
 
 func _ready() -> void:
+	_load_faction_registry()
 	SignalBus.mission_won.connect(_on_mission_won)
 	SignalBus.mission_failed.connect(_on_mission_failed)
 	if active_campaign_config == null:
@@ -51,6 +56,34 @@ func get_campaign_length() -> int:
 
 func get_current_day_config() -> DayConfig:
 	return current_day_config
+
+
+func _load_faction_registry() -> void:
+	faction_registry.clear()
+	for path: String in FactionDataType.BUILTIN_FACTION_RESOURCE_PATHS:
+		var data: FactionDataType = load(path) as FactionDataType
+		if data == null:
+			push_error("CampaignManager: Failed to load FactionData at %s" % path)
+			continue
+		if data.faction_id == "":
+			push_error("CampaignManager: FactionData at %s has empty faction_id" % path)
+			continue
+		faction_registry[data.faction_id] = data
+
+
+## Ensures each day references a known non-empty faction_id (empty → DEFAULT_MIXED).
+func validate_day_configs(day_configs: Array[DayConfig]) -> void:
+	for dc: DayConfig in day_configs:
+		assert(dc != null, "CampaignManager.validate_day_configs: null DayConfig in array.")
+		var fid: String = dc.faction_id.strip_edges()
+		if fid.is_empty():
+			fid = "DEFAULT_MIXED"
+		assert(not fid.is_empty(), "CampaignManager.validate_day_configs: resolved faction_id empty.")
+		assert(
+			faction_registry.has(fid),
+			"CampaignManager.validate_day_configs: unknown faction_id '%s'." % fid
+		)
+
 
 func _set_campaign_config(config: CampaignConfig) -> void:
 	campaign_config = config

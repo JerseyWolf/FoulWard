@@ -5,7 +5,7 @@
 ; # TUNING: enemy_hp_multiplier = 1.0 + (i-1)*0.02 — PLACEHOLDER +2% per day from day 1.
 ; # TUNING: enemy_damage_multiplier = 1.0 + (i-1)*0.015 — PLACEHOLDER +1.5% per day.
 ; # TUNING: gold_reward_multiplier = 1.0 + (i-1)*0.01 — PLACEHOLDER +1% per day.
-; # TUNING: is_mini_boss true on days 10,20,30,40; is_final_boss true on day 50 only.
+; # TUNING: is_mini_boss_day true on days 10,20,30,40; is_final_boss true on day 50 only.
 
 
 [ext_resource type="Script" path="res://scripts/resources/campaign_config.gd" id="1_campaignconfig"]
@@ -26,7 +26,7 @@ enemy_damage_multiplier = 1.0
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.0
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -46,7 +46,7 @@ enemy_damage_multiplier = 1.015
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.01
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -66,7 +66,7 @@ enemy_damage_multiplier = 1.03
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.02
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -86,7 +86,7 @@ enemy_damage_multiplier = 1.045
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.03
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -106,7 +106,7 @@ enemy_damage_multiplier = 1.06
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.04
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -126,7 +126,7 @@ enemy_damage_multiplier = 1.075
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.05
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -146,7 +146,7 @@ enemy_damage_multiplier = 1.09
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.06
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -166,7 +166,7 @@ enemy_damage_multiplier = 1.105
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.07
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -186,7 +186,7 @@ enemy_damage_multiplier = 1.12
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.08
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -206,7 +206,7 @@ enemy_damage_multiplier = 1.135
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.09
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = true
+is_mini_boss_day = true
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -226,7 +226,7 @@ enemy_damage_multiplier = 1.15
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.1
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -246,7 +246,7 @@ enemy_damage_multiplier = 1.165
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.11
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -266,7 +266,7 @@ enemy_damage_multiplier = 1.18
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.12
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -286,7 +286,7 @@ enemy_damage_multiplier = 1.195
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.13
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -306,7 +306,7 @@ enemy_damage_multiplier = 1.21
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.14
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -326,7 +326,7 @@ enemy_damage_multiplier = 1.225
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.15
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -346,7 +346,7 @@ enemy_damage_multiplier = 1.24
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.16
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -366,7 +366,7 @@ enemy_damage_multiplier = 1.255
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.17
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -386,7 +386,7 @@ enemy_damage_multiplier = 1.27
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.18
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -406,7 +406,7 @@ enemy_damage_multiplier = 1.285
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.19
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = true
+is_mini_boss_day = true
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -426,7 +426,7 @@ enemy_damage_multiplier = 1.3
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.2
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -446,7 +446,7 @@ enemy_damage_multiplier = 1.315
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.21
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -466,7 +466,7 @@ enemy_damage_multiplier = 1.33
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.22
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -486,7 +486,7 @@ enemy_damage_multiplier = 1.345
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.23
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -506,7 +506,7 @@ enemy_damage_multiplier = 1.36
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.24
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -526,7 +526,7 @@ enemy_damage_multiplier = 1.375
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.25
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -546,7 +546,7 @@ enemy_damage_multiplier = 1.39
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.26
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -566,7 +566,7 @@ enemy_damage_multiplier = 1.405
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.27
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -586,7 +586,7 @@ enemy_damage_multiplier = 1.42
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.28
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -606,7 +606,7 @@ enemy_damage_multiplier = 1.435
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.29
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = true
+is_mini_boss_day = true
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -626,7 +626,7 @@ enemy_damage_multiplier = 1.45
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.3
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -646,7 +646,7 @@ enemy_damage_multiplier = 1.465
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.31
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -666,7 +666,7 @@ enemy_damage_multiplier = 1.48
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.32
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -686,7 +686,7 @@ enemy_damage_multiplier = 1.495
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.33
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -706,7 +706,7 @@ enemy_damage_multiplier = 1.51
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.34
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -726,7 +726,7 @@ enemy_damage_multiplier = 1.525
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.35
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -746,7 +746,7 @@ enemy_damage_multiplier = 1.54
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.36
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -766,7 +766,7 @@ enemy_damage_multiplier = 1.555
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.37
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -786,7 +786,7 @@ enemy_damage_multiplier = 1.57
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.38
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -806,7 +806,7 @@ enemy_damage_multiplier = 1.585
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.39
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = true
+is_mini_boss_day = true
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -826,7 +826,7 @@ enemy_damage_multiplier = 1.6
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.4
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -846,7 +846,7 @@ enemy_damage_multiplier = 1.615
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.41
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -866,7 +866,7 @@ enemy_damage_multiplier = 1.63
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.42
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -886,7 +886,7 @@ enemy_damage_multiplier = 1.645
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.43
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -906,7 +906,7 @@ enemy_damage_multiplier = 1.66
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.44
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -926,7 +926,7 @@ enemy_damage_multiplier = 1.675
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.45
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -946,7 +946,7 @@ enemy_damage_multiplier = 1.69
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.46
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -966,7 +966,7 @@ enemy_damage_multiplier = 1.705
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.47
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -986,7 +986,7 @@ enemy_damage_multiplier = 1.72
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.48
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = false
 ; # TUNING: final campaign boss
@@ -1006,7 +1006,7 @@ enemy_damage_multiplier = 1.735
 ; # TUNING: damage scaling — PLACEHOLDER
 gold_reward_multiplier = 1.49
 ; # TUNING: reward scaling — PLACEHOLDER
-is_mini_boss = false
+is_mini_boss_day = false
 ; # TUNING: milestone mini-boss days
 is_final_boss = true
 ; # TUNING: final campaign boss

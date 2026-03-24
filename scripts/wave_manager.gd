@@ -9,16 +9,22 @@
 # ASSUMPTION: SpawnPoints at /root/Main/SpawnPoints with 10 Marker3D children.
 # ASSUMPTION: enemy_data_registry has exactly 6 entries in Types.EnemyType order.
 #
+# Prompt 9: Waves use FactionData roster weights (Option B) while total count stays N×6.
+#
 # Credit: Foul Ward SYSTEMS_part1.md §1 (WaveManager spec) — Foul Ward team.
 # Credit: Godot Engine Documentation — SceneTree.get_nodes_in_group()
 #   https://docs.godotengine.org/en/stable/classes/class_scenetree.html
-#   License: CC BY 3.0 | Adapted: group-as-source-of-truth for living enemy count.
+# License: CC BY 3.0 | Adapted: group-as-source-of-truth for living enemy count.
 # Credit: Godot Engine Documentation — Engine.time_scale
 #   https://docs.godotengine.org/en/stable/classes/class_engine.html
-#   License: CC BY 3.0 | Adapted: delta timers automatically respect time_scale.
+# License: CC BY 3.0 | Adapted: delta timers automatically respect time_scale.
 
 class_name WaveManager
 extends Node
+
+## Preloads: autoloads and early parses may run before global `class_name` registration.
+const FactionDataType = preload("res://scripts/resources/faction_data.gd")
+const FactionRosterEntryType = preload("res://scripts/resources/faction_roster_entry.gd")
 
 # ---------------------------------------------------------------------------
 # EXPORTS
@@ -66,6 +72,20 @@ var enemy_hp_multiplier: float = 1.0
 var enemy_damage_multiplier: float = 1.0
 var gold_reward_multiplier: float = 1.0
 
+# Faction-driven waves (Prompt 9) --------------------------------------------
+
+## Optional override used in tests to inject a FactionData instance.
+var _faction_data_override: FactionDataType = null
+
+## Registry mapping faction_id to FactionData. Populated in _ready.
+var faction_registry: Dictionary = {} # String -> FactionData
+
+## Resolved faction for the active mission/day.
+var _current_faction: FactionDataType = null
+
+## Set from DayConfig.is_mini_boss_day when configure_for_day runs.
+var _mini_boss_day_eligible: bool = false
+
 # ---------------------------------------------------------------------------
 # READY
 # ---------------------------------------------------------------------------
@@ -79,6 +99,8 @@ func _ready() -> void:
 	)
 	SignalBus.enemy_killed.connect(_on_enemy_killed)
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
+	_load_faction_registry()
+	resolve_current_faction()
 
 # ---------------------------------------------------------------------------
 # PHYSICS PROCESS — Countdown timer
@@ -164,7 +186,10 @@ func reset_for_new_mission() -> void:
 	enemy_hp_multiplier = 1.0
 	enemy_damage_multiplier = 1.0
 	gold_reward_multiplier = 1.0
+	_mini_boss_day_eligible = false
 	clear_all_enemies()
+	resolve_current_faction()
+
 
 func configure_for_day(day_config: DayConfig) -> void:
 	if day_config == null:
@@ -176,6 +201,57 @@ func configure_for_day(day_config: DayConfig) -> void:
 	enemy_hp_multiplier = day_config.enemy_hp_multiplier
 	enemy_damage_multiplier = day_config.enemy_damage_multiplier
 	gold_reward_multiplier = day_config.gold_reward_multiplier
+	_mini_boss_day_eligible = day_config.is_mini_boss_day
+	_apply_faction_from_day_config(day_config)
+
+
+## Allows tests to inject a custom FactionData instead of using campaign mapping.
+func set_faction_data_override(faction_data: FactionDataType) -> void:
+	_faction_data_override = faction_data
+	if faction_data != null:
+		_current_faction = faction_data
+	else:
+		resolve_current_faction()
+
+
+## Resolves the active faction for current mission/day.
+## ASSUMPTION: Campaign/day system supplies DayConfig via configure_for_day in gameplay.
+func resolve_current_faction() -> void:
+	if _faction_data_override != null:
+		_current_faction = _faction_data_override
+		return
+
+	# POST-MVP: integrate richer CampaignManager / territory default_faction_id here.
+	if faction_registry.has("DEFAULT_MIXED"):
+		_current_faction = faction_registry["DEFAULT_MIXED"] as FactionDataType
+	else:
+		_current_faction = null
+		push_error("WaveManager.resolve_current_faction: DEFAULT_MIXED not found in registry.")
+
+
+## Returns mini-boss schedule info for the given wave, or {} if none.
+## POST-MVP: Only reports data; other systems will decide how/when to spawn bosses.
+func get_mini_boss_info_for_wave(wave_index: int) -> Dictionary:
+	if _current_faction == null:
+		resolve_current_faction()
+	if _current_faction == null:
+		return {}
+
+	# Tests use _faction_data_override without configure_for_day; gameplay gates on day flag.
+	if _faction_data_override == null and not _mini_boss_day_eligible:
+		return {}
+
+	if _current_faction.mini_boss_ids.is_empty():
+		return {}
+
+	if _current_faction.mini_boss_wave_hints.has(wave_index):
+		return {
+			"mini_boss_id": _current_faction.mini_boss_ids[0],
+			"wave_index": wave_index,
+			"faction_id": _current_faction.faction_id,
+		}
+
+	return {}
 
 
 ## Immediately removes all enemies from the scene and the "enemies" group.
@@ -185,6 +261,38 @@ func clear_all_enemies() -> void:
 	for node: Node in get_tree().get_nodes_in_group("enemies"):
 		node.remove_from_group("enemies")
 		node.queue_free()
+
+# ---------------------------------------------------------------------------
+# PRIVATE — FACTION REGISTRY
+# ---------------------------------------------------------------------------
+
+func _load_faction_registry() -> void:
+	faction_registry.clear()
+	for path: String in FactionDataType.BUILTIN_FACTION_RESOURCE_PATHS:
+		var data: FactionDataType = load(path) as FactionDataType
+		if data == null:
+			push_error("WaveManager: Failed to load FactionData at %s" % path)
+			continue
+		if data.faction_id == "":
+			push_error("WaveManager: FactionData at %s has empty faction_id" % path)
+			continue
+		faction_registry[data.faction_id] = data
+
+
+func _apply_faction_from_day_config(day_config: DayConfig) -> void:
+	if _faction_data_override != null:
+		_current_faction = _faction_data_override
+		return
+
+	var fid: String = day_config.faction_id.strip_edges()
+	if fid.is_empty():
+		fid = "DEFAULT_MIXED"
+
+	if faction_registry.has(fid):
+		_current_faction = faction_registry[fid] as FactionDataType
+	else:
+		push_error("WaveManager: unknown faction_id '%s', falling back to DEFAULT_MIXED." % fid)
+		_current_faction = faction_registry.get("DEFAULT_MIXED", null) as FactionDataType
 
 # ---------------------------------------------------------------------------
 # PRIVATE — COUNTDOWN & SPAWN
@@ -202,11 +310,33 @@ func _begin_countdown_for_next_wave() -> void:
 	SignalBus.wave_countdown_started.emit(_current_wave, duration)
 
 
-## Wave formula: N enemies of EACH of the 6 types → total = N × 6.
-## Wave 1 = 6, Wave 5 = 30, Wave 10 = 60.
+## Wave formula: total enemies = N × 6 (scaled by faction difficulty_offset), split by roster weights.
 func _spawn_wave(wave_number: int) -> void:
 	assert(wave_number >= 1 and wave_number <= max_waves,
 		"WaveManager: _spawn_wave() invalid wave_number %d." % wave_number)
+
+	if _enemy_container == null:
+		push_error("WaveManager._spawn_wave: _enemy_container is null; cannot spawn.")
+		return
+	if _spawn_points == null:
+		push_error("WaveManager._spawn_wave: _spawn_points is null; cannot spawn.")
+		return
+
+	if _current_faction == null:
+		resolve_current_faction()
+
+	_current_wave = wave_number
+	_is_wave_active = true
+
+	var roster_entries: Array[FactionRosterEntryType] = _current_faction.get_entries_for_wave(wave_number)
+	if roster_entries.is_empty():
+		push_error(
+			"WaveManager._spawn_wave: faction '%s' has no roster entries for wave %d"
+			% [_current_faction.faction_id, wave_number]
+		)
+		SignalBus.wave_started.emit(_current_wave, 0)
+		call_deferred("_check_wave_cleared")
+		return
 
 	var spawn_point_nodes: Array[Node] = _spawn_points.get_children()
 	assert(
@@ -214,25 +344,34 @@ func _spawn_wave(wave_number: int) -> void:
 		"WaveManager: No spawn points found under SpawnPoints node."
 	)
 
+	var total_enemies: int = _compute_total_enemies_for_wave(wave_number, _current_faction)
+	var per_entry_counts: Array[int] = _allocate_counts_for_roster(roster_entries, total_enemies, wave_number)
+
 	var total_spawned: int = 0
 
-	for enemy_data: EnemyData in enemy_data_registry:
-		for i: int in range(wave_number):
+	for i: int in range(roster_entries.size()):
+		var entry: FactionRosterEntryType = roster_entries[i]
+		var count: int = per_entry_counts[i]
+		if count <= 0:
+			continue
+
+		var enemy_data: EnemyData = _get_enemy_data_for_type(entry.enemy_type)
+		if enemy_data == null:
+			push_error("WaveManager._spawn_wave: No EnemyData for enemy_type %s" % str(entry.enemy_type))
+			continue
+
+		for _j: int in range(count):
 			var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
 
-			# add_child BEFORE initialize so @onready vars (health_component,
-			# navigation_agent) are resolved before initialize() tries to use them.
 			_enemy_container.add_child(enemy)
 
-			# DEVIATION: spawn uses per-day multipliers from CampaignManager DayConfig.
 			var tuned_enemy_data: EnemyData = enemy_data.duplicate(true) as EnemyData
 			tuned_enemy_data.max_hp = maxi(1, int(round(float(enemy_data.max_hp) * enemy_hp_multiplier)))
 			tuned_enemy_data.damage = maxi(1, int(round(float(enemy_data.damage) * enemy_damage_multiplier)))
 			tuned_enemy_data.gold_reward = maxi(0, int(round(float(enemy_data.gold_reward) * gold_reward_multiplier)))
 			enemy.initialize(tuned_enemy_data)
 
-			var spawn_marker: Marker3D = \
-				spawn_point_nodes.pick_random() as Marker3D
+			var spawn_marker: Marker3D = spawn_point_nodes.pick_random() as Marker3D
 			var offset: Vector3 = Vector3(
 				randf_range(-2.0, 2.0),
 				0.0,
@@ -245,9 +384,82 @@ func _spawn_wave(wave_number: int) -> void:
 
 			total_spawned += 1
 
-	_is_wave_active = true
 	print("[WaveManager] wave %d spawned: %d enemies total" % [wave_number, total_spawned])
 	SignalBus.wave_started.emit(wave_number, total_spawned)
+
+	if total_spawned == 0:
+		call_deferred("_check_wave_cleared")
+
+
+## Computes total enemies for this wave based on MVP scaling (N * 6).
+func _compute_total_enemies_for_wave(wave_index: int, faction: FactionDataType) -> int:
+	var base_total: float = float(wave_index * 6)
+
+	if faction != null and faction.difficulty_offset != 0.0:
+		base_total *= maxf(0.1, 1.0 + faction.difficulty_offset) # TUNING
+
+	return maxi(1, int(round(base_total)))
+
+
+## Allocates integer counts across roster entries based on weighted share.
+func _allocate_counts_for_roster(
+		roster_entries: Array[FactionRosterEntryType],
+		total_enemies: int,
+		wave_index: int
+) -> Array[int]:
+	var weights: Array[float] = []
+	var total_weight: float = 0.0
+
+	for entry: FactionRosterEntryType in roster_entries:
+		var w: float = _current_faction.get_effective_weight_for_wave(entry, wave_index)
+		weights.append(w)
+		total_weight += w
+
+	if total_weight <= 0.0:
+		# DEVIATION: Fallback to equal distribution when all weights are zero.
+		var equal: int = total_enemies / roster_entries.size()
+		var remainder: int = total_enemies % roster_entries.size()
+		var counts_eq: Array[int] = []
+		for i: int in range(roster_entries.size()):
+			var c: int = equal + (1 if i < remainder else 0)
+			counts_eq.append(c)
+		return counts_eq
+
+	# SOURCE: Proportional allocation with largest-remainder rounding, common in weighted selection systems.
+	var float_counts: Array[float] = []
+	var counts_int: Array[int] = []
+	var running_total: int = 0
+
+	for i: int in range(roster_entries.size()):
+		var share: float = weights[i] / total_weight
+		var ideal: float = float(total_enemies) * share
+		float_counts.append(ideal)
+		var c_int: int = int(floorf(ideal))
+		counts_int.append(c_int)
+		running_total += c_int
+
+	var remaining: int = total_enemies - running_total
+	if remaining > 0:
+		var indices: Array[int] = []
+		for j: int in range(float_counts.size()):
+			indices.append(j)
+		indices.sort_custom(func(a: int, b: int) -> bool:
+			var frac_a: float = float_counts[a] - float(counts_int[a])
+			var frac_b: float = float_counts[b] - float(counts_int[b])
+			return frac_a > frac_b
+		)
+		for k: int in range(mini(remaining, indices.size())):
+			var idx: int = indices[k]
+			counts_int[idx] += 1
+
+	return counts_int
+
+
+func _get_enemy_data_for_type(enemy_type: Types.EnemyType) -> EnemyData:
+	for data: EnemyData in enemy_data_registry:
+		if data.enemy_type == enemy_type:
+			return data
+	return null
 
 # ---------------------------------------------------------------------------
 # SIGNAL HANDLERS
@@ -260,8 +472,6 @@ func _on_enemy_killed(
 ) -> void:
 	if not _is_wave_active:
 		return
-	# call_deferred ensures _check_wave_cleared() runs AFTER the dying enemy's
-	# queue_free() and remove_from_group() have resolved this frame.
 	call_deferred("_check_wave_cleared")
 
 
@@ -285,6 +495,4 @@ func _on_game_state_changed(
 		_old_state: Types.GameState,
 		_new_state: Types.GameState
 ) -> void:
-	# Build mode slows countdown via Engine.time_scale — no special handling needed.
 	pass
-

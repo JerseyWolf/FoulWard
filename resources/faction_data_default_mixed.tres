@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="FactionData" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/faction_data.gd" id="1_faction"]
+[ext_resource type="Script" path="res://scripts/resources/faction_roster_entry.gd" id="2_roster"]
+
+[sub_resource type="Resource" id="Roster_0"]
+script = ExtResource("2_roster")
+enemy_type = 0
+base_weight = 1.0
+min_wave_index = 1
+max_wave_index = 10
+tier = 1
+
+[sub_resource type="Resource" id="Roster_1"]
+script = ExtResource("2_roster")
+enemy_type = 1
+base_weight = 1.0
+min_wave_index = 1
+max_wave_index = 10
+tier = 1
+
+[sub_resource type="Resource" id="Roster_2"]
+script = ExtResource("2_roster")
+enemy_type = 2
+base_weight = 1.0
+min_wave_index = 1
+max_wave_index = 10
+tier = 1
+
+[sub_resource type="Resource" id="Roster_3"]
+script = ExtResource("2_roster")
+enemy_type = 3
+base_weight = 1.0
+min_wave_index = 1
+max_wave_index = 10
+tier = 1
+
+[sub_resource type="Resource" id="Roster_4"]
+script = ExtResource("2_roster")
+enemy_type = 4
+base_weight = 1.0
+min_wave_index = 1
+max_wave_index = 10
+tier = 1
+
+[sub_resource type="Resource" id="Roster_5"]
+script = ExtResource("2_roster")
+enemy_type = 5
+base_weight = 1.0
+min_wave_index = 1
+max_wave_index = 10
+tier = 1
+
+[resource]
+script = ExtResource("1_faction")
+faction_id = "DEFAULT_MIXED"
+display_name = "Default Mixed"
+description = "PLACEHOLDER: MVP-style mixed enemy roster."
+roster = [SubResource("Roster_0"), SubResource("Roster_1"), SubResource("Roster_2"), SubResource("Roster_3"), SubResource("Roster_4"), SubResource("Roster_5")]
+mini_boss_ids = []
+mini_boss_wave_hints = []
+roster_tier = 1
+difficulty_offset = 0.0

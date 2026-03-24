@@ -14,7 +14,7 @@ display_name = "Day 1"
 description = "Linear campaign day 1. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -30,7 +30,7 @@ display_name = "Day 2"
 description = "Linear campaign day 2. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -46,7 +46,7 @@ display_name = "Day 3"
 description = "Linear campaign day 3. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -62,7 +62,7 @@ display_name = "Day 4"
 description = "Linear campaign day 4. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -78,7 +78,7 @@ display_name = "Day 5"
 description = "Linear campaign day 5. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -94,7 +94,7 @@ display_name = "Day 6"
 description = "Linear campaign day 6. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -110,7 +110,7 @@ display_name = "Day 7"
 description = "Linear campaign day 7. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -126,7 +126,7 @@ display_name = "Day 8"
 description = "Linear campaign day 8. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -142,7 +142,7 @@ display_name = "Day 9"
 description = "Linear campaign day 9. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -158,7 +158,7 @@ display_name = "Day 10"
 description = "Linear campaign day 10. # PLACEHOLDER"
 territory_id = "heartland_plains"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -174,7 +174,7 @@ display_name = "Day 11"
 description = "Linear campaign day 11. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -190,7 +190,7 @@ display_name = "Day 12"
 description = "Linear campaign day 12. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -206,7 +206,7 @@ display_name = "Day 13"
 description = "Linear campaign day 13. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -222,7 +222,7 @@ display_name = "Day 14"
 description = "Linear campaign day 14. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -238,7 +238,7 @@ display_name = "Day 15"
 description = "Linear campaign day 15. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -254,7 +254,7 @@ display_name = "Day 16"
 description = "Linear campaign day 16. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -270,7 +270,7 @@ display_name = "Day 17"
 description = "Linear campaign day 17. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -286,7 +286,7 @@ display_name = "Day 18"
 description = "Linear campaign day 18. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -302,7 +302,7 @@ display_name = "Day 19"
 description = "Linear campaign day 19. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -318,7 +318,7 @@ display_name = "Day 20"
 description = "Linear campaign day 20. # PLACEHOLDER"
 territory_id = "blackwood_forest"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -334,7 +334,7 @@ display_name = "Day 21"
 description = "Linear campaign day 21. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -350,7 +350,7 @@ display_name = "Day 22"
 description = "Linear campaign day 22. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -366,7 +366,7 @@ display_name = "Day 23"
 description = "Linear campaign day 23. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -382,7 +382,7 @@ display_name = "Day 24"
 description = "Linear campaign day 24. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -398,7 +398,7 @@ display_name = "Day 25"
 description = "Linear campaign day 25. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -414,7 +414,7 @@ display_name = "Day 26"
 description = "Linear campaign day 26. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -430,7 +430,7 @@ display_name = "Day 27"
 description = "Linear campaign day 27. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -446,7 +446,7 @@ display_name = "Day 28"
 description = "Linear campaign day 28. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -462,7 +462,7 @@ display_name = "Day 29"
 description = "Linear campaign day 29. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -478,7 +478,7 @@ display_name = "Day 30"
 description = "Linear campaign day 30. # PLACEHOLDER"
 territory_id = "ashen_swamp"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -494,7 +494,7 @@ display_name = "Day 31"
 description = "Linear campaign day 31. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -510,7 +510,7 @@ display_name = "Day 32"
 description = "Linear campaign day 32. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -526,7 +526,7 @@ display_name = "Day 33"
 description = "Linear campaign day 33. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -542,7 +542,7 @@ display_name = "Day 34"
 description = "Linear campaign day 34. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -558,7 +558,7 @@ display_name = "Day 35"
 description = "Linear campaign day 35. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -574,7 +574,7 @@ display_name = "Day 36"
 description = "Linear campaign day 36. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -590,7 +590,7 @@ display_name = "Day 37"
 description = "Linear campaign day 37. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -606,7 +606,7 @@ display_name = "Day 38"
 description = "Linear campaign day 38. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -622,7 +622,7 @@ display_name = "Day 39"
 description = "Linear campaign day 39. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -638,7 +638,7 @@ display_name = "Day 40"
 description = "Linear campaign day 40. # PLACEHOLDER"
 territory_id = "iron_ridge"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -654,7 +654,7 @@ display_name = "Day 41"
 description = "Linear campaign day 41. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -670,7 +670,7 @@ display_name = "Day 42"
 description = "Linear campaign day 42. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -686,7 +686,7 @@ display_name = "Day 43"
 description = "Linear campaign day 43. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -702,7 +702,7 @@ display_name = "Day 44"
 description = "Linear campaign day 44. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -718,7 +718,7 @@ display_name = "Day 45"
 description = "Linear campaign day 45. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -734,7 +734,7 @@ display_name = "Day 46"
 description = "Linear campaign day 46. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -750,7 +750,7 @@ display_name = "Day 47"
 description = "Linear campaign day 47. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -766,7 +766,7 @@ display_name = "Day 48"
 description = "Linear campaign day 48. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -782,7 +782,7 @@ display_name = "Day 49"
 description = "Linear campaign day 49. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
@@ -798,7 +798,7 @@ display_name = "Day 50"
 description = "Linear campaign day 50. # PLACEHOLDER"
 territory_id = "outer_city"
 faction_id = ""
-is_mini_boss = false
+is_mini_boss_day = false
 is_final_boss = false
 base_wave_count = 5
 ; # TUNING
