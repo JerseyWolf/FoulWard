@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="FactionData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/faction_data.gd" id="1_faction"]
+[ext_resource type="Script" path="res://scripts/resources/faction_roster_entry.gd" id="2_roster"]
+
+[sub_resource type="Resource" id="Roster_grunt"]
+script = ExtResource("2_roster")
+enemy_type = 0
+base_weight = 4.0
+min_wave_index = 1
+max_wave_index = 10
+tier = 1
+
+[sub_resource type="Resource" id="Roster_archer"]
+script = ExtResource("2_roster")
+enemy_type = 4
+base_weight = 3.0
+min_wave_index = 2
+max_wave_index = 10
+tier = 1
+
+[sub_resource type="Resource" id="Roster_brute"]
+script = ExtResource("2_roster")
+enemy_type = 1
+base_weight = 2.0
+min_wave_index = 3
+max_wave_index = 10
+tier = 2
+
+[sub_resource type="Resource" id="Roster_bats"]
+script = ExtResource("2_roster")
+enemy_type = 5
+base_weight = 1.0
+min_wave_index = 4
+max_wave_index = 10
+tier = 2
+
+[resource]
+script = ExtResource("1_faction")
+faction_id = "ORC_RAIDERS"
+display_name = "Orc Raiders"
+description = "PLACEHOLDER: Orc warbands and supporting beasts."
+roster = [SubResource("Roster_grunt"), SubResource("Roster_archer"), SubResource("Roster_brute"), SubResource("Roster_bats")]
+mini_boss_ids = Array[String](["PLACEHOLDER_ORC_WARLORD"])
+mini_boss_wave_hints = Array[int]([5, 10])
+roster_tier = 2
+difficulty_offset = 0.0

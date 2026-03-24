@@ -12,7 +12,12 @@ extends Resource
 @export var display_name: String = ""
 
 ## Long-form description for world map and briefing.
+## PLACEHOLDER until narrative pass fills this in.
 @export var description: String = ""
+
+## Default faction controlling this territory.
+## POST-MVP: Used when DayConfig does not set a faction explicitly.
+@export var default_faction_id: String = ""
 
 ## For now just a string; later can map to real icons.
 @export var icon_id: String = ""
@@ -31,6 +36,7 @@ enum TerrainType {
 }
 
 ## Terrain category for this territory.
+## DEVIATION: Prompt 9 sketched `terrain_type: String`; Prompt 8 + world map use this enum instead.
 @export var terrain_type: int = TerrainType.PLAINS
 
 ## Whether the player currently holds this territory.

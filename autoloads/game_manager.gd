@@ -226,12 +226,6 @@ func start_mission_for_day(day_index: int, day_config: DayConfig) -> void:
 	current_mission = clampi(mission_from_config, 1, TOTAL_MISSIONS)
 	current_wave = 0
 
-	if is_instance_valid(get_node_or_null("/root/Main/Managers/WaveManager")):
-		var wave_manager: WaveManager = get_node_or_null("/root/Main/Managers/WaveManager") as WaveManager
-		if wave_manager != null:
-			# DEVIATION: WaveManager is now configured per day.
-			wave_manager.configure_for_day(day_config)
-
 	_transition_to(Types.GameState.COMBAT)
 	SignalBus.mission_started.emit(current_mission)
 	_apply_shop_mission_start_consumables()
@@ -256,6 +250,9 @@ func _begin_mission_wave_sequence() -> void:
 		return
 	print("[GameManager] _begin_mission_wave_sequence: mission=%d" % current_mission)
 	wave_manager.reset_for_new_mission()
+	# Apply day config after reset — reset clears per-day tuning (waves, faction, multipliers).
+	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
+	wave_manager.configure_for_day(day_cfg)
 	wave_manager.call_deferred("start_wave_sequence")
 
 func _transition_to(new_state: Types.GameState) -> void:

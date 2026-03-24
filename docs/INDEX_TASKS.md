@@ -99,3 +99,13 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - `res://ui/world_map.gd`, `res://ui/world_map.tscn`; `between_mission_screen.tscn` Map tab
   - Tests: `test_territory_data.gd`, `test_campaign_territory_mapping.gd`, `test_campaign_territory_updates.gd`, `test_territory_economy_bonuses.gd`, `test_world_map_ui.gd`
   - `INDEX_SHORT.md`, `INDEX_FULL.md`, `INDEX_MACHINE.md` updated for new API and paths
+- Prompt 9 (2026-03-24) — factions + weighted waves + mini-boss hook:
+  - `docs/PROMPT_9_IMPLEMENTATION.md`
+  - `res://scripts/resources/faction_data.gd`, `faction_roster_entry.gd`; `res://resources/faction_data_*.tres` (×3)
+  - `WaveManager` faction-aware spawn + `get_mini_boss_info_for_wave`; `CampaignManager.validate_day_configs` + `faction_registry`
+  - `DayConfig` `is_mini_boss_day`, default `faction_id`; campaign `.tres` migrated; `TerritoryData.default_faction_id`
+  - `GameManager` configure WaveManager after reset in `_begin_mission_wave_sequence`
+  - Tests: `test_faction_data.gd`; expanded `test_wave_manager.gd`
+  - `INDEX_SHORT.md`, `INDEX_FULL.md`, `INDEX_MACHINE.md` updated
+- Pre-generation docs split (2026-03-24): **`docs/PRE_GENERATION_SPECIFICATION.md`** holds the full reference (signals, paths, project checklist, stubs); **`docs/PRE_GENERATION_VERIFICATION.md`** is the short checklist that links to it.
+- Prompt 9 polish (2026-03-24): **`INDEX_FULL.md`** — full **FactionRosterEntry** / **FactionData** field tables under CUSTOM RESOURCE TYPES; **`territory_data.gd`** — `# DEVIATION` on `terrain_type` vs Prompt 9 string sketch; **`PROMPT_9_IMPLEMENTATION.md`** / **`INDEX_SHORT.md`** — GdUnit count **349** tests.

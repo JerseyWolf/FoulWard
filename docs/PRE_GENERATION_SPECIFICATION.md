@@ -1,30 +1,36 @@
-# FOUL WARD â€” PRE_GENERATION_VERIFICATION.md
+# FOUL WARD — PRE_GENERATION_SPECIFICATION.md
+
+Reference **specification** for the FOUL WARD project: SignalBus and local signal inventory, assumed scene paths, Godot project configuration (autoloads, physics, input, navigation, GdUnit), and **Section 4** resource class stubs (stubs may lag the repo — treat live scripts under `res://scripts/resources/` as source of truth for fields).
+
+For a short **pre-flight checklist** (what to verify before codegen or big refactors), use **`docs/PRE_GENERATION_VERIFICATION.md`**.
+
+When this document disagrees with **`docs/ARCHITECTURE.md`**, **`docs/CONVENTIONS.md`**, or **`project.godot`**, those wins for the *current* game unless you are intentionally pinning MVP history here.
 
 ---
 
-## Section 1 â€” Signal Integrity Table
+## Section 1 — Signal Integrity Table
 
 ### 1.1 Cross-Module Signal Flow
 
 | Signal Name | Emitting Module | Receiving Module(s) | Payload Match | Notes |
 |---|---|---|---|---|
 | `enemy_killed` | Enemy+Projectile | Foundation (EconomyManager), Arnulf+Wave+Spell (WaveManager, Arnulf) | YES | `enemy_type: Types.EnemyType, position: Vector3, gold_reward: int` |
-| `tower_damaged` | Tower+Input+UI+SimBot (Tower) | Tower+Input+UI+SimBot (HUD) | YES | `current_hp: int, max_hp: int` â€” emitter and receiver are in same module |
+| `tower_damaged` | Tower+Input+UI+SimBot (Tower) | Tower+Input+UI+SimBot (HUD) | YES | `current_hp: int, max_hp: int` — emitter and receiver are in same module |
 | `tower_destroyed` | Tower+Input+UI+SimBot (Tower) | Foundation (GameManager) | YES | No payload |
-| `projectile_fired` | Tower+Input+UI+SimBot (Tower) | (none) | YES | `weapon_slot: Types.WeaponSlot, origin: Vector3, target: Vector3` â€” emitted but no module declares receiving it |
-| `arnulf_state_changed` | Arnulf+Wave+Spell (Arnulf) | (none) | YES | `new_state: Types.ArnulfState` â€” emitted but no module declares receiving it |
-| `arnulf_incapacitated` | Arnulf+Wave+Spell (Arnulf) | (none) | YES | No payload â€” emitted but no module declares receiving it |
-| `arnulf_recovered` | Arnulf+Wave+Spell (Arnulf) | (none) | YES | No payload â€” emitted but no module declares receiving it |
+| `projectile_fired` | Tower+Input+UI+SimBot (Tower) | (none) | YES | `weapon_slot: Types.WeaponSlot, origin: Vector3, target: Vector3` — emitted but no module declares receiving it |
+| `arnulf_state_changed` | Arnulf+Wave+Spell (Arnulf) | (none) | YES | `new_state: Types.ArnulfState` — emitted but no module declares receiving it |
+| `arnulf_incapacitated` | Arnulf+Wave+Spell (Arnulf) | (none) | YES | No payload — emitted but no module declares receiving it |
+| `arnulf_recovered` | Arnulf+Wave+Spell (Arnulf) | (none) | YES | No payload — emitted but no module declares receiving it |
 | `wave_countdown_started` | Arnulf+Wave+Spell (WaveManager) | Tower+Input+UI+SimBot (HUD) | YES | `wave_number: int, seconds_remaining: float` |
 | `wave_started` | Arnulf+Wave+Spell (WaveManager) | Tower+Input+UI+SimBot (HUD) | YES | `wave_number: int, enemy_count: int` |
 | `wave_cleared` | Arnulf+Wave+Spell (WaveManager) | Tower+Input+UI+SimBot (SimBot) | YES | `wave_number: int` |
 | `all_waves_cleared` | Arnulf+Wave+Spell (WaveManager) | Foundation (GameManager) | YES | No payload |
 | `resource_changed` | Foundation (EconomyManager) | Tower+Input+UI+SimBot (HUD) | YES | `resource_type: Types.ResourceType, new_amount: int` |
 | `building_placed` | HexGrid+Buildings+Research+Shop (HexGrid) | Tower+Input+UI+SimBot (HUD, optional) | YES | `slot_index: int, building_type: Types.BuildingType` |
-| `building_sold` | HexGrid+Buildings+Research+Shop (HexGrid) | (none) | YES | `slot_index: int, building_type: Types.BuildingType` â€” emitted but no module declares receiving it |
-| `building_upgraded` | HexGrid+Buildings+Research+Shop (HexGrid) | (none) | YES | `slot_index: int, building_type: Types.BuildingType` â€” emitted but no module declares receiving it |
-| `research_unlocked` | HexGrid+Buildings+Research+Shop (ResearchManager) | HexGrid+Buildings+Research+Shop (HexGrid) | YES | `node_id: String` â€” emitter and receiver are in same module |
-| `shop_item_purchased` | HexGrid+Buildings+Research+Shop (ShopManager) | (none) | YES | `item_id: String` â€” emitted but no module declares receiving it |
+| `building_sold` | HexGrid+Buildings+Research+Shop (HexGrid) | (none) | YES | `slot_index: int, building_type: Types.BuildingType` — emitted but no module declares receiving it |
+| `building_upgraded` | HexGrid+Buildings+Research+Shop (HexGrid) | (none) | YES | `slot_index: int, building_type: Types.BuildingType` — emitted but no module declares receiving it |
+| `research_unlocked` | HexGrid+Buildings+Research+Shop (ResearchManager) | HexGrid+Buildings+Research+Shop (HexGrid) | YES | `node_id: String` — emitter and receiver are in same module |
+| `shop_item_purchased` | HexGrid+Buildings+Research+Shop (ShopManager) | (none) | YES | `item_id: String` — emitted but no module declares receiving it |
 | `spell_cast` | Arnulf+Wave+Spell (SpellManager) | Tower+Input+UI+SimBot (HUD) | YES | `spell_id: String` |
 | `spell_ready` | Arnulf+Wave+Spell (SpellManager) | Tower+Input+UI+SimBot (HUD) | YES | `spell_id: String` |
 | `mana_changed` | Arnulf+Wave+Spell (SpellManager) | Tower+Input+UI+SimBot (HUD) | YES | `current_mana: int, max_mana: int` |
@@ -39,8 +45,8 @@
 
 | Signal Name | Declared Payload | Status |
 |---|---|---|
-| `enemy_reached_tower` | `enemy_type: Types.EnemyType, damage: int` | **ORPHAN** â€” declared in CONVENTIONS.md Â§5 but no module emits it. EnemyBase calls `Tower.take_damage()` directly instead. Either remove from SignalBus or refactor EnemyBase to emit it. |
-| `building_destroyed` | `slot_index: int` | **ORPHAN** â€” declared in CONVENTIONS.md Â§5 but no module emits it. MVP buildings cannot be damaged. Remove from SignalBus or add as post-MVP stub. |
+| `enemy_reached_tower` | `enemy_type: Types.EnemyType, damage: int` | **ORPHAN** — declared in CONVENTIONS.md §5 but no module emits it. EnemyBase calls `Tower.take_damage()` directly instead. Either remove from SignalBus or refactor EnemyBase to emit it. |
+| `building_destroyed` | `slot_index: int` | **ORPHAN** — declared in CONVENTIONS.md §5 but no module emits it. MVP buildings cannot be damaged. Remove from SignalBus or add as post-MVP stub. |
 
 ### 1.3 Signals Emitted But Not Received by Any Module
 
@@ -54,18 +60,18 @@
 | `building_upgraded` | HexGrid+Buildings+Research+Shop | Same as above. |
 | `shop_item_purchased` | HexGrid+Buildings+Research+Shop | Available for HUD notification. No receiver declared. |
 
-### 1.4 Local Signals (Not on SignalBus â€” Within Scene Only)
+### 1.4 Local Signals (Not on SignalBus — Within Scene Only)
 
 | Signal Name | Declared On | Payload | Consumed By |
 |---|---|---|---|
 | `health_changed` | HealthComponent | `current_hp: int, max_hp: int` | Owning node (Tower, Arnulf, EnemyBase, BuildingBase) |
 | `health_depleted` | HealthComponent | (none) | Owning node |
-| `hit_enemy` | ProjectileBase | `enemy: EnemyBase, damage_dealt: float` | (none in MVP â€” future VFX) |
-| `missed` | ProjectileBase | `final_position: Vector3` | (none in MVP â€” future VFX) |
+| `hit_enemy` | ProjectileBase | `enemy: EnemyBase, damage_dealt: float` | (none in MVP — future VFX) |
+| `missed` | ProjectileBase | `final_position: Vector3` | (none in MVP — future VFX) |
 
 ---
 
-## Section 2 â€” Node Path Verification
+## Section 2 — Node Path Verification
 
 ### 2.1 Hardcoded `get_node()` Paths from Module Assumptions
 
@@ -91,13 +97,13 @@
 | Path | Scene | Exists in ARCHITECTURE.md Scene Tree | Notes |
 |---|---|---|---|
 | `$HealthComponent` | Tower, Arnulf, EnemyBase, BuildingBase | YES | HealthComponent listed as child of Tower and Arnulf. EnemyBase and BuildingBase must add it to their .tscn. |
-| `$NavigationAgent3D` | Arnulf, EnemyBase | YES (Arnulf) / PARTIAL (EnemyBase) | Arnulf scene tree shows NavigationAgent3D. EnemyBase scene tree not detailed â€” **EnemyBase .tscn must include NavigationAgent3D as a child node.** |
+| `$NavigationAgent3D` | Arnulf, EnemyBase | YES (Arnulf) / PARTIAL (EnemyBase) | Arnulf scene tree shows NavigationAgent3D. EnemyBase scene tree not detailed — **EnemyBase .tscn must include NavigationAgent3D as a child node.** |
 | `$DetectionArea` | Arnulf | YES | Area3D at Arnulf > DetectionArea |
 | `$AttackArea` | Arnulf | YES | Area3D at Arnulf > AttackArea |
 | `$ArnulfMesh` | Arnulf | YES | MeshInstance3D at Arnulf > ArnulfMesh |
 | `$SlotMesh` | HexSlot_XX (Area3D children of HexGrid) | YES | MeshInstance3D listed as child of each HexSlot |
 | `$BuildingMesh` | BuildingBase | **NO** | **MISSING from ARCHITECTURE.md scene tree.** BuildingBase.initialize() references `get_node_or_null("BuildingMesh")`. building_base.tscn must include a MeshInstance3D named BuildingMesh. |
-| `$TowerMesh` | Tower | YES (as TowerMesh) | Listed in scene tree. Consistency note: Tower uses "TowerMesh", Building uses "BuildingMesh" â€” naming is consistent with convention. |
+| `$TowerMesh` | Tower | YES (as TowerMesh) | Listed in scene tree. Consistency note: Tower uses "TowerMesh", Building uses "BuildingMesh" — naming is consistent with convention. |
 
 ### 2.4 Flags
 
@@ -109,12 +115,12 @@
 
 ---
 
-## Section 3 â€” Godot 4 Project Configuration Checklist
+## Section 3 — Godot 4 Project Configuration Checklist
 
 ### 3.1 Autoload Registration
 
 Register in `Project > Project Settings > Globals > Autoload` in this EXACT order.
-Order matters â€” later autoloads may depend on earlier ones.
+Order matters — later autoloads may depend on earlier ones.
 
 | # | Script Path | Autoload Name | Enabled |
 |---|---|---|---|
@@ -123,7 +129,9 @@ Order matters â€” later autoloads may depend on earlier ones.
 | 3 | `res://autoloads/economy_manager.gd` | `EconomyManager` | Yes |
 | 4 | `res://autoloads/game_manager.gd` | `GameManager` | Yes |
 
-**WARNING**: CONVENTIONS.md Â§8 autoload table lists the order as SignalBus â†’ GameManager â†’ EconomyManager â†’ DamageCalculator. This contradicts CONVENTIONS.md Â§19 and ARCHITECTURE.md Â§1, both of which specify the order above. The order in this checklist (matching ARCHITECTURE.md Â§1 and CONVENTIONS.md Â§19) is AUTHORITATIVE. CONVENTIONS.md Â§8 table order is a documentation bug to be corrected.
+**NOTE (repo drift):** This checklist reflects the *original* four-autoload MVP. The live `project.godot` also registers `CampaignManager`, `EnchantmentManager`, `AutoTestDriver`, and plugin-related autoloads. Treat **ARCHITECTURE.md §1** and **`project.godot` `[autoload]`** as authoritative for the current game.
+
+**WARNING**: CONVENTIONS.md §8 autoload table lists the order as SignalBus → GameManager → EconomyManager → DamageCalculator. This contradicts CONVENTIONS.md §19 and ARCHITECTURE.md §1, both of which specify the order in the table above for the core four. The order in this checklist (matching ARCHITECTURE.md §1 and CONVENTIONS.md §19) is authoritative for that subset. CONVENTIONS.md §8 table order is a documentation bug to be corrected.
 
 ### 3.2 Physics Layer Assignments
 
@@ -134,7 +142,7 @@ Configure in `Project > Project Settings > General > Layer Names > 3D Physics`.
 | 1 | Tower | Tower StaticBody3D collision_layer |
 | 2 | Enemies | All EnemyBase CharacterBody3D collision_layer |
 | 3 | Arnulf | Arnulf CharacterBody3D collision_layer |
-| 4 | Buildings | All BuildingBase collision bodies (future â€” not used in MVP combat) |
+| 4 | Buildings | All BuildingBase collision bodies (future — not used in MVP combat) |
 | 5 | Projectiles | All ProjectileBase Area3D collision_layer |
 | 6 | Ground | Ground StaticBody3D collision_layer, NavigationRegion3D host |
 | 7 | HexSlots | HexSlot Area3D nodes for click detection |
@@ -143,14 +151,14 @@ Configure in `Project > Project Settings > General > Layer Names > 3D Physics`.
 
 | Entity | collision_layer | collision_mask | Notes |
 |---|---|---|---|
-| Tower (StaticBody3D) | 1 | (none needed) | Static â€” enemies collide with it via their mask |
+| Tower (StaticBody3D) | 1 | (none needed) | Static — enemies collide with it via their mask |
 | EnemyBase (CharacterBody3D) | 2 | 1 (Tower) + 3 (Arnulf) + 4 (Buildings) | Enemies detect tower and Arnulf for attack range |
 | Arnulf (CharacterBody3D) | 3 | 2 (Enemies) + 6 (Ground) | Moves on ground, collides with enemies |
-| BuildingBase (if physics body added) | 4 | (none in MVP) | Buildings are static â€” no physics interaction in MVP |
-| Florence Projectile (Area3D) | 5 | 2 (Enemies) | Hits enemies only. Does NOT include flying sublayer â€” Florence cannot target flying. Flying filtering handled in _on_body_entered code, not mask. |
-| Building Projectile (Area3D) | 5 | 2 (Enemies) | Same as Florence. Anti-Air targets flying â€” filtering in code. |
+| BuildingBase (if physics body added) | 4 | (none in MVP) | Buildings are static — no physics interaction in MVP |
+| Florence Projectile (Area3D) | 5 | 2 (Enemies) | Hits enemies only. Does NOT include flying sublayer — Florence cannot target flying. Flying filtering handled in _on_body_entered code, not mask. |
+| Building Projectile (Area3D) | 5 | 2 (Enemies) | Same as Florence. Anti-Air targets flying — filtering in code. |
 | Ground (StaticBody3D) | 6 | (none) | Static ground plane |
-| HexSlot (Area3D) | 7 | (none â€” mouse raycast target) | Used for build mode click detection |
+| HexSlot (Area3D) | 7 | (none — mouse raycast target) | Used for build mode click detection |
 | DetectionArea (Arnulf child Area3D) | (none) | 2 (Enemies) | Detects enemies entering patrol radius |
 | AttackArea (Arnulf child Area3D) | (none) | 2 (Enemies) | Detects enemies entering melee range |
 
@@ -178,7 +186,7 @@ Configure in `Project > Project Settings > Input Map`.
    - `cell_height` = 0.25
 4. The navigation mesh source geometry must include the Ground mesh and the Tower collision shape (so enemies path around the tower).
 5. Bake the navigation mesh in the editor (`Bake NavigationMesh` button).
-6. The baked mesh should cover the full play area (~80Ã—80 units centered at origin) with a hole carved for the tower collision volume.
+6. The baked mesh should cover the full play area (~80×80 units centered at origin) with a hole carved for the tower collision volume.
 7. Do NOT rebake at runtime in MVP. Buildings do not affect navigation.
 
 ### 3.6 GdUnit4 Installation
@@ -196,13 +204,13 @@ Configure in `Project > Project Settings > Input Map`.
 |---|---|---|
 | `display/window/size/viewport_width` | 1280 | MVP target resolution |
 | `display/window/size/viewport_height` | 720 | MVP target resolution |
-| `physics/3d/default_gravity` | 0.0 | No gravity â€” all movement is script-driven on Y=0 plane. Flying enemies hover at fixed Y. |
+| `physics/3d/default_gravity` | 0.0 | No gravity — all movement is script-driven on Y=0 plane. Flying enemies hover at fixed Y. |
 | `rendering/renderer/rendering_method` | `forward_plus` | Default for 3D. Confirm not changed. |
 | `application/run/main_scene` | `res://scenes/main.tscn` | Entry point |
 
 ---
 
-## Section 4 â€” Resource Class Stubs
+## Section 4 — Resource Class Stubs
 
 ### 4.1 EnemyData
 

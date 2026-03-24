@@ -76,6 +76,7 @@ func before_test() -> void:
 func after_test() -> void:
 	if is_instance_valid(_wave_manager):
 		_wave_manager.clear_all_enemies()
+		_wave_manager.set_faction_data_override(null)
 		_wave_manager.queue_free()
 	if is_instance_valid(_enemy_container):
 		_enemy_container.queue_free()
@@ -240,4 +241,212 @@ func test_resetfornewmission_clears_day_config_values() -> void:
 	_wave_manager.reset_for_new_mission()
 	assert_int(_wave_manager.configured_max_waves).is_equal(0)
 	assert_float(_wave_manager.enemy_hp_multiplier).is_equal(1.0)
+
+
+# ---------------------------------------------------------------------------
+# Prompt 9 — faction-weighted waves (# DEVIATION: per-type counts approximate)
+# ---------------------------------------------------------------------------
+
+func _collect_spawned_enemy_types() -> Array[Types.EnemyType]:
+	var result: Array[Types.EnemyType] = []
+	for node: Node in _enemy_container.get_children():
+		if node is EnemyBase:
+			var enemy: EnemyBase = node as EnemyBase
+			var data: EnemyData = enemy.get_enemy_data()
+			if data != null:
+				result.append(data.enemy_type)
+	return result
+
+
+func _count_types_in_enemy_container() -> Dictionary:
+	var counts: Dictionary = {}
+	for node: Node in _enemy_container.get_children():
+		if node is EnemyBase:
+			var enemy: EnemyBase = node as EnemyBase
+			var data: EnemyData = enemy.get_enemy_data()
+			if data == null:
+				continue
+			var t: Types.EnemyType = data.enemy_type
+			counts[t] = counts.get(t, 0) + 1
+	return counts
+
+
+func _total_count(counts: Dictionary) -> int:
+	var total: int = 0
+	for v: Variant in counts.values():
+		total += int(v)
+	return total
+
+
+func _clear_enemies_in_container() -> void:
+	for node: Node in _enemy_container.get_children():
+		if node is EnemyBase:
+			(node as EnemyBase).queue_free()
+
+
+func test_wave_manager_uses_only_faction_roster_enemy_types() -> void:
+	var faction: FactionData = FactionData.new()
+	faction.faction_id = "TEST_ORCS"
+	var e1: FactionRosterEntry = FactionRosterEntry.new()
+	e1.enemy_type = Types.EnemyType.ORC_GRUNT
+	e1.base_weight = 3.0
+	e1.min_wave_index = 1
+	e1.max_wave_index = 10
+	e1.tier = 1
+	var e2: FactionRosterEntry = FactionRosterEntry.new()
+	e2.enemy_type = Types.EnemyType.ORC_BRUTE
+	e2.base_weight = 1.0
+	e2.min_wave_index = 1
+	e2.max_wave_index = 10
+	e2.tier = 2
+	faction.roster = [e1, e2]
+
+	_wave_manager.set_faction_data_override(faction)
+
+	_wave_manager.force_spawn_wave(2)
+	await get_tree().process_frame
+	var types_wave2: Array[Types.EnemyType] = _collect_spawned_enemy_types()
+
+	_clear_enemies_in_container()
+	await get_tree().process_frame
+
+	_wave_manager.force_spawn_wave(7)
+	await get_tree().process_frame
+	var types_wave7: Array[Types.EnemyType] = _collect_spawned_enemy_types()
+
+	var allowed: Array[Types.EnemyType] = [
+		Types.EnemyType.ORC_GRUNT,
+		Types.EnemyType.ORC_BRUTE,
+	]
+	for t: Types.EnemyType in types_wave2:
+		assert_bool(allowed.has(t)).is_true()
+	for t2: Types.EnemyType in types_wave7:
+		assert_bool(allowed.has(t2)).is_true()
+
+
+func test_wave_manager_elites_more_common_in_late_waves() -> void:
+	var faction: FactionData = FactionData.new()
+	faction.faction_id = "TEST_ELITES"
+	var e1: FactionRosterEntry = FactionRosterEntry.new()
+	e1.enemy_type = Types.EnemyType.ORC_GRUNT
+	e1.base_weight = 1.0
+	e1.min_wave_index = 1
+	e1.max_wave_index = 10
+	e1.tier = 1
+	var e2: FactionRosterEntry = FactionRosterEntry.new()
+	e2.enemy_type = Types.EnemyType.ORC_BRUTE
+	e2.base_weight = 1.0
+	e2.min_wave_index = 3
+	e2.max_wave_index = 10
+	e2.tier = 2
+	faction.roster = [e1, e2]
+
+	_wave_manager.set_faction_data_override(faction)
+
+	_wave_manager.force_spawn_wave(3)
+	await get_tree().process_frame
+	var counts_wave3: Dictionary = _count_types_in_enemy_container()
+	var elite3: int = int(counts_wave3.get(Types.EnemyType.ORC_BRUTE, 0))
+	var total3: int = _total_count(counts_wave3)
+
+	_clear_enemies_in_container()
+	await get_tree().process_frame
+
+	_wave_manager.force_spawn_wave(9)
+	await get_tree().process_frame
+	var counts_wave9: Dictionary = _count_types_in_enemy_container()
+	var elite9: int = int(counts_wave9.get(Types.EnemyType.ORC_BRUTE, 0))
+	var total9: int = _total_count(counts_wave9)
+
+	if total3 > 0 and total9 > 0:
+		var share3: float = float(elite3) / float(total3)
+		var share9: float = float(elite9) / float(total9)
+		assert_float(share9).is_greater(share3)
+
+
+func test_wave_manager_total_enemies_matches_scaling() -> void:
+	var faction: FactionData = FactionData.new()
+	faction.faction_id = "TEST_DEFAULT"
+	var types: Array[Types.EnemyType] = [
+		Types.EnemyType.ORC_GRUNT,
+		Types.EnemyType.ORC_BRUTE,
+		Types.EnemyType.GOBLIN_FIREBUG,
+		Types.EnemyType.PLAGUE_ZOMBIE,
+		Types.EnemyType.ORC_ARCHER,
+		Types.EnemyType.BAT_SWARM,
+	]
+	for t: Types.EnemyType in types:
+		var e: FactionRosterEntry = FactionRosterEntry.new()
+		e.enemy_type = t
+		e.base_weight = 1.0
+		e.min_wave_index = 1
+		e.max_wave_index = 10
+		e.tier = 1
+		faction.roster.append(e)
+
+	_wave_manager.set_faction_data_override(faction)
+
+	for wave: int in [1, 5, 10]:
+		_clear_enemies_in_container()
+		await get_tree().process_frame
+		_wave_manager.force_spawn_wave(wave)
+		await get_tree().process_frame
+		var counts: Dictionary = _count_types_in_enemy_container()
+		var total: int = _total_count(counts)
+		var expected: int = wave * 6
+		assert_int(total).is_equal(expected)
+
+
+func test_mini_boss_hook_reports_expected_wave_when_configured() -> void:
+	var faction: FactionData = FactionData.new()
+	faction.faction_id = "TEST_MINIBOSS"
+	faction.mini_boss_ids = ["MINI_TEST"]
+	faction.mini_boss_wave_hints = [4]
+	var e: FactionRosterEntry = FactionRosterEntry.new()
+	e.enemy_type = Types.EnemyType.ORC_GRUNT
+	e.base_weight = 1.0
+	e.min_wave_index = 1
+	e.max_wave_index = 10
+	e.tier = 1
+	faction.roster = [e]
+
+	_wave_manager.set_faction_data_override(faction)
+
+	var info3: Dictionary = _wave_manager.get_mini_boss_info_for_wave(3)
+	var info4: Dictionary = _wave_manager.get_mini_boss_info_for_wave(4)
+
+	assert_that(info3).is_equal({})
+	assert_str(info4.get("mini_boss_id", "")).is_equal("MINI_TEST")
+	assert_int(info4.get("wave_index", -1)).is_equal(4)
+	assert_str(info4.get("faction_id", "")).is_equal("TEST_MINIBOSS")
+
+
+func test_default_faction_preserves_mixed_composition_trend() -> void:
+	var faction: FactionData = load("res://resources/faction_data_default_mixed.tres") as FactionData
+	assert_that(faction).is_not_null()
+	_wave_manager.set_faction_data_override(faction)
+
+	var observed_types: Dictionary = {}
+
+	for wave: int in [1, 3, 5, 7, 10]:
+		_clear_enemies_in_container()
+		await get_tree().process_frame
+		_wave_manager.force_spawn_wave(wave)
+		await get_tree().process_frame
+		var counts: Dictionary = _count_types_in_enemy_container()
+		var total: int = _total_count(counts)
+		var expected: int = wave * 6
+		assert_int(total).is_equal(expected)
+		for k: Variant in counts.keys():
+			observed_types[k] = true
+
+	for t: Types.EnemyType in [
+		Types.EnemyType.ORC_GRUNT,
+		Types.EnemyType.ORC_BRUTE,
+		Types.EnemyType.GOBLIN_FIREBUG,
+		Types.EnemyType.PLAGUE_ZOMBIE,
+		Types.EnemyType.ORC_ARCHER,
+		Types.EnemyType.BAT_SWARM,
+	]:
+		assert_bool(observed_types.has(t)).is_true()
 

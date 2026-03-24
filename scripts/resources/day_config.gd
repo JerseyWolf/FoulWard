@@ -18,13 +18,13 @@ extends Resource
 ## Day description shown in hub/briefing.
 @export var description: String = ""
 
-## POST-MVP: faction-aware wave composition.
-@export var faction_id: String = ""
+## Active faction for this day. Must match a FactionData.faction_id in the registry.
+@export var faction_id: String = "DEFAULT_MIXED"
 ## POST-MVP: world map / territory UI.
 @export var territory_id: String = ""
 
-## TUNING: mark milestone days.
-@export var is_mini_boss: bool = false
+## Marks this day as eligible for mini-boss schedule queries (WaveManager hook).
+@export var is_mini_boss_day: bool = false
 ## TUNING: mark final day boss.
 @export var is_final_boss: bool = false
 

@@ -4,7 +4,7 @@ INDEXFULL.md
 FOUL WARD — INDEXFULL.md
 
 Full public API reference for every script, resource type, and system.
-Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-24 (post-MVP + Prompt 6).
+Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-24 (Prompt 9 factions + weighted waves).
 Use INDEXSHORT.md for fast orientation, INDEXFULL.md for exact method signatures, signals, and dependencies.
 CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 
@@ -266,7 +266,7 @@ SCENE SCRIPTS (Tower, Arnulf, HexGrid, BuildingBase, EnemyBase, ProjectileBase)
 - Added campaign/day resource classes:
   - `res://scripts/resources/day_config.gd` (`DayConfig`)
     - fields: `day_index`, `display_name`, `description`, `faction_id`, `territory_id`,
-      `is_mini_boss`, `is_final_boss`, `base_wave_count`, `enemy_hp_multiplier`,
+      `is_mini_boss_day`, `is_final_boss`, `base_wave_count`, `enemy_hp_multiplier`,
       `enemy_damage_multiplier`, `gold_reward_multiplier`.
   - `res://scripts/resources/campaign_config.gd` (`CampaignConfig`)
     - fields: `campaign_id`, `display_name`, `day_configs:Array[DayConfig]`,
@@ -317,12 +317,57 @@ SCENE SCRIPTS (Tower, Arnulf, HexGrid, BuildingBase, EnemyBase, ProjectileBase)
   - New file: `res://tests/test_campaign_manager.gd` (campaign/day lifecycle + test helper).
   - Added Prompt 7 cases to `res://tests/test_wave_manager.gd`.
   - Added Prompt 7 cases to `res://tests/test_game_manager.gd`.
+## 2026-03-24 Prompt 9 delta
+
+- **Faction resources**
+  - `res://scripts/resources/faction_roster_entry.gd` (`FactionRosterEntry`): per-roster-row `enemy_type`, `base_weight`, `min_wave_index`, `max_wave_index`, `tier`.
+  - `res://scripts/resources/faction_data.gd` (`FactionData`): identity, `roster[]`, mini-boss hooks, scaling fields; `get_entries_for_wave`, `get_effective_weight_for_wave`; `BUILTIN_FACTION_RESOURCE_PATHS`.
+  - Data: `res://resources/faction_data_default_mixed.tres`, `faction_data_orc_raiders.tres`, `faction_data_plague_cult.tres`.
+- **DayConfig** (`res://scripts/resources/day_config.gd`): `faction_id` default `DEFAULT_MIXED`; `is_mini_boss` renamed **`is_mini_boss_day`** (campaign `.tres` migrated).
+- **TerritoryData**: `default_faction_id` (POST-MVP).
+- **CampaignManager** (`res://autoloads/campaign_manager.gd`):
+  - `faction_registry: Dictionary` (String → FactionData), `_load_faction_registry()` in `_ready`.
+  - `validate_day_configs(day_configs: Array[DayConfig]) -> void`.
+- **WaveManager** (`res://scripts/wave_manager.gd`):
+  - Faction-driven spawning: weighted roster allocation, total enemies **`wave_number × 6`** (scaled only if `difficulty_offset != 0`).
+  - `faction_registry`, `set_faction_data_override(faction_data: FactionData) -> void`, `resolve_current_faction() -> void`, `get_mini_boss_info_for_wave(wave_index: int) -> Dictionary`.
+  - Mini-boss hook respects `DayConfig.is_mini_boss_day` unless a test **faction override** is set.
+  - Uses `preload` aliases (`FactionDataType`) where needed for autoload parse order (**DEVIATION** vs bare `class_name` types).
+- **GameManager**: `configure_for_day` on WaveManager is invoked **after** `reset_for_new_mission()` in `_begin_mission_wave_sequence()` so day tuning persists.
+- **Tests**: `res://tests/test_faction_data.gd`; Prompt 9 cases in `res://tests/test_wave_manager.gd`.
+- **Notes**: `docs/PROMPT_9_IMPLEMENTATION.md`.
 MANAGERS (WaveManager, SpellManager, ResearchManager, ShopManager, InputManager, SimBot)
 
 (Full descriptions of exports, methods, signals, dependencies as summarized earlier.)
 CUSTOM RESOURCE TYPES
 
 Full field tables for EnemyData, BuildingData, WeaponData, SpellData, ResearchNodeData, ShopItemData as previously spelled out.
+
+**FactionRosterEntry** (`res://scripts/resources/faction_roster_entry.gd`)
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `enemy_type` | `Types.EnemyType` | Which enemy type this roster row spawns |
+| `base_weight` | `float` | Relative weight within the wave’s allocation |
+| `min_wave_index` | `int` | First wave (inclusive) where this row is active |
+| `max_wave_index` | `int` | Last wave (inclusive) where this row is active |
+| `tier` | `int` | 1 basic, 2 elite, 3 special — feeds `get_effective_weight_for_wave` ramp |
+
+**FactionData** (`res://scripts/resources/faction_data.gd`)
+
+| Field / member | Type | Purpose |
+|----------------|------|---------|
+| `faction_id` | `String` | Stable ID; must match `DayConfig.faction_id` and registry keys |
+| `display_name` | `String` | UI / logs |
+| `description` | `String` | Codex / summary copy |
+| `roster` | `Array[FactionRosterEntry]` | Weighted spawn table (entries are sub-resources in `.tres`) |
+| `mini_boss_ids` | `Array[String]` | Placeholder boss resource ids (no runtime spawn in MVP) |
+| `mini_boss_wave_hints` | `Array[int]` | Waves where `get_mini_boss_info_for_wave` may return data |
+| `roster_tier` | `int` | Coarse faction difficulty tier (1–3) |
+| `difficulty_offset` | `float` | Scales total enemy count when non-zero (`WaveManager` formula) |
+| `BUILTIN_FACTION_RESOURCE_PATHS` | `const Array[String]` | Paths to shipped faction `.tres` files |
+
+Public methods: `get_entries_for_wave(wave_index: int) -> Array[FactionRosterEntry]`, `get_effective_weight_for_wave(entry: FactionRosterEntry, wave_index: int) -> float`.
 - WeaponData Phase 2 additions:
   - `assist_angle_degrees: float`
   - `assist_max_distance: float`

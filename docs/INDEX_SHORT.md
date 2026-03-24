@@ -3,12 +3,12 @@ INDEXSHORT.md
 
 FOUL WARD — INDEXSHORT.md
 
-Compact repository reference. One-liner per file. Updated: 2026-03-24 (Prompt 8 territory + world map).
-Source of truth: REPO_DUMP_AFTER_MVP.md; last full GdUnit run: 342 tests, 0 failures (see `docs/PROMPT_8_IMPLEMENTATION.md` for CLI notes).
+Compact repository reference. One-liner per file. Updated: 2026-03-24 (Prompt 9 factions + weighted waves).
+Source of truth: REPO_DUMP_AFTER_MVP.md; last full GdUnit run: 349 tests, 0 failures (see `docs/PROMPT_9_IMPLEMENTATION.md` for CLI notes).
 AUTOLOADS (registered in project.godot, in init order)
 Autoload Name	Path	What it does
 SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. No logic, no state.
-CampaignManager	res://autoloads/campaign_manager.gd	Day/campaign progress; wraps mission flow; loads territory map into GameManager when config set.
+CampaignManager	res://autoloads/campaign_manager.gd	Day/campaign progress; faction_registry + validate_day_configs; wraps mission flow; loads territory map into GameManager when config set.
 DamageCalculator	res://autoloads/damage_calculator.gd	Stateless 4×4 damage-type × armor-type matrix. Pure function singleton.
 EconomyManager	res://autoloads/economy_manager.gd	Owns gold, building_material, research_material. Emits resource_changed.
 GameManager	res://autoloads/game_manager.gd	Owns game state, mission index, wave index, territory map runtime; mission rewards + territory bonuses.
@@ -17,7 +17,7 @@ SCRIPTS (attached to Manager nodes in main.tscn under /root/Main/Managers/)
 Class Name	Path	What it does
 Types	res://scripts/types.gd	All enums and shared constants. Not an autoload; referenced as Types.XXX.
 HealthComponent	res://scripts/healthcomponent.gd	Reusable HP tracker. Emits local signals health_depleted, health_changed.
-WaveManager	res://scripts/wavemanager.gd	Spawns enemies per wave, runs countdown timer, emits wave signals.
+WaveManager	res://scripts/wave_manager.gd	Spawns enemies per wave from FactionData-weighted roster (total N×6), countdown, wave signals; mini-boss info stub.
 SpellManager	res://scripts/spellmanager.gd	Owns mana pool, spell cooldowns. Executes Shockwave AoE in MVP.
 ResearchManager	res://scripts/researchmanager.gd	Tracks unlocked research nodes. Gates locked buildings.
 ShopManager	res://scripts/shopmanager.gd	Processes shop purchases. Applies mission-start consumable effects.
@@ -50,9 +50,11 @@ WeaponData	res://scripts/resources/weapondata.gd	weapon_slot, display_name, dama
 SpellData	res://scripts/resources/spelldata.gd	spell_id, display_name, mana_cost, cooldown, damage, radius, damage_type, hits_flying
 ResearchNodeData	res://scripts/resources/researchnodedata.gd	node_id, display_name, research_cost, prerequisite_ids[], description
 ShopItemData	res://scripts/resources/shopitemdata.gd	item_id, display_name, gold_cost, material_cost, description
-TerritoryData	res://scripts/resources/territory_data.gd	territory_id, terrain, ownership, bonus_flat_gold_end_of_day, bonus_percent_gold_end_of_day, POST-MVP bonus hooks
+TerritoryData	res://scripts/resources/territory_data.gd	territory_id, terrain_type, ownership, default_faction_id (POST-MVP), bonus_flat_gold_end_of_day, bonus_percent_gold_end_of_day, POST-MVP bonus hooks
 TerritoryMapData	res://scripts/resources/territory_map_data.gd	territories: Array[TerritoryData], get_territory_by_id, has_territory
-DayConfig	res://scripts/resources/day_config.gd	day_index, mission_index, territory_id, display_name, wave/tuning multipliers
+FactionRosterEntry	res://scripts/resources/faction_roster_entry.gd	enemy_type, base_weight, min_wave_index, max_wave_index, tier
+FactionData	res://scripts/resources/faction_data.gd	faction_id, display_name, description, roster[], mini_boss_ids, mini_boss_wave_hints, roster_tier, difficulty_offset; get_entries_for_wave, get_effective_weight_for_wave; BUILTIN_FACTION_RESOURCE_PATHS
+DayConfig	res://scripts/resources/day_config.gd	day_index, mission_index, territory_id, faction_id (default DEFAULT_MIXED), is_mini_boss_day, is_final_boss, display_name, wave/tuning multipliers
 CampaignConfig	res://scripts/resources/campaign_config.gd	campaign_id, display_name, day_configs, territory_map_resource_path, short-campaign flags
 RESOURCE FILES (.tres — actual data)
 Enemy Data
@@ -85,11 +87,17 @@ res://resources/shopdata/shopcatalog.tres	ShopItemData[]	4 items: tower_repair, 
 res://resources/territories/main_campaign_territories.tres	TerritoryMapData	Five placeholder territories for main campaign
 res://resources/campaign_main_50days.tres	CampaignConfig	50 linear days + territory_map_resource_path (Prompt 8 canonical)
 res://resources/campaigns/campaign_short_5_days.tres	CampaignConfig	Default MVP 5-day short campaign (mission_index 1–5)
-TEST FILES (res://tests/, GdUnit4 framework, 342+ cases; full run see PROMPT_8_IMPLEMENTATION.md)
+Faction data
+File	faction_id	Notes
+res://resources/faction_data_default_mixed.tres	DEFAULT_MIXED	Equal-weight six-type MVP mix
+res://resources/faction_data_orc_raiders.tres	ORC_RAIDERS	Orc-heavy roster + placeholder mini-boss id
+res://resources/faction_data_plague_cult.tres	PLAGUE_CULT	Undead/fire/flyer mix + placeholder mini-boss id
+TEST FILES (res://tests/, GdUnit4 framework; full run see PROMPT_9_IMPLEMENTATION.md)
 File	What it covers
 testeconomymanager.gd	gold/material add/spend/reset, signal emission, transactions
 testdamagecalculator.gd	Full 4×4 matrix, boundary values, DoT stub
-testwavemanager.gd	Wave scaling, countdown, spawn count, signal sequence
+testwavemanager.gd	Wave scaling, countdown, spawn count, faction-weighted composition, mini-boss hook, signal sequence
+testfactiondata.gd	Faction .tres load + roster→EnemyData; validate_day_configs on short campaign
 testspellmanager.gd	Mana regen, deduct, cooldown, shockwave AoE damage
 testarnulfstatemachine.gd	All state transitions, downed/recover cycle
 testhealthcomponent.gd	take_damage, heal, reset, health_depleted signal
@@ -186,6 +194,14 @@ LATEST CHANGES (2026-03-24)
     - `res://tests/test_campaign_manager.gd`
     - Prompt 7 additions in `res://tests/test_wave_manager.gd`
     - Prompt 7 additions in `res://tests/test_game_manager.gd`
+
+- Prompt 9 factions + weighted waves (`docs/PROMPT_9_IMPLEMENTATION.md`):
+  - `FactionData`, `FactionRosterEntry`; `.tres` factions `DEFAULT_MIXED`, `ORC_RAIDERS`, `PLAGUE_CULT`.
+  - `WaveManager` roster-weighted spawns (total `N×6`), `set_faction_data_override`, `get_mini_boss_info_for_wave`, `faction_registry`.
+  - `CampaignManager.faction_registry`, `validate_day_configs`.
+  - `DayConfig.faction_id` default `DEFAULT_MIXED`; `is_mini_boss_day`; `TerritoryData.default_faction_id`.
+  - `GameManager` applies `WaveManager.configure_for_day` after `reset_for_new_mission`.
+  - Tests: `res://tests/test_faction_data.gd`, Prompt 9 cases in `res://tests/test_wave_manager.gd`.
 
 - InputManager build-mode click now raycasts hex slots on layer 7 and routes menu mode by occupancy.
 - BuildMenu now supports `open_for_sell_slot(slot_index, slot_data)` and a sell panel with Sell/Cancel actions.
