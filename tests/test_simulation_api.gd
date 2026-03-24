@@ -55,7 +55,7 @@ func before_test() -> void:
 
 	# ── WaveManager ───────────────────────────────────────────────────────
 	_wave_manager = WaveManager.new()
-	_wave_manager.wave_countdown_duration = 30.0
+	_wave_manager.wave_countdown_duration = 10.0
 	_wave_manager.max_waves = 10
 	_wave_manager.enemy_data_registry = _build_six_enemy_data()
 	add_child(_wave_manager)

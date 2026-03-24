@@ -14,6 +14,15 @@ extends Node
 ## All research nodes in the game. Populated via editor with base_structures_tree.tres.
 @export var research_nodes: Array[ResearchNodeData] = []
 
+# Dev toggle: in dev/test builds, make all towers immediately reachable by
+# unlocking every research node when starting a new game.
+@export var dev_unlock_all_research: bool = false
+
+## Dev toggle: unlock only anti-air research so Anti-Air Bolt is buildable
+## immediately (everything else remains locked behind its research).
+## This is intended for faster manual playtesting of early wave survival.
+@export var dev_unlock_anti_air_only: bool = false
+
 # ---------------------------------------------------------------------------
 # Private state
 # ---------------------------------------------------------------------------
@@ -80,6 +89,11 @@ func get_available_nodes() -> Array[ResearchNodeData]:
 ## Clears all unlocked nodes. Called on new game.
 func reset_to_defaults() -> void:
 	_unlocked_nodes.clear()
+	if dev_unlock_all_research:
+		for node_data: ResearchNodeData in research_nodes:
+			_unlocked_nodes.append(node_data.node_id)
+	elif dev_unlock_anti_air_only:
+		_unlocked_nodes.append("unlock_anti_air")
 
 # ---------------------------------------------------------------------------
 # Private helpers

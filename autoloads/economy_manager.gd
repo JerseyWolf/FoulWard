@@ -8,6 +8,15 @@ const DEFAULT_GOLD: int = 1000
 const DEFAULT_BUILDING_MATERIAL: int = 50
 const DEFAULT_RESEARCH_MATERIAL: int = 0
 
+# During manual playtesting we want more starting resources to reach between-mission
+# interactions faster. GdUnit runs headless, so we keep the defaults there to avoid
+# breaking unit tests that assert exact starting values.
+const PLAYTEST_STARTING_RESOURCES_MULTIPLIER: int = 5
+
+# Research defaults to 0 in MVP, so multiplying would still be 0.
+# For playtesting we want enough to unlock the whole tree without worrying about cost.
+const PLAYTEST_STARTING_RESEARCH_MATERIAL: int = 50
+
 var gold: int = DEFAULT_GOLD
 var building_material: int = DEFAULT_BUILDING_MATERIAL
 var research_material: int = DEFAULT_RESEARCH_MATERIAL
@@ -94,10 +103,38 @@ func get_research_material() -> int:
 ## Resets all three resources to starting values. Emits resource_changed for each.
 ## Call this at new-game start or during test setup.
 func reset_to_defaults() -> void:
-	gold = DEFAULT_GOLD
-	building_material = DEFAULT_BUILDING_MATERIAL
-	research_material = DEFAULT_RESEARCH_MATERIAL
+	var is_playtest_starting_bundle: bool = not (_is_gdunit_run() or _is_headless_run())
+
+	var multiplier: int = PLAYTEST_STARTING_RESOURCES_MULTIPLIER if is_playtest_starting_bundle else 1
+	gold = DEFAULT_GOLD * multiplier
+	building_material = DEFAULT_BUILDING_MATERIAL * multiplier
+	research_material = PLAYTEST_STARTING_RESEARCH_MATERIAL if is_playtest_starting_bundle else DEFAULT_RESEARCH_MATERIAL
 	SignalBus.resource_changed.emit(Types.ResourceType.GOLD, gold)
 	SignalBus.resource_changed.emit(Types.ResourceType.BUILDING_MATERIAL, building_material)
 	SignalBus.resource_changed.emit(Types.ResourceType.RESEARCH_MATERIAL, research_material)
+
+
+func _is_gdunit_run() -> bool:
+	# GdUnit is usually run via:
+	#   -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd
+	# Detect that so unit tests keep exact economy defaults.
+	var args: PackedStringArray = OS.get_cmdline_args()
+	for arg: String in args:
+		if arg.find("GdUnitCmdTool.gd") != -1:
+			return true
+		if arg.find("GdUnitCopyLog.gd") != -1:
+			return true
+	return false
+
+
+func _is_headless_run() -> bool:
+	# GdUnit CLI runs Godot in headless mode.
+	if OS.has_feature("headless"):
+		return true
+
+	var args: PackedStringArray = OS.get_cmdline_args()
+	for arg: String in args:
+		if arg == "--headless":
+			return true
+	return false
 

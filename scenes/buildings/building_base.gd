@@ -35,10 +35,6 @@ var _current_target: EnemyBase = null
 # Children
 # ---------------------------------------------------------------------------
 
-@onready var _mesh: MeshInstance3D = get_node_or_null("BuildingMesh") as MeshInstance3D
-@onready var _label: Label3D = get_node_or_null("BuildingLabel") as Label3D
-@onready var _health_component: HealthComponent = get_node_or_null("HealthComponent") as HealthComponent
-
 # ASSUMPTION: ProjectileContainer at /root/Main/ProjectileContainer per ARCHITECTURE.md §2.
 @onready var _projectile_container: Node3D = get_node("/root/Main/ProjectileContainer")
 

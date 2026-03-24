@@ -27,7 +27,7 @@ func _build_wave_manager() -> WaveManager:
 	add_child(_spawn_points)
 
 	var wm: WaveManager = WaveManager.new()
-	wm.wave_countdown_duration = 30.0
+	wm.wave_countdown_duration = 10.0
 	wm.max_waves = 10
 	wm.enemy_data_registry = _build_six_enemy_data()
 	add_child(wm)

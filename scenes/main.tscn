@@ -146,6 +146,8 @@ spell_registry = Array[ExtResource("15_kmb1v")]([ExtResource("16_fuf3a")])
 [node name="ResearchManager" type="Node" parent="Managers" unique_id=1112433558]
 script = ExtResource("6_researchmanager")
 research_nodes = Array[ExtResource("18_pibwh")]([ExtResource("19_c6pm6"), ExtResource("25_raa"), ExtResource("26_atd"), ExtResource("27_usg"), ExtResource("28_fbr"), ExtResource("29_uab")])
+dev_unlock_all_research = false
+dev_unlock_anti_air_only = true
 
 [node name="ShopManager" type="Node" parent="Managers" unique_id=587576636]
 script = ExtResource("7_shopmanager")

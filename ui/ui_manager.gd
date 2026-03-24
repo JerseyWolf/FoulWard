@@ -55,7 +55,8 @@ func _apply_state(state: Types.GameState) -> void:
 
 		Types.GameState.BUILD_MODE:
 			_hud.show()
-			_build_menu.show()
+			# BuildMenu is shown only after selecting a hex slot (see `BuildMenu.open_for_slot()`).
+			# Keeping it hidden at build-mode entry prevents it from covering most of the grid.
 
 		Types.GameState.BETWEEN_MISSIONS:
 			_between_mission_screen.show()

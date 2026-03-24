@@ -8,9 +8,6 @@
 class_name BetweenMissionScreen
 extends Control
 
-@onready var _shop_tab: Control = $TabContainer/ShopTab
-@onready var _research_tab: Control = $TabContainer/ResearchTab
-@onready var _buildings_tab: Control = $TabContainer/BuildingsTab
 @onready var _next_mission_btn: Button = $NextMissionButton
 
 @onready var _shop_list: VBoxContainer = $TabContainer/ShopTab/ShopList

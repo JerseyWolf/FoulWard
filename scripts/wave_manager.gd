@@ -25,7 +25,7 @@ extends Node
 # ---------------------------------------------------------------------------
 
 ## Seconds of countdown before each wave (waves after the first).
-@export var wave_countdown_duration: float = 30.0
+@export var wave_countdown_duration: float = 10.0
 
 ## Countdown only for wave 1 so “Start Game” leads to enemies quickly.
 @export var first_wave_countdown_seconds: float = 3.0
