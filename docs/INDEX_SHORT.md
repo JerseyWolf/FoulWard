@@ -44,7 +44,7 @@ CUSTOM RESOURCE TYPES (script classes, not .tres files)
 Class Name	Script Path	Fields summary
 EnemyData	res://scripts/resources/enemydata.gd	enemy_type, display_name, max_hp, move_speed, damage, attack_range, attack_cooldown, armor_type, gold_reward, is_ranged, is_flying, color, damage_immunities[]
 BuildingData	res://scripts/resources/buildingdata.gd	building_type, display_name, gold_cost, material_cost, upgrade_gold_cost, upgrade_material_cost, damage, upgraded_damage, fire_rate, attack_range, upgraded_range, damage_type, targets_air, targets_ground, is_locked, unlock_research_id, color
-WeaponData	res://scripts/resources/weapondata.gd	weapon_slot, display_name, damage, projectile_speed, reload_time, burst_count, burst_interval, can_target_flying
+WeaponData	res://scripts/resources/weapondata.gd	weapon_slot, display_name, damage, projectile_speed, reload_time, burst_count, burst_interval, can_target_flying, assist_angle_degrees, assist_max_distance, base_miss_chance, max_miss_angle_degrees
 SpellData	res://scripts/resources/spelldata.gd	spell_id, display_name, mana_cost, cooldown, damage, radius, damage_type, hits_flying
 ResearchNodeData	res://scripts/resources/researchnodedata.gd	node_id, display_name, research_cost, prerequisite_ids[], description
 ShopItemData	res://scripts/resources/shopitemdata.gd	item_id, display_name, gold_cost, material_cost, description
@@ -159,3 +159,9 @@ LATEST CHANGES (2026-03-24)
 - HexGrid slot click callback now only updates highlight in build mode (menu opening is centralized in InputManager).
 - Added concrete HexGrid sell-flow tests for slot clearing, refund correctness, and `building_sold` signal emission.
 - Implementation notes recorded in `docs/PROMPT_1_IMPLEMENTATION.md`.
+- Phase 2 firing changes added:
+  - `WeaponData` now includes assist/miss tuning fields (all default to `0.0`).
+  - `Tower` manual shots now pass through private aim helper for cone assist + miss perturbation.
+  - `crossbow.tres` has initial tuning defaults (`7.5`, `0.05`, `2.0`), `rapid_missile.tres` remains `0.0`.
+  - Added simulation API tests covering assist, miss, and autofire bypass behavior.
+- Implementation notes recorded in `docs/PROMPT_2_IMPLEMENTATION.md`.

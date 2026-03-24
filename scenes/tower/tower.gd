@@ -44,6 +44,8 @@ var _rapid_missile_reload_remaining: float = 0.0
 var _burst_remaining: int = 0
 var _burst_timer: float = 0.0
 var _burst_target: Vector3 = Vector3.ZERO
+var _burst_signal_target: Vector3 = Vector3.ZERO
+var _shot_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 # ─────────────────────────────────────────────────────────────────────────
 
@@ -59,6 +61,7 @@ func _ready() -> void:
 
 	_health_component.health_changed.connect(_on_health_changed)
 	_health_component.health_depleted.connect(_on_health_depleted)
+	_shot_rng.randomize()
 	print("[Tower] _ready: hp=%d auto_fire=%s crossbow_reload=%.1fs" % [
 		starting_hp, auto_fire_enabled, crossbow_data.reload_time
 	])
@@ -79,6 +82,8 @@ func _physics_process(delta: float) -> void:
 			_spawn_projectile(rapid_missile_data, _burst_target)
 			_burst_remaining -= 1
 			_burst_timer = rapid_missile_data.burst_interval
+			if _burst_remaining > 0:
+				_burst_target = _resolve_manual_aim_target(rapid_missile_data, _burst_signal_target)
 
 	if auto_fire_enabled:
 		_auto_fire_at_nearest_enemy()
@@ -91,13 +96,14 @@ func fire_crossbow(target_position: Vector3) -> void:
 		return
 	if _crossbow_reload_remaining > 0.0:
 		return
-	print("[Tower] fire_crossbow → (%.1f,%.1f,%.1f)" % [target_position.x, target_position.y, target_position.z])
-	_spawn_projectile(crossbow_data, target_position)
+	var final_target: Vector3 = _resolve_manual_aim_target(crossbow_data, target_position)
+	print("[Tower] fire_crossbow → (%.1f,%.1f,%.1f)" % [final_target.x, final_target.y, final_target.z])
+	_spawn_projectile(crossbow_data, final_target)
 	_crossbow_reload_remaining = crossbow_data.reload_time
 	SignalBus.projectile_fired.emit(
 		Types.WeaponSlot.CROSSBOW,
 		global_position,
-		target_position
+		final_target
 	)
 
 
@@ -110,14 +116,16 @@ func fire_rapid_missile(target_position: Vector3) -> void:
 		return
 	if _burst_remaining > 0:
 		return
+	var final_target: Vector3 = _resolve_manual_aim_target(rapid_missile_data, target_position)
 	_rapid_missile_reload_remaining = rapid_missile_data.reload_time
 	_burst_remaining = rapid_missile_data.burst_count
 	_burst_timer = 0.0  # First shot fires this same physics frame.
-	_burst_target = target_position
+	_burst_target = final_target
+	_burst_signal_target = final_target
 	SignalBus.projectile_fired.emit(
 		Types.WeaponSlot.RAPID_MISSILE,
 		global_position,
-		target_position
+		_burst_signal_target
 	)
 
 
@@ -209,6 +217,78 @@ func _auto_fire_at_nearest_enemy() -> void:
 			best_target = enemy
 	if best_target != null:
 		fire_crossbow(best_target.global_position)
+
+
+func _resolve_manual_aim_target(weapon_data: WeaponData, raw_target: Vector3) -> Vector3:
+	if auto_fire_enabled:
+		return raw_target
+	if weapon_data == null:
+		return raw_target
+
+	var assisted_target: Vector3 = raw_target
+	if weapon_data.assist_angle_degrees > 0.0:
+		var raw_offset: Vector3 = raw_target - global_position
+		if raw_offset.length_squared() > 0.000001:
+			var raw_dir: Vector3 = raw_offset.normalized()
+			var nearest_enemy: EnemyBase = null
+			var nearest_distance: float = INF
+			for node: Node in get_tree().get_nodes_in_group("enemies"):
+				var enemy: EnemyBase = node as EnemyBase
+				if enemy == null or not is_instance_valid(enemy):
+					continue
+				if enemy.health_component == null or not enemy.health_component.is_alive():
+					continue
+				var enemy_data: EnemyData = enemy.get_enemy_data()
+				if enemy_data == null:
+					continue
+				if enemy_data.is_flying and not weapon_data.can_target_flying:
+					continue
+
+				var to_enemy_vec: Vector3 = enemy.global_position - global_position
+				var to_enemy_len_sq: float = to_enemy_vec.length_squared()
+				if to_enemy_len_sq <= 0.000001:
+					continue
+				var distance_to_enemy: float = sqrt(to_enemy_len_sq)
+				if weapon_data.assist_max_distance > 0.0 and distance_to_enemy > weapon_data.assist_max_distance:
+					continue
+
+				var to_enemy: Vector3 = to_enemy_vec / distance_to_enemy
+				var angle_deg: float = rad_to_deg(raw_dir.angle_to(to_enemy))
+				if angle_deg > weapon_data.assist_angle_degrees:
+					continue
+
+				if distance_to_enemy < nearest_distance:
+					nearest_distance = distance_to_enemy
+					nearest_enemy = enemy
+
+			if nearest_enemy != null:
+				assisted_target = nearest_enemy.global_position
+
+	if weapon_data.base_miss_chance <= 0.0 or weapon_data.max_miss_angle_degrees <= 0.0:
+		return assisted_target
+
+	var clamped_miss_chance: float = clampf(weapon_data.base_miss_chance, 0.0, 1.0)
+	if _shot_rng.randf() > clamped_miss_chance:
+		return assisted_target
+
+	var assisted_offset: Vector3 = assisted_target - global_position
+	if assisted_offset.length_squared() <= 0.000001:
+		return assisted_target
+
+	var aim_dir: Vector3 = assisted_offset.normalized()
+	var random_axis: Vector3 = aim_dir.cross(Vector3.UP)
+	if random_axis.length_squared() <= 0.000001:
+		random_axis = aim_dir.cross(Vector3.RIGHT)
+	if random_axis.length_squared() <= 0.000001:
+		random_axis = Vector3.FORWARD
+	random_axis = random_axis.normalized()
+
+	var random_angle_rad: float = deg_to_rad(
+		_shot_rng.randf_range(-weapon_data.max_miss_angle_degrees, weapon_data.max_miss_angle_degrees)
+	)
+	# SOURCE: Godot docs Vector3/Basis rotation pattern for directional perturbation.
+	var perturbed_dir: Vector3 = Basis(random_axis, random_angle_rad) * aim_dir
+	return global_position + perturbed_dir.normalized() * assisted_offset.length()
 
 
 func _on_health_changed(current_hp: int, max_hp: int) -> void:

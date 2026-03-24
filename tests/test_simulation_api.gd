@@ -11,6 +11,8 @@
 class_name TestSimulationApi
 extends GdUnitTestSuite
 
+const EnemyScene: PackedScene = preload("res://scenes/enemies/enemy_base.tscn")
+
 # ── Headless scene nodes ──────────────────────────────────────────────────
 var _tower: Tower = null
 var _wave_manager: WaveManager = null
@@ -142,6 +144,27 @@ func _build_shockwave_data() -> SpellData:
 	sd.damage_type = Types.DamageType.MAGICAL
 	sd.hits_flying = false
 	return sd
+
+
+func _create_enemy_at(pos: Vector3, is_flying: bool = false) -> EnemyBase:
+	var data: EnemyData = EnemyData.new()
+	data.display_name = "Aim Test Enemy"
+	data.enemy_type = Types.EnemyType.ORC_GRUNT
+	data.max_hp = 100
+	data.move_speed = 0.0
+	data.damage = 1
+	data.attack_range = 1.5
+	data.attack_cooldown = 1.0
+	data.armor_type = Types.ArmorType.UNARMORED
+	data.gold_reward = 1
+	data.is_ranged = false
+	data.is_flying = is_flying
+	data.damage_immunities = []
+	var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
+	_enemy_container.add_child(enemy)
+	enemy.global_position = pos
+	enemy.initialize(data)
+	return enemy
 
 
 func _build_shop_catalog() -> Array[ShopItemData]:
@@ -318,6 +341,85 @@ func test_tower_damaged_signal_emitted_on_take_damage() -> void:
 	var monitor := monitor_signals(SignalBus, false)
 	_tower.take_damage(50)
 	await assert_signal(monitor).is_emitted("tower_damaged", [450, 500])
+
+
+func test_weapon_data_new_assist_and_miss_defaults_are_zero() -> void:
+	var weapon: WeaponData = WeaponData.new()
+	assert_float(weapon.assist_angle_degrees).is_equal(0.0)
+	assert_float(weapon.assist_max_distance).is_equal(0.0)
+	assert_float(weapon.base_miss_chance).is_equal(0.0)
+	assert_float(weapon.max_miss_angle_degrees).is_equal(0.0)
+
+
+func test_crossbow_tres_loads_expected_phase2_defaults() -> void:
+	var crossbow: WeaponData = load("res://resources/weapon_data/crossbow.tres") as WeaponData
+	assert_object(crossbow).is_not_null()
+	assert_float(crossbow.assist_angle_degrees).is_equal_approx(7.5, 0.001)
+	assert_float(crossbow.assist_max_distance).is_equal(0.0)
+	assert_float(crossbow.base_miss_chance).is_equal_approx(0.05, 0.001)
+	assert_float(crossbow.max_miss_angle_degrees).is_equal_approx(2.0, 0.001)
+
+
+func test_fire_crossbow_with_zero_assist_keeps_raw_target() -> void:
+	_tower.crossbow_data.assist_angle_degrees = 0.0
+	_tower.crossbow_data.assist_max_distance = 0.0
+	_tower.crossbow_data.base_miss_chance = 0.0
+	_tower.crossbow_data.max_miss_angle_degrees = 0.0
+	_create_enemy_at(Vector3(10.0, 0.0, 0.0), false)
+
+	var raw_target: Vector3 = Vector3(8.0, 0.0, 0.5)
+	var monitor := monitor_signals(SignalBus, false)
+	_tower.fire_crossbow(raw_target)
+	await assert_signal(monitor).is_emitted(
+		"projectile_fired",
+		[Types.WeaponSlot.CROSSBOW, _tower.global_position, raw_target]
+	)
+
+
+func test_fire_crossbow_assist_snaps_to_nearest_enemy_inside_cone() -> void:
+	_tower.crossbow_data.assist_angle_degrees = 10.0
+	_tower.crossbow_data.assist_max_distance = 0.0
+	_tower.crossbow_data.base_miss_chance = 0.0
+	_tower.crossbow_data.max_miss_angle_degrees = 0.0
+	var near_enemy: EnemyBase = _create_enemy_at(Vector3(9.0, 0.0, 0.4), false)
+	_create_enemy_at(Vector3(18.0, 0.0, 0.8), false)
+
+	var monitor := monitor_signals(SignalBus, false)
+	_tower.fire_crossbow(Vector3(10.0, 0.0, 0.0))
+	await assert_signal(monitor).is_emitted(
+		"projectile_fired",
+		[Types.WeaponSlot.CROSSBOW, _tower.global_position, near_enemy.global_position]
+	)
+
+
+func test_fire_crossbow_miss_chance_one_perturbs_direction() -> void:
+	_tower.crossbow_data.assist_angle_degrees = 0.0
+	_tower.crossbow_data.assist_max_distance = 0.0
+	_tower.crossbow_data.base_miss_chance = 1.0
+	_tower.crossbow_data.max_miss_angle_degrees = 5.0
+	_tower._shot_rng.seed = 12345
+
+	var raw_target: Vector3 = Vector3(10.0, 0.0, 0.0)
+	var helper_target: Vector3 = _tower._resolve_manual_aim_target(_tower.crossbow_data, raw_target)
+	assert_bool(helper_target != raw_target).is_true()
+
+
+func test_fire_crossbow_auto_fire_enabled_ignores_assist_and_miss() -> void:
+	_tower.auto_fire_enabled = true
+	_tower.crossbow_data.assist_angle_degrees = 45.0
+	_tower.crossbow_data.assist_max_distance = 0.0
+	_tower.crossbow_data.base_miss_chance = 1.0
+	_tower.crossbow_data.max_miss_angle_degrees = 15.0
+	_create_enemy_at(Vector3(10.0, 0.0, 0.0), false)
+
+	var raw_target: Vector3 = Vector3(7.0, 0.0, 2.0)
+	var monitor := monitor_signals(SignalBus, false)
+	_tower.fire_crossbow(raw_target)
+	await assert_signal(monitor).is_emitted(
+		"projectile_fired",
+		[Types.WeaponSlot.CROSSBOW, _tower.global_position, raw_target]
+	)
+	_tower.auto_fire_enabled = false
 
 # ═════════════════════════════════════════════════════════════════════════
 # TEST GROUP 3: SimBot activates without UI (2 tests)

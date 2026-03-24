@@ -21,4 +21,10 @@ extends Resource
 @export var burst_interval: float = 0.0
 ## True if this weapon can target flying enemies. Always false for Florence in MVP.
 @export var can_target_flying: bool = false
+# ASSUMPTION: These fields are designer-tunable; setting them to 0.0 disables assist/miss
+# and restores MVP-accurate behavior. Balance changes should be done via .tres resources, not code.
+@export var assist_angle_degrees: float = 0.0
+@export var assist_max_distance: float = 0.0
+@export var base_miss_chance: float = 0.0
+@export var max_miss_angle_degrees: float = 0.0
 

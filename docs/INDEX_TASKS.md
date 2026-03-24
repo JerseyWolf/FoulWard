@@ -44,3 +44,6 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - `BuildMenu` now supports placement mode + sell mode entrypoints.
   - `HexGrid` slot click callback no longer opens menu directly.
 - Added HexGrid sell-flow test cases and reflected them in index notes.
+- Added `docs/PROMPT_2_IMPLEMENTATION.md` with Phase 2 firing-system implementation notes.
+- Indexed new `WeaponData` assist/miss fields and Tower manual-shot aim resolution behavior.
+- Recorded new tests covering manual assist cone snap, miss perturbation, and autofire bypass.

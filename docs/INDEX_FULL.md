@@ -223,6 +223,12 @@ MANAGERS (WaveManager, SpellManager, ResearchManager, ShopManager, InputManager,
 CUSTOM RESOURCE TYPES
 
 Full field tables for EnemyData, BuildingData, WeaponData, SpellData, ResearchNodeData, ShopItemData as previously spelled out.
+- WeaponData Phase 2 additions:
+  - `assist_angle_degrees: float`
+  - `assist_max_distance: float`
+  - `base_miss_chance: float`
+  - `max_miss_angle_degrees: float`
+  - All default to `0.0` (MVP behavior preserved until tuned in `.tres` data).
 TYPES ENUMS (res://scripts/types.gd)
 
 GameState, DamageType, ArmorType, BuildingType, ArnulfState, ResourceType, EnemyType, WeaponSlot, TargetPriority (unused yet).
@@ -242,3 +248,7 @@ These sections describe the complete main-menu → mission → between-mission �
 - `HexGrid._on_hex_slot_input(...)` no longer opens BuildMenu directly; it only updates slot highlight while in build mode.
 - `test_hex_grid.gd` includes direct sell-flow coverage for refund amounts, slot-empty postcondition, and `building_sold` emission.
 - See `docs/PROMPT_1_IMPLEMENTATION.md` for implementation-specific details.
+- Added manual-shot firing assist/miss logic in `Tower` private helper path without public API signature changes.
+- `crossbow.tres` now carries initial Phase 2 tuning defaults; `rapid_missile.tres` remains deterministic (`0.0` assist/miss values).
+- Added simulation API tests for assist disabled path, cone snapping, guaranteed miss perturbation, autofire bypass, and crossbow defaults loading.
+- See `docs/PROMPT_2_IMPLEMENTATION.md` for full Phase 2 implementation and test notes.

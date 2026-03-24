@@ -12,4 +12,8 @@ reload_time = 4.0
 burst_count = 10
 burst_interval = 0.05
 can_target_flying = false
+assist_angle_degrees = 0.0
+assist_max_distance = 0.0
+base_miss_chance = 0.0
+max_miss_angle_degrees = 0.0
 
