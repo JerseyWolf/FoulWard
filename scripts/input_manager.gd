@@ -23,6 +23,8 @@ extends Node
 const _RAY_MAX_DISTANCE: float = 10_000.0
 ## Physics layer 2 — enemies (see enemy_base.tscn collision_layer).
 const _ENEMY_COLLISION_MASK: int = 2
+## Physics layer 7 — hex slots (see hex_grid.gd collision layer setup).
+const _HEX_SLOT_COLLISION_MASK: int = 64
 
 var _selected_slot_index: int = -1
 
@@ -58,14 +60,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					print("[InputManager] RIGHT click — no aim (ZERO)")
 
 			elif mb.button_index == MOUSE_BUTTON_LEFT and state == Types.GameState.BUILD_MODE:
-				var ground: Vector3 = _get_ground_plane_intersection()
-				if ground != Vector3.ZERO:
-					var slot_i: int = _hex_grid.get_nearest_slot_index(ground)
-					if slot_i >= 0:
-						print("[InputManager] BUILD_MODE left click → slot %d (ground %.1f, %.1f)" % [
-							slot_i, ground.x, ground.z
-						])
-						_build_menu.open_for_slot(slot_i)
+				_handle_build_mode_left_click()
 
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.is_action("cast_shockwave"):
@@ -121,3 +116,46 @@ func _get_fire_aim_position() -> Vector3:
 			return enemy.global_position
 
 	return _get_ground_plane_intersection()
+
+
+func _handle_build_mode_left_click() -> void:
+	var slot_index: int = _get_clicked_hex_slot_index()
+	if slot_index < 0:
+		return
+
+	var slot_data: Dictionary = _hex_grid.get_slot_data(slot_index)
+	var is_occupied: bool = bool(slot_data.get("is_occupied", false))
+	print("[InputManager] BUILD_MODE left click → slot=%d occupied=%s" % [slot_index, str(is_occupied)])
+	if is_occupied:
+		_build_menu.open_for_sell_slot(slot_index, slot_data)
+	else:
+		_build_menu.open_for_slot(slot_index)
+
+
+func _get_clicked_hex_slot_index() -> int:
+	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
+	var ray_origin: Vector3 = _camera.project_ray_origin(mouse_pos)
+	var ray_normal: Vector3 = _camera.project_ray_normal(mouse_pos)
+	var ray_end: Vector3 = ray_origin + ray_normal * _RAY_MAX_DISTANCE
+
+	var world: World3D = get_viewport().world_3d
+	if world == null:
+		return -1
+	var space: PhysicsDirectSpaceState3D = world.direct_space_state
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(ray_origin, ray_end)
+	query.collision_mask = _HEX_SLOT_COLLISION_MASK
+
+	var hit: Dictionary = space.intersect_ray(query)
+	if hit.is_empty():
+		return -1
+
+	var collider: Object = hit.get("collider", null)
+	if collider is Area3D:
+		var slot_name: String = (collider as Area3D).name
+		if slot_name.begins_with("HexSlot_"):
+			var index_text: String = slot_name.trim_prefix("HexSlot_")
+			return index_text.to_int()
+
+	# Fallback for non-standard slot naming (keeps behavior robust).
+	var hit_pos: Vector3 = hit.get("position", Vector3.ZERO)
+	return _hex_grid.get_nearest_slot_index(hit_pos)

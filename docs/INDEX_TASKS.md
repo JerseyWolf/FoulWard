@@ -36,3 +36,11 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - an `@export` variable is added/removed/renamed,
   - a SignalBus signal is added/removed/renamed,
   - autoload registration changes.
+
+## Task Update Log (2026-03-24)
+- Added `docs/PROMPT_1_IMPLEMENTATION.md` with concrete implementation notes.
+- Updated indexes for new BuildMenu sell-mode API and BuildMode input routing changes:
+  - `InputManager` now routes hex-slot clicks by occupancy.
+  - `BuildMenu` now supports placement mode + sell mode entrypoints.
+  - `HexGrid` slot click callback no longer opens menu directly.
+- Added HexGrid sell-flow test cases and reflected them in index notes.

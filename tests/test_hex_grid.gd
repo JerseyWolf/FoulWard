@@ -6,6 +6,7 @@ class_name TestHexGrid
 extends GdUnitTestSuite
 
 var _hex_grid: HexGrid = null
+var _main_stub: Node = null
 
 
 func _create_hex_grid() -> HexGrid:
@@ -53,12 +54,33 @@ func before_test() -> void:
 	EconomyManager.reset_to_defaults()
 	EconomyManager.add_gold(1000)
 	EconomyManager.add_building_material(100)
+	_ensure_main_projectile_container_stub()
 
 
 func after_test() -> void:
 	if is_instance_valid(_hex_grid):
 		_hex_grid.queue_free()
+	if is_instance_valid(_main_stub):
+		_main_stub.queue_free()
 	await get_tree().process_frame
+
+
+func _ensure_main_projectile_container_stub() -> void:
+	var existing_main: Node = get_node_or_null("/root/Main")
+	if existing_main != null:
+		_main_stub = null
+		if existing_main.get_node_or_null("ProjectileContainer") == null:
+			var projectile_container: Node3D = Node3D.new()
+			projectile_container.name = "ProjectileContainer"
+			existing_main.add_child(projectile_container)
+		return
+
+	_main_stub = Node3D.new()
+	_main_stub.name = "Main"
+	var projectile_container_stub: Node3D = Node3D.new()
+	projectile_container_stub.name = "ProjectileContainer"
+	_main_stub.add_child(projectile_container_stub)
+	get_tree().root.add_child(_main_stub)
 
 # ---------------------------------------------------------------------------
 # Slot initialisation tests
@@ -205,6 +227,57 @@ func test_sell_upgraded_building_refunds_both_costs_arithmetic() -> void:
 	EconomyManager.spend_gold(75)
 	EconomyManager.add_gold(50 + 75)
 	assert_int(EconomyManager.get_gold()).is_equal(before_gold)
+
+
+func test_sell_building_empties_slot_and_refunds_base_cost() -> void:
+	_hex_grid = _create_hex_grid()
+	_hex_grid.building_data_registry = _make_building_data_registry()
+	add_child(_hex_grid)
+	await get_tree().process_frame
+
+	assert_bool(_hex_grid.place_building(0, Types.BuildingType.ARROW_TOWER)).is_true()
+	var gold_before_sell: int = EconomyManager.get_gold()
+	var mat_before_sell: int = EconomyManager.get_building_material()
+
+	assert_bool(_hex_grid.sell_building(0)).is_true()
+	var slot_data: Dictionary = _hex_grid.get_slot_data(0)
+	assert_bool(slot_data.get("is_occupied", false)).is_false()
+
+	var data: BuildingData = _hex_grid.get_building_data(Types.BuildingType.ARROW_TOWER)
+	assert_int(EconomyManager.get_gold() - gold_before_sell).is_equal(data.gold_cost)
+	assert_int(EconomyManager.get_building_material() - mat_before_sell).is_equal(data.material_cost)
+
+
+func test_sell_upgraded_building_refunds_base_and_upgrade_costs() -> void:
+	_hex_grid = _create_hex_grid()
+	_hex_grid.building_data_registry = _make_building_data_registry()
+	add_child(_hex_grid)
+	await get_tree().process_frame
+
+	assert_bool(_hex_grid.place_building(1, Types.BuildingType.BALLISTA)).is_true()
+	assert_bool(_hex_grid.upgrade_building(1)).is_true()
+	var gold_before_sell: int = EconomyManager.get_gold()
+	var mat_before_sell: int = EconomyManager.get_building_material()
+
+	assert_bool(_hex_grid.sell_building(1)).is_true()
+	var slot_data: Dictionary = _hex_grid.get_slot_data(1)
+	assert_bool(slot_data.get("is_occupied", false)).is_false()
+
+	var data: BuildingData = _hex_grid.get_building_data(Types.BuildingType.BALLISTA)
+	assert_int(EconomyManager.get_gold() - gold_before_sell).is_equal(data.gold_cost + data.upgrade_gold_cost)
+	assert_int(EconomyManager.get_building_material() - mat_before_sell).is_equal(data.material_cost + data.upgrade_material_cost)
+
+
+func test_sell_building_emits_building_sold_signal() -> void:
+	_hex_grid = _create_hex_grid()
+	_hex_grid.building_data_registry = _make_building_data_registry()
+	add_child(_hex_grid)
+	await get_tree().process_frame
+
+	assert_bool(_hex_grid.place_building(2, Types.BuildingType.FIRE_BRAZIER)).is_true()
+	var monitor := monitor_signals(SignalBus, false)
+	assert_bool(_hex_grid.sell_building(2)).is_true()
+	await assert_signal(monitor).is_emitted("building_sold", [2, Types.BuildingType.FIRE_BRAZIER])
 
 # ---------------------------------------------------------------------------
 # Upgrade tests
