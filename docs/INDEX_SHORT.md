@@ -3,15 +3,16 @@ INDEXSHORT.md
 
 FOUL WARD — INDEXSHORT.md
 
-Compact repository reference. One-liner per file. Updated: 2026-03-24 (post-MVP, after Autonomous Sessions 1–3).
-Source of truth: REPO_DUMP_AFTER_MVP.md (110 files, 289 GdUnit4 tests, 0 failures).
+Compact repository reference. One-liner per file. Updated: 2026-03-24 (Prompt 8 territory + world map).
+Source of truth: REPO_DUMP_AFTER_MVP.md; last full GdUnit run: 342 tests, 0 failures (see `docs/PROMPT_8_IMPLEMENTATION.md` for CLI notes).
 AUTOLOADS (registered in project.godot, in init order)
 Autoload Name	Path	What it does
-SignalBus	res://autoloads/signalbus.gd	Central hub for ALL cross-system typed signals. No logic, no state.
-DamageCalculator	res://autoloads/damagecalculator.gd	Stateless 4×4 damage-type × armor-type matrix. Pure function singleton.
-EconomyManager	res://autoloads/economymanager.gd	Owns gold, building_material, research_material. Emits resource_changed.
-GameManager	res://autoloads/gamemanager.gd	Owns game state, mission index, wave index. Drives the full session loop.
-AutoTestDriver	res://autoloads/autotestdriver.gd	Headless smoke-test driver. Active only when --autotest flag is present.
+SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. No logic, no state.
+CampaignManager	res://autoloads/campaign_manager.gd	Day/campaign progress; wraps mission flow; loads territory map into GameManager when config set.
+DamageCalculator	res://autoloads/damage_calculator.gd	Stateless 4×4 damage-type × armor-type matrix. Pure function singleton.
+EconomyManager	res://autoloads/economy_manager.gd	Owns gold, building_material, research_material. Emits resource_changed.
+GameManager	res://autoloads/game_manager.gd	Owns game state, mission index, wave index, territory map runtime; mission rewards + territory bonuses.
+AutoTestDriver	res://autoloads/auto_test_driver.gd	Headless smoke-test driver. Active only when --autotest flag is present.
 SCRIPTS (attached to Manager nodes in main.tscn under /root/Main/Managers/)
 Class Name	Path	What it does
 Types	res://scripts/types.gd	All enums and shared constants. Not an autoload; referenced as Types.XXX.
@@ -36,7 +37,8 @@ Class Name	Script Path	Scene Path	What it does
 UIManager	res://ui/uimanager.gd	(Control node in main.tscn)	Lightweight state router. Shows/hides UI panels on game_state_changed.
 HUD	res://ui/hud.gd	res://ui/hud.tscn	Combat overlay: resources, wave counter, HP bar, spells.
 BuildMenu	res://ui/buildmenu.gd	res://ui/buildmenu.tscn	Radial building placement panel. Opens on hex slot click in BUILDMODE.
-BetweenMissionScreen	res://ui/betweenmissionscreen.gd	res://ui/betweenmissionscreen.tscn	Post-mission tabs: Shop, Research, Buildings. NEXT MISSION.
+BetweenMissionScreen	res://ui/between_mission_screen.gd	res://ui/between_mission_screen.tscn	Post-mission tabs: World Map, Shop, Research, Buildings, Weapons. NEXT DAY.
+WorldMap	res://ui/world_map.gd	res://ui/world_map.tscn	Territory list + details (read-only; GameManager state).
 MainMenu	res://ui/mainmenu.gd	res://ui/mainmenu.tscn	Title screen. Start, Settings (placeholder), Quit.
 MissionBriefing	res://ui/missionbriefing.gd	(Control node in main.tscn)	Shows mission number. BEGIN button → GameManager.start_wave_countdown.
 EndScreen	res://ui/endscreen.gd	(Control node in main.tscn)	Final screen for win/lose. Restart and Quit buttons.
@@ -48,6 +50,10 @@ WeaponData	res://scripts/resources/weapondata.gd	weapon_slot, display_name, dama
 SpellData	res://scripts/resources/spelldata.gd	spell_id, display_name, mana_cost, cooldown, damage, radius, damage_type, hits_flying
 ResearchNodeData	res://scripts/resources/researchnodedata.gd	node_id, display_name, research_cost, prerequisite_ids[], description
 ShopItemData	res://scripts/resources/shopitemdata.gd	item_id, display_name, gold_cost, material_cost, description
+TerritoryData	res://scripts/resources/territory_data.gd	territory_id, terrain, ownership, bonus_flat_gold_end_of_day, bonus_percent_gold_end_of_day, POST-MVP bonus hooks
+TerritoryMapData	res://scripts/resources/territory_map_data.gd	territories: Array[TerritoryData], get_territory_by_id, has_territory
+DayConfig	res://scripts/resources/day_config.gd	day_index, mission_index, territory_id, display_name, wave/tuning multipliers
+CampaignConfig	res://scripts/resources/campaign_config.gd	campaign_id, display_name, day_configs, territory_map_resource_path, short-campaign flags
 RESOURCE FILES (.tres — actual data)
 Enemy Data
 File	enemy_type	armor_type	Notes
@@ -76,7 +82,10 @@ File	Class	Notes
 res://resources/spelldata/shockwave.tres	SpellData	Shockwave AoE, 50 mana, 60s cooldown
 res://resources/researchdata/basestructurestree.tres	ResearchNodeData	6 nodes: unlock_ballista, unlock_antiair, arrow_tower_dmg, unlock_shield_gen, fire_brazier_range, unlock_archer_barracks
 res://resources/shopdata/shopcatalog.tres	ShopItemData[]	4 items: tower_repair, building_repair, arrow_tower (voucher), mana_draught
-TEST FILES (res://tests/, GdUnit4 framework, 289 cases total, 0 failures)
+res://resources/territories/main_campaign_territories.tres	TerritoryMapData	Five placeholder territories for main campaign
+res://resources/campaign_main_50days.tres	CampaignConfig	50 linear days + territory_map_resource_path (Prompt 8 canonical)
+res://resources/campaigns/campaign_short_5_days.tres	CampaignConfig	Default MVP 5-day short campaign (mission_index 1–5)
+TEST FILES (res://tests/, GdUnit4 framework, 342+ cases; full run see PROMPT_8_IMPLEMENTATION.md)
 File	What it covers
 testeconomymanager.gd	gold/material add/spend/reset, signal emission, transactions
 testdamagecalculator.gd	Full 4×4 matrix, boundary values, DoT stub
@@ -86,7 +95,12 @@ testarnulfstatemachine.gd	All state transitions, downed/recover cycle
 testhealthcomponent.gd	take_damage, heal, reset, health_depleted signal
 testresearchmanager.gd	unlock, prereq gating, insufficient material, reset
 testshopmanager.gd	purchase flow, affordability, effect application, signal
-testgamemanager.gd	State transitions, mission progression, win/fail paths
+testgamemanager.gd	State transitions, mission progression, win/fail paths, campaign/territory integration
+testterritorydata.gd	Main territory map load and IDs
+testcampaignterritorymapping.gd	50-day DayConfig → territory_id validity
+testcampaignterritoryupdates.gd	apply_day_result_to_territory + SignalBus
+testterritoryeconomybonuses.gd	Gold modifier aggregation
+testworldmapui.gd	WorldMap button labels on territory_state_changed
 testhexgrid.gd	24 slots, place/sell/upgrade, resource deduction, signals
 testbuildingbase.gd	Combat loop, targeting, fire rate, upgrade stats
 testprojectilesystem.gd	Init paths, travel, collision, damage matrix, immunity, miss

@@ -1,0 +1,111 @@
+; main_campaign_territories.tres — TerritoryMapData for main 50-day campaign.
+; # PLACEHOLDER / # TUNING: names, bonuses, descriptions.
+
+[gd_resource type="Resource" script_class="TerritoryMapData" load_steps=8 format=3 uid="uid://bwmcterrmap01"]
+
+[ext_resource type="Script" path="res://scripts/resources/territory_map_data.gd" id="1_tmap"]
+[ext_resource type="Script" path="res://scripts/resources/territory_data.gd" id="2_terr"]
+
+[sub_resource type="Resource" id="Territory_heartland"]
+script = ExtResource("2_terr")
+territory_id = "heartland_plains"
+display_name = "Heartland Plains"
+description = "Central breadbasket region. # PLACEHOLDER # TUNING"
+icon_id = "plains_icon"
+color = Color(0.75, 0.85, 0.55, 1)
+terrain_type = 0
+is_controlled_by_player = true
+is_permanently_lost = false
+threat_level = 0
+is_under_attack = false
+bonus_flat_gold_end_of_day = 5
+bonus_percent_gold_end_of_day = 0.0
+bonus_flat_gold_per_kill = 0
+bonus_research_per_day = 0
+bonus_research_cost_multiplier = 1.0
+bonus_enchanting_cost_multiplier = 1.0
+bonus_weapon_upgrade_cost_multiplier = 1.0
+
+[sub_resource type="Resource" id="Territory_blackwood"]
+script = ExtResource("2_terr")
+territory_id = "blackwood_forest"
+display_name = "Blackwood Forest"
+description = "Dense woods. # PLACEHOLDER # TUNING"
+icon_id = "forest_icon"
+color = Color(0.2, 0.45, 0.22, 1)
+terrain_type = 1
+is_controlled_by_player = false
+is_permanently_lost = false
+threat_level = 1
+is_under_attack = false
+bonus_flat_gold_end_of_day = 3
+bonus_percent_gold_end_of_day = 0.05
+bonus_flat_gold_per_kill = 0
+bonus_research_per_day = 0
+bonus_research_cost_multiplier = 1.0
+bonus_enchanting_cost_multiplier = 1.0
+bonus_weapon_upgrade_cost_multiplier = 1.0
+
+[sub_resource type="Resource" id="Territory_ashen"]
+script = ExtResource("2_terr")
+territory_id = "ashen_swamp"
+display_name = "Ashen Swamp"
+description = "Miasmic wetlands. # PLACEHOLDER # TUNING"
+icon_id = "swamp_icon"
+color = Color(0.35, 0.4, 0.38, 1)
+terrain_type = 2
+is_controlled_by_player = false
+is_permanently_lost = false
+threat_level = 2
+is_under_attack = false
+bonus_flat_gold_end_of_day = 0
+bonus_percent_gold_end_of_day = 0.12
+bonus_flat_gold_per_kill = 0
+bonus_research_per_day = 0
+bonus_research_cost_multiplier = 1.0
+bonus_enchanting_cost_multiplier = 1.0
+bonus_weapon_upgrade_cost_multiplier = 1.0
+
+[sub_resource type="Resource" id="Territory_iron"]
+script = ExtResource("2_terr")
+territory_id = "iron_ridge"
+display_name = "Iron Ridge"
+description = "Highland mines. # PLACEHOLDER # TUNING"
+icon_id = "mountain_icon"
+color = Color(0.55, 0.5, 0.48, 1)
+terrain_type = 3
+is_controlled_by_player = false
+is_permanently_lost = false
+threat_level = 2
+is_under_attack = false
+bonus_flat_gold_end_of_day = 15
+bonus_percent_gold_end_of_day = 0.0
+bonus_flat_gold_per_kill = 0
+bonus_research_per_day = 0
+bonus_research_cost_multiplier = 1.0
+bonus_enchanting_cost_multiplier = 1.0
+bonus_weapon_upgrade_cost_multiplier = 1.0
+
+[sub_resource type="Resource" id="Territory_outer"]
+script = ExtResource("2_terr")
+territory_id = "outer_city"
+display_name = "Outer City"
+description = "Walled outskirts. # PLACEHOLDER # TUNING"
+icon_id = "city_icon"
+color = Color(0.65, 0.62, 0.7, 1)
+terrain_type = 4
+is_controlled_by_player = false
+is_permanently_lost = false
+threat_level = 3
+is_under_attack = false
+bonus_flat_gold_end_of_day = 12
+bonus_percent_gold_end_of_day = 0.0
+bonus_flat_gold_per_kill = 0
+bonus_research_per_day = 0
+bonus_research_cost_multiplier = 1.0
+bonus_enchanting_cost_multiplier = 1.0
+bonus_weapon_upgrade_cost_multiplier = 1.0
+
+[resource]
+script = ExtResource("1_tmap")
+territories = [SubResource("Territory_heartland"), SubResource("Territory_blackwood"), SubResource("Territory_ashen"), SubResource("Territory_iron"), SubResource("Territory_outer")]

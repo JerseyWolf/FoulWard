@@ -37,6 +37,12 @@ signal all_waves_cleared()
 @warning_ignore("unused_signal")
 signal resource_changed(resource_type: Types.ResourceType, new_amount: int)
 
+# === TERRITORIES / WORLD MAP ===
+@warning_ignore("unused_signal")
+signal territory_state_changed(territory_id: String)
+@warning_ignore("unused_signal")
+signal world_map_updated()
+
 # === BUILDINGS ===
 @warning_ignore("unused_signal")
 signal building_placed(slot_index: int, building_type: Types.BuildingType)

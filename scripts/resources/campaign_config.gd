@@ -10,6 +10,11 @@ extends Resource
 @export var display_name: String = ""
 ## Ordered day configurations (index 0 => day 1).
 @export var day_configs: Array[DayConfig] = []
+
+## Optional path to TerritoryMapData for this campaign. Empty = no territory layer (short MVP).
+## ASSUMPTION: GameManager loads this at runtime when set.
+@export var territory_map_resource_path: String = ""
+
 ## If true, uses short_campaign_length when > 0.
 @export var is_short_campaign: bool = false
 ## Overrides day_configs size when short mode is enabled.
