@@ -11,20 +11,23 @@ extends GdUnitTestSuite
 var _wave_manager: WaveManager
 var _enemy_container: Node3D
 var _spawn_points: Node3D
+## Isolated WaveManager tests emit `all_waves_cleared`; pause GameManager's handler to avoid log noise + economy/mission side effects.
+var _gm_all_waves_handler_paused: bool = false
 
 
 func _build_wave_manager() -> WaveManager:
+	# SpawnPoints must be in the tree before Marker3D children use global_position (valid global_transform).
 	_enemy_container = Node3D.new()
 	_enemy_container.name = "EnemyContainer"
 	add_child(_enemy_container)
 
 	_spawn_points = Node3D.new()
 	_spawn_points.name = "SpawnPoints"
+	add_child(_spawn_points)
 	for i: int in range(10):
 		var marker: Marker3D = Marker3D.new()
-		marker.global_position = Vector3(float(i) * 4.0, 0.0, 0.0)
 		_spawn_points.add_child(marker)
-	add_child(_spawn_points)
+		marker.global_position = Vector3(float(i) * 4.0, 0.0, 0.0)
 
 	var wm: WaveManager = WaveManager.new()
 	wm.wave_countdown_duration = 10.0
@@ -32,7 +35,7 @@ func _build_wave_manager() -> WaveManager:
 	wm.enemy_data_registry = _build_six_enemy_data()
 	add_child(wm)
 
-	# Inject mocks directly — bypasses @onready absolute path lookup.
+	# _ready used get_node_or_null → null without /root/Main; inject test nodes after wm enters tree.
 	wm._enemy_container = _enemy_container
 	wm._spawn_points = _spawn_points
 
@@ -70,6 +73,10 @@ func _build_six_enemy_data() -> Array[EnemyData]:
 # ---------------------------------------------------------------------------
 
 func before_test() -> void:
+	_gm_all_waves_handler_paused = false
+	if SignalBus.all_waves_cleared.is_connected(GameManager._on_all_waves_cleared):
+		SignalBus.all_waves_cleared.disconnect(GameManager._on_all_waves_cleared)
+		_gm_all_waves_handler_paused = true
 	_wave_manager = _build_wave_manager()
 
 
@@ -82,6 +89,10 @@ func after_test() -> void:
 		_enemy_container.queue_free()
 	if is_instance_valid(_spawn_points):
 		_spawn_points.queue_free()
+	if _gm_all_waves_handler_paused:
+		if not SignalBus.all_waves_cleared.is_connected(GameManager._on_all_waves_cleared):
+			SignalBus.all_waves_cleared.connect(GameManager._on_all_waves_cleared)
+		_gm_all_waves_handler_paused = false
 	await get_tree().process_frame
 
 # ---------------------------------------------------------------------------
@@ -449,4 +460,19 @@ func test_default_faction_preserves_mixed_composition_trend() -> void:
 		Types.EnemyType.BAT_SWARM,
 	]:
 		assert_bool(observed_types.has(t)).is_true()
+
+
+func test_regular_day_spawns_no_bosses() -> void:
+	var day: DayConfig = DayConfig.new()
+	day.day_index = 1
+	day.base_wave_count = 10
+	day.is_mini_boss_day = false
+	day.is_mini_boss = false
+	day.is_final_boss = false
+	day.faction_id = "DEFAULT_MIXED"
+	_wave_manager.configure_for_day(day)
+	_wave_manager.force_spawn_wave(_wave_manager.max_waves)
+	await get_tree().process_frame
+	for child: Node in _enemy_container.get_children():
+		assert_bool(child is BossBase).is_false()
 

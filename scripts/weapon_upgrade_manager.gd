@@ -1,6 +1,3 @@
-extends Node
-class_name WeaponUpgradeManager
-
 ## weapon_upgrade_manager.gd
 ## Manages weapon level progression for Florence's Tower weapons.
 ## Tracks current upgrade level per weapon slot (0 = base, 1-3 = upgraded).
@@ -16,6 +13,9 @@ class_name WeaponUpgradeManager
 ##
 # SOURCE: Composition-based stat system pattern — https://www.reddit.com/r/godot/comments/1fu9gcc/stats_resources_for_a_compositionbased_weapon/ [S4]
 # SOURCE: Scene-bound manager pattern — consistent with existing ResearchManager, ShopManager in this codebase
+
+class_name WeaponUpgradeManager
+extends Node
 
 const MAX_LEVEL: int = 3
 

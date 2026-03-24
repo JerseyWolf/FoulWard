@@ -46,6 +46,7 @@ func start_new_campaign() -> void:
 	_start_current_day_internal()
 
 func start_next_day() -> void:
+	GameManager.prepare_next_campaign_day_if_needed()
 	_start_current_day_internal()
 
 func get_current_day() -> int:
@@ -99,18 +100,15 @@ func _set_campaign_config(config: CampaignConfig) -> void:
 func _start_current_day_internal() -> void:
 	if campaign_config == null:
 		return
-	if current_day < 1 or current_day > campaign_length:
+	if current_day < 1:
 		return
 
-	var idx: int = current_day - 1
-	if idx >= 0 and idx < campaign_config.day_configs.size():
-		current_day_config = campaign_config.day_configs[idx]
-	else:
-		current_day_config = null
+	current_day_config = GameManager.get_day_config_for_index(current_day)
+	if current_day_config == null:
+		push_error("CampaignManager: no DayConfig for day %d" % current_day)
 		return
 
 	SignalBus.day_started.emit(current_day)
-	# DEVIATION: GameManager now receives DayConfig to configure mission start.
 	GameManager.start_mission_for_day(current_day, current_day_config)
 
 func _on_mission_won(mission_number: int) -> void:
@@ -119,14 +117,16 @@ func _on_mission_won(mission_number: int) -> void:
 		return
 
 	failed_attempts_on_current_day = 0
-	var finished_day: int = current_day
-	SignalBus.day_won.emit(finished_day)
-	current_day += 1
+	SignalBus.day_won.emit(current_day)
+	if GameManager.final_boss_defeated:
+		campaign_completed = true
+		SignalBus.campaign_completed.emit(campaign_id)
+		return
 
+	current_day += 1
 	if current_day > campaign_length and campaign_length > 0:
 		campaign_completed = true
 		SignalBus.campaign_completed.emit(campaign_id)
-		# POST-MVP: save + meta-progression hooks.
 
 func _on_mission_failed(mission_number: int) -> void:
 	# ASSUMPTION: mission_number == current_day in short-campaign MVP.

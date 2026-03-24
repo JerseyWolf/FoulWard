@@ -994,6 +994,9 @@ is_final_boss = false
 [sub_resource type="Resource" id="DayConfig_50"]
 script = ExtResource("2_dayconfig")
 day_index = 50
+mission_index = 5
+faction_id = "PLAGUE_CULT"
+boss_id = "final_boss"
 display_name = "Day 50"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."

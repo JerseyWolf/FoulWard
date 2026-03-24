@@ -41,6 +41,10 @@ enum TerrainType {
 
 ## Whether the player currently holds this territory.
 @export var is_controlled_by_player: bool = false
+## Set when a mini-boss guarding this territory is defeated (Prompt 10 hook).
+@export var is_secured: bool = false
+## True while the campaign boss threatens this territory (Prompt 10 MVP UI hook).
+@export var has_boss_threat: bool = false
 
 ## If true, territory is lost for the campaign (MVP: set on mission fail).
 @export var is_permanently_lost: bool = false

@@ -25,6 +25,7 @@ extends Node
 ## Preloads: autoloads and early parses may run before global `class_name` registration.
 const FactionDataType = preload("res://scripts/resources/faction_data.gd")
 const FactionRosterEntryType = preload("res://scripts/resources/faction_roster_entry.gd")
+const BossSceneDefault: PackedScene = preload("res://scenes/bosses/boss_base.tscn")
 
 # ---------------------------------------------------------------------------
 # EXPORTS
@@ -50,10 +51,11 @@ const FactionRosterEntryType = preload("res://scripts/resources/faction_roster_e
 const EnemyScene: PackedScene = preload("res://scenes/enemies/enemy_base.tscn")
 
 ## Runtime parent node for spawned enemies.
-@onready var _enemy_container: Node3D = get_node("/root/Main/EnemyContainer")
+## get_node_or_null: GdUnit / headless tests have no /root/Main; tests assign after add_child.
+@onready var _enemy_container: Node3D = get_node_or_null("/root/Main/EnemyContainer")
 
 ## Container holding the 10 Marker3D spawn-point nodes.
-@onready var _spawn_points: Node3D = get_node("/root/Main/SpawnPoints")
+@onready var _spawn_points: Node3D = get_node_or_null("/root/Main/SpawnPoints")
 
 # ---------------------------------------------------------------------------
 # INTERNAL STATE
@@ -86,6 +88,17 @@ var _current_faction: FactionDataType = null
 ## Set from DayConfig.is_mini_boss_day when configure_for_day runs.
 var _mini_boss_day_eligible: bool = false
 
+# Boss wave context (Prompt 10) ------------------------------------------------
+
+## ASSUMPTION: set by configure_for_day or set_day_context
+var current_day_config: DayConfig = null
+var current_faction_data: FactionDataType = null
+
+## boss_id -> BossData; populated from BossData.BUILTIN_BOSS_RESOURCE_PATHS.
+var boss_registry: Dictionary = {} # String -> BossData
+var boss_wave_index: int = -1
+var active_boss_id: String = ""
+
 # ---------------------------------------------------------------------------
 # READY
 # ---------------------------------------------------------------------------
@@ -101,6 +114,7 @@ func _ready() -> void:
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
 	_load_faction_registry()
 	resolve_current_faction()
+	ensure_boss_registry_loaded()
 
 # ---------------------------------------------------------------------------
 # PHYSICS PROCESS — Countdown timer
@@ -187,6 +201,10 @@ func reset_for_new_mission() -> void:
 	enemy_damage_multiplier = 1.0
 	gold_reward_multiplier = 1.0
 	_mini_boss_day_eligible = false
+	current_day_config = null
+	current_faction_data = null
+	boss_wave_index = -1
+	active_boss_id = ""
 	clear_all_enemies()
 	resolve_current_faction()
 
@@ -201,8 +219,35 @@ func configure_for_day(day_config: DayConfig) -> void:
 	enemy_hp_multiplier = day_config.enemy_hp_multiplier
 	enemy_damage_multiplier = day_config.enemy_damage_multiplier
 	gold_reward_multiplier = day_config.gold_reward_multiplier
-	_mini_boss_day_eligible = day_config.is_mini_boss_day
+	_mini_boss_day_eligible = day_config.is_mini_boss_day or day_config.is_mini_boss
 	_apply_faction_from_day_config(day_config)
+	current_day_config = day_config
+	if _faction_data_override != null:
+		current_faction_data = _faction_data_override
+	else:
+		current_faction_data = _current_faction
+	_configure_boss_wave_index()
+
+
+## Test / API: inject DayConfig + FactionData without running full campaign flow.
+func set_day_context(day_config: DayConfig, faction_data: FactionDataType) -> void:
+	configure_for_day(day_config)
+	if faction_data != null:
+		_current_faction = faction_data
+		current_faction_data = faction_data
+	_configure_boss_wave_index()
+
+
+## Loads built-in BossData resources into boss_registry.
+func ensure_boss_registry_loaded() -> void:
+	if not boss_registry.is_empty():
+		return
+	for path: String in BossData.BUILTIN_BOSS_RESOURCE_PATHS:
+		var res: Resource = load(path)
+		if res is BossData:
+			var b: BossData = res as BossData
+			if b.boss_id != "":
+				boss_registry[b.boss_id] = b
 
 
 ## Allows tests to inject a custom FactionData instead of using campaign mapping.
@@ -294,6 +339,94 @@ func _apply_faction_from_day_config(day_config: DayConfig) -> void:
 		push_error("WaveManager: unknown faction_id '%s', falling back to DEFAULT_MIXED." % fid)
 		_current_faction = faction_registry.get("DEFAULT_MIXED", null) as FactionDataType
 
+
+func _configure_boss_wave_index() -> void:
+	boss_wave_index = -1
+	active_boss_id = ""
+	var dc: DayConfig = current_day_config
+	if dc == null:
+		return
+	var cap: int = configured_max_waves if configured_max_waves > 0 else max_waves
+	if dc.is_final_boss or dc.is_boss_attack_day:
+		boss_wave_index = cap
+		active_boss_id = dc.boss_id
+	elif (dc.is_mini_boss_day or dc.is_mini_boss) and _current_faction != null and not _current_faction.mini_boss_ids.is_empty():
+		boss_wave_index = cap
+		var pick: int = randi() % _current_faction.mini_boss_ids.size()
+		active_boss_id = _current_faction.mini_boss_ids[pick]
+
+
+func _spawn_boss_wave() -> int:
+	if _enemy_container == null or _spawn_points == null:
+		push_error(
+			"WaveManager: enemy_container or spawn_points is null. In tests, assign both fields before calling spawn_wave."
+		)
+		return 0
+	var boss_data: BossData = _get_boss_data(active_boss_id)
+	if boss_data == null:
+		push_error("WaveManager: BossData not found for boss_id = %s" % active_boss_id)
+		return 0
+	var scene: PackedScene = boss_data.boss_scene
+	if scene == null:
+		scene = BossSceneDefault
+	var boss: BossBase = scene.instantiate() as BossBase
+	if boss == null:
+		push_error("WaveManager: boss_scene is not a BossBase for boss_id = %s" % active_boss_id)
+		return 0
+	var spawn_point_nodes: Array[Node] = _spawn_points.get_children()
+	var spawn_marker: Marker3D = spawn_point_nodes.pick_random() as Marker3D
+	var offset: Vector3 = Vector3(
+		randf_range(-2.0, 2.0),
+		0.0,
+		randf_range(-2.0, 2.0)
+	)
+	_enemy_container.add_child(boss)
+	boss.global_position = spawn_marker.global_position + offset
+	if not boss.is_in_group("enemies"):
+		boss.add_to_group("enemies")
+	boss.initialize_boss_data(boss_data)
+	var count: int = 1
+	for escort_id: String in boss_data.escort_unit_ids:
+		var escort_data: EnemyData = _resolve_escort_enemy_data(escort_id)
+		if escort_data == null:
+			continue
+		var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
+		_enemy_container.add_child(enemy)
+		var tuned: EnemyData = escort_data.duplicate(true) as EnemyData
+		tuned.max_hp = maxi(1, int(round(float(escort_data.max_hp) * enemy_hp_multiplier)))
+		tuned.damage = maxi(1, int(round(float(escort_data.damage) * enemy_damage_multiplier)))
+		tuned.gold_reward = maxi(0, int(round(float(escort_data.gold_reward) * gold_reward_multiplier)))
+		enemy.initialize(tuned)
+		var escort_spawn: Marker3D = spawn_point_nodes.pick_random() as Marker3D
+		var escort_offset: Vector3 = Vector3(
+			randf_range(-2.0, 2.0),
+			0.0,
+			randf_range(-2.0, 2.0)
+		)
+		enemy.global_position = escort_spawn.global_position + escort_offset
+		if escort_data.is_flying:
+			enemy.global_position.y = 5.0
+		if not enemy.is_in_group("enemies"):
+			enemy.add_to_group("enemies")
+		count += 1
+	return count
+
+
+func _get_boss_data(boss_id: String) -> BossData:
+	if boss_registry.has(boss_id):
+		return boss_registry[boss_id] as BossData
+	return null
+
+
+func _resolve_escort_enemy_data(escort_id: String) -> EnemyData:
+	var eid: String = escort_id.strip_edges()
+	for data: EnemyData in enemy_data_registry:
+		# BossData escort_unit_ids use enum key strings (e.g. "ORC_GRUNT"); str(enum) is not the key name.
+		var key_name: String = Types.EnemyType.keys()[data.enemy_type]
+		if key_name == eid:
+			return data
+	return null
+
 # ---------------------------------------------------------------------------
 # PRIVATE — COUNTDOWN & SPAWN
 # ---------------------------------------------------------------------------
@@ -315,11 +448,10 @@ func _spawn_wave(wave_number: int) -> void:
 	assert(wave_number >= 1 and wave_number <= max_waves,
 		"WaveManager: _spawn_wave() invalid wave_number %d." % wave_number)
 
-	if _enemy_container == null:
-		push_error("WaveManager._spawn_wave: _enemy_container is null; cannot spawn.")
-		return
-	if _spawn_points == null:
-		push_error("WaveManager._spawn_wave: _spawn_points is null; cannot spawn.")
+	if _enemy_container == null or _spawn_points == null:
+		push_error(
+			"WaveManager: enemy_container or spawn_points is null. In tests, assign both fields before calling spawn_wave."
+		)
 		return
 
 	if _current_faction == null:
@@ -328,14 +460,19 @@ func _spawn_wave(wave_number: int) -> void:
 	_current_wave = wave_number
 	_is_wave_active = true
 
+	var total_spawned: int = 0
+	if boss_wave_index == wave_number and active_boss_id.strip_edges() != "":
+		total_spawned += _spawn_boss_wave()
+
 	var roster_entries: Array[FactionRosterEntryType] = _current_faction.get_entries_for_wave(wave_number)
 	if roster_entries.is_empty():
 		push_error(
 			"WaveManager._spawn_wave: faction '%s' has no roster entries for wave %d"
 			% [_current_faction.faction_id, wave_number]
 		)
-		SignalBus.wave_started.emit(_current_wave, 0)
-		call_deferred("_check_wave_cleared")
+		SignalBus.wave_started.emit(_current_wave, total_spawned)
+		if total_spawned == 0:
+			call_deferred("_check_wave_cleared")
 		return
 
 	var spawn_point_nodes: Array[Node] = _spawn_points.get_children()
@@ -346,8 +483,6 @@ func _spawn_wave(wave_number: int) -> void:
 
 	var total_enemies: int = _compute_total_enemies_for_wave(wave_number, _current_faction)
 	var per_entry_counts: Array[int] = _allocate_counts_for_roster(roster_entries, total_enemies, wave_number)
-
-	var total_spawned: int = 0
 
 	for i: int in range(roster_entries.size()):
 		var entry: FactionRosterEntryType = roster_entries[i]

@@ -1,6 +1,3 @@
-extends Resource
-class_name WeaponLevelData
-
 ## weapon_level_data.gd
 ## Defines the incremental stat bonuses and upgrade cost for one weapon level.
 ## One .tres instance exists per weapon per level (levels 1-3).
@@ -12,6 +9,9 @@ class_name WeaponLevelData
 ##
 # SOURCE: Godot 4 custom Resource pattern — https://docs.godotengine.org/en/stable/tutorials/scripting/resources.html [S1]
 # SOURCE: Array[Resource] progression pattern — https://www.youtube.com/watch?v=h5vpjCDNa-w [S2]
+
+class_name WeaponLevelData
+extends Resource
 
 ## Which weapon slot this level applies to.
 @export var weapon_slot: Types.WeaponSlot

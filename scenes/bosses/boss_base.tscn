@@ -1,0 +1,45 @@
+[gd_scene load_steps=8 format=3 uid="uid://bossbasefoulward01"]
+
+[ext_resource type="Script" path="res://scenes/bosses/boss_base.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/health_component.gd" id="3"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_boss"]
+radius = 0.55
+height = 1.2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_boss"]
+albedo_color = Color(0.55, 0.15, 0.65, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_boss"]
+size = Vector3(1.1, 1.1, 1.1)
+
+[node name="BossBase" type="CharacterBody3D" groups=["enemies"]]
+collision_layer = 2
+collision_mask = 45
+script = ExtResource("1")
+
+[node name="BossMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+mesh = SubResource("BoxMesh_boss")
+material_override = SubResource("StandardMaterial3D_boss")
+
+[node name="BossCollision" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_boss")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("3")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+target_position = Vector3(0, 0, 0)
+target_desired_distance = 2.0
+path_desired_distance = 0.5
+avoidance_enabled = true
+radius = 0.55
+neighbor_distance = 5.0
+time_horizon_agents = 2.0
+max_speed = 0.0
+
+[node name="BossLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+text = "Boss"
+font_size = 48
