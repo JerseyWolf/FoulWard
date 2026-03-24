@@ -65,11 +65,19 @@ enum EnemyType {
 	BAT_SWARM,
 }
 
+enum AllyClass {
+	MELEE,
+	RANGED,
+	SUPPORT,
+}
+
 enum WeaponSlot {
 	CROSSBOW,
 	RAPID_MISSILE,
 }
 
+# Used by buildings and allies for target selection preferences.
+# MVP ally AI implements CLOSEST only (nearest enemy by distance).
 enum TargetPriority {
 	CLOSEST,
 	HIGHEST_HP,

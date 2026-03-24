@@ -124,3 +124,13 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - **`GameManager._begin_mission_wave_sequence`**: **`Main` → `Managers` → `WaveManager`** via **`get_node_or_null`**; soft skip (**`push_warning`** + return) when absent so suites like **`test_enchantment_manager`** do not require **`main.tscn`** (GdUnit error monitor); **`test_game_manager`** optional guard test.
   - **`GameManager`** + **`project.godot`**: **`mission_won`** → **`_on_mission_won_transition_to_hub`**; autoload order **`CampaignManager`** before **`GameManager`**; **`test_campaign_manager`** **`mission_failed`** payload fix; **`docs/PROBLEM_REPORT.md`** (errors + files).
   - Indexes updated (**`INDEX_SHORT`**, **`INDEX_FULL`**, **`INDEX_TASKS`**, **`INDEX_MACHINE`**).
+- Prompt 11 (2026-03-24) — ally framework:
+  - **`docs/PROMPT_11_IMPLEMENTATION.md`**
+  - **`Types.AllyClass`**; **`AllyData`** + **`res://resources/ally_data/*.tres`**
+  - **`AllyBase`** (`res://scenes/allies/ally_base.tscn`), **`main.tscn`**: `AllyContainer`, `AllySpawnPoints`
+  - **`CampaignManager`**: `current_ally_roster`, `_initialize_static_roster`, `has_ally`, `get_ally_data`, `reinitialize_ally_roster_for_test`
+  - **`GameManager`**: `_spawn_allies_for_current_mission`, `_cleanup_allies` (mission start / win / fail / `start_new_game`)
+  - **`SignalBus`**: `ally_spawned`, `ally_downed`, `ally_recovered`, `ally_killed`, `ally_state_changed` (POST-MVP)
+  - **`Arnulf`**: `ALLY_ID_ARNULF`, generic `ally_*` mirror emissions
+  - Tests: **`test_ally_data.gd`**, **`test_ally_base.gd`**, **`test_ally_signals.gd`**, **`test_ally_spawning.gd`**
+  - **`ARCHITECTURE.md`**, **`INDEX_SHORT.md`**, **`INDEX_FULL.md`**, **`INDEX_MACHINE.md`** updated

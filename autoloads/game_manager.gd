@@ -21,6 +21,9 @@ const WAVES_PER_MISSION: int = 3
 ## ASSUMPTION: Runtime loads territory map from CampaignManager.campaign_config.territory_map_resource_path.
 const MAIN_CAMPAIGN_CONFIG_PATH: String = "res://resources/campaign_main_50days.tres"
 
+var _active_allies: Array = []
+var _ally_base_scene: PackedScene = preload("res://scenes/allies/ally_base.tscn")
+
 var current_mission: int = 1
 var current_wave: int = 0
 var game_state: Types.GameState = Types.GameState.MAIN_MENU
@@ -80,6 +83,7 @@ func start_new_game() -> void:
 	print("[GameManager] start_new_game: mission=1  gold=%d mat=%d" % [
 		EconomyManager.get_gold(), EconomyManager.get_building_material()
 	])
+	_cleanup_allies()
 	_reset_final_boss_campaign_state()
 	current_mission = 1
 	current_wave = 0
@@ -107,6 +111,7 @@ func start_next_mission() -> void:
 func start_wave_countdown() -> void:
 	assert(game_state == Types.GameState.MISSION_BRIEFING, "start_wave_countdown called from invalid state")
 	_transition_to(Types.GameState.COMBAT)
+	_spawn_allies_for_current_mission()
 	_apply_shop_mission_start_consumables()
 	# Single source of truth for countdown duration: WaveManager emits wave_countdown_started.
 	_begin_mission_wave_sequence()
@@ -309,6 +314,7 @@ func start_mission_for_day(day_index: int, day_config: DayConfig) -> void:
 
 	_transition_to(Types.GameState.COMBAT)
 	SignalBus.mission_started.emit(current_mission)
+	_spawn_allies_for_current_mission()
 	_apply_shop_mission_start_consumables()
 	_begin_mission_wave_sequence()
 
@@ -319,6 +325,61 @@ func _apply_shop_mission_start_consumables() -> void:
 	if shop == null:
 		return
 	shop.apply_mission_start_consumables()
+
+
+func _spawn_allies_for_current_mission() -> void:
+	var main: Node = get_node_or_null("/root/Main")
+	if main == null:
+		push_warning(
+			"GameManager: Main scene not found at /root/Main; skipping ally spawn (mission %d)."
+			% current_mission
+		)
+		return
+
+	var ally_container: Node3D = main.get_node_or_null("AllyContainer") as Node3D
+	var spawn_points_root: Node3D = main.get_node_or_null("AllySpawnPoints") as Node3D
+	if ally_container == null or spawn_points_root == null:
+		push_warning(
+			"GameManager: AllyContainer or AllySpawnPoints missing under Main; skipping ally spawn (mission %d)."
+			% current_mission
+		)
+		return
+
+	_cleanup_allies()
+
+	var ally_datas: Array = CampaignManager.current_ally_roster
+	var spawn_points: Array[Node3D] = []
+	for child: Node in spawn_points_root.get_children():
+		if child is Node3D:
+			spawn_points.append(child as Node3D)
+
+	if ally_datas.is_empty() or spawn_points.is_empty():
+		return
+
+	var index: int = 0
+	for data: Variant in ally_datas:
+		if data == null:
+			continue
+		var ally: Node = _ally_base_scene.instantiate()
+		if ally == null:
+			continue
+
+		ally_container.add_child(ally)
+		var spawn_point: Node3D = spawn_points[index % spawn_points.size()] as Node3D
+		ally.global_position = spawn_point.global_position
+
+		if ally.has_method("initialize_ally_data"):
+			ally.call("initialize_ally_data", data)
+		_active_allies.append(ally)
+
+		index += 1
+
+
+func _cleanup_allies() -> void:
+	for ally: Variant in _active_allies:
+		if ally != null and is_instance_valid(ally):
+			(ally as Node).queue_free()
+	_active_allies.clear()
 
 
 func _begin_mission_wave_sequence() -> void:
@@ -361,6 +422,7 @@ func _transition_to(new_state: Types.GameState) -> void:
 	SignalBus.game_state_changed.emit(old, new_state)
 
 func _on_all_waves_cleared() -> void:
+	_cleanup_allies()
 	print("[GameManager] all_waves_cleared: awarding mission=%d resources" % current_mission)
 	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
 	apply_day_result_to_territory(day_cfg, true)
@@ -393,6 +455,7 @@ func _on_all_waves_cleared() -> void:
 	SignalBus.mission_won.emit(current_mission)
 
 func _on_tower_destroyed() -> void:
+	_cleanup_allies()
 	print("[GameManager] tower_destroyed → MISSION_FAILED")
 	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
 	var completed_day_index: int = CampaignManager.get_current_day()

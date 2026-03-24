@@ -4,7 +4,7 @@ INDEXFULL.md
 FOUL WARD — INDEXFULL.md
 
 Full public API reference for every script, resource type, and system.
-Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-24 (Prompt 10 bosses + Day 50 / post-loop hooks).
+Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-24 (Prompt 11 ally framework; see `docs/PROMPT_11_IMPLEMENTATION.md`).
 Use INDEXSHORT.md for fast orientation, INDEXFULL.md for exact method signatures, signals, and dependencies.
 CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 
@@ -53,6 +53,18 @@ COMBAT
     arnulf_incapacitated()
 
     arnulf_recovered()
+
+ALLIES (Prompt 11)
+
+    ally_spawned(ally_id: String) — emitted when `AllyBase.initialize_ally_data` runs or Arnulf `reset_for_new_mission` (id `arnulf`).
+
+    ally_downed(ally_id: String) — emitted when a generic ally enters downed path (POST-MVP) or Arnulf enters DOWNED.
+
+    ally_recovered(ally_id: String) — emitted when Arnulf completes RECOVERING (generic mirror).
+
+    ally_killed(ally_id: String) — emitted when a generic ally’s HP hits zero (mission removal); Arnulf has no kill path in MVP (POST-MVP).
+
+    ally_state_changed(ally_id: String, new_state: String) — POST-MVP detailed tracking.
 
 BOSSES (Prompt 10)
 
@@ -410,6 +422,27 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
 
 **BossBase** (`res://scenes/bosses/boss_base.gd`): extends `EnemyBase`; `initialize_boss_data(data: BossData) -> void`, `advance_phase() -> void`; emits `boss_spawned` / `boss_killed`.
 
+**AllyData** (`res://scripts/resources/ally_data.gd`) — Prompt 11
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `ally_id` | `String` | Stable id (matches SignalBus payloads, roster lookup) |
+| `display_name`, `description` | `String` | UI / placeholder narrative |
+| `ally_class` | `Types.AllyClass` | MELEE / RANGED / SUPPORT |
+| `max_hp`, `move_speed`, `basic_attack_damage`, `attack_range`, `attack_cooldown` | various | Combat/movement tuning (data-driven) |
+| `preferred_targeting` | `Types.TargetPriority` | MVP: **CLOSEST** only |
+| `is_unique` | `bool` | Named vs generic merc |
+| `starting_level`, `level_scaling_factor`, `uses_downed_recovering` | POST-MVP | Campaign / Arnulf-like recovery |
+
+**AllyBase** (`res://scenes/allies/ally_base.gd` / `ally_base.tscn`) — Prompt 11
+
+- `initialize_ally_data(p_ally_data: Variant) -> void` — HP reset, shapes from `attack_range`, emits `ally_spawned`.
+- `find_target() -> EnemyBase` — nearest living enemy in `enemies` group (CLOSEST).
+- `_perform_attack_on_target` — `EnemyBase.take_damage` (direct damage; POST-MVP projectiles).
+- Death: `ally_killed` + `queue_free()` unless `uses_downed_recovering` (POST-MVP).
+
+**CampaignManager** (ally roster fields): `current_ally_roster: Array`, `current_ally_roster_ids: Array[String]`, `_initialize_static_roster()`, `has_ally`, `get_ally_data`, `reinitialize_ally_roster_for_test()`.
+
 - WeaponData Phase 2 additions:
   - `assist_angle_degrees: float`
   - `assist_max_distance: float`
@@ -418,7 +451,7 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
   - All default to `0.0` (MVP behavior preserved until tuned in `.tres` data).
 TYPES ENUMS (res://scripts/types.gd)
 
-GameState, DamageType, ArmorType, BuildingType, ArnulfState, ResourceType, EnemyType, WeaponSlot, TargetPriority (unused yet).
+GameState, DamageType, ArmorType, BuildingType, ArnulfState, ResourceType, EnemyType, **AllyClass**, WeaponSlot, TargetPriority (buildings + allies; ally MVP uses CLOSEST).
 GAME FLOW, SIGNAL FLOW, POST-MVP STUB INVENTORY
 
 These sections describe the complete main-menu → mission → between-mission → end-screen loop, the major signal chains (enemy dies, tower dies, wave clears, research unlock, build mode, etc.), and which hooks exist but are not yet used (building_destroyed, DoT, SimBot profiles, etc.).

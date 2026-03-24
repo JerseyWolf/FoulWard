@@ -3,19 +3,19 @@ INDEXSHORT.md
 
 FOUL WARD — INDEXSHORT.md
 
-Compact repository reference. One-liner per file. Updated: 2026-03-24 (Prompt 10 bosses + Day 50 / post-loop hooks + GdUnit GameManager notes).
-Source of truth: REPO_DUMP_AFTER_MVP.md; last recorded full GdUnit run: 349 tests, 0 failures (Prompt 9 polish); **re-run** `./tools/run_gdunit.sh` after Prompt 10 (`docs/PROMPT_10_IMPLEMENTATION.md`). **Handoff:** `docs/PROBLEM_REPORT.md` lists files and log snippets for GdUnit / `mission_won` / `push_warning` work.
+Compact repository reference. One-liner per file. Updated: 2026-03-24 (Prompt 11 ally framework + AllyData / AllyBase / roster / tests; see `docs/PROMPT_11_IMPLEMENTATION.md`).
+Source of truth: REPO_DUMP_AFTER_MVP.md; **re-run** `./tools/run_gdunit.sh` after Prompt 11. **Handoff:** `docs/PROBLEM_REPORT.md` lists files and log snippets for GdUnit / `mission_won` / `push_warning` work.
 AUTOLOADS (registered in project.godot, in init order)
 Autoload Name	Path	What it does
-SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. Prompt 10: boss_spawned, boss_killed, campaign_boss_attempted. No logic, no state.
-CampaignManager	res://autoloads/campaign_manager.gd	Day/campaign progress; faction_registry + validate_day_configs; wraps mission flow; loads territory map into GameManager when config set. **Init order:** must load **before** GameManager in `project.godot` so `SignalBus.mission_won` runs `_on_mission_won` (day increment) before GameManager hub transition.
+SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. Prompt 10: boss_spawned, boss_killed, campaign_boss_attempted. Prompt 11: ally_spawned, ally_downed, ally_recovered, ally_killed, ally_state_changed (POST-MVP). No logic, no state.
+CampaignManager	res://autoloads/campaign_manager.gd	Day/campaign progress; faction_registry + validate_day_configs; **current_ally_roster** (Prompt 11); wraps mission flow; loads territory map into GameManager when config set. **Init order:** must load **before** GameManager in `project.godot` so `SignalBus.mission_won` runs `_on_mission_won` (day increment) before GameManager hub transition.
 DamageCalculator	res://autoloads/damage_calculator.gd	Stateless 4×4 damage-type × armor-type matrix. Pure function singleton.
 EconomyManager	res://autoloads/economy_manager.gd	Owns gold, building_material, research_material. Emits resource_changed.
-GameManager	res://autoloads/game_manager.gd	Owns game state, mission index, wave index, territory map runtime; mission rewards + territory bonuses. Prompt 10: final boss state, synthetic boss-attack days, held_territory_ids, prepare_next_campaign_day_if_needed / advance_to_next_day / get_day_config_for_index. `_begin_mission_wave_sequence`: Main→Managers→WaveManager via get_node_or_null; `push_warning` if absent (not `push_error` — GdUnit). Subscribes to `mission_won` for BETWEEN_MISSIONS / GAME_WON after CampaignManager (see `PROBLEM_REPORT.md`).
+GameManager	res://autoloads/game_manager.gd	Owns game state, mission index, wave index, territory map runtime; mission rewards + territory bonuses. Prompt 10: final boss state, synthetic boss-attack days, held_territory_ids, prepare_next_campaign_day_if_needed / advance_to_next_day / get_day_config_for_index. Prompt 11: `_spawn_allies_for_current_mission` / `_cleanup_allies` (Main/AllyContainer, AllySpawnPoints). `_begin_mission_wave_sequence`: Main→Managers→WaveManager via get_node_or_null; `push_warning` if absent (not `push_error` — GdUnit). Subscribes to `mission_won` for BETWEEN_MISSIONS / GAME_WON after CampaignManager (see `PROBLEM_REPORT.md`).
 AutoTestDriver	res://autoloads/auto_test_driver.gd	Headless smoke-test driver. Active only when --autotest flag is present.
 SCRIPTS (attached to Manager nodes in main.tscn under /root/Main/Managers/)
 Class Name	Path	What it does
-Types	res://scripts/types.gd	All enums and shared constants. Not an autoload; referenced as Types.XXX.
+Types	res://scripts/types.gd	All enums and shared constants. Prompt 11: `AllyClass` (MELEE/RANGED/SUPPORT); `TargetPriority` shared with allies (MVP: CLOSEST). Not an autoload; referenced as Types.XXX.
 HealthComponent	res://scripts/healthcomponent.gd	Reusable HP tracker. Emits local signals health_depleted, health_changed.
 WaveManager	res://scripts/wave_manager.gd	Spawns enemies per wave from FactionData-weighted roster (total N×6), countdown, wave signals. `_enemy_container` / `_spawn_points` via get_node_or_null(/root/Main/...); null-safe spawn. Prompt 10: boss_registry, ensure_boss_registry_loaded, set_day_context, boss wave on configured index + escorts.
 SpellManager	res://scripts/spellmanager.gd	Owns mana pool, spell cooldowns. Executes Shockwave AoE in MVP.
@@ -27,7 +27,8 @@ MainRoot	res://scripts/mainroot.gd	Applies root window content scale at startup 
 SCENES (runtime instantiated or statically placed)
 Class Name	Script Path	Scene Path	What it does
 Tower	res://scenes/tower/tower.gd	res://scenes/tower/tower.tscn	Player's stationary avatar. Fires crossbow + rapid missile.
-Arnulf	res://scenes/arnulf/arnulf.gd	res://scenes/arnulf/arnulf.tscn	AI melee companion. State machine: IDLE/PATROL/CHASE/ATTACK/DOWNED/RECOVERING.
+Arnulf	res://scenes/arnulf/arnulf.gd	res://scenes/arnulf/arnulf.tscn	AI melee companion. State machine: IDLE/PATROL/CHASE/ATTACK/DOWNED/RECOVERING. Prompt 11: emits generic `ally_*` with id `arnulf` + `ALLY_ID_ARNULF`.
+AllyBase	res://scenes/allies/ally_base.gd	res://scenes/allies/ally_base.tscn	Prompt 11: generic ally; CLOSEST targeting; nav chase; direct damage; ally_spawned / ally_killed.
 HexGrid	res://scenes/hexgrid/hexgrid.gd	res://scenes/hexgrid/hexgrid.tscn	24-slot ring grid. Manages building placement, sell, upgrade.
 BuildingBase	res://scenes/buildings/buildingbase.gd	res://scenes/buildings/buildingbase.tscn	Base class for all 8 building types. Auto-targets and fires.
 EnemyBase	res://scenes/enemies/enemybase.gd	res://scenes/enemies/enemybase.tscn	Base class for all 6 enemy types. Nav, attack, die, reward.
@@ -58,7 +59,13 @@ FactionData	res://scripts/resources/faction_data.gd	faction_id, display_name, de
 BossData	res://scripts/resources/boss_data.gd	boss_id, stats, escort_unit_ids, phase_count, is_mini_boss / is_final_boss, boss_scene; build_placeholder_enemy_data(); BUILTIN_BOSS_RESOURCE_PATHS
 DayConfig	res://scripts/resources/day_config.gd	day_index, mission_index, territory_id, faction_id (default DEFAULT_MIXED), is_mini_boss_day, is_mini_boss (alias), is_final_boss, boss_id, is_boss_attack_day, display_name, wave/tuning multipliers
 CampaignConfig	res://scripts/resources/campaign_config.gd	campaign_id, display_name, day_configs, starting_territory_ids, territory_map_resource_path, short-campaign flags
+AllyData	res://scripts/resources/ally_data.gd	Prompt 11: ally_id, ally_class, stats, preferred_targeting (CLOSEST MVP), is_unique, POST-MVP progression fields.
 RESOURCE FILES (.tres — actual data)
+Ally data (Prompt 11)
+File	ally_id	Notes
+res://resources/ally_data/ally_melee_generic.tres	ally_melee_generic	Placeholder melee merc
+res://resources/ally_data/ally_ranged_generic.tres	ally_ranged_generic	Placeholder ranged merc
+res://resources/ally_data/ally_support_generic.tres	ally_support_generic	Optional; not in static roster by default
 Enemy Data
 File	enemy_type	armor_type	Notes
 res://resources/enemydata/orcgrunt.tres	ORCGRUNT	UNARMORED	Basic melee runner
@@ -111,6 +118,10 @@ testfinalbossday.gd	Final-boss day / GameManager campaign hooks (see test file)
 testfactiondata.gd	Faction .tres load + roster→EnemyData; validate_day_configs on short campaign
 testspellmanager.gd	Mana regen, deduct, cooldown, shockwave AoE damage
 testarnulfstatemachine.gd	All state transitions, downed/recover cycle
+testallydata.gd	AllyData defaults + all res://resources/ally_data/*.tres loads
+testallybase.gd	AllyBase find_target, attack in range, ally_killed on HP depletion
+testallysignals.gd	ally_spawned, ally_killed, Arnulf generic ally_* + reset ally_spawned
+testallyspawning.gd	Campaign roster count under AllyContainer; cleanup on waves cleared / new game
 testhealthcomponent.gd	take_damage, heal, reset, health_depleted signal
 testresearchmanager.gd	unlock, prereq gating, insufficient material, reset
 testshopmanager.gd	purchase flow, affordability, effect application, signal

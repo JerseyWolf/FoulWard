@@ -60,6 +60,9 @@ const HOME_POSITION: Vector3 = Vector3(2.0, 0.0, 0.0)
 ## Same issue as EnemyBase: nav next waypoint can match position → normalized() is zero.
 const _MIN_NAV_STEP_SQ: float = 0.0004
 
+## Stable id for generic ally signals (SignalBus.ally_*).
+const ALLY_ID_ARNULF: String = "arnulf"
+
 # ---------------------------------------------------------------------------
 # STATE
 # ---------------------------------------------------------------------------
@@ -224,6 +227,8 @@ func _process_recovering() -> void:
 	var heal_amount: int = int(round(float(max_hp) * 0.5))
 	health_component.heal(heal_amount)
 	SignalBus.arnulf_recovered.emit()
+	# DEVIATION: generic ally_recovered for ally framework integration.
+	SignalBus.ally_recovered.emit(ALLY_ID_ARNULF)
 	_transition_to_state(Types.ArnulfState.IDLE)
 
 # ---------------------------------------------------------------------------
@@ -250,6 +255,8 @@ func _transition_to_state(new_state: Types.ArnulfState) -> void:
 			_chase_target = null
 			velocity = Vector3.ZERO
 			SignalBus.arnulf_incapacitated.emit()
+			# DEVIATION: generic ally_downed for ally framework integration.
+			SignalBus.ally_downed.emit(ALLY_ID_ARNULF)
 		Types.ArnulfState.RECOVERING:
 			pass
 		Types.ArnulfState.PATROL:
@@ -390,4 +397,7 @@ func reset_for_new_mission() -> void:
 	velocity = Vector3.ZERO
 	global_position = HOME_POSITION
 	_transition_to_state(Types.ArnulfState.IDLE)
+	# DEVIATION: Arnulf also broadcasts generic ally_spawned for ally systems.
+	SignalBus.ally_spawned.emit(ALLY_ID_ARNULF)
+	# POST-MVP: emit SignalBus.ally_killed(ALLY_ID_ARNULF) if a permanent-death path is added.
 

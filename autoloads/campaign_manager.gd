@@ -18,6 +18,13 @@ var campaign_config: CampaignConfig = null
 ## Loaded from FactionData.BUILTIN_FACTION_RESOURCE_PATHS (String -> FactionData).
 var faction_registry: Dictionary = {}
 
+# Campaign-wide ally roster for the current campaign (which allies are fielded each mission).
+# POST-MVP: post-mission recovery, temporary removal from roster, permanent death — handled here
+# across campaign days, not in AllyBase.
+var current_ally_roster: Array = []
+# POST-MVP: alternative representation by IDs for easier save/load.
+var current_ally_roster_ids: Array[String] = []
+
 ## Assign the active campaign from the inspector.
 ## Default should be campaign_short_5_days.tres.
 @export var active_campaign_config: CampaignConfig
@@ -30,6 +37,38 @@ func _ready() -> void:
 		active_campaign_config = DEFAULT_SHORT_CAMPAIGN
 	if active_campaign_config != null:
 		_set_campaign_config(active_campaign_config)
+	_initialize_static_roster()
+
+func _initialize_static_roster() -> void:
+	current_ally_roster.clear()
+	current_ally_roster_ids.clear()
+
+	var melee_data: Resource = load("res://resources/ally_data/ally_melee_generic.tres")
+	var ranged_data: Resource = load("res://resources/ally_data/ally_ranged_generic.tres")
+	if melee_data != null:
+		current_ally_roster.append(melee_data)
+		current_ally_roster_ids.append(str(melee_data.get("ally_id")))
+	if ranged_data != null:
+		current_ally_roster.append(ranged_data)
+		current_ally_roster_ids.append(str(ranged_data.get("ally_id")))
+
+	# POST-MVP: add support, defected mini-bosses, mercenaries dynamically.
+
+# POST-MVP: mercenary recruitment, mini-boss defection.
+func add_ally_to_roster(_ally_id: String) -> void:
+	pass
+
+func remove_ally_from_roster(_ally_id: String) -> void:
+	pass
+
+func has_ally(ally_id: String) -> bool:
+	return ally_id in current_ally_roster_ids
+
+func get_ally_data(ally_id: String) -> Resource:
+	for data: Variant in current_ally_roster:
+		if data != null and data.get("ally_id") == ally_id:
+			return data as Resource
+	return null
 
 func start_new_campaign() -> void:
 	if active_campaign_config != null and campaign_config != active_campaign_config:
@@ -38,6 +77,7 @@ func start_new_campaign() -> void:
 	current_day = 1
 	failed_attempts_on_current_day = 0
 	campaign_completed = false
+	_initialize_static_roster()
 
 	if campaign_config != null:
 		campaign_length = campaign_config.get_effective_length()
@@ -145,3 +185,8 @@ func set_active_campaign_config_for_test(config: CampaignConfig) -> void:
 	# TEST-ONLY: swaps the active campaign config and refreshes derived state.
 	active_campaign_config = config
 	_set_campaign_config(config)
+
+
+func reinitialize_ally_roster_for_test() -> void:
+	# TEST-ONLY: repopulates static ally roster (used by ally spawn tests).
+	_initialize_static_roster()
