@@ -18,9 +18,10 @@ config/icon="res://icon.svg"
 [autoload]
 
 SignalBus="*res://autoloads/signal_bus.gd"
-DamageCalculator="*res://autoloads/damage_calculator.gd"
-EconomyManager="*res://autoloads/economy_manager.gd"
+CampaignManager="*res://autoloads/campaign_manager.gd"
 GameManager="*res://autoloads/game_manager.gd"
+EconomyManager="*res://autoloads/economy_manager.gd"
+DamageCalculator="*res://autoloads/damage_calculator.gd"
 EnchantmentManager="*res://autoloads/enchantment_manager.gd"
 AutoTestDriver="*res://autoloads/auto_test_driver.gd"
 GDAIMCPRuntime="*uid://dcne7ryelpxmn"

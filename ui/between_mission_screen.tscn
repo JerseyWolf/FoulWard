@@ -13,9 +13,23 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.1, 0.1, 0.1, 0.95)
 
+[node name="DayProgressLabel" type="Label" parent="."]
+offset_left = 120.0
+offset_top = 20.0
+offset_right = 420.0
+offset_bottom = 48.0
+text = "Day 1 / 5"
+
+[node name="DayNameLabel" type="Label" parent="."]
+offset_left = 120.0
+offset_top = 52.0
+offset_right = 780.0
+offset_bottom = 82.0
+text = "Day 1 - Rotting Fields"
+
 [node name="TabContainer" type="TabContainer" parent="."]
 anchor_left = 0.1
-anchor_top = 0.05
+anchor_top = 0.1
 anchor_right = 0.9
 anchor_bottom = 0.85
 
@@ -124,7 +138,7 @@ anchor_left = 0.35
 anchor_top = 0.88
 anchor_right = 0.65
 anchor_bottom = 0.96
-text = "Next Mission"
+text = "Next Day"
 
 [connection signal="pressed" from="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/ApplyElementalButton" to="." method="on_apply_crossbow_elemental_pressed"]
 [connection signal="pressed" from="TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/ApplyPowerButton" to="." method="on_apply_crossbow_power_pressed"]

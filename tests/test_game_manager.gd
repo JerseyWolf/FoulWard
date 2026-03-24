@@ -303,3 +303,46 @@ func test_total_missions_constant_is_5() -> void:
 func test_waves_per_mission_constant_is_3() -> void:
 	assert_int(GameManager.WAVES_PER_MISSION).is_equal(3)
 
+func test_start_new_game_resets_campaign_and_mission() -> void:
+	while CampaignManager.current_day < 3:
+		SignalBus.mission_won.emit(GameManager.get_current_mission())
+	assert_int(CampaignManager.current_day).is_greater(1)
+
+	GameManager.start_new_game()
+
+	assert_int(CampaignManager.current_day).is_equal(1)
+	assert_bool(CampaignManager.campaign_completed).is_false()
+	assert_int(GameManager.get_current_mission()).is_equal(1)
+	assert_int(GameManager.get_current_wave()).is_equal(0)
+
+func test_dayconfig_wave_count_configures_wavemanager_via_gamemanager() -> void:
+	var custom_day: DayConfig = DayConfig.new()
+	custom_day.day_index = 1
+	custom_day.base_wave_count = 7
+
+	var temp_config: CampaignConfig = CampaignConfig.new()
+	temp_config.campaign_id = "test_wave_count_config"
+	temp_config.is_short_campaign = true
+	temp_config.short_campaign_length = 1
+	temp_config.day_configs = [custom_day]
+	CampaignManager.set_active_campaign_config_for_test(temp_config)
+
+	GameManager.start_new_game()
+
+	var wave_manager: WaveManager = get_node("/root/Main/Managers/WaveManager")
+	var expected: int = mini(7, wave_manager.max_waves)
+	assert_int(wave_manager.configured_max_waves).is_equal(expected)
+
+func test_start_mission_for_day_sets_current_mission() -> void:
+	var day_config: DayConfig = DayConfig.new()
+	day_config.day_index = 3
+	day_config.base_wave_count = 5
+
+	GameManager.start_mission_for_day(3, day_config)
+	assert_int(GameManager.get_current_mission()).is_equal(3)
+
+func test_existing_missions_still_use_campaign_length_not_hardcoded_5() -> void:
+	assert_int(CampaignManager.campaign_length).is_equal(
+		CampaignManager.campaign_config.get_effective_length()
+	)
+

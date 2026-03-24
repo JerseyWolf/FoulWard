@@ -78,3 +78,15 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - `res://scenes/enemies/enemy_base.gd` now includes ground/flying split process and stuck-prevention helpers.
   - `res://tests/test_enemy_pathfinding.gd` now includes integration pathing scenarios.
   - `res://tests/test_building_base.gd` now verifies collision/obstacle node presence and layer/mask values.
+- Added Prompt 7 indexed artifacts:
+  - `res://autoloads/campaign_manager.gd`
+  - `res://scripts/resources/day_config.gd`
+  - `res://scripts/resources/campaign_config.gd`
+  - `res://resources/campaigns/campaign_short_5_days.tres`
+  - `res://resources/campaigns/campaign_main_50_days.tres`
+  - `SignalBus` campaign/day signals:
+    - `campaign_started`, `day_started`, `day_won`, `day_failed`, `campaign_completed`
+  - Prompt 7 tests:
+    - `res://tests/test_campaign_manager.gd`
+    - additions in `res://tests/test_wave_manager.gd`
+    - additions in `res://tests/test_game_manager.gd`

@@ -59,6 +59,13 @@ var _is_counting_down: bool = false
 var _is_wave_active: bool = false
 var _is_sequence_running: bool = false
 
+# Per-day configuration set by GameManager via configure_for_day().
+# DEVIATION: runtime wave cap is now driven by DayConfig.
+var configured_max_waves: int = 0
+var enemy_hp_multiplier: float = 1.0
+var enemy_damage_multiplier: float = 1.0
+var gold_reward_multiplier: float = 1.0
+
 # ---------------------------------------------------------------------------
 # READY
 # ---------------------------------------------------------------------------
@@ -153,7 +160,22 @@ func reset_for_new_mission() -> void:
 	_is_counting_down = false
 	_is_wave_active = false
 	_is_sequence_running = false
+	configured_max_waves = 0
+	enemy_hp_multiplier = 1.0
+	enemy_damage_multiplier = 1.0
+	gold_reward_multiplier = 1.0
 	clear_all_enemies()
+
+func configure_for_day(day_config: DayConfig) -> void:
+	if day_config == null:
+		return
+	var desired: int = day_config.base_wave_count
+	if desired <= 0:
+		desired = max_waves
+	configured_max_waves = mini(desired, max_waves)
+	enemy_hp_multiplier = day_config.enemy_hp_multiplier
+	enemy_damage_multiplier = day_config.enemy_damage_multiplier
+	gold_reward_multiplier = day_config.gold_reward_multiplier
 
 
 ## Immediately removes all enemies from the scene and the "enemies" group.
@@ -202,7 +224,12 @@ func _spawn_wave(wave_number: int) -> void:
 			# navigation_agent) are resolved before initialize() tries to use them.
 			_enemy_container.add_child(enemy)
 
-			enemy.initialize(enemy_data)
+			# DEVIATION: spawn uses per-day multipliers from CampaignManager DayConfig.
+			var tuned_enemy_data: EnemyData = enemy_data.duplicate(true) as EnemyData
+			tuned_enemy_data.max_hp = maxi(1, int(round(float(enemy_data.max_hp) * enemy_hp_multiplier)))
+			tuned_enemy_data.damage = maxi(1, int(round(float(enemy_data.damage) * enemy_damage_multiplier)))
+			tuned_enemy_data.gold_reward = maxi(0, int(round(float(enemy_data.gold_reward) * gold_reward_multiplier)))
+			enemy.initialize(tuned_enemy_data)
 
 			var spawn_marker: Marker3D = \
 				spawn_point_nodes.pick_random() as Marker3D
@@ -245,7 +272,8 @@ func _check_wave_cleared() -> void:
 	print("[WaveManager] wave %d cleared!" % _current_wave)
 	SignalBus.wave_cleared.emit(_current_wave)
 
-	if _current_wave >= max_waves:
+	var effective_max: int = configured_max_waves if configured_max_waves > 0 else max_waves
+	if _current_wave >= effective_max:
 		_is_sequence_running = false
 		print("[WaveManager] all waves cleared for this mission!")
 		SignalBus.all_waves_cleared.emit()

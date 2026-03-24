@@ -233,6 +233,62 @@ SCENE SCRIPTS (Tower, Arnulf, HexGrid, BuildingBase, EnemyBase, ProjectileBase)
 - Tests
   - `res://tests/test_enemy_pathfinding.gd` now validates solid-ring routing, flying bypass, sell/clear route reopening, and stuck recovery.
   - `res://tests/test_building_base.gd` now validates presence/configuration of collision + obstacle nodes.
+## 2026-03-24 Prompt 7 delta
+
+- Added campaign/day resource classes:
+  - `res://scripts/resources/day_config.gd` (`DayConfig`)
+    - fields: `day_index`, `display_name`, `description`, `faction_id`, `territory_id`,
+      `is_mini_boss`, `is_final_boss`, `base_wave_count`, `enemy_hp_multiplier`,
+      `enemy_damage_multiplier`, `gold_reward_multiplier`.
+  - `res://scripts/resources/campaign_config.gd` (`CampaignConfig`)
+    - fields: `campaign_id`, `display_name`, `day_configs:Array[DayConfig]`,
+      `is_short_campaign`, `short_campaign_length`.
+    - method: `get_effective_length() -> int`.
+- Added campaign resources:
+  - `res://resources/campaigns/campaign_short_5_days.tres`
+  - `res://resources/campaigns/campaign_main_50_days.tres`
+    - placeholder day ramp pattern for wave count + hp/damage/reward multipliers.
+- Added autoload:
+  - `CampaignManager` at `res://autoloads/campaign_manager.gd`.
+  - Public API:
+    - `start_new_campaign() -> void`
+    - `start_next_day() -> void`
+    - `get_current_day() -> int`
+    - `get_campaign_length() -> int`
+    - `get_current_day_config() -> DayConfig`
+    - `set_active_campaign_config_for_test(config: CampaignConfig) -> void` (test-only).
+  - State:
+    - `current_day`, `campaign_length`, `campaign_id`, `campaign_completed`,
+      `failed_attempts_on_current_day`, `current_day_config`, `campaign_config`,
+      `active_campaign_config`.
+- SignalBus additions (declared in `res://autoloads/signal_bus.gd`):
+  - `campaign_started(campaign_id: String)` emitted by `CampaignManager.start_new_campaign()`.
+  - `day_started(day_index: int)` emitted by `CampaignManager` when day starts.
+  - `day_won(day_index: int)` emitted by `CampaignManager` on mission-day win.
+  - `day_failed(day_index: int)` emitted by `CampaignManager` on mission-day fail.
+  - `campaign_completed(campaign_id: String)` emitted by `CampaignManager` on final day completion.
+- GameManager updates:
+  - `start_new_game()` now delegates mission kickoff to `CampaignManager.start_new_campaign()`.
+  - `start_next_mission()` now delegates to `CampaignManager.start_next_day()`.
+  - Added `start_mission_for_day(day_index: int, day_config: DayConfig) -> void`.
+- WaveManager updates:
+  - Added day-config fields:
+    - `configured_max_waves: int`
+    - `enemy_hp_multiplier: float`
+    - `enemy_damage_multiplier: float`
+    - `gold_reward_multiplier: float`
+  - Added `configure_for_day(day_config: DayConfig) -> void`.
+  - End-of-wave completion now uses `configured_max_waves` fallback to `max_waves`.
+  - Spawn path now applies per-day multipliers via duplicated `EnemyData` before enemy initialization.
+- BetweenMissionScreen updates:
+  - Added day labels and refresh logic:
+    - `DayProgressLabel` ("Day X / Y")
+    - `DayNameLabel` ("Day X - <name>")
+  - Next button flow now routes to `CampaignManager.start_next_day()`.
+- Tests added/expanded:
+  - New file: `res://tests/test_campaign_manager.gd` (campaign/day lifecycle + test helper).
+  - Added Prompt 7 cases to `res://tests/test_wave_manager.gd`.
+  - Added Prompt 7 cases to `res://tests/test_game_manager.gd`.
 MANAGERS (WaveManager, SpellManager, ResearchManager, ShopManager, InputManager, SimBot)
 
 (Full descriptions of exports, methods, signals, dependencies as summarized earlier.)
