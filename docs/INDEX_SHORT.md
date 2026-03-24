@@ -154,6 +154,25 @@ SCENE TREE OVERVIEW (main.tscn)
 
 LATEST CHANGES (2026-03-24)
 
+- Prompt 7 campaign/day layer added:
+  - New autoload: `CampaignManager` (`res://autoloads/campaign_manager.gd`).
+  - New resource classes:
+    - `CampaignConfig` (`res://scripts/resources/campaign_config.gd`)
+    - `DayConfig` (`res://scripts/resources/day_config.gd`)
+  - New campaign resources:
+    - `res://resources/campaigns/campaign_short_5_days.tres`
+    - `res://resources/campaigns/campaign_main_50_days.tres`
+  - `SignalBus` added campaign/day lifecycle signals:
+    - `campaign_started`, `day_started`, `day_won`, `day_failed`, `campaign_completed`
+  - `GameManager` now exposes `start_mission_for_day(day_index, day_config)` and delegates day progression to `CampaignManager`.
+  - `WaveManager` now supports day config fields:
+    - `configured_max_waves`, `enemy_hp_multiplier`, `enemy_damage_multiplier`, `gold_reward_multiplier`
+  - `BetweenMissionScreen` now displays day info and routes next progression via `CampaignManager.start_next_day()`.
+  - Added tests:
+    - `res://tests/test_campaign_manager.gd`
+    - Prompt 7 additions in `res://tests/test_wave_manager.gd`
+    - Prompt 7 additions in `res://tests/test_game_manager.gd`
+
 - InputManager build-mode click now raycasts hex slots on layer 7 and routes menu mode by occupancy.
 - BuildMenu now supports `open_for_sell_slot(slot_index, slot_data)` and a sell panel with Sell/Cancel actions.
 - HexGrid slot click callback now only updates highlight in build mode (menu opening is centralized in InputManager).

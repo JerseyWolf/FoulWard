@@ -202,3 +202,42 @@ func test_check_wave_cleared_uses_call_deferred() -> void:
 
 	await assert_signal(SignalBus).is_not_emitted("wave_cleared")
 
+func test_dayconfig_wave_count_configures_wavemanager() -> void:
+	var day_config: DayConfig = DayConfig.new()
+	day_config.base_wave_count = 7
+
+	var default_max: int = _wave_manager.max_waves
+	_wave_manager.configure_for_day(day_config)
+
+	var expected: int = mini(7, default_max)
+	assert_int(_wave_manager.configured_max_waves).is_equal(expected)
+
+func test_dayconfig_wave_count_clamps_to_maxwaves() -> void:
+	var day_config: DayConfig = DayConfig.new()
+	day_config.base_wave_count = 9999
+	_wave_manager.configure_for_day(day_config)
+	assert_int(_wave_manager.configured_max_waves).is_less_equal(_wave_manager.max_waves)
+
+func test_dayconfig_difficulty_multipliers_stored_in_wavemanager() -> void:
+	var day_config: DayConfig = DayConfig.new()
+	day_config.enemy_hp_multiplier = 1.5
+	day_config.enemy_damage_multiplier = 2.0
+	day_config.gold_reward_multiplier = 0.75
+	_wave_manager.configure_for_day(day_config)
+	assert_float(_wave_manager.enemy_hp_multiplier).is_equal(1.5)
+	assert_float(_wave_manager.enemy_damage_multiplier).is_equal(2.0)
+	assert_float(_wave_manager.gold_reward_multiplier).is_equal(0.75)
+
+func test_null_dayconfig_does_not_crash_wavemanager() -> void:
+	_wave_manager.configure_for_day(null)
+	assert_int(_wave_manager.configured_max_waves).is_greater_equal(0)
+
+func test_resetfornewmission_clears_day_config_values() -> void:
+	var day_config: DayConfig = DayConfig.new()
+	day_config.base_wave_count = 7
+	day_config.enemy_hp_multiplier = 2.0
+	_wave_manager.configure_for_day(day_config)
+	_wave_manager.reset_for_new_mission()
+	assert_int(_wave_manager.configured_max_waves).is_equal(0)
+	assert_float(_wave_manager.enemy_hp_multiplier).is_equal(1.0)
+

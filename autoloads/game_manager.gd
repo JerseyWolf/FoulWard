@@ -41,18 +41,13 @@ func start_new_game() -> void:
 	var weapon_upgrade_manager: Node = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
 	if weapon_upgrade_manager != null:
 		weapon_upgrade_manager.reset_to_defaults()
-	_transition_to(Types.GameState.COMBAT)
-	SignalBus.mission_started.emit(current_mission)
-	_apply_shop_mission_start_consumables()
-	_begin_mission_wave_sequence()
+	# DEVIATION: CampaignManager now owns day/campaign state and mission kickoff.
+	CampaignManager.start_new_campaign()
 
 func start_next_mission() -> void:
-	current_mission += 1
-	current_wave = 0
-	print("[GameManager] start_next_mission: now mission=%d" % current_mission)
-	_transition_to(Types.GameState.MISSION_BRIEFING)
-	SignalBus.mission_started.emit(current_mission)
-	# Wave sequence starts in start_wave_countdown() after briefing (MVP: player confirms).
+	# DEVIATION: next day is now owned by CampaignManager.
+	# BetweenMissionScreen routes directly through CampaignManager, this remains for compatibility.
+	CampaignManager.start_next_day()
 
 func start_wave_countdown() -> void:
 	assert(game_state == Types.GameState.MISSION_BRIEFING, "start_wave_countdown called from invalid state")
@@ -90,6 +85,22 @@ func get_current_mission() -> int:
 func get_current_wave() -> int:
 	return current_wave
 
+func start_mission_for_day(day_index: int, day_config: DayConfig) -> void:
+	# ASSUMPTION: mission number == day index in short-campaign mode.
+	current_mission = day_index
+	current_wave = 0
+
+	if is_instance_valid(get_node_or_null("/root/Main/Managers/WaveManager")):
+		var wave_manager: WaveManager = get_node_or_null("/root/Main/Managers/WaveManager") as WaveManager
+		if wave_manager != null:
+			# DEVIATION: WaveManager is now configured per day.
+			wave_manager.configure_for_day(day_config)
+
+	_transition_to(Types.GameState.COMBAT)
+	SignalBus.mission_started.emit(current_mission)
+	_apply_shop_mission_start_consumables()
+	_begin_mission_wave_sequence()
+
 # ── Private helpers ────────────────────────────────────────────────────────────
 
 func _apply_shop_mission_start_consumables() -> void:
@@ -108,7 +119,6 @@ func _begin_mission_wave_sequence() -> void:
 		print("[GameManager] ERROR: WaveManager not found!")
 		return
 	print("[GameManager] _begin_mission_wave_sequence: mission=%d" % current_mission)
-	wave_manager.max_waves = WAVES_PER_MISSION
 	wave_manager.reset_for_new_mission()
 	wave_manager.call_deferred("start_wave_sequence")
 

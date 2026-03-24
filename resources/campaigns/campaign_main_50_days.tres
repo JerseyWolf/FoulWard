@@ -1,0 +1,1020 @@
+[gd_resource type="Resource" script_class="CampaignConfig" format=3]
+; campaign_main_50_days.tres — 50-day main campaign (Prompt 7).
+; # PLACEHOLDER: display_name "Day N", description "Placeholder briefing." on every day until narrative pass.
+; # TUNING (per day i = day_index): base_wave_count follows clamp(5 + floor((i-1)/5), 5, 10) — PLACEHOLDER linear ramp.
+; # TUNING: enemy_hp_multiplier = 1.0 + (i-1)*0.02 — PLACEHOLDER +2% per day from day 1.
+; # TUNING: enemy_damage_multiplier = 1.0 + (i-1)*0.015 — PLACEHOLDER +1.5% per day.
+; # TUNING: gold_reward_multiplier = 1.0 + (i-1)*0.01 — PLACEHOLDER +1% per day.
+; # TUNING: is_mini_boss true on days 10,20,30,40; is_final_boss true on day 50 only.
+
+
+[ext_resource type="Script" path="res://scripts/resources/campaign_config.gd" id="1_campaignconfig"]
+[ext_resource type="Script" path="res://scripts/resources/day_config.gd" id="2_dayconfig"]
+
+[sub_resource type="Resource" id="DayConfig_1"]
+script = ExtResource("2_dayconfig")
+day_index = 1
+display_name = "Day 1"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 5
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.0
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.0
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.0
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_2"]
+script = ExtResource("2_dayconfig")
+day_index = 2
+display_name = "Day 2"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 5
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.02
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.015
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.01
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_3"]
+script = ExtResource("2_dayconfig")
+day_index = 3
+display_name = "Day 3"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 5
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.04
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.03
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.02
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_4"]
+script = ExtResource("2_dayconfig")
+day_index = 4
+display_name = "Day 4"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 5
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.06
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.045
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.03
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_5"]
+script = ExtResource("2_dayconfig")
+day_index = 5
+display_name = "Day 5"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 6
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.08
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.06
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.04
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_6"]
+script = ExtResource("2_dayconfig")
+day_index = 6
+display_name = "Day 6"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 6
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.1
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.075
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.05
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_7"]
+script = ExtResource("2_dayconfig")
+day_index = 7
+display_name = "Day 7"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 6
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.12
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.09
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.06
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_8"]
+script = ExtResource("2_dayconfig")
+day_index = 8
+display_name = "Day 8"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 6
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.14
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.105
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.07
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_9"]
+script = ExtResource("2_dayconfig")
+day_index = 9
+display_name = "Day 9"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 6
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.16
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.12
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.08
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_10"]
+script = ExtResource("2_dayconfig")
+day_index = 10
+display_name = "Day 10"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 7
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.18
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.135
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.09
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = true
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_11"]
+script = ExtResource("2_dayconfig")
+day_index = 11
+display_name = "Day 11"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 7
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.2
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.15
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.1
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_12"]
+script = ExtResource("2_dayconfig")
+day_index = 12
+display_name = "Day 12"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 7
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.22
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.165
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.11
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_13"]
+script = ExtResource("2_dayconfig")
+day_index = 13
+display_name = "Day 13"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 7
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.24
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.18
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.12
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_14"]
+script = ExtResource("2_dayconfig")
+day_index = 14
+display_name = "Day 14"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 7
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.26
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.195
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.13
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_15"]
+script = ExtResource("2_dayconfig")
+day_index = 15
+display_name = "Day 15"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 8
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.28
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.21
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.14
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_16"]
+script = ExtResource("2_dayconfig")
+day_index = 16
+display_name = "Day 16"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 8
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.3
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.225
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.15
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_17"]
+script = ExtResource("2_dayconfig")
+day_index = 17
+display_name = "Day 17"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 8
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.32
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.24
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.16
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_18"]
+script = ExtResource("2_dayconfig")
+day_index = 18
+display_name = "Day 18"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 8
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.34
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.255
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.17
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_19"]
+script = ExtResource("2_dayconfig")
+day_index = 19
+display_name = "Day 19"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 8
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.36
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.27
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.18
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_20"]
+script = ExtResource("2_dayconfig")
+day_index = 20
+display_name = "Day 20"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 9
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.38
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.285
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.19
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = true
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_21"]
+script = ExtResource("2_dayconfig")
+day_index = 21
+display_name = "Day 21"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 9
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.4
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.3
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.2
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_22"]
+script = ExtResource("2_dayconfig")
+day_index = 22
+display_name = "Day 22"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 9
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.42
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.315
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.21
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_23"]
+script = ExtResource("2_dayconfig")
+day_index = 23
+display_name = "Day 23"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 9
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.44
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.33
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.22
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_24"]
+script = ExtResource("2_dayconfig")
+day_index = 24
+display_name = "Day 24"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 9
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.46
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.345
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.23
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_25"]
+script = ExtResource("2_dayconfig")
+day_index = 25
+display_name = "Day 25"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.48
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.36
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.24
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_26"]
+script = ExtResource("2_dayconfig")
+day_index = 26
+display_name = "Day 26"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.5
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.375
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.25
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_27"]
+script = ExtResource("2_dayconfig")
+day_index = 27
+display_name = "Day 27"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.52
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.39
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.26
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_28"]
+script = ExtResource("2_dayconfig")
+day_index = 28
+display_name = "Day 28"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.54
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.405
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.27
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_29"]
+script = ExtResource("2_dayconfig")
+day_index = 29
+display_name = "Day 29"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.56
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.42
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.28
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_30"]
+script = ExtResource("2_dayconfig")
+day_index = 30
+display_name = "Day 30"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.58
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.435
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.29
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = true
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_31"]
+script = ExtResource("2_dayconfig")
+day_index = 31
+display_name = "Day 31"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.6
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.45
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.3
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_32"]
+script = ExtResource("2_dayconfig")
+day_index = 32
+display_name = "Day 32"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.62
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.465
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.31
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_33"]
+script = ExtResource("2_dayconfig")
+day_index = 33
+display_name = "Day 33"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.64
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.48
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.32
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_34"]
+script = ExtResource("2_dayconfig")
+day_index = 34
+display_name = "Day 34"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.66
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.495
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.33
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_35"]
+script = ExtResource("2_dayconfig")
+day_index = 35
+display_name = "Day 35"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.68
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.51
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.34
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_36"]
+script = ExtResource("2_dayconfig")
+day_index = 36
+display_name = "Day 36"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.7
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.525
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.35
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_37"]
+script = ExtResource("2_dayconfig")
+day_index = 37
+display_name = "Day 37"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.72
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.54
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.36
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_38"]
+script = ExtResource("2_dayconfig")
+day_index = 38
+display_name = "Day 38"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.74
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.555
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.37
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_39"]
+script = ExtResource("2_dayconfig")
+day_index = 39
+display_name = "Day 39"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.76
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.57
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.38
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_40"]
+script = ExtResource("2_dayconfig")
+day_index = 40
+display_name = "Day 40"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.78
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.585
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.39
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = true
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_41"]
+script = ExtResource("2_dayconfig")
+day_index = 41
+display_name = "Day 41"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.8
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.6
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.4
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_42"]
+script = ExtResource("2_dayconfig")
+day_index = 42
+display_name = "Day 42"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.82
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.615
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.41
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_43"]
+script = ExtResource("2_dayconfig")
+day_index = 43
+display_name = "Day 43"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.84
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.63
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.42
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_44"]
+script = ExtResource("2_dayconfig")
+day_index = 44
+display_name = "Day 44"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.86
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.645
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.43
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_45"]
+script = ExtResource("2_dayconfig")
+day_index = 45
+display_name = "Day 45"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.88
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.66
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.44
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_46"]
+script = ExtResource("2_dayconfig")
+day_index = 46
+display_name = "Day 46"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.9
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.675
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.45
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_47"]
+script = ExtResource("2_dayconfig")
+day_index = 47
+display_name = "Day 47"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.92
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.69
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.46
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_48"]
+script = ExtResource("2_dayconfig")
+day_index = 48
+display_name = "Day 48"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.94
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.705
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.47
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_49"]
+script = ExtResource("2_dayconfig")
+day_index = 49
+display_name = "Day 49"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.96
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.72
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.48
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = false
+; # TUNING: final campaign boss
+
+[sub_resource type="Resource" id="DayConfig_50"]
+script = ExtResource("2_dayconfig")
+day_index = 50
+display_name = "Day 50"
+; # PLACEHOLDER: replace with final day name
+description = "Placeholder briefing."
+; # PLACEHOLDER: replace with briefing copy
+base_wave_count = 10
+; # TUNING: wave count ramp — PLACEHOLDER
+enemy_hp_multiplier = 1.98
+; # TUNING: HP scaling — PLACEHOLDER
+enemy_damage_multiplier = 1.735
+; # TUNING: damage scaling — PLACEHOLDER
+gold_reward_multiplier = 1.49
+; # TUNING: reward scaling — PLACEHOLDER
+is_mini_boss = false
+; # TUNING: milestone mini-boss days
+is_final_boss = true
+; # TUNING: final campaign boss
+
+[resource]
+script = ExtResource("1_campaignconfig")
+campaign_id = "main_50_day_campaign"
+display_name = "The Foul Ward - Main Campaign"
+day_configs = [SubResource("DayConfig_1"), SubResource("DayConfig_2"), SubResource("DayConfig_3"), SubResource("DayConfig_4"), SubResource("DayConfig_5"), SubResource("DayConfig_6"), SubResource("DayConfig_7"), SubResource("DayConfig_8"), SubResource("DayConfig_9"), SubResource("DayConfig_10"), SubResource("DayConfig_11"), SubResource("DayConfig_12"), SubResource("DayConfig_13"), SubResource("DayConfig_14"), SubResource("DayConfig_15"), SubResource("DayConfig_16"), SubResource("DayConfig_17"), SubResource("DayConfig_18"), SubResource("DayConfig_19"), SubResource("DayConfig_20"), SubResource("DayConfig_21"), SubResource("DayConfig_22"), SubResource("DayConfig_23"), SubResource("DayConfig_24"), SubResource("DayConfig_25"), SubResource("DayConfig_26"), SubResource("DayConfig_27"), SubResource("DayConfig_28"), SubResource("DayConfig_29"), SubResource("DayConfig_30"), SubResource("DayConfig_31"), SubResource("DayConfig_32"), SubResource("DayConfig_33"), SubResource("DayConfig_34"), SubResource("DayConfig_35"), SubResource("DayConfig_36"), SubResource("DayConfig_37"), SubResource("DayConfig_38"), SubResource("DayConfig_39"), SubResource("DayConfig_40"), SubResource("DayConfig_41"), SubResource("DayConfig_42"), SubResource("DayConfig_43"), SubResource("DayConfig_44"), SubResource("DayConfig_45"), SubResource("DayConfig_46"), SubResource("DayConfig_47"), SubResource("DayConfig_48"), SubResource("DayConfig_49"), SubResource("DayConfig_50")]
+is_short_campaign = false
+short_campaign_length = 0

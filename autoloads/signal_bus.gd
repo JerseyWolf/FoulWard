@@ -66,6 +66,20 @@ signal mission_won(mission_number: int)
 @warning_ignore("unused_signal")
 signal mission_failed(mission_number: int)
 
+# Campaign / day-level signals.
+# mission_* signals remain mission-level; in the current short campaign they
+# correspond 1:1 to days (one mission per day). CampaignManager wraps them.
+@warning_ignore("unused_signal")
+signal campaign_started(campaign_id: String)
+@warning_ignore("unused_signal")
+signal day_started(day_index: int)
+@warning_ignore("unused_signal")
+signal day_won(day_index: int)
+@warning_ignore("unused_signal")
+signal day_failed(day_index: int)
+@warning_ignore("unused_signal")
+signal campaign_completed(campaign_id: String)
+
 # === BUILD MODE ===
 @warning_ignore("unused_signal")
 signal build_mode_entered()

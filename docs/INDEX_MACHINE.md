@@ -5,6 +5,7 @@
 | name | path | script_class | emits_signals(csv) |
 |---|---|---|---|
 | SignalBus | `res://autoloads/signal_bus.gd` | `-` | `-` |
+| CampaignManager | `res://autoloads/campaign_manager.gd` | `-` | `campaign_started,day_started,day_won,day_failed,campaign_completed` |
 | DamageCalculator | `res://autoloads/damage_calculator.gd` | `-` | `-` |
 | EconomyManager | `res://autoloads/economy_manager.gd` | `-` | `resource_changed` |
 | GameManager | `res://autoloads/game_manager.gd` | `-` | `mission_started,build_mode_entered,game_state_changed,build_mode_exited,mission_won,mission_failed` |
@@ -130,6 +131,17 @@
   - `res://scenes/enemies/enemy_base.gd` now has ground/flying split movement + stuck-prevention helpers.
   - `res://tests/test_enemy_pathfinding.gd` replaced with gameplay-level navigation scenarios.
   - `res://tests/test_building_base.gd` includes node-configuration assertions for Prompt 6.
+ - Added Prompt 7 campaign/day layer:
+  - New autoload: `CampaignManager` (`res://autoloads/campaign_manager.gd`).
+  - New resource classes: `DayConfig`, `CampaignConfig`.
+  - New resources under `res://resources/campaigns/` (short 5-day + main 50-day).
+  - `SignalBus` includes campaign/day signals:
+    - `campaign_started`, `day_started`, `day_won`, `day_failed`, `campaign_completed`.
+  - `GameManager` adds `start_mission_for_day(day_index:int, day_config:DayConfig)` and delegates day progression.
+  - `WaveManager` adds `configure_for_day(day_config:DayConfig)` and per-day tuning fields.
+  - Added tests:
+    - `res://tests/test_campaign_manager.gd`
+    - Prompt 7 additions in `test_wave_manager.gd`, `test_game_manager.gd`.
 | `arnulf_incapacitated` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `arnulf_recovered` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `wave_countdown_started` | `(wave_number:int,seconds_remaining:float)` | `res://scripts/wave_manager.gd` |

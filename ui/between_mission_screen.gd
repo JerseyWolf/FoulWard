@@ -9,6 +9,8 @@ class_name BetweenMissionScreen
 extends Control
 
 @onready var _next_mission_btn: Button = $NextMissionButton
+@onready var _day_progress_label: Label = $DayProgressLabel
+@onready var _day_name_label: Label = $DayNameLabel
 
 @onready var _shop_list: VBoxContainer = $TabContainer/ShopTab/ShopList
 @onready var _research_list: VBoxContainer = $TabContainer/ResearchTab/ResearchList
@@ -45,6 +47,7 @@ func _ready() -> void:
 	SignalBus.enchantment_applied.connect(_on_enchantment_applied)
 	SignalBus.enchantment_removed.connect(_on_enchantment_removed)
 	_refresh_weapons_tab()
+	_refresh_day_info()
 
 
 func _on_game_state_changed(
@@ -60,6 +63,21 @@ func _refresh_all() -> void:
 	_refresh_research()
 	_refresh_buildings()
 	_refresh_weapons_tab()
+	_refresh_day_info()
+
+func _refresh_day_info() -> void:
+	var cur: int = CampaignManager.get_current_day()
+	var len: int = CampaignManager.get_campaign_length()
+	var cfg: DayConfig = CampaignManager.get_current_day_config()
+
+	if is_instance_valid(_day_progress_label):
+		_day_progress_label.text = "Day %d / %d" % [cur, maxi(len, 1)]
+
+	if is_instance_valid(_day_name_label):
+		if cfg != null:
+			_day_name_label.text = "Day %d - %s" % [cfg.day_index, cfg.display_name]
+		else:
+			_day_name_label.text = "Day %d" % cur
 
 
 func _refresh_shop() -> void:
@@ -146,7 +164,8 @@ func _on_research_unlock_pressed(node_id: String) -> void:
 
 
 func _on_next_mission_pressed() -> void:
-	GameManager.start_next_mission()
+	# DEVIATION: BetweenMissionScreen now routes through CampaignManager.
+	CampaignManager.start_next_day()
 
 
 ## Refreshes the entire Weapons tab display. Called on show and after any upgrade.
