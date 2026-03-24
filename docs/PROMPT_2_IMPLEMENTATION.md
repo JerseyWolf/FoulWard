@@ -6,6 +6,28 @@ Date: 2026-03-24
 
 This Phase 2 implementation was directly shaped by a prior design/research prompt that defined the firing-extension rules before coding started. That upstream prompt established the core boundaries used here: keep `InputManager` logic-free, keep Tower public firing APIs and `ProjectileBase.initialize_from_weapon(...)` unchanged, place assist/miss behavior inside Tower only, gate all assist/miss to manual fire only, and preserve deterministic autofire/SimBot behavior. It also drove the data-model approach (new `WeaponData` fields with safe `0.0` defaults), the initial crossbow tuning targets, and the specific test expectations around assist cone selection, miss perturbation, and autofire bypass.
 
+## Credits and Sources
+
+- **Other LLM prompt contribution**
+  - Used as design inspiration for structuring Tower internals into distinct auto-aim and miss steps, and for adopting a cone-sampled miss perturbation approach.
+  - Also informed the explicit deterministic RNG requirement for reproducible tests/SimBot behavior.
+
+- **Godot documentation (official)**
+  - Vector angle/cone checks via `Vector3.angle_to` + degree conversion.
+  - 3D directional perturbation concepts via `Vector3`/`Basis` rotation utilities and orthonormal-basis math patterns.
+  - Source site: [https://docs.godotengine.org](https://docs.godotengine.org)
+
+- **Project architecture and convention sources**
+  - `docs/CONVENTIONS.md` and `docs/ARCHITECTURE.md` governed the final placement decisions:
+    - no gameplay logic in `InputManager`
+    - no public firing API signature changes
+    - no `ProjectileBase.initialize_from_weapon(...)` contract changes.
+
+- **Adoption notes**
+  - Adopted: deterministic Tower RNG, cone-based auto-aim filtering, orthonormal-basis miss perturbation.
+  - Intentionally adapted to repo reality: alive checks use `enemy.health_component.is_alive()` in this codebase (not `enemy.is_alive()`).
+  - Intentionally preserved existing burst semantics: a rapid-missile trigger computes one final burst target used for the entire burst.
+
 ## Implemented
 
 - `res://scripts/resources/weapon_data.gd`

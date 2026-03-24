@@ -44,7 +44,7 @@ var _rapid_missile_reload_remaining: float = 0.0
 var _burst_remaining: int = 0
 var _burst_timer: float = 0.0
 var _burst_target: Vector3 = Vector3.ZERO
-var _burst_signal_target: Vector3 = Vector3.ZERO
+# ASSUMPTION: Tower-owned RNG is used instead of global randf() so tests can seed it.
 var _shot_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -82,8 +82,6 @@ func _physics_process(delta: float) -> void:
 			_spawn_projectile(rapid_missile_data, _burst_target)
 			_burst_remaining -= 1
 			_burst_timer = rapid_missile_data.burst_interval
-			if _burst_remaining > 0:
-				_burst_target = _resolve_manual_aim_target(rapid_missile_data, _burst_signal_target)
 
 	if auto_fire_enabled:
 		_auto_fire_at_nearest_enemy()
@@ -121,11 +119,10 @@ func fire_rapid_missile(target_position: Vector3) -> void:
 	_burst_remaining = rapid_missile_data.burst_count
 	_burst_timer = 0.0  # First shot fires this same physics frame.
 	_burst_target = final_target
-	_burst_signal_target = final_target
 	SignalBus.projectile_fired.emit(
 		Types.WeaponSlot.RAPID_MISSILE,
 		global_position,
-		_burst_signal_target
+		final_target
 	)
 
 
@@ -220,6 +217,10 @@ func _auto_fire_at_nearest_enemy() -> void:
 
 
 func _resolve_manual_aim_target(weapon_data: WeaponData, raw_target: Vector3) -> Vector3:
+	return _apply_miss_chance(weapon_data, _apply_auto_aim(weapon_data, raw_target))
+
+
+func _apply_auto_aim(weapon_data: WeaponData, raw_target: Vector3) -> Vector3:
 	if auto_fire_enabled:
 		return raw_target
 	if weapon_data == null:
@@ -252,6 +253,7 @@ func _resolve_manual_aim_target(weapon_data: WeaponData, raw_target: Vector3) ->
 				if weapon_data.assist_max_distance > 0.0 and distance_to_enemy > weapon_data.assist_max_distance:
 					continue
 
+				# SOURCE: Godot docs Vector3.angle_to + rad_to_deg cone check pattern.
 				var to_enemy: Vector3 = to_enemy_vec / distance_to_enemy
 				var angle_deg: float = rad_to_deg(raw_dir.angle_to(to_enemy))
 				if angle_deg > weapon_data.assist_angle_degrees:
@@ -264,31 +266,47 @@ func _resolve_manual_aim_target(weapon_data: WeaponData, raw_target: Vector3) ->
 			if nearest_enemy != null:
 				assisted_target = nearest_enemy.global_position
 
+	return assisted_target
+
+
+func _apply_miss_chance(weapon_data: WeaponData, aim_target: Vector3) -> Vector3:
+	if auto_fire_enabled:
+		return aim_target
+	if weapon_data == null:
+		return aim_target
 	if weapon_data.base_miss_chance <= 0.0 or weapon_data.max_miss_angle_degrees <= 0.0:
-		return assisted_target
+		return aim_target
 
 	var clamped_miss_chance: float = clampf(weapon_data.base_miss_chance, 0.0, 1.0)
-	if _shot_rng.randf() > clamped_miss_chance:
-		return assisted_target
+	if _shot_rng.randf() >= clamped_miss_chance:
+		return aim_target
 
-	var assisted_offset: Vector3 = assisted_target - global_position
-	if assisted_offset.length_squared() <= 0.000001:
-		return assisted_target
+	var aim_offset: Vector3 = aim_target - global_position
+	var aim_distance: float = aim_offset.length()
+	if aim_distance <= 0.000001:
+		# ASSUMPTION: when aim point is effectively tower origin, keep target unchanged.
+		return aim_target
 
-	var aim_dir: Vector3 = assisted_offset.normalized()
-	var random_axis: Vector3 = aim_dir.cross(Vector3.UP)
-	if random_axis.length_squared() <= 0.000001:
-		random_axis = aim_dir.cross(Vector3.RIGHT)
-	if random_axis.length_squared() <= 0.000001:
-		random_axis = Vector3.FORWARD
-	random_axis = random_axis.normalized()
+	var aim_dir: Vector3 = aim_offset / aim_distance
 
-	var random_angle_rad: float = deg_to_rad(
-		_shot_rng.randf_range(-weapon_data.max_miss_angle_degrees, weapon_data.max_miss_angle_degrees)
-	)
-	# SOURCE: Godot docs Vector3/Basis rotation pattern for directional perturbation.
-	var perturbed_dir: Vector3 = Basis(random_axis, random_angle_rad) * aim_dir
-	return global_position + perturbed_dir.normalized() * assisted_offset.length()
+	# SOURCE: Godot docs Vector3/Basis rotation pattern adapted to orthonormal-basis cone sampling.
+	var max_angle_rad: float = deg_to_rad(weapon_data.max_miss_angle_degrees)
+	var delta_angle: float = _shot_rng.randf_range(0.0, max_angle_rad)
+	var phi: float = _shot_rng.randf_range(0.0, TAU)
+
+	var up: Vector3 = Vector3.UP
+	if absf(aim_dir.dot(up)) > 0.99:
+		up = Vector3.RIGHT
+	var u: Vector3 = aim_dir.cross(up).normalized()
+	var v: Vector3 = aim_dir.cross(u).normalized()
+
+	var perturbed_dir: Vector3 = (
+		aim_dir * cos(delta_angle)
+		+ u * sin(delta_angle) * cos(phi)
+		+ v * sin(delta_angle) * sin(phi)
+	).normalized()
+	var miss_distance: float = maxf(1.0, aim_distance)
+	return global_position + perturbed_dir * miss_distance
 
 
 func _on_health_changed(current_hp: int, max_hp: int) -> void:
