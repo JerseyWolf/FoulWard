@@ -43,6 +43,7 @@ Date: 2026-03-24
 
 - No behavior change was made to `HexGrid.sell_building()` logic.
 - No additional game logic was added to `InputManager` or `BuildMenu`; both only route/call into existing systems.
+- Continuation note: follow-up firing assist/miss implementation details are documented in `docs/PROMPT_2_IMPLEMENTATION.md`.
 
 ## Second-pass audit (2026-03-24)
 
