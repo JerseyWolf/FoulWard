@@ -303,6 +303,13 @@ func get_empty_slots() -> Array[int]:
 			result.append(slot["index"])
 	return result
 
+## Returns true if at least one slot is currently empty.
+func has_empty_slot() -> bool:
+	for slot: Dictionary in _slots:
+		if not slot["is_occupied"]:
+			return true
+	return false
+
 
 ## Frees all buildings and resets all slots. Called on new game only.
 func clear_all_buildings() -> void:
@@ -437,15 +444,15 @@ func _compute_ring_positions(count: int, radius: float, angle_offset_degrees: fl
 	return positions
 
 
-func _set_slots_visible(visible: bool) -> void:
+func _set_slots_visible(slots_visible: bool) -> void:
 	for i: int in range(get_child_count()):
 		var slot_node: Area3D = get_child(i) as Area3D
 		if slot_node == null:
 			continue
 		var mesh: MeshInstance3D = slot_node.get_node_or_null("SlotMesh") as MeshInstance3D
 		if mesh != null:
-			mesh.visible = visible
-	if visible:
+			mesh.visible = slots_visible
+	if slots_visible:
 		_apply_build_slot_highlights()
 
 
@@ -501,13 +508,14 @@ func _on_research_unlocked(_node_id: String) -> void:
 	pass
 
 
+## Bound slot index is last: Godot passes signal args first, then Callable.bind() args.
 func _on_hex_slot_input(
-		slot_index: int,
 		_camera: Node,
 		event: InputEvent,
 		_event_position: Vector3,
 		_normal: Vector3,
-		_shape_idx: int
+		_shape_idx: int,
+		slot_index: int
 ) -> void:
 	var mb: InputEventMouseButton = event as InputEventMouseButton
 	if mb == null or not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:

@@ -29,14 +29,12 @@ MCPGameInspector="*res://addons/godot_mcp/mcp_game_inspector_service.gd"
 
 [display]
 
-window/size/viewport_width=1152
-window/size/viewport_height=648
-window/size/width=1152
-window/size/height=648
+window/size/viewport_width=3477
+window/size/viewport_height=1957
 window/stretch/mode="viewport"
 window/stretch/aspect="expand"
-window/stretch/scale=1.0
-window/stretch/scale_mode="fractional"
+window/size/width=1152
+window/size/height=648
 
 [editor_plugins]
 

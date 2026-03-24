@@ -5,7 +5,8 @@
 extends Node
 
 const TOTAL_MISSIONS: int = 5
-const WAVES_PER_MISSION: int = 10
+# Temporary dev/testing cap so we can reach "mission won" quickly.
+const WAVES_PER_MISSION: int = 3
 
 var current_mission: int = 1
 var current_wave: int = 0
@@ -30,6 +31,12 @@ func start_new_game() -> void:
 	current_mission = 1
 	current_wave = 0
 	EconomyManager.reset_to_defaults()
+	# Ensure research unlock state is reset for a new run.
+	# In dev mode, ResearchManager can choose to unlock all nodes to make
+	# content reachable for testing (e.g., tower availability).
+	var rm: ResearchManager = get_node_or_null("/root/Main/Managers/ResearchManager") as ResearchManager
+	if rm != null:
+		rm.reset_to_defaults()
 	_transition_to(Types.GameState.COMBAT)
 	SignalBus.mission_started.emit(current_mission)
 	_apply_shop_mission_start_consumables()
@@ -97,6 +104,7 @@ func _begin_mission_wave_sequence() -> void:
 		print("[GameManager] ERROR: WaveManager not found!")
 		return
 	print("[GameManager] _begin_mission_wave_sequence: mission=%d" % current_mission)
+	wave_manager.max_waves = WAVES_PER_MISSION
 	wave_manager.reset_for_new_mission()
 	wave_manager.call_deferred("start_wave_sequence")
 

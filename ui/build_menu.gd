@@ -10,7 +10,6 @@ extends Control
 var _selected_slot: int = -1
 
 @onready var _slot_label: Label = $Panel/VBox/SlotLabel
-@onready var _help_label: Label = $Panel/VBox/HelpScroll/HelpLabel
 @onready var _building_container: GridContainer = $Panel/VBox/BuildingContainer
 @onready var _close_button: Button = $Panel/VBox/CloseButton
 
@@ -88,8 +87,9 @@ func _on_building_selected(building_type: Types.BuildingType) -> void:
 
 
 func _on_build_mode_entered() -> void:
-	print("[BuildMenu] build_mode_entered — opening slot 0")
-	open_for_slot(0)
+	print("[BuildMenu] build_mode_entered — waiting for slot click")
+	_selected_slot = -1
+	hide()  # UIManager keeps BuildMenu hidden until HexGrid explicitly opens it.
 
 
 func _on_resource_changed(_resource_type: Types.ResourceType, _new_amount: int) -> void:

@@ -221,7 +221,7 @@ func _process_downed(delta: float) -> void:
 
 func _process_recovering() -> void:
 	# Instant transition state: heal to 50% max HP, then return to IDLE.
-	var heal_amount: int = max_hp / 2
+	var heal_amount: int = int(round(float(max_hp) * 0.5))
 	health_component.heal(heal_amount)
 	SignalBus.arnulf_recovered.emit()
 	_transition_to_state(Types.ArnulfState.IDLE)

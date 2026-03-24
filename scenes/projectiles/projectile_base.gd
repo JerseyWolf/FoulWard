@@ -15,6 +15,12 @@ extends Area3D
 
 const MAX_LIFETIME: float = 5.0
 
+# Visual/collision scaling for all projectile types.
+# User request: make every projectile "twice bigger".
+const PROJECTILE_VISUAL_SCALE: float = 2.0
+const BASE_HIT_OVERLAP_SPHERE_RADIUS: float = 0.4
+const BASE_COLLISION_SPHERE_RADIUS: float = 0.2
+
 var _damage: float = 0.0
 var _damage_type: Types.DamageType = Types.DamageType.PHYSICAL
 var _speed: float = 20.0
@@ -95,6 +101,16 @@ func _configure_collision(_targets_air_only_flag: bool) -> void:
 	set_collision_layer_value(5, true)
 	set_collision_mask_value(2, true)
 	_targets_air_only = _targets_air_only_flag
+
+	# Keep collision shape consistent with visuals scaling so the "bigger projectile"
+	# also feels bigger when hitting.
+	var collision_shape: CollisionShape3D = get_node_or_null("ProjectileCollision") as CollisionShape3D
+	var sphere_shape: SphereShape3D = null
+	if collision_shape != null:
+		sphere_shape = collision_shape.shape as SphereShape3D
+	if sphere_shape != null:
+		sphere_shape.radius = BASE_COLLISION_SPHERE_RADIUS * PROJECTILE_VISUAL_SCALE
+
 	# NOTE: Filtering flying vs ground is done in targeting code (which decides where
 	# the projectile is fired), not via different masks. All projectiles collide with
 	# any enemy body on layer 2.
@@ -110,10 +126,12 @@ func _configure_visuals(is_standard_size: bool) -> void:
 
 	if is_standard_size:
 		# Building projectiles or crossbow bolt (large enough to read at isometric scale).
-		_mesh.scale = Vector3(1.1, 1.1, 1.1)
+		var s: float = 1.1 * PROJECTILE_VISUAL_SCALE
+		_mesh.scale = Vector3(s, s, s)
 	else:
 		# Rapid missile (small + fast look).
-		_mesh.scale = Vector3(0.55, 0.55, 0.55)
+		var s2: float = 0.55 * PROJECTILE_VISUAL_SCALE
+		_mesh.scale = Vector3(s2, s2, s2)
 
 	match _damage_type:
 		Types.DamageType.PHYSICAL:
@@ -182,7 +200,7 @@ func _try_hit_overlapping_enemy() -> bool:
 	if space == null:
 		return false
 	var sphere := SphereShape3D.new()
-	sphere.radius = 0.4
+	sphere.radius = BASE_HIT_OVERLAP_SPHERE_RADIUS * PROJECTILE_VISUAL_SCALE
 	var params := PhysicsShapeQueryParameters3D.new()
 	params.shape = sphere
 	params.transform = global_transform

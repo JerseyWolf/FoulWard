@@ -159,4 +159,3 @@ func _apply_effect(item_id: String) -> bool:
 		_:
 			push_warning("ShopManager._apply_effect: unknown item_id '%s'" % item_id)
 			return false
-
