@@ -26,7 +26,7 @@
 | `res://scripts/spell_manager.gd` | `SpellManager` | `Node` | `cast_spell(spell_id:String)->bool,get_current_mana()->int,get_max_mana()->int,get_cooldown_remaining(spell_id:String)->float,is_spell_ready(spell_id:String)->bool,set_mana_to_full()->void,reset_to_defaults()->void` | `max_mana:int,mana_regen_rate:float,spell_registry:Array[SpellData]` | `-` | `mana_changed,spell_ready,spell_cast` | `SignalBus,Types,SpellData,EnemyBase,DamageCalculator` |
 | `res://scripts/main_root.gd` | `-` | `Node3D` | `-` | `-` | `-` | `-` | `Window` |
 | `res://scripts/sim_bot.gd` | `SimBot` | `Node` | `activate()->void,deactivate()->void,bot_enter_build_mode()->void,bot_exit_build_mode()->void,bot_place_building(slot:int,building_type:Types.BuildingType)->bool,bot_cast_spell(spell_id:String)->bool,bot_fire_crossbow(target:Vector3)->void,bot_advance_wave()->void` | `-` | `-` | `-` | `SignalBus,Types,GameManager,HexGrid,SpellManager,Tower,WaveManager` |
-| `res://scripts/input_manager.gd` | `InputManager` | `Node` | `-` | `-` | `-` | `-` | `Types,GameManager,Tower,SpellManager,HexGrid,BuildMenu,EnemyBase` |
+| `res://scripts/input_manager.gd` | `InputManager` | `Node` | `-` | `-` | `-` | `-` | `Types,GameManager,Tower,SpellManager,HexGrid,BuildMenu,EnemyBase,Camera3D,PhysicsDirectSpaceState3D` |
 | `res://scripts/research_manager.gd` | `ResearchManager` | `Node` | `unlock_node(node_id:String)->bool,is_unlocked(node_id:String)->bool,get_available_nodes()->Array[ResearchNodeData],reset_to_defaults()->void` | `research_nodes:Array[ResearchNodeData],dev_unlock_all_research:bool,dev_unlock_anti_air_only:bool` | `-` | `research_unlocked` | `SignalBus,EconomyManager,ResearchNodeData` |
 | `res://scripts/shop_manager.gd` | `ShopManager` | `Node` | `purchase_item(item_id:String)->bool,get_available_items()->Array[ShopItemData],can_purchase(item_id:String)->bool,consume_mana_draught_pending()->bool,consume_arrow_tower_pending()->bool,apply_mission_start_consumables()->void` | `shop_catalog:Array[ShopItemData]` | `-` | `shop_item_purchased,mana_draught_consumed` | `SignalBus,EconomyManager,HexGrid,Tower,ShopItemData` |
 | `res://scripts/wave_manager.gd` | `WaveManager` | `Node` | `start_wave_sequence()->void,force_spawn_wave(wave_number:int)->void,get_living_enemy_count()->int,get_current_wave_number()->int,is_wave_active()->bool,is_counting_down()->bool,get_countdown_remaining()->float,reset_for_new_mission()->void,clear_all_enemies()->void` | `wave_countdown_duration:float,first_wave_countdown_seconds:float,max_waves:int,enemy_data_registry:Array[EnemyData]` | `-` | `wave_countdown_started,wave_started,wave_cleared,all_waves_cleared` | `SignalBus,GameManager,EnemyData,EnemyBase,PackedScene` |
@@ -45,7 +45,7 @@
 | `res://scenes/projectiles/projectile_base.gd` | `ProjectileBase` | `Area3D` | `initialize_from_weapon(weapon_data:WeaponData,origin:Vector3,target_position:Vector3)->void,initialize_from_building(damage:float,damage_type:Types.DamageType,speed:float,origin:Vector3,target_position:Vector3,targets_air_only:bool)->void` | `-` | `-` | `-` | `Types,WeaponData,EnemyBase,DamageCalculator` |
 | `res://scenes/tower/tower.gd` | `Tower` | `StaticBody3D` | `fire_crossbow(target_position:Vector3)->void,fire_rapid_missile(target_position:Vector3)->void,take_damage(amount:int)->void,repair_to_full()->void,get_current_hp()->int,get_max_hp()->int,is_weapon_ready(weapon_slot:Types.WeaponSlot)->bool,get_crossbow_reload_remaining_seconds()->float,get_crossbow_reload_total_seconds()->float,get_rapid_missile_reload_remaining_seconds()->float,get_rapid_missile_reload_total_seconds()->float,get_rapid_missile_burst_remaining()->int,get_rapid_missile_burst_total()->int` | `starting_hp:int,crossbow_data:WeaponData,rapid_missile_data:WeaponData,auto_fire_enabled:bool` | `-` | `projectile_fired,tower_damaged,tower_destroyed` | `SignalBus,Types,WeaponData,ProjectileBase,HealthComponent,EnemyBase` |
 | `res://ui/between_mission_screen.gd` | `BetweenMissionScreen` | `Control` | `-` | `-` | `-` | `-` | `SignalBus,Types,GameManager,ShopManager,ResearchManager,HexGrid` |
-| `res://ui/build_menu.gd` | `BuildMenu` | `Control` | `open_for_slot(slot_index:int)->void` | `-` | `-` | `-` | `SignalBus,Types,HexGrid,EconomyManager,ResearchManager` |
+| `res://ui/build_menu.gd` | `BuildMenu` | `Control` | `open_for_slot(slot_index:int)->void,open_for_sell_slot(slot_index:int,slot_data:Dictionary)->void` | `-` | `-` | `-` | `SignalBus,Types,HexGrid,EconomyManager,ResearchManager,BuildingBase,BuildingData` |
 | `res://ui/end_screen.gd` | `EndScreen` | `Control` | `-` | `-` | `-` | `-` | `SignalBus,Types,GameManager` |
 | `res://ui/hud.gd` | `HUD` | `Control` | `update_weapon_display(crossbow_ready:bool,missile_ready:bool)->void` | `-` | `-` | `-` | `SignalBus,Types,GameManager,EconomyManager,Tower` |
 | `res://ui/main_menu.gd` | `MainMenu` | `Control` | `-` | `-` | `-` | `-` | `GameManager` |
@@ -90,6 +90,13 @@
 | `tower_destroyed` | `()` | `res://scenes/tower/tower.gd` |
 | `projectile_fired` | `(weapon_slot:Types.WeaponSlot,origin:Vector3,target:Vector3)` | `res://scenes/tower/tower.gd` |
 | `arnulf_state_changed` | `(new_state:Types.ArnulfState)` | `res://scenes/arnulf/arnulf.gd` |
+
+## 2026-03-24 delta
+
+- Build-mode slot routing is centralized in `InputManager` (raycast against layer 7 + occupancy check).
+- `BuildMenu` now has placement and sell entrypoints.
+- `HexGrid` slot input callback now only updates highlight when in build mode.
+- Added sell-flow tests to `res://tests/test_hex_grid.gd`.
 | `arnulf_incapacitated` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `arnulf_recovered` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `wave_countdown_started` | `(wave_number:int,seconds_remaining:float)` | `res://scripts/wave_manager.gd` |

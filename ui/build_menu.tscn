@@ -48,6 +48,26 @@ horizontal_alignment = 1
 [node name="BuildingContainer" type="GridContainer" parent="Panel/VBox"]
 columns = 2
 
+[node name="SellPanel" type="VBoxContainer" parent="Panel/VBox"]
+visible = false
+
+[node name="BuildingNameLabel" type="Label" parent="Panel/VBox/SellPanel"]
+text = ""
+
+[node name="UpgradeStatusLabel" type="Label" parent="Panel/VBox/SellPanel"]
+text = ""
+
+[node name="RefundLabel" type="Label" parent="Panel/VBox/SellPanel"]
+text = ""
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/VBox/SellPanel"]
+
+[node name="SellButton" type="Button" parent="Panel/VBox/SellPanel/Buttons"]
+text = "Sell"
+
+[node name="CancelButton" type="Button" parent="Panel/VBox/SellPanel/Buttons"]
+text = "Cancel"
+
 [node name="CloseButton" type="Button" parent="Panel/VBox"]
 text = "Close / Exit Build Mode"
 

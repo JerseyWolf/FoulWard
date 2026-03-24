@@ -422,7 +422,7 @@ func _initialize_slots() -> void:
 			var mesh_inst: MeshInstance3D = slot_node.get_node_or_null("SlotMesh") as MeshInstance3D
 			if mesh_inst != null:
 				var shared: Material = mesh_inst.material_override
-				if shared == null:
+				if shared == null and mesh_inst.mesh != null and mesh_inst.mesh.get_surface_count() > 0:
 					shared = mesh_inst.get_surface_override_material(0)
 				if shared != null:
 					mesh_inst.material_override = shared.duplicate() as Material
@@ -524,8 +524,6 @@ func _on_hex_slot_input(
 	print("[HexGrid] hex slot %d clicked  game_state=%s" % [slot_index, Types.GameState.keys()[state]])
 	if state != Types.GameState.BUILD_MODE:
 		return
-	var build_menu: BuildMenu = get_node_or_null("/root/Main/UI/BuildMenu") as BuildMenu
-	if build_menu == null:
-		print("[HexGrid] ERROR: BuildMenu not found at /root/Main/UI/BuildMenu")
-		return
-	build_menu.open_for_slot(slot_index)
+	# InputManager now owns BUILD_MODE slot click routing (place vs sell menu mode).
+	# Keep this callback for highlight feedback only.
+	set_build_slot_highlight(slot_index)
