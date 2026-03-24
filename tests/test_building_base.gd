@@ -1,4 +1,4 @@
-﻿# tests/test_building_base.gd
+# tests/test_building_base.gd
 # GdUnit4 test suite for BuildingBase.
 # Tests initialization, targeting, combat process, upgrade, and effective stats.
 
@@ -174,4 +174,18 @@ func test_combat_process_decrements_attack_timer() -> void:
 	building._attack_timer = 0.5
 	building._combat_process(0.3)
 	assert_float(building._attack_timer).is_equal_approx(0.2, 0.001)
+
+
+func test_building_scene_has_collision_and_navigation_obstacle() -> void:
+	var scene: PackedScene = load("res://scenes/buildings/building_base.tscn") as PackedScene
+	var building: BuildingBase = scene.instantiate() as BuildingBase
+	add_child(building)
+	await get_tree().process_frame
+	var collision_body: StaticBody3D = building.get_node("BuildingCollision") as StaticBody3D
+	var obstacle: NavigationObstacle3D = building.get_node("NavigationObstacle") as NavigationObstacle3D
+	assert_object(collision_body).is_not_null()
+	assert_object(obstacle).is_not_null()
+	assert_int(collision_body.collision_layer).is_equal(8)
+	assert_int(collision_body.collision_mask).is_equal(2)
+	building.queue_free()
 

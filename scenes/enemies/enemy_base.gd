@@ -13,12 +13,15 @@ extends CharacterBody3D
 
 const TARGET_POSITION: Vector3 = Vector3.ZERO
 const FLYING_HEIGHT: float = 5.0
-## If the nav agent reports a next waypoint on top of us, normalized() would be zero — fall back to direct steering.
-const _MIN_NAV_STEP_SQ: float = 0.0004
+const STUCK_VELOCITY_EPSILON: float = 0.1
+const STUCK_TIME_THRESHOLD: float = 1.5
+const PROGRESS_EPSILON: float = 0.05
 
 var _enemy_data: EnemyData = null
 var _attack_timer: float = 0.0
 var _is_attacking: bool = false
+var _time_since_last_progress: float = 0.0
+var _last_distance_to_tower: float = 0.0
 var active_status_effects: Array[Dictionary] = []
 const MAX_POISON_STACKS: int = 5 # TUNING: max poison stacks per enemy.
 
@@ -45,6 +48,8 @@ func initialize(enemy_data: EnemyData) -> void:
 	_enemy_data = enemy_data
 	_attack_timer = 0.0
 	_is_attacking = false
+	_last_distance_to_tower = global_position.distance_to(TARGET_POSITION)
+	_time_since_last_progress = 0.0
 	print("[Enemy] initialized: %s  hp=%d speed=%.1f flying=%s pos=(%.0f,%.0f,%.0f)" % [
 		enemy_data.display_name, enemy_data.max_hp, enemy_data.move_speed, enemy_data.is_flying,
 		global_position.x, global_position.y, global_position.z
@@ -63,6 +68,7 @@ func initialize(enemy_data: EnemyData) -> void:
 		navigation_agent.target_desired_distance = _enemy_data.attack_range
 		navigation_agent.avoidance_enabled = true
 		navigation_agent.radius = 0.5
+		navigation_agent.target_position = TARGET_POSITION
 
 	# Visuals from EnemyData.color.
 	if _mesh != null:
@@ -96,18 +102,10 @@ func _physics_process(delta: float) -> void:
 	if _enemy_data == null:
 		return
 	_update_status_effects(delta)
-
-	if _is_attacking:
-		if _enemy_data.is_ranged:
-			_attack_tower_ranged(delta)
-		else:
-			_attack_tower_melee(delta)
-		return
-
 	if _enemy_data.is_flying:
-		_move_flying(delta)
+		_physics_process_flying(delta)
 	else:
-		_move_ground(delta)
+		_physics_process_ground(delta)
 
 
 ## Applies or updates a damage-over-time (DoT) effect on this enemy.
@@ -234,90 +232,87 @@ func _update_status_effects(delta: float) -> void:
 
 # === MOVEMENT =======================================================
 
-func _move_ground(delta: float) -> void:
-	# Primary arrival check — switch to attacking once within range.
-	# This must come first so direct-steering enemies stop at the right distance.
-	if global_position.distance_to(TARGET_POSITION) <= _enemy_data.attack_range:
-		print("[Enemy] %s reached attack range — switching to attack" % _enemy_data.display_name)
-		_is_attacking = true
-		_attack_timer = 0.0
-		return
-
-	var nav_map: RID = navigation_agent.get_navigation_map()
-	# A NavRegion3D with no baked mesh may still give iteration_id > 0 in Godot 4.
-	# is_navigation_finished() then returns true immediately (no path computed),
-	# which previously set _is_attacking from the spawn point — enemies would
-	# "attack" the tower from 40 units away without moving.
-	# Solution: treat "finished but out of range" the same as "no navmesh" and
-	# fall back to direct vector steering in both cases.
-	var has_valid_nav: bool = (
-		nav_map.is_valid()
-		and NavigationServer3D.map_get_iteration_id(nav_map) > 0
-	)
-
-	if not has_valid_nav:
-		_move_direct(delta)
-		return
-
+func _physics_process_ground(delta: float) -> void:
 	navigation_agent.target_position = TARGET_POSITION
-
 	if navigation_agent.is_navigation_finished():
-		# Nav reports "done" but the distance check above didn't fire, which means
-		# there is no walkable path (empty or unbaked navmesh). Use direct steering.
-		_move_direct(delta)
-		return
+		var distance_to_tower: float = global_position.distance_to(TARGET_POSITION)
+		if distance_to_tower <= _enemy_data.attack_range:
+			_update_attack_tower(delta)
+			_reset_progress_tracking(distance_to_tower)
+			return
 
 	var next_pos: Vector3 = navigation_agent.get_next_path_position()
-	var to_next: Vector3 = next_pos - global_position
-	if to_next.length_squared() < _MIN_NAV_STEP_SQ:
-		_move_direct(delta)
+	var direction: Vector3 = next_pos - global_position
+	if direction.length_squared() < 0.0001:
+		direction = Vector3.ZERO
+	else:
+		direction = direction.normalized()
+	if direction != Vector3.ZERO:
+		velocity = direction * _enemy_data.move_speed
+	else:
+		velocity = Vector3.ZERO
+	move_and_slide()
+	_update_progress_tracking(delta)
+	_maybe_resolve_stuck()
+
+	if global_position.distance_to(TARGET_POSITION) <= _enemy_data.attack_range:
+		_update_attack_tower(delta)
+		_reset_progress_tracking(global_position.distance_to(TARGET_POSITION))
+
+
+func _physics_process_flying(delta: float) -> void:
+	var target_pos: Vector3 = Vector3(TARGET_POSITION.x, FLYING_HEIGHT, TARGET_POSITION.z)
+	var direction: Vector3 = target_pos - global_position
+	if direction.length_squared() > 0.0001:
+		direction = direction.normalized()
+	velocity = direction * _enemy_data.move_speed
+	move_and_slide()
+	if global_position.distance_to(target_pos) <= _enemy_data.attack_range:
+		_update_attack_tower(delta)
+
+
+func _update_progress_tracking(delta: float) -> void:
+	var distance_to_tower: float = global_position.distance_to(TARGET_POSITION)
+	if distance_to_tower < _last_distance_to_tower - PROGRESS_EPSILON:
+		_time_since_last_progress = 0.0
+		_last_distance_to_tower = distance_to_tower
+	else:
+		_time_since_last_progress += delta
+
+
+func _reset_progress_tracking(current_distance: float) -> void:
+	_last_distance_to_tower = current_distance
+	_time_since_last_progress = 0.0
+
+
+func _maybe_resolve_stuck() -> void:
+	if _time_since_last_progress < STUCK_TIME_THRESHOLD:
 		return
-
-	var direction: Vector3 = to_next.normalized()
-	velocity = direction * _enemy_data.move_speed
-	move_and_slide()
-
-
-func _move_direct(_delta: float) -> void:
-	var direction: Vector3 = (TARGET_POSITION - global_position).normalized()
-	velocity = direction * _enemy_data.move_speed
-	move_and_slide()
-
-func _move_flying(_delta: float) -> void:
-	# Credit (constant-height + horizontal arrival):
-	#   FOUL WARD SYSTEMS_part3.md §8.6 EnemyBase.move_flying pseudocode.
-	var fly_target := Vector3(TARGET_POSITION.x, FLYING_HEIGHT, TARGET_POSITION.z)
-	var direction: Vector3 = (fly_target - global_position).normalized()
-	velocity = direction * _enemy_data.move_speed
-	move_and_slide()
-
-	var horizontal_dist := Vector2(
-		global_position.x - TARGET_POSITION.x,
-		global_position.z - TARGET_POSITION.z
-	).length()
-	if horizontal_dist <= _enemy_data.attack_range:
-		_is_attacking = true
-		_attack_timer = 0.0
+	var distance_to_tower: float = global_position.distance_to(TARGET_POSITION)
+	if distance_to_tower <= _enemy_data.attack_range:
+		return
+	var speed: float = velocity.length()
+	if speed > STUCK_VELOCITY_EPSILON:
+		return
+	navigation_agent.target_position = TARGET_POSITION
+	navigation_agent.set_velocity(Vector3.ZERO)
+	_time_since_last_progress = 0.0
+	_last_distance_to_tower = distance_to_tower
 
 # === ATTACK LOGIC ===================================================
 
-func _attack_tower_melee(delta: float) -> void:
+func _update_attack_tower(delta: float) -> void:
+	_is_attacking = true
 	velocity = Vector3.ZERO
-	_attack_timer -= delta
-	if _attack_timer <= 0.0:
-		_attack_timer = _enemy_data.attack_cooldown
-		if is_instance_valid(_tower):
-			# ASSUMPTION: Tower exposes take_damage(amount: int) -> void.
-			_tower.take_damage(_enemy_data.damage)
+	_attack_timer += delta
+	if _attack_timer >= _enemy_data.attack_cooldown:
+		_attack_timer = 0.0
+		_deal_damage_to_tower()
 
-func _attack_tower_ranged(delta: float) -> void:
-	# DEVIATION (documented in SYSTEMS_part3 §8.6):
-	#   Orc Archer uses instant-hit damage, not a visible projectile, for MVP.
-	_attack_timer -= delta
-	if _attack_timer <= 0.0:
-		_attack_timer = _enemy_data.attack_cooldown
-		if is_instance_valid(_tower):
-			_tower.take_damage(_enemy_data.damage)
+
+func _deal_damage_to_tower() -> void:
+	if is_instance_valid(_tower):
+		_tower.take_damage(_enemy_data.damage)
 
 # === DEATH HANDLING ================================================
 

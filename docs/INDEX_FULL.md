@@ -4,7 +4,7 @@ INDEXFULL.md
 FOUL WARD — INDEXFULL.md
 
 Full public API reference for every script, resource type, and system.
-Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-24 (post-MVP).
+Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-24 (post-MVP + Prompt 6).
 Use INDEXSHORT.md for fast orientation, INDEXFULL.md for exact method signatures, signals, and dependencies.
 CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 
@@ -217,6 +217,22 @@ Purpose: Headless integration smoke tester, active only with --autotest CLI flag
 SCENE SCRIPTS (Tower, Arnulf, HexGrid, BuildingBase, EnemyBase, ProjectileBase)
 
 (Details are as previously summarized in INDEXSHORT, expanded with method behavior and signals.)
+
+## 2026-03-24 Prompt 6 delta
+
+- `res://scenes/buildings/building_base.tscn`
+  - Added `BuildingCollision` (`StaticBody3D`, layer 4 bit, enemy-only mask) and `NavigationObstacle3D`.
+- `res://scenes/buildings/building_base.gd`
+  - Added footprint/obstacle constants and `_configure_base_area()` setup helpers.
+- `res://scenes/enemies/enemy_base.tscn`
+  - Updated `NavigationAgent3D` defaults and enemy collision mask to include buildings/arnulf/tower.
+- `res://scenes/enemies/enemy_base.gd`
+  - Added split physics loops for ground vs flying and stuck-prevention progress tracking.
+- `res://scenes/hex_grid/hex_grid.gd`
+  - Placement now includes `_activate_building_obstacle(building: BuildingBase)` integration hook.
+- Tests
+  - `res://tests/test_enemy_pathfinding.gd` now validates solid-ring routing, flying bypass, sell/clear route reopening, and stuck recovery.
+  - `res://tests/test_building_base.gd` now validates presence/configuration of collision + obstacle nodes.
 MANAGERS (WaveManager, SpellManager, ResearchManager, ShopManager, InputManager, SimBot)
 
 (Full descriptions of exports, methods, signals, dependencies as summarized earlier.)

@@ -21,6 +21,10 @@ extends Node3D
 
 const ProjectileScene: PackedScene = preload("res://scenes/projectiles/projectile_base.tscn")
 # ASSUMPTION: ProjectileBase at this path per ARCHITECTURE.md §11.
+const BASE_HALF_EXTENT_X: float = 1.25
+const BASE_HALF_EXTENT_Z: float = 1.25
+const BASE_HEIGHT: float = 3.0
+const OBSTACLE_RADIUS: float = 2.0
 
 # ---------------------------------------------------------------------------
 # Private state
@@ -36,7 +40,13 @@ var _current_target: EnemyBase = null
 # ---------------------------------------------------------------------------
 
 # ASSUMPTION: ProjectileContainer at /root/Main/ProjectileContainer per ARCHITECTURE.md §2.
-@onready var _projectile_container: Node3D = get_node("/root/Main/ProjectileContainer")
+@onready var _projectile_container: Node3D = get_node_or_null("/root/Main/ProjectileContainer") as Node3D
+@onready var health_component: HealthComponent = $HealthComponent
+@onready var collision_body: StaticBody3D = $BuildingCollision
+@onready var collision_shape: CollisionShape3D = $BuildingCollision/CollisionShape3D
+@onready var navigation_obstacle: NavigationObstacle3D = $NavigationObstacle
+@onready var mesh: MeshInstance3D = $BuildingMesh
+@onready var label: Label3D = $BuildingLabel
 
 # ---------------------------------------------------------------------------
 # Public accessor – is_upgraded is read by HexGrid for sell refunds
@@ -51,11 +61,39 @@ var is_upgraded: bool:
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	_configure_base_area()
+	_enable_collision_and_obstacle()
 	if _building_data != null:
 		print("[Building] ready: %s at (%.1f,%.1f,%.1f)" % [
 			_building_data.display_name,
 			global_position.x, global_position.y, global_position.z
 		])
+
+
+func _configure_base_area() -> void:
+	# ASSUMPTION: one footprint shape drives both collision and avoidance tuning.
+	if collision_shape == null or navigation_obstacle == null:
+		return
+	var box_shape: BoxShape3D = collision_shape.shape as BoxShape3D
+	if box_shape == null:
+		return
+	box_shape.size = Vector3(BASE_HALF_EXTENT_X * 2.0, BASE_HEIGHT, BASE_HALF_EXTENT_Z * 2.0)
+	navigation_obstacle.radius = OBSTACLE_RADIUS
+
+
+func _enable_collision_and_obstacle() -> void:
+	if collision_shape == null or navigation_obstacle == null:
+		return
+	collision_shape.set_deferred("disabled", false)
+	navigation_obstacle.set_deferred("enabled", true)
+
+
+func _disable_collision_and_obstacle() -> void:
+	# POST-MVP hook for destroyable buildings.
+	if collision_shape == null or navigation_obstacle == null:
+		return
+	collision_shape.set_deferred("disabled", true)
+	navigation_obstacle.set_deferred("enabled", false)
 
 
 func _physics_process(delta: float) -> void:
@@ -219,6 +257,8 @@ func _fire_at_target() -> void:
 		return
 
 	var proj: ProjectileBase = ProjectileScene.instantiate() as ProjectileBase
+	if _projectile_container == null:
+		return
 
 	# Speed proxy: fire_rate * 15.0 gives reasonable projectile speed spread.
 	# Slow-firing Ballista (0.4/s) → speed 6; fast Poison Vat (1.5/s) → speed 22.5.

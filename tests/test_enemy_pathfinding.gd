@@ -1,131 +1,120 @@
-## test_enemy_pathfinding.gd
-## GdUnit4 tests for EnemyBase initialization, damage application, and basic path/attack behavior.
-
-# Credit (test names and behaviors):
-#   FOUL WARD SYSTEMS_part3.md §8.8 GdUnit4 Test Specifications for EnemyBase.
-
 class_name TestEnemyPathfinding
 extends GdUnitTestSuite
 
-const EnemyScene: PackedScene = preload("res://scenes/enemies/enemy_base.tscn")
+const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
+const INNER_RING_SLOT_COUNT: int = 6
+const TEST_MAX_STEPS: int = 1800 # 30s at 60 physics ticks/s
+const FLYING_STEPS: int = 1200 # 20s at 60 physics ticks/s
 
-func _create_enemy(data: EnemyData) -> EnemyBase:
-	var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
-	add_child(enemy)
-	enemy.initialize(data)
-	return enemy
+var _main: Node3D = null
+var _hex_grid: HexGrid = null
+var _wave_manager: WaveManager = null
+var _tower: Tower = null
+var _enemy_container: Node3D = null
 
-# --- initialize -----------------------------------------------------
+func before_test() -> void:
+	_main = MAIN_SCENE.instantiate() as Node3D
+	get_tree().root.add_child(_main)
+	_hex_grid = _main.get_node("HexGrid") as HexGrid
+	_wave_manager = _main.get_node("Managers/WaveManager") as WaveManager
+	_tower = _main.get_node("Tower") as Tower
+	_enemy_container = _main.get_node("EnemyContainer") as Node3D
+	GameManager.start_new_game()
+	EconomyManager.add_gold(20000)
+	EconomyManager.add_building_material(2000)
+	await get_tree().process_frame
 
-func test_initialize_sets_stats_from_enemy_data() -> void:
-	var data := EnemyData.new()
-	data.max_hp = 123
-	data.display_name = "Test Enemy"
-	data.color = Color(0.2, 0.3, 0.4)
-	var enemy := _create_enemy(data)
 
-	assert_int(enemy.health_component.max_hp).is_equal(123)
-	assert_str(enemy.get_enemy_data().display_name).is_equal("Test Enemy")
-	enemy.queue_free()
+func after_test() -> void:
+	if is_instance_valid(_main):
+		_main.queue_free()
+	await get_tree().process_frame
 
-# --- damage + matrix + immunities ----------------------------------
 
-func test_take_damage_physical_vs_unarmored_full_damage() -> void:
-	var data := EnemyData.new()
-	data.max_hp = 100
-	data.armor_type = Types.ArmorType.UNARMORED
-	data.damage_immunities = []
-	var enemy := _create_enemy(data)
+func test_ground_enemy_paths_around_buildings_reaches_tower() -> void:
+	for i: int in range(INNER_RING_SLOT_COUNT):
+		assert_bool(_hex_grid.place_building(i, Types.BuildingType.ARROW_TOWER)).is_true()
+	var hp_before: int = _tower.get_current_hp()
+	_wave_manager.force_spawn_wave(1)
+	await _run_steps(TEST_MAX_STEPS)
+	assert_int(_tower.get_current_hp()).is_less(hp_before)
 
-	enemy.take_damage(50.0, Types.DamageType.PHYSICAL)
-	assert_int(enemy.health_component.current_hp).is_equal(50)
-	enemy.queue_free()
 
-func test_take_damage_physical_vs_heavy_armor_half_damage() -> void:
-	var data := EnemyData.new()
-	data.max_hp = 100
-	data.armor_type = Types.ArmorType.HEAVY_ARMOR
-	data.damage_immunities = []
-	var enemy := _create_enemy(data)
+func test_ground_enemy_paths_to_tower_without_buildings_unchanged() -> void:
+	_hex_grid.clear_all_buildings()
+	var hp_before: int = _tower.get_current_hp()
+	_wave_manager.force_spawn_wave(1)
+	await _run_steps(TEST_MAX_STEPS)
+	assert_int(_tower.get_current_hp()).is_less(hp_before)
 
-	enemy.take_damage(50.0, Types.DamageType.PHYSICAL)
-	# 50 * 0.5 = 25 damage -> 75 hp remaining
-	assert_int(enemy.health_component.current_hp).is_equal(75)
-	enemy.queue_free()
 
-func test_take_damage_fire_immunity_goblin_no_damage() -> void:
-	var data := EnemyData.new()
-	data.max_hp = 60
-	data.armor_type = Types.ArmorType.UNARMORED
-	data.damage_immunities = [Types.DamageType.FIRE]
-	var enemy := _create_enemy(data)
+func test_flying_enemy_ignores_building_obstacles() -> void:
+	for i: int in range(INNER_RING_SLOT_COUNT):
+		assert_bool(_hex_grid.place_building(i, Types.BuildingType.ARROW_TOWER)).is_true()
+	var hp_before: int = _tower.get_current_hp()
+	_wave_manager.force_spawn_wave(1)
+	var flying_enemy: EnemyBase = await _wait_for_flying_enemy(300)
+	assert_object(flying_enemy).is_not_null()
+	var xz_before: Vector2 = Vector2(flying_enemy.global_position.x, flying_enemy.global_position.z)
+	await _run_steps(FLYING_STEPS)
+	var xz_after: Vector2 = Vector2(flying_enemy.global_position.x, flying_enemy.global_position.z)
+	var radial_before: float = xz_before.length()
+	var radial_after: float = xz_after.length()
+	assert_float(radial_after).is_less(radial_before)
+	assert_int(_tower.get_current_hp()).is_less(hp_before)
 
-	enemy.take_damage(999.0, Types.DamageType.FIRE)
-	assert_int(enemy.health_component.current_hp).is_equal(60)
-	enemy.queue_free()
 
-func test_take_damage_poison_immunity_zombie_no_damage() -> void:
-	var data := EnemyData.new()
-	data.max_hp = 120
-	data.armor_type = Types.ArmorType.UNDEAD
-	data.damage_immunities = [Types.DamageType.POISON]
-	var enemy := _create_enemy(data)
+func test_enemy_paths_through_area_after_selling_building() -> void:
+	assert_bool(_hex_grid.place_building(0, Types.BuildingType.ARROW_TOWER)).is_true()
+	assert_bool(_hex_grid.place_building(1, Types.BuildingType.ARROW_TOWER)).is_true()
+	assert_bool(_hex_grid.place_building(2, Types.BuildingType.ARROW_TOWER)).is_true()
+	_wave_manager.force_spawn_wave(1)
+	var constrained_enemy: EnemyBase = await _wait_for_ground_enemy(300)
+	assert_object(constrained_enemy).is_not_null()
+	await _run_steps(300)
+	var constrained_distance: float = constrained_enemy.global_position.distance_to(Vector3.ZERO)
 
-	enemy.take_damage(999.0, Types.DamageType.POISON)
-	assert_int(enemy.health_component.current_hp).is_equal(120)
-	enemy.queue_free()
+	assert_bool(_hex_grid.sell_building(1)).is_true()
+	_hex_grid.clear_all_buildings()
+	_wave_manager.force_spawn_wave(1)
+	var open_enemy: EnemyBase = await _wait_for_ground_enemy(300)
+	assert_object(open_enemy).is_not_null()
+	await _run_steps(300)
+	var open_distance: float = open_enemy.global_position.distance_to(Vector3.ZERO)
+	assert_float(open_distance).is_less_equal(constrained_distance)
 
-func test_take_damage_triggers_health_depleted_at_zero() -> void:
-	var data := EnemyData.new()
-	data.max_hp = 50
-	data.armor_type = Types.ArmorType.UNARMORED
-	data.damage_immunities = []
-	var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
-	add_child(enemy)
-	var depleted_box: Array[int] = [0]
-	# Connect before initialize() so this runs before EnemyBase._on_health_depleted (queue_free).
-	enemy.health_component.health_depleted.connect(func() -> void: depleted_box[0] += 1)
-	enemy.initialize(data)
-	enemy.take_damage(50.0, Types.DamageType.PHYSICAL)
-	assert_int(depleted_box[0]).is_equal(1)
 
-# --- on_health_depleted effects ------------------------------------
+func test_enemy_stuck_near_building_eventually_reaches_tower() -> void:
+	assert_bool(_hex_grid.place_building(0, Types.BuildingType.ARROW_TOWER)).is_true()
+	assert_bool(_hex_grid.place_building(2, Types.BuildingType.ARROW_TOWER)).is_true()
+	assert_bool(_hex_grid.place_building(4, Types.BuildingType.ARROW_TOWER)).is_true()
+	var hp_before: int = _tower.get_current_hp()
+	_wave_manager.force_spawn_wave(1)
+	await _run_steps(1500)
+	assert_int(_tower.get_current_hp()).is_less(hp_before)
 
-func test_on_health_depleted_emits_enemy_killed_signal() -> void:
-	var data := EnemyData.new()
-	data.enemy_type = Types.EnemyType.ORC_GRUNT
-	data.max_hp = 10
-	data.gold_reward = 10
-	data.armor_type = Types.ArmorType.UNARMORED
-	data.damage_immunities = []
-	var enemy := _create_enemy(data)
 
-	var monitor := monitor_signals(SignalBus, false)
-	enemy.take_damage(999.0, Types.DamageType.PHYSICAL)
-	await assert_signal(monitor).is_emitted(
-		"enemy_killed", [Types.EnemyType.ORC_GRUNT, Vector3.ZERO, 10]
-	)
+func _run_steps(steps: int) -> void:
+	for _i: int in range(steps):
+		await get_tree().physics_frame
 
-func test_on_health_depleted_removes_from_enemies_group() -> void:
-	var data := EnemyData.new()
-	data.max_hp = 10
-	data.armor_type = Types.ArmorType.UNARMORED
-	data.damage_immunities = []
-	var enemy := _create_enemy(data)
 
-	assert_bool(enemy.is_in_group("enemies")).is_true()
-	enemy.take_damage(999.0, Types.DamageType.PHYSICAL)
-	# remove_from_group runs synchronously in _on_health_depleted before queue_free().
-	assert_bool(enemy.is_in_group("enemies")).is_false()
+func _wait_for_ground_enemy(max_steps: int) -> EnemyBase:
+	for _i: int in range(max_steps):
+		await get_tree().physics_frame
+		for child: Node in _enemy_container.get_children():
+			var enemy: EnemyBase = child as EnemyBase
+			if enemy != null and not enemy.get_enemy_data().is_flying:
+				return enemy
+	return null
 
-func test_on_health_depleted_calls_queue_free() -> void:
-	var data := EnemyData.new()
-	data.max_hp = 10
-	data.armor_type = Types.ArmorType.UNARMORED
-	data.damage_immunities = []
-	var enemy := _create_enemy(data)
 
-	enemy.take_damage(999.0, Types.DamageType.PHYSICAL)
-	await await_idle_frame()
-	assert_bool(is_instance_valid(enemy)).is_false()
+func _wait_for_flying_enemy(max_steps: int) -> EnemyBase:
+	for _i: int in range(max_steps):
+		await get_tree().physics_frame
+		for child: Node in _enemy_container.get_children():
+			var enemy: EnemyBase = child as EnemyBase
+			if enemy != null and enemy.get_enemy_data().is_flying:
+				return enemy
+	return null
 

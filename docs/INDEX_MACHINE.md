@@ -124,6 +124,12 @@
   - Extended `BuildingData` with DoT export fields.
   - Extended `ProjectileBase.initialize_from_building(...)` with DoT parameters.
   - Added `res://tests/test_enemy_dot_system.gd` and DoT assertions in projectile tests.
+- Added Phase 6 solid-building navigation:
+  - `res://scenes/buildings/building_base.tscn` now declares `BuildingCollision` + `NavigationObstacle`.
+  - `res://scenes/buildings/building_base.gd` now configures collision footprint and avoidance radius via constants.
+  - `res://scenes/enemies/enemy_base.gd` now has ground/flying split movement + stuck-prevention helpers.
+  - `res://tests/test_enemy_pathfinding.gd` replaced with gameplay-level navigation scenarios.
+  - `res://tests/test_building_base.gd` includes node-configuration assertions for Prompt 6.
 | `arnulf_incapacitated` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `arnulf_recovered` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `wave_countdown_started` | `(wave_number:int,seconds_remaining:float)` | `res://scripts/wave_manager.gd` |

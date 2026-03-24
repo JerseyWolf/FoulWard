@@ -192,3 +192,11 @@ LATEST CHANGES (2026-03-24)
   - `ProjectileBase.initialize_from_building(...)` now accepts DoT fields and applies DoT on hit for fire/poison.
   - Fire Brazier / Poison Vat `.tres` now include conservative DoT defaults.
   - Added tests: `res://tests/test_enemy_dot_system.gd`; DoT integration coverage in `res://tests/test_projectile_system.gd`.
+- Phase 6 solid-building navigation added:
+  - `BuildingBase` scene now includes `BuildingCollision` (`StaticBody3D`) + `NavigationObstacle3D`.
+  - `BuildingBase` script now centralizes footprint/obstacle tuning constants and setup.
+  - `EnemyBase` ground pathing now tracks progress and applies stuck recovery retargeting.
+  - `EnemyBase` flying pathing remains direct steering and ignores ground obstacles.
+  - `HexGrid` placement now calls `_activate_building_obstacle(...)` hook.
+  - Added pathing integration scenarios in `res://tests/test_enemy_pathfinding.gd`.
+  - Added building collision/obstacle scene assertion in `res://tests/test_building_base.gd`.
