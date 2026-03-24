@@ -60,6 +60,8 @@ func _set_campaign_config(config: CampaignConfig) -> void:
 	else:
 		campaign_length = 0
 		campaign_id = ""
+	if GameManager != null:
+		GameManager.reload_territory_map_from_active_campaign()
 
 func _start_current_day_internal() -> void:
 	if campaign_config == null:

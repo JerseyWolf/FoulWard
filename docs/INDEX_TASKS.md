@@ -90,3 +90,12 @@ This file breaks index generation into small, verifiable tasks so updates stay a
     - `res://tests/test_campaign_manager.gd`
     - additions in `res://tests/test_wave_manager.gd`
     - additions in `res://tests/test_game_manager.gd`
+- Prompt 8 (2026-03-24) — territory + world map + 50-day campaign data:
+  - `docs/PROMPT_8_IMPLEMENTATION.md`
+  - `res://scripts/resources/territory_data.gd`, `territory_map_data.gd`; `DayConfig.mission_index`; `CampaignConfig.territory_map_resource_path`
+  - `res://resources/territories/main_campaign_territories.tres`, `res://resources/campaign_main_50days.tres`
+  - `SignalBus.territory_state_changed`, `SignalBus.world_map_updated`
+  - `GameManager` territory map, `apply_day_result_to_territory`, gold aggregation, last-day win snapshot before `mission_won`
+  - `res://ui/world_map.gd`, `res://ui/world_map.tscn`; `between_mission_screen.tscn` Map tab
+  - Tests: `test_territory_data.gd`, `test_campaign_territory_mapping.gd`, `test_campaign_territory_updates.gd`, `test_territory_economy_bonuses.gd`, `test_world_map_ui.gd`
+  - `INDEX_SHORT.md`, `INDEX_FULL.md`, `INDEX_MACHINE.md` updated for new API and paths

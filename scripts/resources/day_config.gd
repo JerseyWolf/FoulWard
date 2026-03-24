@@ -8,6 +8,11 @@ extends Resource
 
 ## 1-based day index inside the campaign.
 @export var day_index: int = 1
+
+## Mission index used by MVP systems (1–5). Short campaign: days 1–5 map 1:1 to missions 1–5.
+## Days beyond 5 may reuse mission 5 as placeholder content (# ASSUMPTION / # PLACEHOLDER / # TUNING).
+@export var mission_index: int = 1
+
 ## Human-friendly day name for UI.
 @export var display_name: String = ""
 ## Day description shown in hub/briefing.

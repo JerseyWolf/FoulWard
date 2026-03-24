@@ -10,6 +10,7 @@
 [sub_resource type="Resource" id="DayConfig_day_1"]
 script = ExtResource("2_dayconfig")
 day_index = 1
+mission_index = 1
 display_name = "Rotting Fields"
 ; # PLACEHOLDER: hub / briefing display name
 description = "The first wave approaches."
@@ -30,6 +31,7 @@ is_final_boss = false
 [sub_resource type="Resource" id="DayConfig_day_2"]
 script = ExtResource("2_dayconfig")
 day_index = 2
+mission_index = 2
 display_name = "Blighted Road"
 ; # PLACEHOLDER
 description = "The enemy grows bolder."
@@ -50,6 +52,7 @@ is_final_boss = false
 [sub_resource type="Resource" id="DayConfig_day_3"]
 script = ExtResource("2_dayconfig")
 day_index = 3
+mission_index = 3
 display_name = "Cursed Bridge"
 ; # PLACEHOLDER
 description = "Midway. Losses mount."
@@ -70,6 +73,7 @@ is_final_boss = false
 [sub_resource type="Resource" id="DayConfig_day_4"]
 script = ExtResource("2_dayconfig")
 day_index = 4
+mission_index = 4
 display_name = "Siege at Dawngate"
 ; # PLACEHOLDER
 description = "They send their elite."
@@ -90,6 +94,7 @@ is_final_boss = false
 [sub_resource type="Resource" id="DayConfig_day_5"]
 script = ExtResource("2_dayconfig")
 day_index = 5
+mission_index = 5
 display_name = "Foul Ward - Last Stand"
 ; # PLACEHOLDER
 description = "The final assault."
