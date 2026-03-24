@@ -54,3 +54,46 @@ Date: 2026-03-24
 - Improved `res://tests/test_hex_grid.gd` headless stability:
   - added a minimal `/root/Main/ProjectileContainer` test stub in setup to avoid runtime node-path errors when instantiating `BuildingBase` during sell-flow tests.
 - Re-ran `test_hex_grid.gd`: all 22 tests pass, 0 failures.
+
+## Source prompt summary
+
+The source prompt requested two primary outcomes for FOUL WARD:
+
+1. Wire the already-implemented `HexGrid.sell_building()` flow into player-facing UX in build mode.
+2. Complete remaining Phase 6 verification gaps through tests and/or clearly documented manual checks.
+
+Key requirements from the source prompt:
+
+- Preserve existing behavior; do not break current systems.
+- Do not add autoloads.
+- Avoid public API signature changes unless absolutely necessary (`# DEVIATION` if needed).
+- Follow `CONVENTIONS.md` strictly.
+- Read architecture/index/project files first; do not invent signatures.
+- Keep `InputManager` as input routing only.
+- Keep UI scripts as presentation + delegation only (no game logic).
+
+Requested implementation direction:
+
+- In build mode, left-clicking a hex slot should branch by occupancy:
+  - empty slot -> placement mode menu
+  - occupied slot -> sell mode menu
+- Build menu sell mode should display building context and expose Sell/Cancel actions.
+- Sell action should call `HexGrid.sell_building(slot_index)` and close.
+- `HexGrid.sell_building()` behavior itself should remain unchanged.
+- Optional between-mission sell UX was explicitly allowed to remain `# POST-MVP` if non-trivial.
+
+Requested testing direction:
+
+- Strengthen sell coverage (`sell_building` slot state/refunds/signals/empty-slot behavior).
+- Validate Phase 6 items for:
+  - Shockwave (ground/flying behavior + mana/cooldown/signals)
+  - Arnulf state machine transitions and recovery cycle
+  - Mission win/fail and between-mission progression
+  - Simulation-loop stability
+- If some flows are impractical to fully automate, document clear manual verification steps.
+
+Requested deliverables:
+
+- Code changes in gameplay/UI/test files as needed.
+- Updated project indexes when API/surface changes are introduced.
+- A dedicated `CURSOR_INSTRUCTIONS_1.md` checklist describing final verification execution steps for Cursor.
