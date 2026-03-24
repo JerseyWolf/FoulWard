@@ -72,3 +72,9 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - `ProjectileBase.initialize_from_building(...)` signature expanded for DoT parameters.
   - Added `res://tests/test_enemy_dot_system.gd`.
   - Updated `res://tests/test_projectile_system.gd` with fire/poison DoT integration checks.
+- Added Phase 6 indexed artifacts:
+  - `res://scenes/buildings/building_base.tscn` now includes `BuildingCollision` and `NavigationObstacle`.
+  - `res://scenes/buildings/building_base.gd` now exposes base-area obstacle tuning constants + setup helpers.
+  - `res://scenes/enemies/enemy_base.gd` now includes ground/flying split process and stuck-prevention helpers.
+  - `res://tests/test_enemy_pathfinding.gd` now includes integration pathing scenarios.
+  - `res://tests/test_building_base.gd` now verifies collision/obstacle node presence and layer/mask values.

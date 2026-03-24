@@ -195,6 +195,7 @@ func _try_place_building(
 	building.global_position = slot["world_pos"]
 	building.initialize(building_data)
 	building.add_to_group("buildings")
+	_activate_building_obstacle(building)
 
 	slot["building"] = building
 	slot["is_occupied"] = true
@@ -206,6 +207,12 @@ func _try_place_building(
 	])
 	SignalBus.building_placed.emit(slot_index, building_type)
 	return true
+
+
+func _activate_building_obstacle(building: BuildingBase) -> void:
+	# ASSUMPTION: BuildingBase self-configures collision + obstacle in _ready().
+	if building == null:
+		return
 
 
 ## Sells the building on the given slot. Full refund including upgrade costs if upgraded.
