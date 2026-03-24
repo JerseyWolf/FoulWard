@@ -21,4 +21,11 @@ targets_ground = true
 is_locked = false
 unlock_research_id = ""
 color = Color(0.2, 0.7, 0.1, 1.0)
+dot_enabled = true
+dot_total_damage = 7.5
+dot_tick_interval = 1.0
+dot_duration = 5.0
+dot_effect_type = "poison"
+dot_source_id = "poison_vat"
+dot_in_addition_to_hit = true
 

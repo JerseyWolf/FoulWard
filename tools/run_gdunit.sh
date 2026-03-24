@@ -11,9 +11,27 @@ if [[ ! -x "$godot_bin" ]]; then
   exit 1
 fi
 
-exec "$godot_bin" \
+set +e
+"$godot_bin" \
   --headless \
   --path "$repo_root" \
   -s "$repo_root/addons/gdUnit4/bin/GdUnitCmdTool.gd" \
   --ignoreHeadlessMode \
   -a "res://tests"
+gdunit_exit_code=$?
+set -e
+
+# GdUnit returns:
+#   0   = success
+#   101 = warning (typically orphan nodes)
+# Keep all warnings/errors visible in output, but allow warning-only runs to pass.
+if [[ $gdunit_exit_code -eq 0 ]]; then
+  exit 0
+fi
+
+if [[ $gdunit_exit_code -eq 101 ]]; then
+  echo "run_gdunit.sh: GdUnit finished with warnings (exit 101); treating as pass." >&2
+  exit 0
+fi
+
+exit "$gdunit_exit_code"

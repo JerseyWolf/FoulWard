@@ -95,7 +95,8 @@ func test_initialize_from_building_sets_damage_type() -> void:
 		25.0,
 		Vector3.ZERO,
 		Vector3(0, 0, 5),
-		false
+		false,
+		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	assert_int(int(proj._damage_type)).is_equal(int(Types.DamageType.FIRE))
 	proj.queue_free()
@@ -110,7 +111,8 @@ func test_projectile_freed_on_miss() -> void:
 		5.0,
 		Vector3.ZERO,
 		Vector3(1, 0, 0),
-		false
+		false,
+		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(200):
 		proj._physics_process(0.016)
@@ -125,7 +127,8 @@ func test_projectile_freed_on_lifetime_exceeded() -> void:
 		0.1,
 		Vector3.ZERO,
 		Vector3(1000, 0, 0),
-		false
+		false,
+		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(400):
 		proj._physics_process(0.016)
@@ -146,7 +149,8 @@ func test_projectile_skips_dead_enemy() -> void:
 		20.0,
 		Vector3.ZERO,
 		enemy.global_position,
-		false
+		false,
+		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(60):
 		proj._physics_process(0.016)
@@ -167,7 +171,8 @@ func test_projectile_respects_fire_immunity() -> void:
 		20.0,
 		Vector3.ZERO,
 		enemy.global_position,
-		false
+		false,
+		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(60):
 		proj._physics_process(0.016)
@@ -185,12 +190,67 @@ func test_projectile_deals_double_damage_magical_vs_heavy_armor() -> void:
 		20.0,
 		Vector3.ZERO,
 		enemy.global_position,
-		false
+		false,
+		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(60):
 		proj._physics_process(0.016)
 
 	# DAMAGE_MATRIX: MAGICAL vs HEAVY_ARMOR = 2.0 → 60 damage → 40 hp remaining.
 	assert_int(enemy.health_component.current_hp).is_equal(40)
+	enemy.queue_free()
+
+
+func test_fire_brazier_projectile_applies_instant_and_burn_dot() -> void:
+	var enemy := _create_enemy_at(Vector3(2, 0, 0))
+	var hp_before: int = enemy.health_component.current_hp
+	var proj := _create_projectile()
+	proj.initialize_from_building(
+		20.0,
+		Types.DamageType.FIRE,
+		20.0,
+		Vector3.ZERO,
+		enemy.global_position,
+		false,
+		true, 15.0, 1.0, 3.0, "burn", "fire_brazier", true
+	)
+	for i in range(60):
+		proj._physics_process(0.016)
+	assert_int(enemy.health_component.current_hp).is_less(hp_before)
+	assert_int(enemy.active_status_effects.size()).is_equal(1)
+	var first_effect: Dictionary = enemy.active_status_effects[0]
+	assert_str(String(first_effect.get("effect_type", ""))).is_equal("burn")
+	assert_str(String(first_effect.get("source_id", ""))).is_equal("fire_brazier")
+	var hp_after_hit: int = enemy.health_component.current_hp
+	for _j: int in range(3):
+		enemy._physics_process(1.0)
+	assert_int(enemy.health_component.current_hp).is_less(hp_after_hit)
+	enemy.queue_free()
+
+
+func test_poison_vat_projectile_applies_instant_and_poison_dot() -> void:
+	var enemy := _create_enemy_at(Vector3(2, 0, 0))
+	var hp_before: int = enemy.health_component.current_hp
+	var proj := _create_projectile()
+	proj.initialize_from_building(
+		10.0,
+		Types.DamageType.POISON,
+		20.0,
+		Vector3.ZERO,
+		enemy.global_position,
+		false,
+		true, 12.0, 1.0, 4.0, "poison", "poison_vat", true
+	)
+	for i in range(60):
+		proj._physics_process(0.016)
+	assert_int(enemy.health_component.current_hp).is_less(hp_before)
+	assert_int(enemy.active_status_effects.size()).is_equal(1)
+	var first_effect: Dictionary = enemy.active_status_effects[0]
+	assert_str(String(first_effect.get("effect_type", ""))).is_equal("poison")
+	assert_str(String(first_effect.get("source_id", ""))).is_equal("poison_vat")
+	var hp_after_hit: int = enemy.health_component.current_hp
+	for _j: int in range(3):
+		enemy._physics_process(1.0)
+	assert_int(enemy.health_component.current_hp).is_less(hp_after_hit)
 	enemy.queue_free()
 

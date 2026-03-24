@@ -43,7 +43,7 @@ EndScreen	res://ui/endscreen.gd	(Control node in main.tscn)	Final screen for win
 CUSTOM RESOURCE TYPES (script classes, not .tres files)
 Class Name	Script Path	Fields summary
 EnemyData	res://scripts/resources/enemydata.gd	enemy_type, display_name, max_hp, move_speed, damage, attack_range, attack_cooldown, armor_type, gold_reward, is_ranged, is_flying, color, damage_immunities[]
-BuildingData	res://scripts/resources/buildingdata.gd	building_type, display_name, gold_cost, material_cost, upgrade_gold_cost, upgrade_material_cost, damage, upgraded_damage, fire_rate, attack_range, upgraded_range, damage_type, targets_air, targets_ground, is_locked, unlock_research_id, color
+BuildingData	res://scripts/resources/buildingdata.gd	building_type, display_name, gold_cost, material_cost, upgrade_gold_cost, upgrade_material_cost, damage, upgraded_damage, fire_rate, attack_range, upgraded_range, damage_type, targets_air, targets_ground, is_locked, unlock_research_id, color, dot_enabled, dot_total_damage, dot_tick_interval, dot_duration, dot_effect_type, dot_source_id, dot_in_addition_to_hit
 WeaponData	res://scripts/resources/weapondata.gd	weapon_slot, display_name, damage, projectile_speed, reload_time, burst_count, burst_interval, can_target_flying, assist_angle_degrees, assist_max_distance, base_miss_chance, max_miss_angle_degrees
 SpellData	res://scripts/resources/spelldata.gd	spell_id, display_name, mana_cost, cooldown, damage, radius, damage_type, hits_flying
 ResearchNodeData	res://scripts/resources/researchnodedata.gd	node_id, display_name, research_cost, prerequisite_ids[], description
@@ -184,3 +184,11 @@ LATEST CHANGES (2026-03-24)
   - `BetweenMissionScreen` now includes enchantment apply/remove controls in Weapons tab
   - Added tests: `res://tests/test_enchantment_manager.gd`, `res://tests/test_tower_enchantments.gd`
   - Added projectile regression: `test_initialize_from_weapon_without_custom_values_uses_physical`
+- Phase 5 DoT system added:
+  - `DamageCalculator.calculate_dot_tick(...)` now returns live per-tick DoT values (no stub).
+  - `EnemyBase` now stores `active_status_effects` and exposes `apply_dot_effect(effect_data: Dictionary)`.
+  - Burn: one stack per source with duration refresh + max total damage retention.
+  - Poison: additive stacks capped by `MAX_POISON_STACKS`.
+  - `ProjectileBase.initialize_from_building(...)` now accepts DoT fields and applies DoT on hit for fire/poison.
+  - Fire Brazier / Poison Vat `.tres` now include conservative DoT defaults.
+  - Added tests: `res://tests/test_enemy_dot_system.gd`; DoT integration coverage in `res://tests/test_projectile_system.gd`.

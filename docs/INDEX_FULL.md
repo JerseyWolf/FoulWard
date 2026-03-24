@@ -131,7 +131,7 @@ Public methods:
 
     is_immune(damage_type: Types.DamageType, armor_type: Types.ArmorType) -> bool
 
-    calculate_dot_tick(dot_total_damage: float, tick_interval: float, duration: float, damage_type: Types.DamageType, armor_type: Types.ArmorType) -> float (stub: returns 0.0)
+    calculate_dot_tick(dot_total_damage: float, tick_interval: float, duration: float, damage_type: Types.DamageType, armor_type: Types.ArmorType) -> float (returns matrix-adjusted per-tick DoT damage)
 
 Notes: per-enemy immunities via EnemyData.damage_immunities[] are applied before calling DamageCalculator.
 EconomyManager
@@ -276,3 +276,16 @@ These sections describe the complete main-menu → mission → between-mission �
     - `res://tests/test_enchantment_manager.gd`
     - `res://tests/test_tower_enchantments.gd`
     - projectile regression in `res://tests/test_projectile_system.gd`
+- Added Phase 5 DoT system:
+  - `EnemyBase` now exposes `apply_dot_effect(effect_data: Dictionary) -> void`.
+  - Enemy-local `active_status_effects` tracks burn/poison status with stack-aware rules.
+  - `BuildingData` exports now include:
+    - `dot_enabled`, `dot_total_damage`, `dot_tick_interval`, `dot_duration`
+    - `dot_effect_type`, `dot_source_id`, `dot_in_addition_to_hit`
+  - `ProjectileBase.initialize_from_building(...)` now accepts DoT parameters and applies status effects on hit.
+  - Tuned resources:
+    - `res://resources/building_data/fire_brazier.tres`
+    - `res://resources/building_data/poison_vat.tres`
+  - Added tests:
+    - `res://tests/test_enemy_dot_system.gd`
+    - DoT integration assertions in `res://tests/test_projectile_system.gd`

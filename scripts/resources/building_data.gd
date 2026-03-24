@@ -45,4 +45,18 @@ extends Resource
 @export var color: Color = Color.GRAY
 ## Targeting strategy this building uses to select its next attack target.
 @export var target_priority: Types.TargetPriority = Types.TargetPriority.CLOSEST
+## Enables damage-over-time (DoT) application for this building's projectiles.
+@export var dot_enabled: bool = false
+## TUNING: total DoT damage over full duration.
+@export var dot_total_damage: float = 0.0
+## TUNING: seconds between DoT ticks.
+@export var dot_tick_interval: float = 1.0
+## TUNING: DoT duration in seconds.
+@export var dot_duration: float = 0.0
+## Effect identifier for DoT handling ("burn", "poison", etc.).
+@export var dot_effect_type: String = ""
+## Stable source identifier for stacking rules ("fire_brazier", "poison_vat", etc.).
+@export var dot_source_id: String = ""
+## TUNING: true = instant hit plus DoT, false = DoT only.
+@export var dot_in_addition_to_hit: bool = true
 

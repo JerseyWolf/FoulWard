@@ -239,7 +239,14 @@ func _fire_at_target() -> void:
 		proj_speed,
 		global_position,
 		_current_target.global_position,
-		_building_data.targets_air
+		_building_data.targets_air,
+		_building_data.dot_enabled,
+		_building_data.dot_total_damage,
+		_building_data.dot_tick_interval,
+		_building_data.dot_duration,
+		_building_data.dot_effect_type,
+		_building_data.dot_source_id,
+		_building_data.dot_in_addition_to_hit
 	)
 	proj.add_to_group("projectiles")
 
