@@ -65,3 +65,10 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - `res://tests/test_enchantment_manager.gd`
   - `res://tests/test_tower_enchantments.gd`
   - new regression in `res://tests/test_projectile_system.gd`
+- Added Phase 5 indexed artifacts:
+  - `DamageCalculator.calculate_dot_tick(...)` now implemented.
+  - `EnemyBase.apply_dot_effect(effect_data: Dictionary)` added.
+  - `BuildingData` DoT exports added (`dot_*` fields).
+  - `ProjectileBase.initialize_from_building(...)` signature expanded for DoT parameters.
+  - Added `res://tests/test_enemy_dot_system.gd`.
+  - Updated `res://tests/test_projectile_system.gd` with fire/poison DoT integration checks.

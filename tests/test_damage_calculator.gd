@@ -130,3 +130,28 @@ func test_fractional_base_damage_preserved_in_output() -> void:
 		33.3, Types.DamageType.FIRE, Types.ArmorType.UNDEAD)
 	assert_float(result).is_equal_approx(66.6, 0.01)
 
+
+func test_calculate_dot_tick_simple_case() -> void:
+	var dot_total_damage: float = 100.0
+	var tick_interval: float = 0.5
+	var duration: float = 5.0
+	var per_tick: float = DamageCalculator.calculate_dot_tick(
+		dot_total_damage,
+		tick_interval,
+		duration,
+		Types.DamageType.FIRE,
+		Types.ArmorType.UNARMORED
+	)
+	assert_float(per_tick).is_equal_approx(10.0, 0.001)
+
+
+func test_calculate_dot_tick_poison_undead_returns_zero() -> void:
+	var per_tick: float = DamageCalculator.calculate_dot_tick(
+		100.0,
+		0.5,
+		5.0,
+		Types.DamageType.POISON,
+		Types.ArmorType.UNDEAD
+	)
+	assert_float(per_tick).is_equal(0.0)
+

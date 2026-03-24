@@ -31,6 +31,13 @@ var _max_travel_distance: float = 0.0
 var _distance_traveled: float = 0.0
 var _lifetime: float = 0.0
 var _targets_air_only: bool = false
+var _dot_enabled: bool = false
+var _dot_total_damage: float = 0.0
+var _dot_tick_interval: float = 1.0
+var _dot_duration: float = 0.0
+var _dot_effect_type: String = ""
+var _dot_source_id: String = ""
+var _dot_in_addition_to_hit: bool = true
 
 var _mesh: MeshInstance3D = null
 
@@ -75,7 +82,14 @@ func initialize_from_building(
 	speed: float,
 	origin: Vector3,
 	target_position: Vector3,
-	targets_air_only: bool
+	targets_air_only: bool,
+	dot_enabled: bool,
+	dot_total_damage: float,
+	dot_tick_interval: float,
+	dot_duration: float,
+	dot_effect_type: String,
+	dot_source_id: String,
+	dot_in_addition_to_hit: bool
 ) -> void:
 	_damage = damage
 	_damage_type = damage_type
@@ -87,6 +101,13 @@ func initialize_from_building(
 	_distance_traveled = 0.0
 	_lifetime = 0.0
 	_targets_air_only = targets_air_only
+	_dot_enabled = dot_enabled
+	_dot_total_damage = dot_total_damage
+	_dot_tick_interval = dot_tick_interval
+	_dot_duration = dot_duration
+	_dot_effect_type = dot_effect_type
+	_dot_source_id = dot_source_id
+	_dot_in_addition_to_hit = dot_in_addition_to_hit
 
 	global_position = origin
 	_configure_collision(targets_air_only)
@@ -240,11 +261,35 @@ func _apply_damage_to_enemy(enemy: EnemyBase) -> bool:
 	if _damage_type in enemy_data.damage_immunities:
 		return false
 
-	var final_damage: float = DamageCalculator.calculate_damage(
+	if _dot_enabled and (_damage_type == Types.DamageType.FIRE or _damage_type == Types.DamageType.POISON):
+		if _dot_in_addition_to_hit:
+			var final_damage: float = DamageCalculator.calculate_damage(
+				_damage,
+				_damage_type,
+				enemy_data.armor_type
+			)
+			if final_damage > 0.0:
+				enemy.take_damage(_damage, _damage_type)
+		var effect_data: Dictionary = {
+			"effect_type": _dot_effect_type,
+			"damage_type": _damage_type,
+			"dot_total_damage": _dot_total_damage,
+			"tick_interval": _dot_tick_interval,
+			"duration": _dot_duration,
+			"remaining_time": _dot_duration,
+			"time_since_last_tick": 0.0,
+			"source_id": _dot_source_id,
+		}
+		enemy.apply_dot_effect(effect_data)
+		return true
+
+	var final_damage_no_dot: float = DamageCalculator.calculate_damage(
 		_damage,
 		_damage_type,
 		enemy_data.armor_type
 	)
-	enemy.health_component.take_damage(final_damage)
-	return true
+	if final_damage_no_dot > 0.0:
+		enemy.take_damage(_damage, _damage_type)
+		return true
+	return false
 

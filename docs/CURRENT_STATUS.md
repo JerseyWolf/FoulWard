@@ -51,6 +51,12 @@ From **`$REPO`**:
 
 If your shell defines `godot` as a wrapper function that forces editor mode (for example appending `-e`), use the direct Godot binary path for CLI tests. Editor-mode wrappers inject `--editor` and break GdUnit CLI parsing.
 
+Recommended CLI form (explicitly no `--editor`):
+
+```bash
+godot --headless --path "$REPO" --script addons/gdUnit4/bin/GdUnitCmdTool.gd -- -a "res://tests"
+```
+
 - Expect **289** cases, **0** failures in the **Overall Summary** line.
 - If the process **crashes after** tests on some OSes, still trust the summary line when it printed.
 
