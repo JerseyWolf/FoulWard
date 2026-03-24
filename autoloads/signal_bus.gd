@@ -82,3 +82,7 @@ signal shop_item_purchased(item_id: String)
 ## Emitted by ShopManager when a mana draught has been consumed by GameManager at mission start.
 @warning_ignore("unused_signal")
 signal mana_draught_consumed()
+
+# === WEAPONS ===
+@warning_ignore("unused_signal")
+signal weapon_upgraded(weapon_slot: Types.WeaponSlot, new_level: int)

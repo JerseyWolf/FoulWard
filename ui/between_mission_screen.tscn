@@ -37,6 +37,52 @@ anchor_bottom = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
+[node name="WeaponsTab" type="Control" parent="TabContainer"]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/WeaponsTab"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="CrossbowPanel" type="VBoxContainer" parent="TabContainer/WeaponsTab/VBoxContainer"]
+
+[node name="TitleLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/CrossbowPanel"]
+text = "Crossbow"
+
+[node name="LevelLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/CrossbowPanel"]
+text = "Level 0 / 3"
+
+[node name="StatsLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/CrossbowPanel"]
+text = "DMG: 0  SPD: 0  RLD: 0.0s  BURST: 0"
+
+[node name="PreviewLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/CrossbowPanel"]
+text = ""
+
+[node name="CostLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/CrossbowPanel"]
+text = ""
+
+[node name="UpgradeButton" type="Button" parent="TabContainer/WeaponsTab/VBoxContainer/CrossbowPanel"]
+text = "Upgrade"
+
+[node name="RapidMissilePanel" type="VBoxContainer" parent="TabContainer/WeaponsTab/VBoxContainer"]
+
+[node name="TitleLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/RapidMissilePanel"]
+text = "Rapid Missile"
+
+[node name="LevelLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/RapidMissilePanel"]
+text = "Level 0 / 3"
+
+[node name="StatsLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/RapidMissilePanel"]
+text = "DMG: 0  SPD: 0  RLD: 0.0s  BURST: 0"
+
+[node name="PreviewLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/RapidMissilePanel"]
+text = ""
+
+[node name="CostLabel" type="Label" parent="TabContainer/WeaponsTab/VBoxContainer/RapidMissilePanel"]
+text = ""
+
+[node name="UpgradeButton" type="Button" parent="TabContainer/WeaponsTab/VBoxContainer/RapidMissilePanel"]
+text = "Upgrade"
+
 [node name="NextMissionButton" type="Button" parent="."]
 anchor_left = 0.35
 anchor_top = 0.88

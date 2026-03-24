@@ -165,3 +165,11 @@ LATEST CHANGES (2026-03-24)
   - `crossbow.tres` has initial tuning defaults (`7.5`, `0.05`, `2.0`), `rapid_missile.tres` remains `0.0`.
   - Added simulation API tests covering assist, miss, and autofire bypass behavior.
 - Implementation notes recorded in `docs/PROMPT_2_IMPLEMENTATION.md`.
+- Phase 3 weapon-upgrade system added:
+  - `WeaponLevelData` resource class (`res://scripts/resources/weapon_level_data.gd`)
+  - `WeaponUpgradeManager` scene-bound manager (`/root/Main/Managers/WeaponUpgradeManager`)
+  - New level resources in `res://resources/weapon_level_data/` (crossbow + rapid missile, levels 1-3)
+  - `SignalBus.weapon_upgraded(weapon_slot, new_level)`
+  - `BetweenMissionScreen` now includes a Weapons tab with upgrade controls
+  - `Tower` now resolves effective damage/speed/reload/burst via manager with null-guard fallback
+  - `docs/PROMPT_3_IMPLEMENTATION.md` records implementation details

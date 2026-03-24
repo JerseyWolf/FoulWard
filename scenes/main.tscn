@@ -48,6 +48,13 @@
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_arrow_tower.tres" id="31_at"]
 [ext_resource type="Script" path="res://ui/mission_briefing.gd" id="24_missionbrief"]
 [ext_resource type="Script" path="res://scripts/main_root.gd" id="32_mainroot"]
+[ext_resource type="Script" path="res://scripts/weapon_upgrade_manager.gd" id="33_wum"]
+[ext_resource type="Resource" path="res://resources/weapon_level_data/crossbow_level_1.tres" id="34_cb1"]
+[ext_resource type="Resource" path="res://resources/weapon_level_data/crossbow_level_2.tres" id="35_cb2"]
+[ext_resource type="Resource" path="res://resources/weapon_level_data/crossbow_level_3.tres" id="36_cb3"]
+[ext_resource type="Resource" path="res://resources/weapon_level_data/rapid_missile_level_1.tres" id="37_rm1"]
+[ext_resource type="Resource" path="res://resources/weapon_level_data/rapid_missile_level_2.tres" id="38_rm2"]
+[ext_resource type="Resource" path="res://resources/weapon_level_data/rapid_missile_level_3.tres" id="39_rm3"]
 
 [sub_resource type="PlaneMesh" id="GroundMesh"]
 size = Vector2(120, 120)
@@ -152,6 +159,13 @@ dev_unlock_anti_air_only = true
 [node name="ShopManager" type="Node" parent="Managers" unique_id=587576636]
 script = ExtResource("7_shopmanager")
 shop_catalog = Array[ExtResource("21_fv21b")]([ExtResource("22_tel4y"), ExtResource("23_qkpxi"), ExtResource("30_br"), ExtResource("31_at")])
+
+[node name="WeaponUpgradeManager" type="Node" parent="Managers"]
+script = ExtResource("33_wum")
+crossbow_levels = [ExtResource("34_cb1"), ExtResource("35_cb2"), ExtResource("36_cb3")]
+rapid_missile_levels = [ExtResource("37_rm1"), ExtResource("38_rm2"), ExtResource("39_rm3")]
+crossbow_base_data = ExtResource("2_vxglm")
+rapid_missile_base_data = ExtResource("3_2f3dj")
 
 [node name="InputManager" type="Node" parent="Managers" unique_id=281699099]
 script = ExtResource("8_inputmanager")

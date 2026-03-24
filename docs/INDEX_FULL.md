@@ -252,3 +252,12 @@ These sections describe the complete main-menu → mission → between-mission �
 - `crossbow.tres` now carries initial Phase 2 tuning defaults; `rapid_missile.tres` remains deterministic (`0.0` assist/miss values).
 - Added simulation API tests for assist disabled path, cone snapping, guaranteed miss perturbation, autofire bypass, and crossbow defaults loading.
 - See `docs/PROMPT_2_IMPLEMENTATION.md` for full Phase 2 implementation and test notes.
+- Added deterministic weapon-upgrade station Phase 3:
+  - New resource class: `res://scripts/resources/weapon_level_data.gd`
+  - New scene manager: `res://scripts/weapon_upgrade_manager.gd` under `/root/Main/Managers/WeaponUpgradeManager`
+  - New resource set: `res://resources/weapon_level_data/{crossbow,rapid_missile}_level_{1..3}.tres`
+  - New SignalBus signal: `weapon_upgraded(weapon_slot: Types.WeaponSlot, new_level: int)`
+  - `Tower` now composes effective weapon stats from WeaponUpgradeManager with null fallback to raw WeaponData
+  - `BetweenMissionScreen` now has a Weapons tab and upgrade UI refresh logic
+  - Added tests in `res://tests/test_weapon_upgrade_manager.gd` and a tower fallback regression in `res://tests/test_simulation_api.gd`
+  - See `docs/PROMPT_3_IMPLEMENTATION.md` for full implementation notes.

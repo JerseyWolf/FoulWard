@@ -100,6 +100,15 @@
 - Added Phase 2 firing behavior notes in `docs/PROMPT_2_IMPLEMENTATION.md`.
 - `Tower` manual shots now resolve final targets through private assist/miss helper; autofire path bypasses helper effects.
 - Added simulation API tests for assist/miss behavior and crossbow default tuning load checks.
+- Added deterministic weapon upgrades:
+  - new script `res://scripts/weapon_upgrade_manager.gd`
+  - new resource class `res://scripts/resources/weapon_level_data.gd`
+  - new resource instances `res://resources/weapon_level_data/*.tres`
+  - new signal `weapon_upgraded(weapon_slot:Types.WeaponSlot,new_level:int)`
+  - `res://scenes/main.tscn` now includes `Managers/WeaponUpgradeManager`
+  - `res://ui/between_mission_screen.tscn` now includes `TabContainer/WeaponsTab`
+  - tests added in `res://tests/test_weapon_upgrade_manager.gd`
+  - tower fallback regression added in `res://tests/test_simulation_api.gd`
 | `arnulf_incapacitated` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `arnulf_recovered` | `()` | `res://scenes/arnulf/arnulf.gd` |
 | `wave_countdown_started` | `(wave_number:int,seconds_remaining:float)` | `res://scripts/wave_manager.gd` |

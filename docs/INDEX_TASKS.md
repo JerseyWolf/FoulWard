@@ -47,3 +47,11 @@ This file breaks index generation into small, verifiable tasks so updates stay a
 - Added `docs/PROMPT_2_IMPLEMENTATION.md` with Phase 2 firing-system implementation notes.
 - Indexed new `WeaponData` assist/miss fields and Tower manual-shot aim resolution behavior.
 - Recorded new tests covering manual assist cone snap, miss perturbation, and autofire bypass.
+- Added `docs/PROMPT_3_IMPLEMENTATION.md` with deterministic weapon-upgrade station integration notes.
+- Added new indexed artifacts for Phase 3:
+  - `res://scripts/resources/weapon_level_data.gd`
+  - `res://scripts/weapon_upgrade_manager.gd`
+  - `res://resources/weapon_level_data/*.tres` (6 level files)
+  - `SignalBus.weapon_upgraded(...)`
+  - `BetweenMissionScreen` Weapons tab
+  - `res://tests/test_weapon_upgrade_manager.gd`

@@ -1,0 +1,14 @@
+[gd_resource type="WeaponLevelData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/weapon_level_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_slot = 0
+level = 3
+damage_bonus = 20.0
+speed_bonus = 5.0
+reload_bonus = -0.2
+burst_count_bonus = 0
+gold_cost = 350
+material_cost = 0
