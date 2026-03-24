@@ -37,6 +37,9 @@ func start_new_game() -> void:
 	var rm: ResearchManager = get_node_or_null("/root/Main/Managers/ResearchManager") as ResearchManager
 	if rm != null:
 		rm.reset_to_defaults()
+	var weapon_upgrade_manager: Node = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
+	if weapon_upgrade_manager != null:
+		weapon_upgrade_manager.reset_to_defaults()
 	_transition_to(Types.GameState.COMBAT)
 	SignalBus.mission_started.emit(current_mission)
 	_apply_shop_mission_start_consumables()

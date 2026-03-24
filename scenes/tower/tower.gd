@@ -25,6 +25,10 @@ extends StaticBody3D
 ## and fires the crossbow at it. Useful for testing without player input.
 @export var auto_fire_enabled: bool = false
 
+## Reference to WeaponUpgradeManager, resolved at runtime.
+## Null in unit test context — Tower falls back to raw WeaponData values.
+var _weapon_upgrade_manager: Node = null
+
 const ProjectileScene: PackedScene = preload(
 	"res://scenes/projectiles/projectile_base.tscn"
 )
@@ -61,6 +65,7 @@ func _ready() -> void:
 
 	_health_component.health_changed.connect(_on_health_changed)
 	_health_component.health_depleted.connect(_on_health_depleted)
+	_weapon_upgrade_manager = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
 	_shot_rng.randomize()
 	print("[Tower] _ready: hp=%d auto_fire=%s crossbow_reload=%.1fs" % [
 		starting_hp, auto_fire_enabled, crossbow_data.reload_time
@@ -79,7 +84,7 @@ func _physics_process(delta: float) -> void:
 	if _burst_remaining > 0:
 		_burst_timer -= delta
 		if _burst_timer <= 0.0:
-			_spawn_projectile(rapid_missile_data, _burst_target)
+			_spawn_projectile(_build_effective_weapon_data(Types.WeaponSlot.RAPID_MISSILE), _burst_target)
 			_burst_remaining -= 1
 			_burst_timer = rapid_missile_data.burst_interval
 
@@ -96,8 +101,8 @@ func fire_crossbow(target_position: Vector3) -> void:
 		return
 	var final_target: Vector3 = _resolve_manual_aim_target(crossbow_data, target_position)
 	print("[Tower] fire_crossbow → (%.1f,%.1f,%.1f)" % [final_target.x, final_target.y, final_target.z])
-	_spawn_projectile(crossbow_data, final_target)
-	_crossbow_reload_remaining = crossbow_data.reload_time
+	_spawn_projectile(_build_effective_weapon_data(Types.WeaponSlot.CROSSBOW), final_target)
+	_crossbow_reload_remaining = _get_effective_weapon_reload_time(Types.WeaponSlot.CROSSBOW)
 	SignalBus.projectile_fired.emit(
 		Types.WeaponSlot.CROSSBOW,
 		global_position,
@@ -115,8 +120,8 @@ func fire_rapid_missile(target_position: Vector3) -> void:
 	if _burst_remaining > 0:
 		return
 	var final_target: Vector3 = _resolve_manual_aim_target(rapid_missile_data, target_position)
-	_rapid_missile_reload_remaining = rapid_missile_data.reload_time
-	_burst_remaining = rapid_missile_data.burst_count
+	_rapid_missile_reload_remaining = _get_effective_weapon_reload_time(Types.WeaponSlot.RAPID_MISSILE)
+	_burst_remaining = _get_effective_weapon_burst_count(Types.WeaponSlot.RAPID_MISSILE)
 	_burst_timer = 0.0  # First shot fires this same physics frame.
 	_burst_target = final_target
 	SignalBus.projectile_fired.emit(
@@ -164,7 +169,7 @@ func get_crossbow_reload_remaining_seconds() -> float:
 
 ## Total crossbow reload duration from WeaponData.
 func get_crossbow_reload_total_seconds() -> float:
-	return crossbow_data.reload_time
+	return _get_effective_weapon_reload_time(Types.WeaponSlot.CROSSBOW)
 
 
 ## Seconds until rapid missile weapon is ready for a new burst (0 = ready, burst may still be firing).
@@ -173,7 +178,7 @@ func get_rapid_missile_reload_remaining_seconds() -> float:
 
 
 func get_rapid_missile_reload_total_seconds() -> float:
-	return rapid_missile_data.reload_time
+	return _get_effective_weapon_reload_time(Types.WeaponSlot.RAPID_MISSILE)
 
 
 ## Shots left in the current burst (0 when idle).
@@ -182,7 +187,7 @@ func get_rapid_missile_burst_remaining() -> int:
 
 
 func get_rapid_missile_burst_total() -> int:
-	return rapid_missile_data.burst_count
+	return _get_effective_weapon_burst_count(Types.WeaponSlot.RAPID_MISSILE)
 
 # ── Private ───────────────────────────────────────────────────────────────
 
@@ -315,4 +320,65 @@ func _on_health_changed(current_hp: int, max_hp: int) -> void:
 
 func _on_health_depleted() -> void:
 	SignalBus.tower_destroyed.emit()
+
+
+## Returns effective damage for the given weapon slot.
+## Queries WeaponUpgradeManager when available; falls back to raw WeaponData.
+# SOURCE: Null-guard fallback pattern consistent with HexGrid's ResearchManager reference in this codebase
+func _get_effective_weapon_damage(slot: Types.WeaponSlot) -> float:
+	if _weapon_upgrade_manager != null:
+		return _weapon_upgrade_manager.get_effective_damage(slot)
+	match slot:
+		Types.WeaponSlot.CROSSBOW:
+			return crossbow_data.damage
+		Types.WeaponSlot.RAPID_MISSILE:
+			return rapid_missile_data.damage
+	return 0.0
+
+
+## Returns effective projectile speed for the given weapon slot.
+func _get_effective_weapon_speed(slot: Types.WeaponSlot) -> float:
+	if _weapon_upgrade_manager != null:
+		return _weapon_upgrade_manager.get_effective_speed(slot)
+	match slot:
+		Types.WeaponSlot.CROSSBOW:
+			return crossbow_data.projectile_speed
+		Types.WeaponSlot.RAPID_MISSILE:
+			return rapid_missile_data.projectile_speed
+	return 0.0
+
+
+## Returns effective reload time for the given weapon slot.
+func _get_effective_weapon_reload_time(slot: Types.WeaponSlot) -> float:
+	if _weapon_upgrade_manager != null:
+		return _weapon_upgrade_manager.get_effective_reload_time(slot)
+	match slot:
+		Types.WeaponSlot.CROSSBOW:
+			return crossbow_data.reload_time
+		Types.WeaponSlot.RAPID_MISSILE:
+			return rapid_missile_data.reload_time
+	return 1.0
+
+
+## Returns effective burst count for the given weapon slot.
+func _get_effective_weapon_burst_count(slot: Types.WeaponSlot) -> int:
+	if _weapon_upgrade_manager != null:
+		return _weapon_upgrade_manager.get_effective_burst_count(slot)
+	match slot:
+		Types.WeaponSlot.CROSSBOW:
+			return crossbow_data.burst_count
+		Types.WeaponSlot.RAPID_MISSILE:
+			return rapid_missile_data.burst_count
+	return 0
+
+
+## Builds a duplicated WeaponData containing effective upgradable stats.
+## SOURCE: Resource.duplicate() for safe per-instance stat overrides — Godot 4 docs [S1]
+## SOURCE: Composition over mutation for shared Resources — [S4]
+func _build_effective_weapon_data(slot: Types.WeaponSlot) -> WeaponData:
+	var base_data: WeaponData = crossbow_data if slot == Types.WeaponSlot.CROSSBOW else rapid_missile_data
+	var effective_data: WeaponData = base_data.duplicate() as WeaponData
+	effective_data.damage = _get_effective_weapon_damage(slot)
+	effective_data.projectile_speed = _get_effective_weapon_speed(slot)
+	return effective_data
 

@@ -13,6 +13,7 @@ extends Control
 @onready var _shop_list: VBoxContainer = $TabContainer/ShopTab/ShopList
 @onready var _research_list: VBoxContainer = $TabContainer/ResearchTab/ResearchList
 @onready var _buildings_list: VBoxContainer = $TabContainer/BuildingsTab/BuildingsList
+@onready var _weapons_tab: Control = $TabContainer/WeaponsTab
 
 @onready var _shop_manager: ShopManager = get_node(
 	"/root/Main/Managers/ShopManager"
@@ -21,12 +22,17 @@ extends Control
 	"/root/Main/Managers/ResearchManager"
 )
 @onready var _hex_grid: HexGrid = get_node("/root/Main/HexGrid")
+var _weapon_upgrade_manager: Node = null
 
 # ─────────────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
 	_next_mission_btn.pressed.connect(_on_next_mission_pressed)
+	_weapon_upgrade_manager = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
+	SignalBus.weapon_upgraded.connect(_on_weapon_upgraded)
+	SignalBus.resource_changed.connect(_on_resource_changed_weapons)
+	_refresh_weapons_tab()
 
 
 func _on_game_state_changed(
@@ -41,6 +47,7 @@ func _refresh_all() -> void:
 	_refresh_shop()
 	_refresh_research()
 	_refresh_buildings()
+	_refresh_weapons_tab()
 
 
 func _refresh_shop() -> void:
@@ -128,3 +135,108 @@ func _on_research_unlock_pressed(node_id: String) -> void:
 
 func _on_next_mission_pressed() -> void:
 	GameManager.start_next_mission()
+
+
+## Refreshes the entire Weapons tab display. Called on show and after any upgrade.
+func _refresh_weapons_tab() -> void:
+	if _weapon_upgrade_manager == null:
+		return
+	_refresh_weapon_panel(Types.WeaponSlot.CROSSBOW)
+	_refresh_weapon_panel(Types.WeaponSlot.RAPID_MISSILE)
+
+
+## Refreshes the display panel for a single weapon slot.
+# SOURCE: UI-as-thin-presenter pattern — [S5]
+func _refresh_weapon_panel(slot: Types.WeaponSlot) -> void:
+	var current_level: int = _weapon_upgrade_manager.get_current_level(slot)
+	var max_level: int = _weapon_upgrade_manager.get_max_level()
+	var next_data: WeaponLevelData = _weapon_upgrade_manager.get_next_level_data(slot)
+	var at_max: bool = current_level >= max_level
+
+	var panel_name: String = "CrossbowPanel" if slot == Types.WeaponSlot.CROSSBOW else "RapidMissilePanel"
+	var panel: Control = _weapons_tab.get_node_or_null("VBoxContainer/%s" % panel_name)
+	if panel == null:
+		push_warning("BetweenMissionScreen._refresh_weapon_panel: %s not found" % panel_name)
+		return
+
+	var level_label: Label = panel.get_node_or_null("LevelLabel")
+	if level_label:
+		level_label.text = "Level %d / %d" % [current_level, max_level]
+
+	var stats_label: Label = panel.get_node_or_null("StatsLabel")
+	if stats_label:
+		stats_label.text = _build_stats_text(slot)
+
+	var preview_label: Label = panel.get_node_or_null("PreviewLabel")
+	if preview_label:
+		if at_max:
+			preview_label.text = ""
+		elif next_data != null:
+			preview_label.text = _build_preview_text(slot, next_data)
+
+	var cost_label: Label = panel.get_node_or_null("CostLabel")
+	if cost_label:
+		if at_max:
+			cost_label.text = ""
+		elif next_data != null:
+			cost_label.text = "Cost: %d gold" % next_data.gold_cost
+
+	var upgrade_button: Button = panel.get_node_or_null("UpgradeButton")
+	if upgrade_button:
+		if at_max:
+			upgrade_button.text = "MAX LEVEL"
+			upgrade_button.disabled = true
+		else:
+			upgrade_button.text = "Upgrade"
+			var can_afford: bool = next_data != null and EconomyManager.can_afford(next_data.gold_cost, 0)
+			upgrade_button.disabled = not can_afford
+			if not upgrade_button.pressed.is_connected(_on_upgrade_pressed.bind(slot)):
+				upgrade_button.pressed.connect(_on_upgrade_pressed.bind(slot))
+
+
+## Builds the current stat display string for a weapon slot.
+func _build_stats_text(slot: Types.WeaponSlot) -> String:
+	if _weapon_upgrade_manager == null:
+		return ""
+	var dmg: float = _weapon_upgrade_manager.get_effective_damage(slot)
+	var spd: float = _weapon_upgrade_manager.get_effective_speed(slot)
+	var rld: float = _weapon_upgrade_manager.get_effective_reload_time(slot)
+	var bst: int = _weapon_upgrade_manager.get_effective_burst_count(slot)
+	return "DMG: %.0f  SPD: %.0f  RLD: %.1fs  BURST: %d" % [dmg, spd, rld, bst]
+
+
+## Builds the next-level preview string showing deltas for changed stats.
+func _build_preview_text(slot: Types.WeaponSlot, next_data: WeaponLevelData) -> String:
+	var lines: Array[String] = []
+	if next_data.damage_bonus != 0.0:
+		var cur_damage: float = _weapon_upgrade_manager.get_effective_damage(slot)
+		lines.append("Damage: %.0f -> %.0f (%+.0f)" % [cur_damage, cur_damage + next_data.damage_bonus, next_data.damage_bonus])
+	if next_data.speed_bonus != 0.0:
+		var cur_speed: float = _weapon_upgrade_manager.get_effective_speed(slot)
+		lines.append("Speed: %.0f -> %.0f (%+.0f)" % [cur_speed, cur_speed + next_data.speed_bonus, next_data.speed_bonus])
+	if next_data.reload_bonus != 0.0:
+		var cur_reload: float = _weapon_upgrade_manager.get_effective_reload_time(slot)
+		lines.append("Reload: %.1fs -> %.1fs (%+.1f)" % [cur_reload, maxf(cur_reload + next_data.reload_bonus, 0.1), next_data.reload_bonus])
+	if next_data.burst_count_bonus != 0:
+		var cur_burst: int = _weapon_upgrade_manager.get_effective_burst_count(slot)
+		lines.append("Burst: %d -> %d (%+d)" % [cur_burst, cur_burst + next_data.burst_count_bonus, next_data.burst_count_bonus])
+	if lines.is_empty():
+		return "No stat changes"
+	return "\n".join(lines)
+
+
+## Called when the Upgrade button is pressed for a weapon slot.
+func _on_upgrade_pressed(slot: Types.WeaponSlot) -> void:
+	if _weapon_upgrade_manager == null:
+		return
+	_weapon_upgrade_manager.upgrade_weapon(slot)
+
+
+## Called when weapon_upgraded signal is received from SignalBus.
+func _on_weapon_upgraded(_weapon_slot: Types.WeaponSlot, _new_level: int) -> void:
+	_refresh_weapons_tab()
+
+
+## Called when resources change — refreshes button affordability states.
+func _on_resource_changed_weapons(_resource_type: Types.ResourceType, _new_amount: int) -> void:
+	_refresh_weapons_tab()

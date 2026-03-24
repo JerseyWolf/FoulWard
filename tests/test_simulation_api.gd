@@ -321,6 +321,12 @@ func test_fire_crossbow_starts_reload_timer() -> void:
 	assert_bool(_tower.is_weapon_ready(Types.WeaponSlot.CROSSBOW)).is_false()
 
 
+func test_tower_fires_with_base_stats_when_no_upgrade_manager() -> void:
+	assert_bool(_tower.is_weapon_ready(Types.WeaponSlot.CROSSBOW)).is_true()
+	_tower.fire_crossbow(Vector3(10.0, 0.0, 0.0))
+	assert_bool(_tower.is_weapon_ready(Types.WeaponSlot.CROSSBOW)).is_false()
+
+
 func test_fire_crossbow_on_cooldown_does_nothing() -> void:
 	_tower.fire_crossbow(Vector3(10.0, 0.0, 0.0))
 	_tower.fire_crossbow(Vector3(10.0, 0.0, 0.0))
