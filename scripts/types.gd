@@ -112,3 +112,27 @@ enum HubRole {
 	FLAVOR_ONLY,
 }
 
+# Meta-state timeline advance reasons for Florence and between-mission narratives.
+# Higher priority means "more important" to keep within the same advance window.
+enum DayAdvanceReason {
+	MISSION_COMPLETED,
+	ACHIEVEMENT_EARNED,
+	MAJOR_STORY_EVENT,
+}
+
+# SOURCE: Day/week advancement priority table pattern from management/roguelite design.
+# TUNING: Adjust priorities as needed.
+static func get_day_advance_priority(reason: DayAdvanceReason) -> int:
+	match reason:
+		DayAdvanceReason.MISSION_COMPLETED:
+			# Baseline: still advances time, but is superseded by higher narrative drivers.
+			return 0
+		DayAdvanceReason.ACHIEVEMENT_EARNED:
+			return 1
+		DayAdvanceReason.MAJOR_STORY_EVENT:
+			return 2
+		_:
+			return 0
+
+# ASSUMPTION: Types uses enums + static helpers as a shared registry across systems.
+

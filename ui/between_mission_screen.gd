@@ -11,6 +11,7 @@ extends Control
 @onready var _next_mission_btn: Button = $NextMissionButton
 @onready var _day_progress_label: Label = $DayProgressLabel
 @onready var _day_name_label: Label = $DayNameLabel
+@onready var _florence_debug_label: Label = $FlorenceDebugLabel
 
 @onready var _shop_list: VBoxContainer = $TabContainer/ShopTab/ShopList
 @onready var _research_list: VBoxContainer = $TabContainer/ResearchTab/ResearchList
@@ -32,14 +33,14 @@ extends Control
 @onready var _rapid_power_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/ApplyPowerButton
 @onready var _rapid_remove_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/RemoveAllButton
 
-@onready var _shop_manager: ShopManager = get_node(
+@onready var _shop_manager: ShopManager = get_node_or_null(
 	"/root/Main/Managers/ShopManager"
-)
-@onready var _research_manager: ResearchManager = get_node(
+) as ShopManager
+@onready var _research_manager: ResearchManager = get_node_or_null(
 	"/root/Main/Managers/ResearchManager"
-)
-@onready var _hex_grid: HexGrid = get_node("/root/Main/HexGrid")
-@onready var _ui_manager: UIManager = get_node("/root/Main/UI/UIManager")
+) as ResearchManager
+@onready var _hex_grid: HexGrid = get_node_or_null("/root/Main/HexGrid") as HexGrid
+@onready var _ui_manager: UIManager = get_node_or_null("/root/Main/UI/UIManager") as UIManager
 var _weapon_upgrade_manager: Node = null
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -48,6 +49,7 @@ func _ready() -> void:
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
 	_next_mission_btn.pressed.connect(_on_next_mission_pressed)
 	_weapon_upgrade_manager = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
+	SignalBus.florence_state_changed.connect(_on_florence_state_changed)
 	SignalBus.weapon_upgraded.connect(_on_weapon_upgraded)
 	SignalBus.resource_changed.connect(_on_resource_changed_weapons)
 	SignalBus.enchantment_applied.connect(_on_enchantment_applied)
@@ -57,6 +59,7 @@ func _ready() -> void:
 	SignalBus.mercenary_recruited.connect(_on_mercenary_recruited)
 	_refresh_weapons_tab()
 	_refresh_day_info()
+	_refresh_florence_debug()
 
 
 func _on_game_state_changed(
@@ -200,6 +203,33 @@ func _refresh_day_info() -> void:
 			_day_name_label.text = "Day %d - %s" % [cfg.day_index, cfg.display_name]
 		else:
 			_day_name_label.text = "Day %d" % cur
+
+
+func _on_florence_state_changed() -> void:
+	_refresh_florence_debug()
+
+
+func _refresh_florence_debug() -> void:
+	# Pure UI: read-only presentation of Florence meta-state.
+	if not is_instance_valid(_florence_debug_label):
+		return
+
+	var florence := GameManager.get_florence_data()
+	if florence == null:
+		_florence_debug_label.text = "Florence: <no data>"
+		return
+
+	var text: String = (
+		"Day %d | Run %d | Missions %d | Failures %d | Boss attempts %d"
+		% [
+			GameManager.current_day,
+			florence.run_count,
+			florence.total_missions_played,
+			florence.mission_failures,
+			florence.boss_attempts,
+		]
+	)
+	_florence_debug_label.text = text
 
 
 func _refresh_shop() -> void:

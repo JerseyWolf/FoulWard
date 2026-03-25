@@ -235,3 +235,24 @@
 - **SimBot**: `activate(strategy)`, `decide_mercenaries`, `get_log`.
 - **Tests**: `test_mercenary_offers.gd`, `test_mercenary_purchase.gd`, `test_campaign_ally_roster.gd`, `test_mini_boss_defection.gd`, `test_simbot_mercenaries.gd` (included in `./tools/run_gdunit_quick.sh`).
 - **GameManager**: `_transition_to` no-op when new state equals current state.
+
+## 2026-03-25 Prompt 15 delta (Florence meta-state)
+
+- **`docs/PROMPT_15_IMPLEMENTATION.md`**
+- Added `res://scripts/florence_data.gd` (`class_name FlorenceData`)
+- Updated `res://scripts/types.gd`:
+  - `enum DayAdvanceReason`
+  - `Types.get_day_advance_priority(reason)`
+- Updated `res://autoloads/signal_bus.gd`:
+  - `SignalBus.florence_state_changed()`
+- Updated `res://autoloads/game_manager.gd`:
+  - `GameManager.current_day`, `GameManager.florence_data`, `advance_day()`, `_apply_pending_day_advance_if_any()`
+  - Mission win/fail hooks increment Florence counters and advance meta day
+  - `get_florence_data()`
+- Updated `res://scripts/research_manager.gd` and `res://scripts/shop_manager.gd` with Florence unlock hooks
+- Updated `res://ui/between_mission_screen.tscn` / `res://ui/between_mission_screen.gd`:
+  - `FlorenceDebugLabel` + refresh on `florence_state_changed`
+- Updated `res://autoloads/dialogue_manager.gd`:
+  - Resolver support for `florence.*` and `campaign.*` condition keys
+- Added `res://tests/test_florence.gd` and included it in `./tools/run_gdunit_quick.sh` allowlist
+- Follow-up parse-safety fixes: removed invalid `Types.DayAdvanceReason(...)` cast in `GameManager.advance_day()` and avoided `: FlorenceData` local type annotations in tests/UI
