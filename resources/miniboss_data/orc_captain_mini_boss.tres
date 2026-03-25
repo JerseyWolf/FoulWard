@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MiniBossData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/mini_boss_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+boss_id = "orc_captain"
+display_name = "Orc Captain"
+appears_on_day = 5
+max_hp = 800
+gold_reward = 120
+can_defect_to_ally = true
+defected_ally_id = "defected_orc_captain"
+defection_cost_gold = 0
+defection_day_offset = 0

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/mercenary_catalog.gd" id="1_cat"]
+[ext_resource type="Resource" path="res://resources/mercenary_offers/offer_hired_archer.tres" id="2_o1"]
+[ext_resource type="Resource" path="res://resources/mercenary_offers/offer_anti_air_scout.tres" id="3_o2"]
+
+[resource]
+script = ExtResource("1_cat")
+offers = [ExtResource("2_o1"), ExtResource("3_o2")]
+max_offers_per_day = 3

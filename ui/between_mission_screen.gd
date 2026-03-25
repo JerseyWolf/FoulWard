@@ -15,6 +15,9 @@ extends Control
 @onready var _shop_list: VBoxContainer = $TabContainer/ShopTab/ShopList
 @onready var _research_list: VBoxContainer = $TabContainer/ResearchTab/ResearchList
 @onready var _buildings_list: VBoxContainer = $TabContainer/BuildingsTab/BuildingsList
+@onready var _offers_list: VBoxContainer = $TabContainer/MercenariesTab/OffersSection/OffersList
+@onready var _roster_list: VBoxContainer = $TabContainer/MercenariesTab/RosterSection/RosterList
+@onready var _active_cap_label: Label = $TabContainer/MercenariesTab/RosterSection/CapLabel
 @onready var _weapons_tab: Control = $TabContainer/WeaponsTab
 @onready var _crossbow_enchant_label: Label = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/EnchantmentLabel
 @onready var _rapid_enchant_label: Label = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/EnchantmentLabel
@@ -46,6 +49,9 @@ func _ready() -> void:
 	SignalBus.resource_changed.connect(_on_resource_changed_weapons)
 	SignalBus.enchantment_applied.connect(_on_enchantment_applied)
 	SignalBus.enchantment_removed.connect(_on_enchantment_removed)
+	SignalBus.mercenary_offer_generated.connect(_refresh_offers)
+	SignalBus.ally_roster_changed.connect(_refresh_roster)
+	SignalBus.mercenary_recruited.connect(_on_mercenary_recruited)
 	_refresh_weapons_tab()
 	_refresh_day_info()
 
@@ -62,8 +68,85 @@ func _refresh_all() -> void:
 	_refresh_shop()
 	_refresh_research()
 	_refresh_buildings()
+	_refresh_mercenaries_tab()
 	_refresh_weapons_tab()
 	_refresh_day_info()
+
+
+func _refresh_mercenaries_tab() -> void:
+	_refresh_offers("")
+	_refresh_roster()
+
+
+func _refresh_offers(_ally_id: String) -> void:
+	for child: Node in _offers_list.get_children():
+		child.queue_free()
+	var offers: Array = CampaignManager.get_current_offers()
+	for offer: Variant in offers:
+		if offer == null:
+			continue
+		var aid: String = str(offer.get("ally_id"))
+		var ad: Resource = CampaignManager.get_ally_data(aid)
+		var display_name: String = aid if ad == null else str(ad.get("display_name"))
+		var row: HBoxContainer = HBoxContainer.new()
+		var lbl: Label = Label.new()
+		lbl.text = "%s [%s]" % [display_name, str(offer.call("get_cost_summary"))]
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var btn: Button = Button.new()
+		btn.text = "Recruit"
+		var can_afford: bool = (
+				EconomyManager.get_gold() >= int(offer.get("cost_gold"))
+				and EconomyManager.get_building_material() >= int(offer.get("cost_building_material"))
+				and EconomyManager.get_research_material() >= int(offer.get("cost_research_material"))
+		)
+		btn.disabled = not can_afford
+		var captured_ally_id: String = aid
+		btn.pressed.connect(func() -> void:
+			var offers_now: Array = CampaignManager.get_current_offers()
+			var purchase_i: int = -1
+			for j: int in range(offers_now.size()):
+				var o: Variant = offers_now[j]
+				if o != null and str(o.get("ally_id")) == captured_ally_id:
+					purchase_i = j
+					break
+			if purchase_i >= 0:
+				CampaignManager.purchase_mercenary_offer(purchase_i)
+			_refresh_mercenaries_tab()
+		)
+		row.add_child(lbl)
+		row.add_child(btn)
+		_offers_list.add_child(row)
+
+
+func _refresh_roster() -> void:
+	for child: Node in _roster_list.get_children():
+		child.queue_free()
+	var active_allies: Array[String] = CampaignManager.get_active_allies()
+	var cap: int = CampaignManager.max_active_allies_per_day
+	if is_instance_valid(_active_cap_label):
+		_active_cap_label.text = "Active: %d / %d" % [active_allies.size(), cap]
+	for ally_id: String in CampaignManager.get_owned_allies():
+		var data: Resource = CampaignManager.get_ally_data(ally_id)
+		var dname: String = ally_id if data == null else str(data.get("display_name"))
+		var row2: HBoxContainer = HBoxContainer.new()
+		var lbl2: Label = Label.new()
+		lbl2.text = dname
+		lbl2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var tbtn: Button = Button.new()
+		var is_active: bool = active_allies.has(ally_id)
+		tbtn.text = "Active" if is_active else "Standby"
+		var captured_aid: String = ally_id
+		tbtn.pressed.connect(func() -> void:
+			CampaignManager.toggle_ally_active(captured_aid)
+			_refresh_mercenaries_tab()
+		)
+		row2.add_child(lbl2)
+		row2.add_child(tbtn)
+		_roster_list.add_child(row2)
+
+
+func _on_mercenary_recruited(_ally_id: String) -> void:
+	_refresh_mercenaries_tab()
 
 func _refresh_day_info() -> void:
 	var cur: int = CampaignManager.get_current_day()
@@ -271,6 +354,8 @@ func _on_weapon_upgraded(_weapon_slot: Types.WeaponSlot, _new_level: int) -> voi
 ## Called when resources change — refreshes button affordability states.
 func _on_resource_changed_weapons(_resource_type: Types.ResourceType, _new_amount: int) -> void:
 	_refresh_weapons_tab()
+	if GameManager.get_game_state() == Types.GameState.BETWEEN_MISSIONS:
+		_refresh_offers("")
 
 
 func _on_enchantment_applied(_weapon_slot: Types.WeaponSlot, _slot_type: String, _enchantment_id: String) -> void:

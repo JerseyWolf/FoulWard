@@ -59,6 +59,34 @@ anchor_bottom = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
+[node name="MercenariesTab" type="Control" parent="TabContainer"]
+metadata/_tab_name = "Mercenaries"
+
+[node name="OffersSection" type="VBoxContainer" parent="TabContainer/MercenariesTab"]
+anchor_right = 1.0
+anchor_bottom = 0.48
+
+[node name="OffersLabel" type="Label" parent="TabContainer/MercenariesTab/OffersSection"]
+text = "Available Mercenaries"
+
+[node name="OffersList" type="VBoxContainer" parent="TabContainer/MercenariesTab/OffersSection"]
+anchor_top = 0.12
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="RosterSection" type="VBoxContainer" parent="TabContainer/MercenariesTab"]
+anchor_top = 0.52
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="CapLabel" type="Label" parent="TabContainer/MercenariesTab/RosterSection"]
+text = "Active: 0 / 2"
+
+[node name="RosterList" type="VBoxContainer" parent="TabContainer/MercenariesTab/RosterSection"]
+anchor_top = 0.14
+anchor_right = 1.0
+anchor_bottom = 1.0
+
 [node name="WeaponsTab" type="Control" parent="TabContainer"]
 
 [node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/WeaponsTab"]

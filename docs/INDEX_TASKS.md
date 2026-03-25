@@ -134,3 +134,11 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - **`Arnulf`**: `ALLY_ID_ARNULF`, generic `ally_*` mirror emissions
   - Tests: **`test_ally_data.gd`**, **`test_ally_base.gd`**, **`test_ally_signals.gd`**, **`test_ally_spawning.gd`**
   - **`ARCHITECTURE.md`**, **`INDEX_SHORT.md`**, **`INDEX_FULL.md`**, **`INDEX_MACHINE.md`** updated
+- Prompt 12 (2026-03-25) — mercenary offers + roster + defection + SimBot:
+  - **`docs/PROMPT_12_IMPLEMENTATION.md`**
+  - **`MercenaryOfferData`**, **`MercenaryCatalog`**, **`MiniBossData`**; **`res://resources/mercenary_catalog.tres`**, **`mercenary_offers/`**, **`miniboss_data/`**
+  - **`SignalBus`**: `mercenary_offer_generated`, `mercenary_recruited`, `ally_roster_changed`
+  - **`CampaignManager`**: owned/active allies, offers, purchase, preview, defection, `auto_select_best_allies`
+  - **`BetweenMissionScreen`**: Mercenaries tab; **`SimBot`**: `activate(strategy)`, `decide_mercenaries`, `get_log`
+  - Tests: **`test_mercenary_offers.gd`**, **`test_mercenary_purchase.gd`**, **`test_campaign_ally_roster.gd`**, **`test_mini_boss_defection.gd`**, **`test_simbot_mercenaries.gd`**; **`./tools/run_gdunit_quick.sh`** allowlist
+  - **`INDEX_SHORT.md`**, **`INDEX_FULL.md`**, **`INDEX_MACHINE.md`** updated

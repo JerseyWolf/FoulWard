@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MercenaryOfferData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/mercenary_offer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ally_id = "hired_archer"
+cost_gold = 80
+cost_building_material = 2
+cost_research_material = 0
+min_day = 1
+max_day = -1
+is_defection_offer = false
