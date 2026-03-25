@@ -10,7 +10,7 @@
 
 Open `project.godot` → `[autoload]` and confirm order and names match **`docs/ARCHITECTURE.md` §1**.
 
-The specification’s §3.1 table is the **historical four-autoload core**; the live project also registers `CampaignManager`, `EnchantmentManager`, `AutoTestDriver`, and plugin-related autoloads. See **`PRE_GENERATION_SPECIFICATION.md` §3.1** NOTE.
+The specification’s §3.1 table is the **historical four-autoload core**; the live project also registers `CampaignManager`, `DialogueManager` (Prompt 13 hub dialogue), `EnchantmentManager`, `AutoTestDriver`, and plugin-related autoloads. See **`PRE_GENERATION_SPECIFICATION.md` §3.1** NOTE.
 
 ## 2. Scene tree and paths
 

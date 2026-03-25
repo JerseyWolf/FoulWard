@@ -4,7 +4,7 @@ INDEXFULL.md
 FOUL WARD — INDEXFULL.md
 
 Full public API reference for every script, resource type, and system.
-Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-25 (Prompt 12 mercenary roster + offers; see `docs/PROMPT_12_IMPLEMENTATION.md`).
+Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-25 (Prompt 13 hub dialogue; see `docs/PROMPT_13_IMPLEMENTATION.md`).
 Use INDEXSHORT.md for fast orientation, INDEXFULL.md for exact method signatures, signals, and dependencies.
 CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 
@@ -280,6 +280,30 @@ Key methods:
 Prompt 10 public state (selected): `final_boss_id`, `final_boss_defeated`, `final_boss_active`, `current_boss_threat_territory_id`, `held_territory_ids`.
 
 Consumes: all_waves_cleared, tower_destroyed, boss_killed; subscribes to mission_won (hub transition). See `docs/PROBLEM_REPORT.md`.
+DialogueManager
+
+Path: res://autoloads/dialogue_manager.gd
+Purpose: Data-driven between-mission hub dialogue: loads `DialogueEntry` resources from `res://resources/dialogue/**`, applies priority selection, AND conditions, once-only tracking, and chain pointers (`active_chains_by_character`). UI-agnostic; `DialogueUI` + `UIManager` call into it.
+
+Dependencies: SignalBus, GameManager (sync), EconomyManager, ResearchManager (via `Main/Managers/ResearchManager` when present).
+
+Public variables (selected): `entries_by_id`, `entries_by_character`, `played_once_only`, `active_chains_by_character`, `mission_won_count`, `mission_failed_count`, `current_mission_number`, `current_gamestate`.
+
+Signals: `dialogue_line_started(entry_id: String, character_id: String)`, `dialogue_line_finished(entry_id: String, character_id: String)`.
+
+Key methods:
+
+    request_entry_for_character(character_id: String, context: String = "") -> DialogueEntry
+
+    mark_entry_played(entry_id: String) -> void
+
+    notify_dialogue_finished(entry_id: String, character_id: String) -> void
+
+    _load_all_dialogue_entries() -> void — rescans folder (used by tests after mutation).
+
+Internal: `_evaluate_conditions`, `_resolve_state_value`, `_compare`, `_sybil_research_unlocked_any`, `_arnulf_research_unlocked_any`, `_get_research_manager()` — see `docs/PROMPT_13_IMPLEMENTATION.md` for condition keys.
+
+Consumes: SignalBus.game_state_changed, mission_started, mission_won, mission_failed, resource_changed, research_unlocked, shop_item_purchased, arnulf_state_changed, spell_cast (stubs where no logic yet).
 AutoTestDriver
 
 Path: res://autoloads/autotestdriver.gd
@@ -453,6 +477,28 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
 **MercenaryCatalog** (`res://scripts/resources/mercenary_catalog.gd`) — Prompt 12: `offers` (untyped `Array`), `max_offers_per_day`, `get_daily_offers`.
 
 **MiniBossData** (`res://scripts/resources/mini_boss_data.gd`) — Prompt 12: `can_defect_to_ally`, `defected_ally_id`, defection cost fields.
+
+**DialogueCondition** (`res://scripts/resources/dialogue/dialogue_condition.gd`) — Prompt 13
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `key` | `String` | Condition key for DialogueManager (`current_mission_number`, `gold_amount`, `sybil_research_unlocked_any`, `research_unlocked_<id>`, …) |
+| `comparison` | `String` | `==`, `!=`, `>`, `>=`, `<`, `<=` |
+| `value` | `Variant` | Expected value (int, bool, or string for game-state name) |
+
+**DialogueEntry** (`res://scripts/resources/dialogue/dialogue_entry.gd`) — Prompt 13
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `entry_id` | `String` | Unique id (warnings on duplicate) |
+| `character_id` | `String` | Role bucket (`SPELL_RESEARCHER`, `COMPANION_MELEE`, …) |
+| `text` | `String` | Multiline line (placeholder TODO in MVP) |
+| `priority` | `int` | Higher = more likely when conditions pass |
+| `once_only` | `bool` | Suppress after `mark_entry_played` for this run |
+| `chain_next_id` | `String` | Optional next `entry_id` after current line plays |
+| `conditions` | `Array[DialogueCondition]` | All must pass (AND) |
+
+**DialogueUI** (`res://ui/dialogueui.gd` / `dialogueui.tscn`) — Prompt 13: `show_entry(DialogueEntry)`; **Continue** → `mark_entry_played` / chain or `notify_dialogue_finished`.
 
 **AllyBase** (`res://scenes/allies/ally_base.gd` / `ally_base.tscn`) — Prompt 11
 

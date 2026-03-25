@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "SPELL_RESEARCHER_SYBIL_GENERIC_01"
+character_id = "SPELL_RESEARCHER"
+text = "TODO: Sybil makes a generic remark about spell theory and future upgrades."
+priority = 20
+once_only = false
+chain_next_id = ""
+conditions = []

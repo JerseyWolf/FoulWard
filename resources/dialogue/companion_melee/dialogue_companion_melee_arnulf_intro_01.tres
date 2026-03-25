@@ -1,0 +1,26 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_condition.gd" id="2_cond"]
+
+[sub_resource type="Resource" id="sub1"]
+script = ExtResource("2_cond")
+key = "current_mission_number"
+comparison = ">="
+value = 2
+
+[sub_resource type="Resource" id="sub2"]
+script = ExtResource("2_cond")
+key = "current_gamestate"
+comparison = "=="
+value = "BETWEEN_MISSIONS"
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "COMPANION_MELEE_ARNULF_INTRO_01"
+character_id = "COMPANION_MELEE"
+text = "TODO: Arnulf greets Florence in the between-mission hub."
+priority = 80
+once_only = true
+chain_next_id = ""
+conditions = [SubResource("sub1"), SubResource("sub2")]

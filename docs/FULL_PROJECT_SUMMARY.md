@@ -38,6 +38,7 @@ Authoritative gameplay design: `docs/FoulWard_MVP_Specification.md`. Architectur
 - **`DamageCalculator`** — Damage type × armor × vulnerability matrix.
 - **`EconomyManager`** — Gold, building material, research material; spend/add/reset.
 - **`GameManager`** — Mission index, wave index (via `WaveManager` sync where applicable), `Types.GameState` (menu, combat, build mode, briefing, between missions, etc.), mission win/fail, **shop mission-start consumables** (mana draught, prepaid Arrow Tower).
+- **`DialogueManager`** — Loads **`DialogueEntry`** `.tres` files from `res://resources/dialogue/**`; priority / conditions / once-only / chains; hub dialogue signals (`dialogue_line_started`, `dialogue_line_finished`). See **`docs/PROMPT_13_IMPLEMENTATION.md`**.
 - **`AutoTestDriver`** — Headless smoke driver (optional; autoload for scripted checks).
 
 MCP-related autoloads from `addons/godot_mcp/` (`MCPScreenshot`, `MCPInputService`, `MCPGameInspector`) support editor MCP tooling when the plugin is enabled.
@@ -54,7 +55,7 @@ Under **`Main`** (Node3D):
 - **SpawnPoints** — `Marker3D` for wave spawns.
 - **EnemyContainer**, **BuildingContainer**, **ProjectileContainer**.
 - **Managers** — `WaveManager`, `SpellManager`, `ResearchManager`, `ShopManager`, `InputManager`.
-- **UI** — `UIManager`, HUD, build menu, between-mission screen, main menu, mission briefing, end screen.
+- **UI** — `UIManager`, HUD, build menu, between-mission screen, main menu, mission briefing, end screen, **`dialogueui.tscn`** (instantiated by `UIManager` for hub lines).
 
 ---
 
@@ -70,6 +71,7 @@ Under **`Main`** (Node3D):
 | Shop | `scripts/shop_manager.gd`, `resources/shop_data/*.tres` — four MVP items (tower repair, building repair, mana draught, arrow tower voucher) |
 | Spells / mana | `scripts/spell_manager.gd`, `resources/spell_data/shockwave.tres` |
 | UI / flow | `ui/ui_manager.gd`, `ui/mission_briefing.gd`, `game_manager.gd` state machine |
+| Hub dialogue | `autoloads/dialogue_manager.gd`, `scripts/resources/dialogue/dialogue_entry.gd`, `scripts/resources/dialogue/dialogue_condition.gd`, `resources/dialogue/**/*.tres`, `ui/dialogueui.gd` |
 | Simulation / bot | `scripts/sim_bot.gd`, `tests/test_simulation_api.gd` |
 
 ---
@@ -88,6 +90,8 @@ Under **`Main`** (Node3D):
 
 - **No hardcoded combat stats in random scripts** — prefer `.tres` under `resources/` loaded by registries on managers / scenes (per project rules in Cursor).
 - **Enemy / building / weapon / spell / shop / research** each have resource scripts under `scripts/resources/`.
+- **DialogueEntry** (`scripts/resources/dialogue/dialogue_entry.gd`) — `entry_id`, `character_id`, `text`, `priority`, `once_only`, `chain_next_id`, `conditions: Array[DialogueCondition]`.
+- **DialogueCondition** (`scripts/resources/dialogue/dialogue_condition.gd`) — `key`, `comparison` (`==`, `!=`, `>`, `>=`, `<`, `<=`), `value` (Variant). Evaluated only as **AND** lists on each entry.
 
 ---
 

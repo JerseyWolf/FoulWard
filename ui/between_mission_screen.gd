@@ -37,6 +37,7 @@ extends Control
 	"/root/Main/Managers/ResearchManager"
 )
 @onready var _hex_grid: HexGrid = get_node("/root/Main/HexGrid")
+@onready var _ui_manager: UIManager = get_node("/root/Main/UI/UIManager")
 var _weapon_upgrade_manager: Node = null
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -62,6 +63,13 @@ func _on_game_state_changed(
 ) -> void:
 	if new_state == Types.GameState.BETWEEN_MISSIONS:
 		_refresh_all()
+		_show_hub_dialogue()
+
+
+func _show_hub_dialogue() -> void:
+	_ui_manager.show_dialogue_for_character("SPELL_RESEARCHER")
+	_ui_manager.show_dialogue_for_character("COMPANION_MELEE")
+	# POST-MVP: Add Florence, Merchant, etc. as additional calls.
 
 
 func _refresh_all() -> void:

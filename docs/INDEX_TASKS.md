@@ -142,3 +142,9 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - **`BetweenMissionScreen`**: Mercenaries tab; **`SimBot`**: `activate(strategy)`, `decide_mercenaries`, `get_log`
   - Tests: **`test_mercenary_offers.gd`**, **`test_mercenary_purchase.gd`**, **`test_campaign_ally_roster.gd`**, **`test_mini_boss_defection.gd`**, **`test_simbot_mercenaries.gd`**; **`./tools/run_gdunit_quick.sh`** allowlist
   - **`INDEX_SHORT.md`**, **`INDEX_FULL.md`**, **`INDEX_MACHINE.md`** updated
+- Prompt 13 (2026-03-25) — hub dialogue (data-driven):
+  - **`docs/PROMPT_13_IMPLEMENTATION.md`**
+  - **`DialogueEntry`**, **`DialogueCondition`**; **`DialogueManager`** autoload; **`res://resources/dialogue/**`** pools
+  - **`dialogue_ui.tscn`**, **`UIManager.show_dialogue_for_character`**, **`BetweenMissionScreen._show_hub_dialogue`**
+  - Tests: **`test_dialogue_manager.gd`**; **`run_gdunit_quick.sh`** allowlist
+  - **`INDEX_SHORT.md`**, **`INDEX_FULL.md`**, **`INDEX_MACHINE.md`**, **`ARCHITECTURE.md`** §1 updated

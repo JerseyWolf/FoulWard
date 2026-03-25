@@ -15,6 +15,7 @@ Registered in `project.godot` in this exact order:
 | 3  | `res://autoloads/economy_manager.gd`     | `EconomyManager`   | Resource tracking + transactions         |
 | 4  | `res://autoloads/campaign_manager.gd`    | `CampaignManager`  | Campaign/day state, faction registry, **ally roster** (`current_ally_roster`); must load **before** `GameManager` so `mission_won` / `mission_failed` handlers run in order |
 | 5  | `res://autoloads/game_manager.gd`        | `GameManager`      | Mission state, session flow, territory; **spawns/cleans up generic allies** under `Main/AllyContainer` |
+| 6  | `res://autoloads/dialogue_manager.gd`    | `DialogueManager`  | Data-driven hub dialogue: loads `res://resources/dialogue/**/*.tres`, priority / conditions / once-only / chains; emits `dialogue_line_started` / `dialogue_line_finished` |
 
 `Types` is a `class_name` script at `res://scripts/types.gd` — NOT an autoload.
 It provides enums and constants via `Types.GameState`, `Types.DamageType`, etc.

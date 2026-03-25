@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_condition.gd" id="2_cond"]
+
+[sub_resource type="Resource" id="sub1"]
+script = ExtResource("2_cond")
+key = "mission_won_count"
+comparison = ">="
+value = 1
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "EXAMPLE_CHARACTER_CONDITIONAL_01"
+character_id = "EXAMPLE_CHARACTER"
+text = "TODO: Example numeric condition (mission_won_count >= 1). # PLACEHOLDER dev template."
+priority = 50
+once_only = false
+chain_next_id = ""
+conditions = [SubResource("sub1")]
