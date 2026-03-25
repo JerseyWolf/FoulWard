@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="StrategyProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/strategyprofile.gd" id="1_strategyprofile"]
+
+[resource]
+script = ExtResource("1_strategyprofile")
+
+profile_id = "BALANCED_DEFAULT"
+description = "Balanced profile: mix of all building types, moderate spell usage."
+
+build_priorities = [
+	{"building_type": 0, "weight": 1.0, "min_wave": 1, "max_wave": 10},
+	{"building_type": 1, "weight": 0.9, "min_wave": 2, "max_wave": 10},
+	{"building_type": 2, "weight": 0.9, "min_wave": 3, "max_wave": 10},
+	{"building_type": 3, "weight": 0.8, "min_wave": 1, "max_wave": 10},
+	{"building_type": 4, "weight": 0.7, "min_wave": 3, "max_wave": 10},
+	{"building_type": 5, "weight": 0.6, "min_wave": 2, "max_wave": 10},
+	{"building_type": 6, "weight": 0.6, "min_wave": 4, "max_wave": 10},
+	{"building_type": 7, "weight": 0.5, "min_wave": 4, "max_wave": 10}
+]
+
+placement_preferences = {
+	"preferred_slots": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+	"fallback_strategy": "FIRST_EMPTY",
+	"ring_hint": "INNER_FIRST",
+}
+
+spell_usage = {
+	"enabled": true,
+	"spell_id": "shockwave",
+	"min_enemies_in_wave": 8,
+	"min_mana": 50,
+	"cooldown_safety_margin": 0.5,
+	"evaluation_interval": 1.0,
+	"priority_vs_building": 1.0,
+}
+
+upgrade_behavior = {
+	"prefer_upgrades_until_build_count": 6,
+	"upgrade_weight": 1.0,
+	"min_gold_reserve": 50,
+	"max_upgrade_level": 1,
+}
+
+difficulty_target = 0.0
+

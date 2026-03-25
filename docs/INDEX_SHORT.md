@@ -23,7 +23,7 @@ SpellManager	res://scripts/spellmanager.gd	Owns mana pool, spell cooldowns. Exec
 ResearchManager	res://scripts/researchmanager.gd	Tracks unlocked research nodes. Gates locked buildings.
 ShopManager	res://scripts/shopmanager.gd	Processes shop purchases. Applies mission-start consumable effects.
 InputManager	res://scripts/inputmanager.gd	Translates mouse/keyboard input into public method calls on managers.
-SimBot	res://scripts/sim_bot.gd	Headless automated playtester stub. Prompt 12: `activate(strategy)`, `decide_mercenaries`, `get_log`; plus existing bot_* helpers.
+SimBot	res://scripts/sim_bot.gd	Headless automated simulation bot. Prompt 16 Phase 2: `run_single(profile_id,run_index,seed_value)` + `run_batch(profile_id,runs,base_seed,csv_path)` driven by `StrategyProfile` resources, with per-run CSV balance logging.
 MainRoot	res://scripts/mainroot.gd	Applies root window content scale at startup (stretch fix for Godot 4.4+).
 SCENES (runtime instantiated or statically placed)
 Class Name	Script Path	Scene Path	What it does
@@ -63,6 +63,7 @@ FactionData	res://scripts/resources/faction_data.gd	faction_id, display_name, de
 BossData	res://scripts/resources/boss_data.gd	boss_id, stats, escort_unit_ids, phase_count, is_mini_boss / is_final_boss, boss_scene; build_placeholder_enemy_data(); BUILTIN_BOSS_RESOURCE_PATHS
 DayConfig	res://scripts/resources/day_config.gd	day_index, mission_index, territory_id, faction_id (default DEFAULT_MIXED), is_mini_boss_day, is_mini_boss (alias), is_final_boss, boss_id, is_boss_attack_day, display_name, wave/tuning multipliers
 CampaignConfig	res://scripts/resources/campaign_config.gd	campaign_id, display_name, day_configs, starting_territory_ids, territory_map_resource_path, short-campaign flags
+StrategyProfile	res://scripts/resources/strategyprofile.gd	profile_id, description, build_priorities, placement_preferences, spell_usage, upgrade_behavior, difficulty_target
 AllyData	res://scripts/resources/ally_data.gd	Prompt 11: ally_id, ally_class, stats, preferred_targeting (CLOSEST MVP), is_unique. Prompt 12: role, damage_type, attack_damage / patrol / recovery, scene_path, is_starter_ally, is_defected_ally, debug_color; POST-MVP progression fields.
 MercenaryOfferData	res://scripts/resources/mercenary_offer_data.gd	Prompt 12: ally_id, costs, day range, is_defection_offer.
 MercenaryCatalog	res://scripts/resources/mercenary_catalog.gd	Prompt 12: offers pool, max_offers_per_day, get_daily_offers.
@@ -142,6 +143,11 @@ File	boss_id	Notes
 res://resources/bossdata_plague_cult_miniboss.tres	plague_cult_miniboss	Shared boss_base.tscn
 res://resources/bossdata_orc_warlord_miniboss.tres	orc_warlord	Shared boss_base.tscn
 res://resources/bossdata_final_boss.tres	final_boss	Day 50 / campaign boss
+SimBot strategy profiles (Prompt 16 Phase 2)
+File	profile_id	Notes
+res://resources/strategyprofiles/strategy_balanced_default.tres	BALANCED_DEFAULT	Balanced profile: mix of tower types + moderate shockwave
+res://resources/strategyprofiles/strategy_greedy_econ.tres	GREEDY_ECON	Greedy econ: prioritize cheap/early towers, fewer upgrades/spells
+res://resources/strategyprofiles/strategy_heavy_fire.tres	HEAVY_FIRE	Heavy fire/DPS: FireBrazier/Ballista/MagicObelisk bias + aggressive shockwave
 TEST FILES (res://tests/, GdUnit4 framework; full run see PROMPT_9_IMPLEMENTATION.md / PROMPT_10_IMPLEMENTATION.md / PROMPT_12_IMPLEMENTATION.md / PROMPT_13_IMPLEMENTATION.md)
 File	What it covers
 testmercenaryoffers.gd	Prompt 12: offer generation / preview
@@ -149,6 +155,11 @@ testmercenarypurchase.gd	Prompt 12: purchase + economy
 testcampaignallyroster.gd	Prompt 12: owned/active roster APIs
 testminibossdefection.gd	Prompt 12: defection offer injection
 testsimbotmercenaries.gd	Prompt 12: SimBot mercenary API
+test_simbot_profiles.gd	Prompt 16 Phase 2: `StrategyProfile` `.tres` loading + basic structure validation
+test_simbot_basic_run.gd	Prompt 16 Phase 2: headless `SimBot.run_single()` places buildings without UI dependencies
+test_simbot_logging.gd	Prompt 16 Phase 2: `run_batch()` CSV header + append behavior
+test_simbot_determinism.gd	Prompt 16 Phase 2: determinism for a fixed seed
+test_simbot_safety.gd	Prompt 16 Phase 2: safety check (no `res://ui/` references)
 test_dialogue_manager.gd	Prompt 13: DialogueManager conditions, priority, once-only, chain fallback, resource load
 test_character_hub.gd	Prompt 14: CharacterData/Catalog loading, Hub click focus behavior, DialoguePanel display + chaining, and UIManager hub open/close integration.
 testeconomymanager.gd	gold/material add/spend/reset, signal emission, transactions

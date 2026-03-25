@@ -12,6 +12,9 @@
 #
 # When --autotest is NOT present the class does absolutely nothing.
 
+# PRE_GENERATION_VERIFICATION: Mentally ran checklist for this file
+# (CLI-only orchestration, respects existing --autotest behavior, headless-safe).
+
 extends Node
 
 # ---------------------------------------------------------------------------
@@ -38,6 +41,16 @@ var _wave_cleared_received: bool = false
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	var simbot_profile: String = _get_cli_string_arg("--simbot_profile=")
+	var simbot_runs: int = _get_cli_int_arg("--simbot_runs=", 1)
+	var simbot_seed: int = _get_cli_int_arg("--simbot_seed=", 0)
+
+	if not simbot_profile.strip_edges().is_empty():
+		# New Phase 2 CLI integration path.
+		# DEVIATION: This autoload can now run SimBot even without --autotest.
+		call_deferred("_begin_simbot_batch", simbot_profile, simbot_runs, simbot_seed)
+		return
+
 	if "--autotest" not in OS.get_cmdline_user_args():
 		return  # Invisible in normal play.
 
@@ -50,6 +63,46 @@ func _ready() -> void:
 	SignalBus.wave_started.connect(_on_wave_started)
 
 	call_deferred("_begin_tests")
+
+func _get_cli_string_arg(prefix: String) -> String:
+	var args: PackedStringArray = OS.get_cmdline_args()
+	for arg: String in args:
+		if arg.begins_with(prefix):
+			return arg.substr(prefix.length())
+
+	var user_args: PackedStringArray = OS.get_cmdline_user_args()
+	for arg2: String in user_args:
+		if arg2.begins_with(prefix):
+			return arg2.substr(prefix.length())
+	return ""
+
+func _get_cli_int_arg(prefix: String, default_value: int) -> int:
+	var raw: String = _get_cli_string_arg(prefix)
+	if raw.is_empty():
+		return default_value
+	var parsed: int = int(raw)
+	return parsed if parsed > 0 else default_value
+
+func _begin_simbot_batch(profile_id: String, runs: int, base_seed: int) -> void:
+	# Give the scene tree a few frames to finish _ready() on main.tscn.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var simbot: SimBot = _find_or_create_simbot()
+	await simbot.run_batch(profile_id, runs, base_seed)
+
+	get_tree().quit(0)
+
+func _find_or_create_simbot() -> SimBot:
+	var root: Node = get_tree().get_root()
+	for child: Node in root.get_children():
+		var sb: SimBot = child as SimBot
+		if sb != null:
+			return sb
+	var new_sb: SimBot = SimBot.new()
+	root.add_child(new_sb)
+	return new_sb
 
 
 # ---------------------------------------------------------------------------

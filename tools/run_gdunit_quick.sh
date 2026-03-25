@@ -60,6 +60,10 @@ QUICK_SUITES=(
 	"res://tests/test_campaign_ally_roster.gd"
 	"res://tests/test_mini_boss_defection.gd"
 	"res://tests/test_simbot_mercenaries.gd"
+	"res://tests/test_simbot_profiles.gd"
+	"res://tests/test_simbot_basic_run.gd"
+	"res://tests/test_simbot_logging.gd"
+	"res://tests/test_simbot_safety.gd"
 	"res://tests/test_dialogue_manager.gd"
 	"res://tests/test_florence.gd"
 )
