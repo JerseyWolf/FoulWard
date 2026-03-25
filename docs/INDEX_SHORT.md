@@ -24,6 +24,7 @@ ResearchManager	res://scripts/researchmanager.gd	Tracks unlocked research nodes.
 ShopManager	res://scripts/shopmanager.gd	Processes shop purchases. Applies mission-start consumable effects.
 InputManager	res://scripts/inputmanager.gd	Translates mouse/keyboard input into public method calls on managers.
 SimBot	res://scripts/sim_bot.gd	Headless automated simulation bot. Prompt 16 Phase 2: `run_single(profile_id,run_index,seed_value)` + `run_batch(profile_id,runs,base_seed,csv_path)` driven by `StrategyProfile` resources, with per-run CSV balance logging.
+ArtPlaceholderHelper	res://scripts/art/art_placeholder_helper.gd	Stateless utility resolving placeholder meshes, materials, and icons from res://art based on Types enums and string IDs. Handles caching, fallbacks, and generated-asset priority.
 MainRoot	res://scripts/mainroot.gd	Applies root window content scale at startup (stretch fix for Godot 4.4+).
 SCENES (runtime instantiated or statically placed)
 Class Name	Script Path	Scene Path	What it does
@@ -148,6 +149,12 @@ File	profile_id	Notes
 res://resources/strategyprofiles/strategy_balanced_default.tres	BALANCED_DEFAULT	Balanced profile: mix of tower types + moderate shockwave
 res://resources/strategyprofiles/strategy_greedy_econ.tres	GREEDY_ECON	Greedy econ: prioritize cheap/early towers, fewer upgrades/spells
 res://resources/strategyprofiles/strategy_heavy_fire.tres	HEAVY_FIRE	Heavy fire/DPS: FireBrazier/Ballista/MagicObelisk bias + aggressive shockwave
+Art resources
+Art root: res://art/
+- Meshes: res://art/meshes/{buildings,enemies,allies,misc}/ — primitive Mesh .tres, named by convention
+- Materials: res://art/materials/{factions,types}/ — StandardMaterial3D .tres, named by convention
+- Icons: res://art/icons/{buildings,enemies,allies}/ — Texture2D .png/.tres, POST-MVP
+- Generated: res://art/generated/{meshes,icons}/ — drop zone for Blender/AI outputs, takes priority over placeholders
 TEST FILES (res://tests/, GdUnit4 framework; full run see PROMPT_9_IMPLEMENTATION.md / PROMPT_10_IMPLEMENTATION.md / PROMPT_12_IMPLEMENTATION.md / PROMPT_13_IMPLEMENTATION.md)
 File	What it covers
 testmercenaryoffers.gd	Prompt 12: offer generation / preview
@@ -161,6 +168,7 @@ test_simbot_logging.gd	Prompt 16 Phase 2: `run_batch()` CSV header + append beha
 test_simbot_determinism.gd	Prompt 16 Phase 2: determinism for a fixed seed
 test_simbot_safety.gd	Prompt 16 Phase 2: safety check (no `res://ui/` references)
 test_dialogue_manager.gd	Prompt 13: DialogueManager conditions, priority, once-only, chain fallback, resource load
+test_art_placeholders.gd	Prompt 17: ArtPlaceholderHelper placeholder mesh/material resolution, generated-asset priority, scene wiring, and cache/fallback behavior
 test_character_hub.gd	Prompt 14: CharacterData/Catalog loading, Hub click focus behavior, DialoguePanel display + chaining, and UIManager hub open/close integration.
 testeconomymanager.gd	gold/material add/spend/reset, signal emission, transactions
 testdamagecalculator.gd	Full 4×4 matrix, boundary values, DoT stub

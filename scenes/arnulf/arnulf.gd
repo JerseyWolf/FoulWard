@@ -63,6 +63,9 @@ const _MIN_NAV_STEP_SQ: float = 0.0004
 ## Stable id for generic ally signals (SignalBus.ally_*).
 const ALLY_ID_ARNULF: String = "arnulf"
 
+# Assign placeholder art resources via convention-based pipeline.
+const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
+
 # ---------------------------------------------------------------------------
 # STATE
 # ---------------------------------------------------------------------------
@@ -110,6 +113,16 @@ func _ready() -> void:
 
 	SignalBus.enemy_killed.connect(_on_enemy_killed)
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
+
+	# Art pipeline placeholder assignment.
+	var mesh_node: MeshInstance3D = get_node_or_null("ArnulfMesh") as MeshInstance3D
+	if mesh_node != null:
+		var _mesh: Mesh = ArtPlaceholderHelper.get_ally_mesh("arnulf")
+		if _mesh != null and mesh_node.mesh == null:
+			mesh_node.mesh = _mesh
+		var _mat: Material = ArtPlaceholderHelper.get_faction_material("allies")
+		if _mat != null:
+			mesh_node.material_override = _mat
 
 	_transition_to_state(Types.ArnulfState.IDLE)
 

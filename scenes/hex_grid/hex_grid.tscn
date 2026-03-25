@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://hex_grid"]
+[gd_scene load_steps=6 format=3 uid="uid://hex_grid"]
 
 [ext_resource type="Script" path="res://scenes/hex_grid/hex_grid.gd" id="1_hexgrid"]
+[ext_resource type="Mesh" path="res://art/meshes/misc/hex_slot.tres" id="2_hex_slot_mesh"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_slot"]
 size = Vector3(2.8, 0.1, 2.8)
@@ -23,7 +24,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_00"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_01" type="Area3D" parent="."]
@@ -33,7 +34,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_01"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_02" type="Area3D" parent="."]
@@ -43,7 +44,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_02"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_03" type="Area3D" parent="."]
@@ -53,7 +54,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_03"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_04" type="Area3D" parent="."]
@@ -63,7 +64,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_04"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_05" type="Area3D" parent="."]
@@ -73,7 +74,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_05"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_06" type="Area3D" parent="."]
@@ -83,7 +84,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_06"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_07" type="Area3D" parent="."]
@@ -93,7 +94,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_07"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_08" type="Area3D" parent="."]
@@ -103,7 +104,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_08"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_09" type="Area3D" parent="."]
@@ -113,7 +114,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_09"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_10" type="Area3D" parent="."]
@@ -123,7 +124,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_10"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_11" type="Area3D" parent="."]
@@ -133,7 +134,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_11"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_12" type="Area3D" parent="."]
@@ -143,7 +144,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_12"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_13" type="Area3D" parent="."]
@@ -153,7 +154,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_13"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_14" type="Area3D" parent="."]
@@ -163,7 +164,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_14"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_15" type="Area3D" parent="."]
@@ -173,7 +174,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_15"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_16" type="Area3D" parent="."]
@@ -183,7 +184,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_16"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_17" type="Area3D" parent="."]
@@ -193,7 +194,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_17"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_18" type="Area3D" parent="."]
@@ -203,7 +204,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_18"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_19" type="Area3D" parent="."]
@@ -213,7 +214,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_19"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_20" type="Area3D" parent="."]
@@ -223,7 +224,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_20"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_21" type="Area3D" parent="."]
@@ -233,7 +234,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_21"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_22" type="Area3D" parent="."]
@@ -243,7 +244,7 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_22"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 
 [node name="HexSlot_23" type="Area3D" parent="."]
@@ -253,6 +254,6 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_slot")
 [node name="SlotMesh" type="MeshInstance3D" parent="HexSlot_23"]
 visible = false
-mesh = SubResource("SlotQuadMesh")
+mesh = ExtResource("2_hex_slot_mesh")
 surface_material_override/0 = SubResource("SlotMat")
 

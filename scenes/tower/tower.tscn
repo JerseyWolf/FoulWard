@@ -1,9 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://tower_scene"]
+[gd_scene load_steps=9 format=3 uid="uid://tower_scene"]
 
 [ext_resource type="Script" path="res://scenes/tower/tower.gd" id="1_tower"]
 [ext_resource type="Script" path="res://scripts/health_component.gd" id="2_health"]
 [ext_resource type="Resource" path="res://resources/weapon_data/crossbow.tres" id="3_crossbow"]
 [ext_resource type="Resource" path="res://resources/weapon_data/rapid_missile.tres" id="4_rapid"]
+[ext_resource type="Mesh" path="res://art/meshes/misc/tower_core.tres" id="5_tower_core_mesh"]
+[ext_resource type="Material" path="res://art/materials/factions/faction_neutral_material.tres" id="6_neutral_faction_mat"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_tower"]
 size = Vector3(2.0, 2.0, 2.0)
@@ -23,8 +25,8 @@ crossbow_data = ExtResource("3_crossbow")
 rapid_missile_data = ExtResource("4_rapid")
 
 [node name="TowerMesh" type="MeshInstance3D" parent="."]
-mesh = SubResource("BoxMesh_tower")
-surface_material_override/0 = SubResource("Mat_tower")
+mesh = ExtResource("5_tower_core_mesh")
+material_override = ExtResource("6_neutral_faction_mat")
 transform = Transform3D(1,0,0,0,1,0,0,0,1, 0,1.0,0)
 
 [node name="TowerCollision" type="CollisionShape3D" parent="."]

@@ -33,6 +33,9 @@ const ProjectileScene: PackedScene = preload(
 	"res://scenes/projectiles/projectile_base.tscn"
 )
 
+# Assign placeholder art resources via convention-based pipeline.
+const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
+
 @onready var _health_component: HealthComponent = $HealthComponent
 
 # ASSUMPTION: ProjectileContainer at /root/Main/ProjectileContainer per ARCHITECTURE.md §2.
@@ -67,6 +70,16 @@ func _ready() -> void:
 	_health_component.health_depleted.connect(_on_health_depleted)
 	_weapon_upgrade_manager = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
 	_shot_rng.randomize()
+
+	# Art pipeline placeholder assignment.
+	var tower_mesh_node: MeshInstance3D = get_node_or_null("TowerMesh") as MeshInstance3D
+	if tower_mesh_node != null:
+		var _mesh: Mesh = ArtPlaceholderHelper.get_tower_mesh()
+		if _mesh != null and tower_mesh_node.mesh == null:
+			tower_mesh_node.mesh = _mesh
+		var _mat: Material = ArtPlaceholderHelper.get_faction_material("neutral")
+		if _mat != null:
+			tower_mesh_node.material_override = _mat
 	print("[Tower] _ready: hp=%d auto_fire=%s crossbow_reload=%.1fs" % [
 		starting_hp, auto_fire_enabled, crossbow_data.reload_time
 	])
