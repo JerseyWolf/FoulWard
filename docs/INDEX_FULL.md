@@ -4,7 +4,7 @@ INDEXFULL.md
 FOUL WARD — INDEXFULL.md
 
 Full public API reference for every script, resource type, and system.
-Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-24 (Prompt 11 ally framework; see `docs/PROMPT_11_IMPLEMENTATION.md`).
+Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-25 (Prompt 12 mercenary roster + offers; see `docs/PROMPT_12_IMPLEMENTATION.md`).
 Use INDEXSHORT.md for fast orientation, INDEXFULL.md for exact method signatures, signals, and dependencies.
 CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 
@@ -65,6 +65,14 @@ ALLIES (Prompt 11)
     ally_killed(ally_id: String) — emitted when a generic ally’s HP hits zero (mission removal); Arnulf has no kill path in MVP (POST-MVP).
 
     ally_state_changed(ally_id: String, new_state: String) — POST-MVP detailed tracking.
+
+MERCENARIES / ROSTER (Prompt 12)
+
+    mercenary_offer_generated(ally_id: String) — when a catalog or defection offer is added to the current pool.
+
+    mercenary_recruited(ally_id: String) — after a successful `purchase_mercenary_offer`.
+
+    ally_roster_changed() — owned/active roster or offer list changed (UI refresh).
 
 BOSSES (Prompt 10)
 
@@ -433,6 +441,18 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
 | `preferred_targeting` | `Types.TargetPriority` | MVP: **CLOSEST** only |
 | `is_unique` | `bool` | Named vs generic merc |
 | `starting_level`, `level_scaling_factor`, `uses_downed_recovering` | POST-MVP | Campaign / Arnulf-like recovery |
+| `role` | `Types.AllyRole` | SimBot / auto-select scoring |
+| `damage_type`, `can_target_flying` | `Types.DamageType`, `bool` | Combat tagging |
+| `attack_damage`, `patrol_radius`, `recovery_time` | `float` | Primary damage (fallback to `basic_attack_damage` if zero), patrol, downed loop |
+| `scene_path` | `String` | Spawn scene for `AllyBase` |
+| `is_starter_ally`, `is_defected_ally` | `bool` | Campaign start vs mini-boss defection |
+| `debug_color` | `Color` | Placeholder mesh tint |
+
+**MercenaryOfferData** (`res://scripts/resources/mercenary_offer_data.gd`) — Prompt 12: `ally_id`, resource costs, `min_day` / `max_day`, `is_defection_offer`, `is_available_on_day`, `get_cost_summary`.
+
+**MercenaryCatalog** (`res://scripts/resources/mercenary_catalog.gd`) — Prompt 12: `offers` (untyped `Array`), `max_offers_per_day`, `get_daily_offers`.
+
+**MiniBossData** (`res://scripts/resources/mini_boss_data.gd`) — Prompt 12: `can_defect_to_ally`, `defected_ally_id`, defection cost fields.
 
 **AllyBase** (`res://scenes/allies/ally_base.gd` / `ally_base.tscn`) — Prompt 11
 
@@ -441,7 +461,9 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
 - `_perform_attack_on_target` — `EnemyBase.take_damage` (direct damage; POST-MVP projectiles).
 - Death: `ally_killed` + `queue_free()` unless `uses_downed_recovering` (POST-MVP).
 
-**CampaignManager** (ally roster fields): `current_ally_roster: Array`, `current_ally_roster_ids: Array[String]`, `_initialize_static_roster()`, `has_ally`, `get_ally_data`, `reinitialize_ally_roster_for_test()`.
+**CampaignManager** — Prompt 11 roster arrays + **Prompt 12**: `owned_allies` / `active_allies_for_next_day` / `max_active_allies_per_day`; `mercenary_catalog` export; `is_ally_owned`, `get_owned_allies`, `get_active_allies`, `add_ally_to_roster`, `remove_ally_from_roster`, `toggle_ally_active`, `set_active_allies_from_list`, `get_allies_for_mission_start`; `generate_offers_for_day`, `preview_mercenary_offers_for_day`, `get_current_offers`, `purchase_mercenary_offer`; `notify_mini_boss_defeated`, `register_mini_boss`, `auto_select_best_allies`; legacy `current_ally_roster` sync for spawn; `has_ally`, `get_ally_data`, `reinitialize_ally_roster_for_test()`.
+
+**SimBot** — Prompt 12: `activate(strategy: Types.StrategyProfile)`, `decide_mercenaries()`, `get_log()`.
 
 - WeaponData Phase 2 additions:
   - `assist_angle_degrees: float`

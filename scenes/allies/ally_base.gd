@@ -11,6 +11,7 @@ const _MIN_NAV_STEP_SQ: float = 0.0004
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var detection_area: Area3D = $DetectionArea
 @onready var attack_area: Area3D = $AttackArea
+@onready var ally_mesh: MeshInstance3D = $AllyMesh
 @onready var _detection_shape: CollisionShape3D = $DetectionArea/DetectionShape
 @onready var _attack_shape: CollisionShape3D = $AttackArea/AttackShape
 
@@ -18,6 +19,7 @@ var ally_data: Variant = null
 
 enum AllyState {
 	IDLE,
+	PATROL,
 	CHASE,
 	ATTACK,
 	DOWNED,
@@ -38,6 +40,11 @@ func _ready() -> void:
 	navigation_agent.radius = 0.5
 
 
+## Spec alias (Prompt 12); delegates to `initialize_ally_data`.
+func initialize(p_ally_data: AllyData) -> void:
+	initialize_ally_data(p_ally_data)
+
+
 func initialize_ally_data(p_ally_data: Variant) -> void:
 	ally_data = p_ally_data
 	if ally_data == null:
@@ -54,6 +61,7 @@ func initialize_ally_data(p_ally_data: Variant) -> void:
 		health_component.health_depleted.connect(_on_health_depleted)
 
 	_apply_ally_data_to_shapes()
+	_apply_debug_color_from_data()
 
 	# DEVIATION: generic ally_spawned for campaign / UI integration.
 	SignalBus.ally_spawned.emit(str(ally_data.get("ally_id")))
@@ -70,11 +78,21 @@ func _apply_ally_data_to_shapes() -> void:
 		(_attack_shape.shape as SphereShape3D).radius = atk_range
 
 
+func _apply_debug_color_from_data() -> void:
+	if ally_data == null or ally_mesh == null:
+		return
+	var c: Variant = ally_data.get("debug_color")
+	if c is Color and ally_mesh.material_override is StandardMaterial3D:
+		(ally_mesh.material_override as StandardMaterial3D).albedo_color = c as Color
+
+
 func _physics_process(delta: float) -> void:
 	if ally_data == null:
 		return
 	match _state:
 		AllyState.IDLE:
+			_update_idle(delta)
+		AllyState.PATROL:
 			_update_idle(delta)
 		AllyState.CHASE:
 			_update_chase(delta)
@@ -200,8 +218,18 @@ func find_target() -> EnemyBase:
 func _perform_attack_on_target(enemy: EnemyBase) -> void:
 	if enemy == null or not is_instance_valid(enemy):
 		return
+	var dmg: float = float(ally_data.get("attack_damage"))
+	if dmg <= 0.0:
+		dmg = float(ally_data.get("basic_attack_damage"))
+	var damage_t: Types.DamageType = Types.DamageType.PHYSICAL
+	if ally_data is AllyData:
+		damage_t = (ally_data as AllyData).damage_type
+	else:
+		var dt: Variant = ally_data.get("damage_type")
+		if dt != null:
+			damage_t = dt as Types.DamageType
 	# POST-MVP: RANGED allies may instantiate ProjectileBase via initialize_from_building(...) for visuals.
-	enemy.take_damage(float(ally_data.get("basic_attack_damage")), Types.DamageType.PHYSICAL)
+	enemy.take_damage(dmg, damage_t)
 
 
 func _on_health_depleted() -> void:
@@ -214,3 +242,13 @@ func _on_health_depleted() -> void:
 	var id: String = str(ally_data.get("ally_id")) if ally_data != null else ""
 	SignalBus.ally_killed.emit(id)
 	queue_free()
+
+
+func get_current_state() -> AllyState:
+	return _state
+
+
+func get_current_hp() -> int:
+	if health_component == null:
+		return 0
+	return health_component.get_current_hp()

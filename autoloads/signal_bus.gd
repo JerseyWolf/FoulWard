@@ -133,3 +133,11 @@ signal weapon_upgraded(weapon_slot: Types.WeaponSlot, new_level: int)
 signal enchantment_applied(weapon_slot: Types.WeaponSlot, slot_type: String, enchantment_id: String)
 @warning_ignore("unused_signal")
 signal enchantment_removed(weapon_slot: Types.WeaponSlot, slot_type: String)
+
+# === CAMPAIGN / ALLY ROSTER (Prompt 12) ===
+@warning_ignore("unused_signal")
+signal mercenary_offer_generated(ally_id: String)
+@warning_ignore("unused_signal")
+signal mercenary_recruited(ally_id: String)
+@warning_ignore("unused_signal")
+signal ally_roster_changed()

@@ -414,6 +414,8 @@ func _begin_mission_wave_sequence() -> void:
 	wave_manager.call_deferred("start_wave_sequence")
 
 func _transition_to(new_state: Types.GameState) -> void:
+	if game_state == new_state:
+		return
 	var old_name: String = Types.GameState.keys()[game_state]
 	var new_name: String = Types.GameState.keys()[new_state]
 	print("[GameManager] state: %s → %s" % [old_name, new_name])
@@ -560,6 +562,7 @@ func _mark_territory_boss_threat(territory_id: String, threatened: bool) -> void
 
 
 func _on_boss_killed(boss_id: String) -> void:
+	CampaignManager.notify_mini_boss_defeated(boss_id)
 	var data: BossData = _get_boss_data(boss_id)
 	if data != null and data.is_mini_boss and data.associated_territory_id != "":
 		_mark_territory_secured(data.associated_territory_id)

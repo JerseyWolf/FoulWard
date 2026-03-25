@@ -13,12 +13,14 @@ func test_start_new_game_initializes_day_one_for_short_campaign() -> void:
 
 func test_day_win_advances_day_and_shows_between_day_hub() -> void:
 	assert_int(CampaignManager.current_day).is_equal(1)
+	GameManager.current_mission = CampaignManager.get_current_day()
 	SignalBus.mission_won.emit(GameManager.get_current_mission())
 	assert_int(CampaignManager.current_day).is_equal(2)
 	assert_bool(CampaignManager.campaign_completed).is_false()
 	assert_int(GameManager.get_game_state()).is_equal(Types.GameState.BETWEEN_MISSIONS)
 
 func test_day_fail_repeats_same_day() -> void:
+	GameManager.current_mission = CampaignManager.get_current_day()
 	SignalBus.mission_won.emit(GameManager.get_current_mission())
 	assert_int(CampaignManager.current_day).is_equal(2)
 	var prev_fails: int = CampaignManager.failed_attempts_on_current_day
@@ -28,17 +30,21 @@ func test_day_fail_repeats_same_day() -> void:
 	assert_int(CampaignManager.failed_attempts_on_current_day).is_equal(prev_fails + 1)
 
 func test_failed_attempts_reset_on_day_win() -> void:
+	GameManager.current_mission = CampaignManager.get_current_day()
 	SignalBus.mission_failed.emit(GameManager.get_current_mission())
 	SignalBus.mission_failed.emit(GameManager.get_current_mission())
 	assert_int(CampaignManager.failed_attempts_on_current_day).is_equal(2)
+	GameManager.current_mission = CampaignManager.get_current_day()
 	SignalBus.mission_won.emit(GameManager.get_current_mission())
 	assert_int(CampaignManager.failed_attempts_on_current_day).is_equal(0)
 
 func test_campaign_completed_after_last_short_day_win() -> void:
 	while CampaignManager.current_day < CampaignManager.campaign_length:
+		GameManager.current_mission = CampaignManager.get_current_day()
 		SignalBus.mission_won.emit(GameManager.get_current_mission())
 	assert_int(CampaignManager.current_day).is_equal(CampaignManager.campaign_length)
 	assert_bool(CampaignManager.campaign_completed).is_false()
+	GameManager.current_mission = CampaignManager.get_current_day()
 	SignalBus.mission_won.emit(GameManager.get_current_mission())
 	assert_bool(CampaignManager.campaign_completed).is_true()
 

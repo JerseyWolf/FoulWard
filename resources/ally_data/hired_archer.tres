@@ -4,18 +4,23 @@
 
 [resource]
 script = ExtResource("1")
-ally_id = "ally_ranged_generic"
-display_name = "Mercenary (Ranged)"
-description = "PLACEHOLDER narrative."
+ally_id = "hired_archer"
+display_name = "Hired Archer"
+description = "PLACEHOLDER: catalog mercenary (ranged)."
 ally_class = 1
+role = 1
+damage_type = 0
+can_target_flying = false
 max_hp = 70
 move_speed = 4.0
 basic_attack_damage = 14.0
 attack_range = 10.0
 attack_cooldown = 1.1
+patrol_radius = 14.0
+recovery_time = 0.0
 preferred_targeting = 0
 is_unique = false
 scene_path = "res://scenes/allies/ally_base.tscn"
 is_starter_ally = false
 is_defected_ally = false
-debug_color = Color(0.25, 0.5, 0.9, 1)
+debug_color = Color(0.85, 0.55, 0.2, 1)

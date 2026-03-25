@@ -46,6 +46,12 @@ func test_ally_data_placeholder_resources_load() -> void:
 			assert_float(float(data.get("move_speed"))).is_greater(0.0)
 			assert_float(float(data.get("basic_attack_damage"))).is_greater(0.0)
 			assert_float(float(data.get("attack_cooldown"))).is_greater(0.0)
-			assert_that(data.get("preferred_targeting")).is_equal(Types.TargetPriority.CLOSEST)
+			var pri: Variant = data.get("preferred_targeting")
+			var valid_pri2: Array = [
+				Types.TargetPriority.CLOSEST,
+				Types.TargetPriority.HIGHEST_HP,
+				Types.TargetPriority.FLYING_FIRST,
+			]
+			assert_bool(valid_pri2.has(pri)).is_true()
 		file_name = dir.get_next()
 	dir.list_dir_end()

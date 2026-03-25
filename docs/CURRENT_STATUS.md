@@ -41,13 +41,23 @@ Open **`project.godot`** in Godot (or “Import” the folder). First open regen
 
 ---
 
-## 4. Run the full test suite (headless)
+## 4. Run tests (headless)
 
 From **`$REPO`**:
+
+**Full suite** (everything under `res://tests/` — use before merge / milestones):
 
 ```bash
 ./tools/run_gdunit.sh
 ```
+
+**Quick subset** (allowlist of lighter suites — faster while iterating; edit the list in the script):
+
+```bash
+./tools/run_gdunit_quick.sh
+```
+
+Both scripts **tee stdout/stderr** to a log under **`reports/`** (gitignored): `gdunit_quick_run.log` and `gdunit_full_run.log`. Override with **`GDUNIT_LOG_FILE`**. For automation or long runs, inspect failures with e.g. `tail -n 100 reports/gdunit_full_run.log` or `rg 'FAIL|ERROR' reports/gdunit_full_run.log`.
 
 If your shell defines `godot` as a wrapper function that forces editor mode (for example appending `-e`), use the direct Godot binary path for CLI tests. Editor-mode wrappers inject `--editor` and break GdUnit CLI parsing.
 

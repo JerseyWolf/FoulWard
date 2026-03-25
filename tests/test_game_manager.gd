@@ -10,6 +10,8 @@ func before_test() -> void:
 	GameManager.current_mission = 1
 	GameManager.current_wave = 0
 	GameManager.game_state = Types.GameState.MAIN_MENU
+	GameManager.final_boss_defeated = false
+	GameManager.final_boss_active = false
 	EconomyManager.reset_to_defaults()
 	CampaignManager.set_active_campaign_config_for_test(CampaignManager.DEFAULT_SHORT_CAMPAIGN)
 	CampaignManager.campaign_completed = false
@@ -331,8 +333,9 @@ func test_waves_per_mission_constant_is_3() -> void:
 	assert_int(GameManager.WAVES_PER_MISSION).is_equal(3)
 
 func test_start_new_game_resets_campaign_and_mission() -> void:
-	while CampaignManager.current_day < 3:
-		# CampaignManager requires mission_won payload to match current_day.
+	# Two explicit wins (bounded). A `while current_day < N` loop can hang if `mission_won` is ignored
+	# (e.g. payload mismatch or `CampaignManager._on_mission_won` returns early).
+	for _i: int in range(2):
 		GameManager.current_mission = CampaignManager.get_current_day()
 		SignalBus.mission_won.emit(GameManager.get_current_mission())
 	assert_int(CampaignManager.current_day).is_greater(1)

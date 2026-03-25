@@ -84,3 +84,20 @@ enum TargetPriority {
 	FLYING_FIRST,
 }
 
+# NEW enums for ally roles and SimBot strategy profiles (Prompt 12).
+enum AllyRole {
+	MELEE_FRONTLINE,
+	RANGED_SUPPORT,
+	ANTI_AIR,
+	TANK,
+	SPELL_SUPPORT,
+}
+
+enum StrategyProfile {
+	BALANCED,
+	ALLY_HEAVY_PHYSICAL,
+	ANTI_AIR_FOCUS,
+	SPELL_FOCUS,
+	BUILDING_FOCUS,
+}
+
