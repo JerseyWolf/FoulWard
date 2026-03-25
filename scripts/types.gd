@@ -101,3 +101,14 @@ enum StrategyProfile {
 	BUILDING_FOCUS,
 }
 
+# ASSUMPTION: HubRole enum is appended to keep existing enum numeric ordering stable.
+# POST-MVP: Extend with FLORENCE, CAMPAIGN_SPECIFIC, etc. narrative requires.
+enum HubRole {
+	SHOP,
+	RESEARCH,
+	ENCHANT,
+	MERCENARY,
+	ALLY,
+	FLAVOR_ONLY,
+}
+

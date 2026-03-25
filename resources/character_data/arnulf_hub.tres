@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/character_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+character_id = "COMPANION_MELEE"
+display_name = "Arnulf Hub"
+description = "TODO: description"
+role = 4
+portrait_id = "TODO_PORTRAIT"
+icon_id = ""
+hub_position_2d = Vector2(480, 0)
+hub_marker_name_3d = ""
+default_dialogue_tags = ["hub", "ally"]
+

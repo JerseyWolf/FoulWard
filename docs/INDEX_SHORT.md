@@ -16,7 +16,7 @@ DialogueManager	res://autoloads/dialogue_manager.gd	Prompt 13: loads `DialogueEn
 AutoTestDriver	res://autoloads/auto_test_driver.gd	Headless smoke-test driver. Active only when --autotest flag is present.
 SCRIPTS (attached to Manager nodes in main.tscn under /root/Main/Managers/)
 Class Name	Path	What it does
-Types	res://scripts/types.gd	All enums and shared constants. Prompt 11: `AllyClass` (MELEE/RANGED/SUPPORT); `TargetPriority` shared with allies (MVP: CLOSEST). Not an autoload; referenced as Types.XXX.
+Types	res://scripts/types.gd	All enums and shared constants. Prompt 11: `AllyClass` (MELEE/RANGED/SUPPORT); `TargetPriority` shared with allies (MVP: CLOSEST). Prompt 14: `HubRole` marks between-mission hub character categories. Not an autoload; referenced as Types.XXX.
 HealthComponent	res://scripts/healthcomponent.gd	Reusable HP tracker. Emits local signals health_depleted, health_changed.
 WaveManager	res://scripts/wave_manager.gd	Spawns enemies per wave from FactionData-weighted roster (total N×6), countdown, wave signals. `_enemy_container` / `_spawn_points` via get_node_or_null(/root/Main/...); null-safe spawn. Prompt 10: boss_registry, ensure_boss_registry_loaded, set_day_context, boss wave on configured index + escorts.
 SpellManager	res://scripts/spellmanager.gd	Owns mana pool, spell cooldowns. Executes Shockwave AoE in MVP.
@@ -37,8 +37,10 @@ BossBase	res://scenes/bosses/boss_base.gd	res://scenes/bosses/boss_base.tscn	Pro
 ProjectileBase	res://scenes/projectiles/projectilebase.gd	res://scenes/projectiles/projectilebase.tscn	Physics-driven projectile. Hits first valid enemy, self-destructs.
 UI SCRIPTS & SCENES
 Class Name	Script Path	Scene Path	What it does
-UIManager	res://ui/ui_manager.gd	(Control node in main.tscn)	Lightweight state router. Shows/hides UI panels on game_state_changed. Prompt 13: `show_dialogue_for_character` + queue; instantiates `dialogueui.tscn` on demand.
-DialogueUI	res://ui/dialogueui.gd	res://ui/dialogueui.tscn	Placeholder hub dialogue panel (name, text, Continue). Calls DialogueManager on advance.
+UIManager	res://ui/ui_manager.gd	(Control node in main.tscn)	Lightweight state router + hub dialogue router. Shows/hides UI panels on game_state_changed and wires `Hub2DHub` + `DialoguePanel`. Prompt 14: `show_dialogue(display_name, entry)` + `clear_dialogue()`; still supports `show_dialogue_for_character` with queue.
+Hub2DHub	res://ui/hub.gd	res://ui/hub.tscn	2D between-mission hub overlay. Instantiates clickable characters from `CharacterCatalog` and routes focus to `BetweenMissionScreen` + dialogue.
+DialoguePanel	res://ui/dialogue_panel.gd	res://ui/dialogue_panel.tscn	Global click-to-continue dialogue overlay (SpeakerLabel + TextLabel). Chains via `DialogueEntry.chain_next_id`.
+DialogueUI	res://ui/dialogueui.gd	res://ui/dialogueui.tscn	Legacy placeholder hub dialogue panel (Prompt 13). Kept for reference; hub now uses DialoguePanel.
 HUD	res://ui/hud.gd	res://ui/hud.tscn	Combat overlay: resources, wave counter, HP bar, spells.
 BuildMenu	res://ui/buildmenu.gd	res://ui/buildmenu.tscn	Radial building placement panel. Opens on hex slot click in BUILDMODE.
 BetweenMissionScreen	res://ui/between_mission_screen.gd	res://ui/between_mission_screen.tscn	Post-mission tabs: World Map, Shop, Research, Buildings, Weapons, Mercenaries (Prompt 12). NEXT DAY. Prompt 13: on `BETWEEN_MISSIONS`, `_show_hub_dialogue()` → UIManager for SPELL_RESEARCHER then COMPANION_MELEE (queued).
@@ -67,6 +69,8 @@ MercenaryCatalog	res://scripts/resources/mercenary_catalog.gd	Prompt 12: offers 
 MiniBossData	res://scripts/resources/mini_boss_data.gd	Prompt 12: defection metadata (defected_ally_id, costs).
 DialogueCondition	res://scripts/resources/dialogue/dialogue_condition.gd	key, comparison (==, !=, >, >=, <, <=), value (Variant) — AND only; evaluated by DialogueManager
 DialogueEntry	res://scripts/resources/dialogue/dialogue_entry.gd	entry_id, character_id, text, priority, once_only, chain_next_id, conditions[]
+CharacterData	res://scripts/resources/character_data.gd	data resource for a single between-mission hub character (id, display_name, HubRole, dialogue tags, 2D placement).
+CharacterCatalog	res://scripts/resources/character_catalog.gd	resource holding the hub character set loaded by `Hub2DHub`.
 RESOURCE FILES (.tres — actual data)
 Ally data (Prompt 11)
 File	ally_id	Notes
@@ -89,6 +93,15 @@ res://resources/dialogue/merchant/	MERCHANT placeholder pool
 res://resources/dialogue/mercenary_commander/	MERCENARY_COMMANDER placeholder pool
 res://resources/dialogue/campaign_character_template/	CAMPAIGN_CHARACTER_X template pool
 res://resources/dialogue/example_character/	EXAMPLE_CHARACTER — conditional + chain demo entries
+Character hub cast (Prompt 14)
+File	Notes
+res://resources/character_data/merchant.tres	MERCHANT (HubRole.SHOP)
+res://resources/character_data/researcher.tres	SPELL_RESEARCHER (HubRole.RESEARCH)
+res://resources/character_data/enchantress.tres	ENCHANTER (HubRole.ENCHANT)
+res://resources/character_data/mercenary_captain.tres	MERCENARY_COMMANDER (HubRole.MERCENARY)
+res://resources/character_data/arnulf_hub.tres	COMPANION_MELEE (HubRole.ALLY)
+res://resources/character_data/flavor_npc_01.tres	EXAMPLE_CHARACTER (HubRole.FLAVOR_ONLY)
+res://resources/character_catalog.tres	CharacterCatalog containing all hub cast entries.
 Enemy Data
 File	enemy_type	armor_type	Notes
 res://resources/enemydata/orcgrunt.tres	ORCGRUNT	UNARMORED	Basic melee runner
@@ -137,6 +150,7 @@ testcampaignallyroster.gd	Prompt 12: owned/active roster APIs
 testminibossdefection.gd	Prompt 12: defection offer injection
 testsimbotmercenaries.gd	Prompt 12: SimBot mercenary API
 test_dialogue_manager.gd	Prompt 13: DialogueManager conditions, priority, once-only, chain fallback, resource load
+test_character_hub.gd	Prompt 14: CharacterData/Catalog loading, Hub click focus behavior, DialoguePanel display + chaining, and UIManager hub open/close integration.
 testeconomymanager.gd	gold/material add/spend/reset, signal emission, transactions
 testdamagecalculator.gd	Full 4×4 matrix, boundary values, DoT stub
 testwavemanager.gd	Wave scaling, countdown, spawn count, faction-weighted composition, mini-boss hook, Prompt 10: regular day spawns no bosses

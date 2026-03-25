@@ -199,3 +199,48 @@ func test_dialoguemanager_loads_entries_from_dialogue_resources_folder() -> void
 	_reset_dialogue_manager_runtime_state()
 	DialogueManager._load_all_dialogue_entries()
 	assert_int(DialogueManager.entries_by_id.size()).is_greater(0)
+
+
+func test_get_entry_by_id_returns_registered_entry() -> void:
+	var entry := DialogueEntry.new()
+	entry.entry_id = "TEST_GET_ENTRY_BY_ID_01"
+	entry.character_id = "EXAMPLE_CHARACTER"
+	entry.text = "Hello"
+	entry.priority = 10
+	entry.once_only = false
+	entry.chain_next_id = ""
+	entry.conditions = []
+
+	_register_entries([entry])
+
+	var fetched: DialogueEntry = DialogueManager.get_entry_by_id("TEST_GET_ENTRY_BY_ID_01")
+	assert_object(fetched).is_not_null()
+	assert_str(fetched.entry_id).is_equal("TEST_GET_ENTRY_BY_ID_01")
+
+
+func test_request_entry_for_character_with_tags_keeps_priority_selection() -> void:
+	var high := DialogueEntry.new()
+	high.entry_id = "TEST_TAGS_HIGH"
+	high.character_id = "EXAMPLE_CHARACTER"
+	high.priority = 99
+	high.once_only = false
+	high.chain_next_id = ""
+	high.text = "High"
+	high.conditions = []
+
+	var low := DialogueEntry.new()
+	low.entry_id = "TEST_TAGS_LOW"
+	low.character_id = "EXAMPLE_CHARACTER"
+	low.priority = 1
+	low.once_only = false
+	low.chain_next_id = ""
+	low.text = "Low"
+	low.conditions = []
+
+	_register_entries([high, low])
+
+	var picked: DialogueEntry = DialogueManager.request_entry_for_character(
+		"EXAMPLE_CHARACTER",
+		["hub", "shop"]
+	)
+	assert_str(picked.entry_id).is_equal("TEST_TAGS_HIGH")
