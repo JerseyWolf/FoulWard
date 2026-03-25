@@ -38,3 +38,6 @@ tools/autotest_last_run.err
 
 # Local repository dump exports for LLM context
 repo_dump_option_b_with_tests.txt
+
+# Generated docs dump exports for LLM context
+docs/DOCS_DUMP.md
