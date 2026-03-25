@@ -22,6 +22,8 @@ extends Control
 @onready var _crossbow_enchant_label: Label = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/EnchantmentLabel
 @onready var _rapid_enchant_label: Label = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/RapidMissile/EnchantmentLabel
 
+@onready var _tab_container: TabContainer = $TabContainer # ASSUMPTION: TabContainer node exists at root.
+
 @onready var _crossbow_elemental_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/ApplyElementalButton
 @onready var _crossbow_power_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/ApplyPowerButton
 @onready var _crossbow_remove_button: Button = $TabContainer/WeaponsTab/VBoxContainer/WeaponsPanel/Crossbow/RemoveAllButton
@@ -64,6 +66,35 @@ func _on_game_state_changed(
 	if new_state == Types.GameState.BETWEEN_MISSIONS:
 		_refresh_all()
 		_show_hub_dialogue()
+
+
+func open_shop_panel() -> void:
+	if _tab_container == null:
+		return
+	# ASSUMPTION (from between_mission_screen.tscn):
+	# MapTab=0, ShopTab=1.
+	_tab_container.current_tab = 1
+
+
+func open_research_panel() -> void:
+	if _tab_container == null:
+		return
+	# ASSUMPTION (from between_mission_screen.tscn): ResearchTab index=2.
+	_tab_container.current_tab = 2
+
+
+func open_enchant_panel() -> void:
+	if _tab_container == null:
+		return
+	# DEVIATION: No Enchant tab exists in current MVP scene. Route to ResearchTab.
+	_tab_container.current_tab = 2
+
+
+func open_mercenary_panel() -> void:
+	if _tab_container == null:
+		return
+	# DEVIATION: Current MVP scene has a Mercenaries tab already (MercenariesTab index=4).
+	_tab_container.current_tab = 4
 
 
 func _show_hub_dialogue() -> void:

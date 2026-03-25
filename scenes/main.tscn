@@ -25,6 +25,8 @@
 [ext_resource type="PackedScene" path="res://ui/build_menu.tscn" id="11_buildmenu"]
 [ext_resource type="Resource" path="res://resources/building_data/ballista.tres" id="11_cjqg0"]
 [ext_resource type="PackedScene" path="res://ui/between_mission_screen.tscn" id="12_bms"]
+[ext_resource type="PackedScene" path="res://ui/hub.tscn" id="40_hub"]
+[ext_resource type="PackedScene" path="res://ui/dialogue_panel.tscn" id="41_dialogue_panel"]
 [ext_resource type="Resource" path="res://resources/enemy_data/orc_archer.tres" id="12_dgi5k"]
 [ext_resource type="Resource" path="res://resources/building_data/archer_barracks.tres" id="12_vchkt"]
 [ext_resource type="Resource" path="res://resources/enemy_data/bat_swarm.tres" id="13_j8jky"]
@@ -194,6 +196,19 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("9_uimanager")
+
+[node name="Hub" parent="UI" instance=ExtResource("40_hub")]
+layout_mode = 3
+anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DialoguePanel" parent="UI/UIManager" instance=ExtResource("41_dialogue_panel")]
+layout_mode = 3
+anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
+
 
 [node name="HUD" parent="UI" unique_id=2074136346 instance=ExtResource("10_hud")]
 layout_mode = 3

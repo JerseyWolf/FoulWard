@@ -293,9 +293,11 @@ Signals: `dialogue_line_started(entry_id: String, character_id: String)`, `dialo
 
 Key methods:
 
-    request_entry_for_character(character_id: String, context: String = "") -> DialogueEntry
+    request_entry_for_character(character_id: String, tags: Array[String] = []) -> DialogueEntry
 
     mark_entry_played(entry_id: String) -> void
+
+    get_entry_by_id(entry_id: String) -> DialogueEntry
 
     notify_dialogue_finished(entry_id: String, character_id: String) -> void
 
@@ -498,7 +500,61 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
 | `chain_next_id` | `String` | Optional next `entry_id` after current line plays |
 | `conditions` | `Array[DialogueCondition]` | All must pass (AND) |
 
+**CharacterData** (`res://scripts/resources/character_data.gd`) — Prompt 14
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `character_id` | `String` | Stable ID passed into `DialogueManager.request_entry_for_character()` |
+| `display_name` | `String` | Speaker/name shown by hub character UI and `DialoguePanel` |
+| `description` | `String` | Placeholder copy for future tooltips/codex |
+| `role` | `Types.HubRole` | Drives which `BetweenMissionScreen` panel to open |
+| `portrait_id` | `String` | Visual identifier for future portrait rendering |
+| `icon_id` | `String` | Optional sprite/icon identifier for future UI |
+| `hub_position_2d` | `Vector2` | Intended 2D placement for the hub overlay |
+| `hub_marker_name_3d` | `String` | Marker reference for a future 3D hub implementation |
+| `default_dialogue_tags` | `Array[String]` | Tags passed into `DialogueManager` when requesting dialogue (MVP ignores tags) |
+
+**CharacterCatalog** (`res://scripts/resources/character_catalog.gd`) — Prompt 14
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `characters` | `Array[CharacterData]` | Full hub character set instantiated by `Hub2DHub` |
+
 **DialogueUI** (`res://ui/dialogueui.gd` / `dialogueui.tscn`) — Prompt 13: `show_entry(DialogueEntry)`; **Continue** → `mark_entry_played` / chain or `notify_dialogue_finished`.
+
+**DialoguePanel** (`res://ui/dialogue_panel.gd` / `dialogue_panel.tscn`) — Prompt 14
+- `show_entry(display_name: String, entry: DialogueEntry) -> void`: sets SpeakerLabel + TextLabel and makes the overlay visible.
+- `clear_dialogue() -> void`: hides the panel and resets the current entry.
+- Click-to-continue: left mouse advances. On chain end it calls `DialogueManager.notify_dialogue_finished`.
+
+**HubCharacterBase2D** (`res://scenes/hub/character_base_2d.gd` / `character_base_2d.tscn`) — Prompt 14
+- Export: `character_data: CharacterData`.
+- Signal: `character_interacted(character_id: String)` emitted on left mouse click.
+
+**Hub2DHub** (`res://ui/hub.gd` / `ui/hub.tscn`) — Prompt 14
+- Export: `character_catalog: CharacterCatalog`.
+- Signals: `hub_opened()`, `hub_closed()`, `hub_character_interacted(character_id: String)`.
+- Public API:
+  - `open_hub() -> void`
+  - `close_hub() -> void`
+  - `focus_character(character_id: String) -> void` (same behavior as a user click)
+  - `set_between_mission_screen(screen: Node) -> void`
+  - `_set_ui_manager(ui_manager: Node) -> void`
+
+**BetweenMissionScreen** (`res://ui/between_mission_screen.gd`) — Prompt 14
+- Panel helpers used by hub focus routing:
+  - `open_shop_panel() -> void`
+  - `open_research_panel() -> void`
+  - `open_enchant_panel() -> void` (routes to ResearchTab in MVP)
+  - `open_mercenary_panel() -> void` (routes to MercenariesTab in current MVP scene)
+
+**UIManager** (`res://ui/ui_manager.gd`) — Prompt 14
+- New dialogue helpers:
+  - `show_dialogue(display_name: String, entry: DialogueEntry) -> void` (routes to DialoguePanel)
+  - `clear_dialogue() -> void` (hides DialoguePanel)
+- Hub integration:
+  - Shows `Hub2DHub` when entering `Types.GameState.BETWEEN_MISSIONS`
+  - Closes Hub + clears dialogue when leaving `BETWEEN_MISSIONS`
 
 **AllyBase** (`res://scenes/allies/ally_base.gd` / `ally_base.tscn`) — Prompt 11
 
@@ -519,7 +575,7 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
   - All default to `0.0` (MVP behavior preserved until tuned in `.tres` data).
 TYPES ENUMS (res://scripts/types.gd)
 
-GameState, DamageType, ArmorType, BuildingType, ArnulfState, ResourceType, EnemyType, **AllyClass**, WeaponSlot, TargetPriority (buildings + allies; ally MVP uses CLOSEST).
+GameState, DamageType, ArmorType, BuildingType, ArnulfState, ResourceType, EnemyType, **AllyClass**, **HubRole**, WeaponSlot, TargetPriority (buildings + allies; ally MVP uses CLOSEST).
 GAME FLOW, SIGNAL FLOW, POST-MVP STUB INVENTORY
 
 These sections describe the complete main-menu → mission → between-mission → end-screen loop, the major signal chains (enemy dies, tower dies, wave clears, research unlock, build mode, etc.), and which hooks exist but are not yet used (building_destroyed, DoT, SimBot profiles, etc.).

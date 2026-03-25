@@ -26,9 +26,6 @@ DialogueManager="*res://autoloads/dialogue_manager.gd"
 AutoTestDriver="*res://autoloads/auto_test_driver.gd"
 GDAIMCPRuntime="*uid://dcne7ryelpxmn"
 EnchantmentManager="*res://autoloads/enchantment_manager.gd"
-MCPScreenshot="*res://addons/godot_mcp/mcp_screenshot_service.gd"
-MCPInputService="*res://addons/godot_mcp/mcp_input_service.gd"
-MCPGameInspector="*res://addons/godot_mcp/mcp_game_inspector_service.gd"
 
 [display]
 

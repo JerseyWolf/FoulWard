@@ -106,7 +106,7 @@ func _connect_signals() -> void:
 	SignalBus.spell_cast.connect(_on_spell_cast)
 
 
-func request_entry_for_character(character_id: String, _context: String = "") -> DialogueEntry:
+func request_entry_for_character(character_id: String, tags: Array[String] = []) -> DialogueEntry:
 	if not entries_by_character.has(character_id):
 		return null
 
@@ -115,7 +115,7 @@ func request_entry_for_character(character_id: String, _context: String = "") ->
 		if entries_by_id.has(active_chain_id):
 			var chain_entry: DialogueEntry = entries_by_id[active_chain_id] as DialogueEntry
 			if not (chain_entry.once_only and played_once_only.get(chain_entry.entry_id, false)):
-				if _evaluate_conditions(chain_entry):
+				if _entry_matches_tags(chain_entry, tags) and _evaluate_conditions(chain_entry):
 					_emit_started(chain_entry)
 					return chain_entry
 			active_chains_by_character.erase(character_id)
@@ -131,7 +131,7 @@ func request_entry_for_character(character_id: String, _context: String = "") ->
 		var entry: DialogueEntry = entry_variant as DialogueEntry
 		if entry.once_only and played_once_only.get(entry.entry_id, false):
 			continue
-		if not _evaluate_conditions(entry):
+		if not (_entry_matches_tags(entry, tags) and _evaluate_conditions(entry)):
 			continue
 		candidates.append(entry)
 
@@ -155,6 +155,19 @@ func request_entry_for_character(character_id: String, _context: String = "") ->
 	var chosen: DialogueEntry = best_candidates[index]
 	_emit_started(chosen)
 	return chosen
+
+
+func get_entry_by_id(entry_id: String) -> DialogueEntry:
+	if entries_by_id.has(entry_id):
+		return entries_by_id[entry_id] as DialogueEntry
+	return null
+
+
+func _entry_matches_tags(_entry: DialogueEntry, _tags: Array[String]) -> bool:
+	# ASSUMPTION: DialogueEntry resources currently do not include tag metadata.
+	# The hub passes CharacterData.default_dialogue_tags for future expansion.
+	# For MVP, all tags are treated as non-filtering.
+	return true
 
 
 func _emit_started(entry: DialogueEntry) -> void:
