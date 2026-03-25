@@ -310,6 +310,29 @@ AutoTestDriver
 
 Path: res://autoloads/autotestdriver.gd
 Purpose: Headless integration smoke tester, active only with --autotest CLI flag.
+
+ArtPlaceholderHelper
+
+class path: res://scripts/art/art_placeholder_helper.gd
+class_name: ArtPlaceholderHelper
+purpose: Stateless utility. Resolves Mesh, Material, and Texture2D resources from res://art using convention-based path derivation keyed by Types.EnemyType, Types.BuildingType, ally ID strings, and faction ID strings. Caches loaded resources. Prefers res://art/generated/ assets over placeholders. Falls back to unknown_mesh/neutral material on missing resources — never crashes.
+public methods:
+  get_enemy_mesh(enemy_type: Types.EnemyType) -> Mesh
+  get_building_mesh(building_type: Types.BuildingType) -> Mesh
+  get_ally_mesh(ally_id: StringName) -> Mesh
+  get_tower_mesh() -> Mesh
+  get_unknown_mesh() -> Mesh
+  get_faction_material(faction_id: StringName) -> Material
+  get_enemy_material(enemy_type: Types.EnemyType) -> Material
+  get_building_material(building_type: Types.BuildingType) -> Material
+  get_enemy_icon(enemy_type: Types.EnemyType) -> Texture2D  [POST-MVP stub]
+  get_building_icon(building_type: Types.BuildingType) -> Texture2D  [POST-MVP stub]
+  get_ally_icon(ally_id: StringName) -> Texture2D  [POST-MVP stub]
+  clear_cache() -> void
+exported variables: none
+signals emitted: none
+dependencies: Types, ResourceLoader (built-in)
+
 SCENE SCRIPTS (Tower, Arnulf, HexGrid, BuildingBase, EnemyBase, ProjectileBase)
 
 (Details are as previously summarized in INDEXSHORT, expanded with method behavior and signals.)

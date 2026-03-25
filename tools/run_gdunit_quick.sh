@@ -43,6 +43,7 @@ QUICK_SUITES=(
 	"res://tests/test_economy_manager.gd"
 	"res://tests/test_damage_calculator.gd"
 	"res://tests/test_health_component.gd"
+	"res://tests/test_art_placeholders.gd"
 	"res://tests/test_ally_data.gd"
 	"res://tests/test_faction_data.gd"
 	"res://tests/test_boss_data.gd"

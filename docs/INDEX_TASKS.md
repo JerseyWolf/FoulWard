@@ -157,3 +157,14 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - `BetweenMissionScreen` Florence debug label + refresh on `florence_state_changed`
   - `DialogueManager` resolver support for `florence.*` and `campaign.*`
   - Tests: `res://tests/test_florence.gd` (+ quick allowlist update); parse-safety fixes (no invalid `Types.DayAdvanceReason(...)` cast; avoid `: FlorenceData` local type annotations)
+
+- Prompt 17 (2026-03-25) — art placeholder pipeline scaffolding:
+  - **`docs/PROMPT_17_IMPLEMENTATION.md`**
+  - `res://scripts/art/art_placeholder_helper.gd` (`ArtPlaceholderHelper`)
+  - `res://art/` hierarchy + `README_ART_PIPELINE.md` files
+  - Primitive placeholder mesh/material `.tres` resources
+  - Fixed Godot primitive `.tres` text format: added required `[resource]` wrapper to `art/meshes/**/*.tres` and `art/materials/factions/*.tres` (and matched `StandardMaterial3D` property order)
+  - Updated `tests/test_art_placeholders.gd` to preload the helper script and fixed invalid enum fallback casting for headless parsing
+  - Scene + script wiring for enemy/building/tower/arnulf + helper overrides
+  - Tests: `res://tests/test_art_placeholders.gd` (+ quick allowlist update)
+  - `docs/INDEX_SHORT.md`, `docs/INDEX_FULL.md`, `docs/INDEX_MACHINE.md` updated

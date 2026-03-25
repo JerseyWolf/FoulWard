@@ -1,7 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scenes/enemies/enemy_base.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/health_component.gd" id="3"]
+[ext_resource type="Mesh" path="res://art/meshes/enemies/enemy_orc_grunt.tres" id="4_enemy_mesh"]
+[ext_resource type="Material" path="res://art/materials/factions/faction_orcs_material.tres" id="5_enemy_mat"]
 
 [sub_resource type="CapsuleShape3D" id="1"]
 radius = 0.5
@@ -19,8 +21,8 @@ collision_layer = 2
 collision_mask = 45
 
 [node name="EnemyMesh" type="MeshInstance3D" parent="."]
-mesh = SubResource("4")
-material_override = SubResource("2")
+mesh = ExtResource("4_enemy_mesh")
+material_override = ExtResource("5_enemy_mat")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 
 [node name="EnemyCollision" type="CollisionShape3D" parent="."]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://arnulf_scene"]
+[gd_scene load_steps=10 format=3 uid="uid://arnulf_scene"]
 
 ; arnulf.tscn — Arnulf AI melee companion scene for FOUL WARD.
 ; Scene tree matches ARCHITECTURE.md §2.
@@ -10,6 +10,8 @@
 
 [ext_resource type="Script" path="res://scenes/arnulf/arnulf.gd" id="1_arnulf"]
 [ext_resource type="Script" path="res://scripts/health_component.gd" id="2_health"]
+[ext_resource type="Mesh" path="res://art/meshes/allies/ally_arnulf.tres" id="3_arnulf_mesh"]
+[ext_resource type="Material" path="res://art/materials/factions/faction_allies_material.tres" id="4_allies_faction_mat"]
 
 [sub_resource type="BoxMesh" id="1_mesh"]
 size = Vector3(1.0, 1.5, 1.0)
@@ -29,7 +31,8 @@ collision_layer = 4
 collision_mask = 0
 
 [node name="ArnulfMesh" type="MeshInstance3D" parent="."]
-mesh = SubResource("1_mesh")
+mesh = ExtResource("3_arnulf_mesh")
+material_override = ExtResource("4_allies_faction_mat")
 
 [node name="ArnulfCollision" type="CollisionShape3D" parent="."]
 shape = SubResource("2_collision")

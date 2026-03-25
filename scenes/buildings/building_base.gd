@@ -26,6 +26,9 @@ const BASE_HALF_EXTENT_Z: float = 1.25
 const BASE_HEIGHT: float = 3.0
 const OBSTACLE_RADIUS: float = 2.0
 
+# Assign placeholder art resources via convention-based pipeline.
+const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
+
 # ---------------------------------------------------------------------------
 # Private state
 # ---------------------------------------------------------------------------
@@ -117,6 +120,16 @@ func initialize(data: BuildingData) -> void:
 		var mat: StandardMaterial3D = StandardMaterial3D.new()
 		mat.albedo_color = data.color
 		mesh_inst.material_override = mat
+
+	# Art pipeline placeholder assignment (runtime override).
+	# NOTE: keep existing MVP color material generation for now; we override it via helper.
+	if mesh_inst != null:
+		var _art_mesh: Mesh = ArtPlaceholderHelper.get_building_mesh(data.building_type)
+		if _art_mesh != null:
+			mesh_inst.mesh = _art_mesh
+		var _art_mat: Material = ArtPlaceholderHelper.get_building_material(data.building_type)
+		if _art_mat != null:
+			mesh_inst.material_override = _art_mat
 
 	var label_inst: Label3D = get_node_or_null("BuildingLabel") as Label3D
 	if label_inst != null:

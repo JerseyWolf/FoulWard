@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://building_base"]
+[gd_scene load_steps=8 format=3 uid="uid://building_base"]
 
 [ext_resource type="Script" path="res://scenes/buildings/building_base.gd" id="1_buildingbase"]
 [ext_resource type="Script" path="res://scripts/health_component.gd" id="2_healthcomponent"]
+[ext_resource type="Mesh" path="res://art/meshes/misc/unknown_mesh.tres" id="3_unknown_mesh"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_building"]
 size = Vector3(1.5, 3.0, 1.5)
@@ -17,8 +18,7 @@ script = ExtResource("1_buildingbase")
 
 [node name="BuildingMesh" type="MeshInstance3D" parent="."]
 position = Vector3(0, 1.5, 0)
-mesh = SubResource("BoxMesh_building")
-surface_material_override/0 = SubResource("BuildingMat")
+mesh = ExtResource("3_unknown_mesh")
 
 [node name="BuildingLabel" type="Label3D" parent="."]
 position = Vector3(0, 3.5, 0)

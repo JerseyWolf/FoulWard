@@ -17,6 +17,9 @@ const STUCK_VELOCITY_EPSILON: float = 0.1
 const STUCK_TIME_THRESHOLD: float = 1.5
 const PROGRESS_EPSILON: float = 0.05
 
+# Assign placeholder art resources via convention-based pipeline.
+const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
+
 var _enemy_data: EnemyData = null
 var _attack_timer: float = 0.0
 var _is_attacking: bool = false
@@ -77,6 +80,15 @@ func initialize(enemy_data: EnemyData) -> void:
 		_mesh.material_override = mat
 	if _label != null:
 		_label.text = _enemy_data.display_name
+
+	# Art pipeline placeholder assignment (runtime override).
+	if _mesh != null:
+		var _art_mesh: Mesh = ArtPlaceholderHelper.get_enemy_mesh(enemy_data.enemy_type)
+		if _art_mesh != null:
+			_mesh.mesh = _art_mesh
+		var _art_mat: Material = ArtPlaceholderHelper.get_enemy_material(enemy_data.enemy_type)
+		if _art_mat != null:
+			_mesh.material_override = _art_mat
 
 ## Applies damage of a given type to this enemy.
 func take_damage(amount: float, damage_type: Types.DamageType) -> void:
