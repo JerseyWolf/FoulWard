@@ -60,6 +60,7 @@ QUICK_SUITES=(
 	"res://tests/test_campaign_ally_roster.gd"
 	"res://tests/test_mini_boss_defection.gd"
 	"res://tests/test_simbot_mercenaries.gd"
+	"res://tests/test_dialogue_manager.gd"
 )
 
 gdunit_args=()

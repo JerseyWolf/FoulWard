@@ -1,0 +1,334 @@
+## dialogue_manager.gd
+## Loads DialogueEntry resources, tracks hub dialogue state (priority, once-only, chains).
+## UI-agnostic: UIManager / DialogueUI call request_entry_for_character and mark_entry_played.
+
+extends Node
+
+const DIALOGUE_ROOT_PATH: String = "res://resources/dialogue"
+
+var entries_by_id: Dictionary = {}
+var entries_by_character: Dictionary = {}
+var played_once_only: Dictionary = {}
+var active_chains_by_character: Dictionary = {}
+
+var mission_won_count: int = 0
+var mission_failed_count: int = 0
+var current_mission_number: int = 1
+var current_gamestate: Types.GameState = Types.GameState.MAIN_MENU
+
+var _rng := RandomNumberGenerator.new() # TUNING
+
+signal dialogue_line_started(entry_id: String, character_id: String)
+signal dialogue_line_finished(entry_id: String, character_id: String)
+
+
+func _ready() -> void:
+	_rng.randomize()
+	_load_all_dialogue_entries()
+	_sync_from_game_manager()
+	_connect_signals()
+
+
+func _sync_from_game_manager() -> void:
+	current_mission_number = GameManager.get_current_mission()
+	current_gamestate = GameManager.get_game_state()
+
+
+func _load_all_dialogue_entries() -> void:
+	entries_by_id.clear()
+	entries_by_character.clear()
+	played_once_only.clear()
+	active_chains_by_character.clear()
+
+	var dir := DirAccess.open(DIALOGUE_ROOT_PATH)
+	if dir == null:
+		push_warning("DialogueManager: could not open dialogue root at %s" % DIALOGUE_ROOT_PATH)
+		return
+
+	_scan_directory_recursive(DIALOGUE_ROOT_PATH)
+
+
+func _scan_directory_recursive(path: String) -> void:
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
+
+	dir.list_dir_begin()
+	while true:
+		var file_name := dir.get_next()
+		if file_name == "":
+			break
+		if file_name.begins_with("."):
+			continue
+
+		var full_path := "%s/%s" % [path, file_name]
+		if dir.current_is_dir():
+			_scan_directory_recursive(full_path)
+		else:
+			if full_path.ends_with(".tres"):
+				_try_register_entry(full_path)
+
+	dir.list_dir_end()
+
+
+func _try_register_entry(path: String) -> void:
+	var res: Resource = load(path)
+	if res == null:
+		push_warning("DialogueManager: failed to load resource at %s" % path)
+		return
+	if not res is DialogueEntry:
+		return
+
+	var entry: DialogueEntry = res as DialogueEntry
+	if entry.entry_id.is_empty():
+		push_warning("DialogueManager: DialogueEntry at %s has empty entry_id" % path)
+		return
+
+	if entries_by_id.has(entry.entry_id):
+		push_warning("DialogueManager: duplicate entry_id '%s' at %s" % [entry.entry_id, path])
+
+	entries_by_id[entry.entry_id] = entry
+
+	if not entries_by_character.has(entry.character_id):
+		entries_by_character[entry.character_id] = [] as Array[DialogueEntry]
+	(entries_by_character[entry.character_id] as Array).append(entry)
+
+
+func _connect_signals() -> void:
+	SignalBus.game_state_changed.connect(_on_game_state_changed)
+	SignalBus.mission_started.connect(_on_mission_started)
+	SignalBus.mission_won.connect(_on_mission_won)
+	SignalBus.mission_failed.connect(_on_mission_failed)
+	SignalBus.resource_changed.connect(_on_resource_changed)
+	SignalBus.research_unlocked.connect(_on_research_unlocked)
+	SignalBus.shop_item_purchased.connect(_on_shop_item_purchased)
+	SignalBus.arnulf_state_changed.connect(_on_arnulf_state_changed)
+	SignalBus.spell_cast.connect(_on_spell_cast)
+
+
+func request_entry_for_character(character_id: String, _context: String = "") -> DialogueEntry:
+	if not entries_by_character.has(character_id):
+		return null
+
+	var active_chain_id: String = str(active_chains_by_character.get(character_id, ""))
+	if not active_chain_id.is_empty():
+		if entries_by_id.has(active_chain_id):
+			var chain_entry: DialogueEntry = entries_by_id[active_chain_id] as DialogueEntry
+			if not (chain_entry.once_only and played_once_only.get(chain_entry.entry_id, false)):
+				if _evaluate_conditions(chain_entry):
+					_emit_started(chain_entry)
+					return chain_entry
+			active_chains_by_character.erase(character_id)
+			# Active chain exists but is blocked by once-only or fails conditions;
+			# fall back to normal priority selection.
+		else:
+			active_chains_by_character.erase(character_id)
+
+	var raw: Variant = entries_by_character[character_id]
+	var source_list: Array = raw as Array
+	var candidates: Array[DialogueEntry] = []
+	for entry_variant: Variant in source_list:
+		var entry: DialogueEntry = entry_variant as DialogueEntry
+		if entry.once_only and played_once_only.get(entry.entry_id, false):
+			continue
+		if not _evaluate_conditions(entry):
+			continue
+		candidates.append(entry)
+
+	if candidates.is_empty():
+		return null
+
+	var max_priority := _find_max_priority(candidates)
+	var best_candidates: Array[DialogueEntry] = []
+	for entry: DialogueEntry in candidates:
+		if entry.priority == max_priority:
+			best_candidates.append(entry)
+
+	if best_candidates.is_empty():
+		return null
+
+	var index := 0
+	if best_candidates.size() > 1:
+		# SOURCE: Hades-style priority bucket selection (external analysis videos/articles).
+		index = _rng.randi_range(0, best_candidates.size() - 1)
+
+	var chosen: DialogueEntry = best_candidates[index]
+	_emit_started(chosen)
+	return chosen
+
+
+func _emit_started(entry: DialogueEntry) -> void:
+	dialogue_line_started.emit(entry.entry_id, entry.character_id)
+
+
+func mark_entry_played(entry_id: String) -> void:
+	if not entries_by_id.has(entry_id):
+		return
+
+	var entry: DialogueEntry = entries_by_id[entry_id] as DialogueEntry
+	if entry.once_only:
+		played_once_only[entry_id] = true
+
+	if not entry.chain_next_id.is_empty():
+		if entries_by_id.has(entry.chain_next_id):
+			active_chains_by_character[entry.character_id] = entry.chain_next_id
+		else:
+			active_chains_by_character.erase(entry.character_id)
+	else:
+		active_chains_by_character.erase(entry.character_id)
+
+
+func notify_dialogue_finished(entry_id: String, character_id: String) -> void:
+	dialogue_line_finished.emit(entry_id, character_id)
+	active_chains_by_character.erase(character_id)
+
+
+func _find_max_priority(candidates: Array[DialogueEntry]) -> int:
+	var max_priority := -999999
+	for entry: DialogueEntry in candidates:
+		if entry.priority > max_priority:
+			max_priority = entry.priority
+	return max_priority
+
+
+func _evaluate_conditions(entry: DialogueEntry) -> bool:
+	for cond: DialogueCondition in entry.conditions:
+		var current_value: Variant = _resolve_state_value(cond.key)
+		if not _compare(current_value, cond.comparison, cond.value):
+			return false
+	return true
+
+
+func _resolve_state_value(key: String) -> Variant:
+	match key:
+		"current_mission_number":
+			return current_mission_number
+		"mission_won_count":
+			return mission_won_count
+		"mission_failed_count":
+			return mission_failed_count
+		"current_gamestate":
+			return Types.GameState.keys()[current_gamestate]
+		"gold_amount":
+			return EconomyManager.get_gold()
+		"building_material_amount":
+			return EconomyManager.get_building_material()
+		"research_material_amount":
+			return EconomyManager.get_research_material()
+		"sybil_research_unlocked_any":
+			return _sybil_research_unlocked_any()
+		"arnulf_research_unlocked_any":
+			return _arnulf_research_unlocked_any()
+		_:
+			if key.begins_with("research_unlocked_"):
+				var node_id := key.substr("research_unlocked_".length())
+				return _is_research_unlocked(node_id)
+			if key.begins_with("shop_item_purchased_"):
+				var item_id := key.substr("shop_item_purchased_".length())
+				return _is_shop_item_purchased(item_id)
+			push_warning("DialogueManager: unknown condition key '%s'" % key)
+			return null
+
+
+func _compare(current_value: Variant, op: String, expected: Variant) -> bool:
+	if current_value == null:
+		return false
+
+	match op:
+		"==":
+			return current_value == expected
+		"!=":
+			return current_value != expected
+		">":
+			return typeof(current_value) == TYPE_INT and int(current_value) > int(expected)
+		">=":
+			return typeof(current_value) == TYPE_INT and int(current_value) >= int(expected)
+		"<":
+			return typeof(current_value) == TYPE_INT and int(current_value) < int(expected)
+		"<=":
+			return typeof(current_value) == TYPE_INT and int(current_value) <= int(expected)
+		_:
+			push_warning("DialogueManager: unsupported comparison operator '%s'" % op)
+			return false
+
+
+func _sybil_research_unlocked_any() -> bool:
+	var rm: ResearchManager = _get_research_manager()
+	if rm == null:
+		return false
+	# ASSUMPTION: spell-related research nodes include substring "spell" in node_id (see PROMPT_13_IMPLEMENTATION.md).
+	for node_data: ResearchNodeData in rm.research_nodes:
+		if "spell" in node_data.node_id.to_lower():
+			if rm.is_unlocked(node_data.node_id):
+				return true
+	return false
+
+
+func _arnulf_research_unlocked_any() -> bool:
+	var rm: ResearchManager = _get_research_manager()
+	if rm == null:
+		return false
+	# ASSUMPTION: Arnulf-related nodes include "arnulf" in node_id (none in current tree — condition stays false until data adds one).
+	for node_data: ResearchNodeData in rm.research_nodes:
+		if "arnulf" in node_data.node_id.to_lower():
+			if rm.is_unlocked(node_data.node_id):
+				return true
+	return false
+
+
+func _is_research_unlocked(node_id: String) -> bool:
+	var rm: ResearchManager = _get_research_manager()
+	if rm == null:
+		return false
+	return rm.is_unlocked(node_id)
+
+
+func _get_research_manager() -> ResearchManager:
+	var main := get_tree().root.get_node_or_null("Main")
+	if main == null:
+		return null
+	var managers := main.get_node_or_null("Managers")
+	if managers == null:
+		return null
+	return managers.get_node_or_null("ResearchManager") as ResearchManager
+
+
+func _is_shop_item_purchased(_item_id: String) -> bool:
+	# POST-MVP: implement a purchase history cache on ShopManager.
+	return false
+
+
+func _on_game_state_changed(_old_state: Types.GameState, new_state: Types.GameState) -> void:
+	current_gamestate = new_state
+
+
+func _on_mission_started(mission_number: int) -> void:
+	current_mission_number = mission_number
+
+
+func _on_mission_won(_mission_number: int) -> void:
+	mission_won_count += 1
+
+
+func _on_mission_failed(_mission_number: int) -> void:
+	mission_failed_count += 1
+
+
+func _on_resource_changed(_resource_type: Types.ResourceType, _new_amount: int) -> void:
+	pass
+
+
+func _on_research_unlocked(_node_id: String) -> void:
+	pass
+
+
+func _on_shop_item_purchased(_item_id: String) -> void:
+	pass
+
+
+func _on_arnulf_state_changed(_new_state: Types.ArnulfState) -> void:
+	pass
+
+
+func _on_spell_cast(_spell_id: String) -> void:
+	pass

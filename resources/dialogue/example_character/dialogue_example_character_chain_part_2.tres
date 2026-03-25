@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "EXAMPLE_CHARACTER_CHAIN_PART_2"
+character_id = "EXAMPLE_CHARACTER"
+text = "TODO: Chain end — no further chain_next_id. # PLACEHOLDER"
+priority = 70
+once_only = false
+chain_next_id = ""
+conditions = []

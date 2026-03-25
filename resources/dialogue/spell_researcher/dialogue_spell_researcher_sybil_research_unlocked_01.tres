@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_condition.gd" id="2_cond"]
+
+[sub_resource type="Resource" id="sub1"]
+script = ExtResource("2_cond")
+key = "sybil_research_unlocked_any"
+comparison = "=="
+value = true
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "SPELL_RESEARCHER_SYBIL_AFTER_UNLOCK_01"
+character_id = "SPELL_RESEARCHER"
+text = "TODO: Sybil comments on a newly unlocked spell research node."
+priority = 80
+once_only = false
+chain_next_id = ""
+conditions = [SubResource("sub1")]
