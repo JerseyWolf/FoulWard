@@ -12,7 +12,7 @@
 | DialogueManager | `res://autoloads/dialogue_manager.gd` | `-` | `dialogue_line_started,dialogue_line_finished` |
 | EnchantmentManager | `res://autoloads/enchantment_manager.gd` | `-` | `enchantment_applied,enchantment_removed` |
 | AutoTestDriver | `res://autoloads/auto_test_driver.gd` | `-` | `-` |
-| GDAIMCPRuntime | `uid://dcne7ryelpxmn` | `-` | `-` |
+| GDAIMCPRuntime | `-` | `-` | `-` |
 | MCPScreenshot | `res://addons/godot_mcp/mcp_screenshot_service.gd` | `-` | `-` |
 | MCPInputService | `res://addons/godot_mcp/mcp_input_service.gd` | `-` | `-` |
 | MCPGameInspector | `res://addons/godot_mcp/mcp_game_inspector_service.gd` | `-` | `-` |

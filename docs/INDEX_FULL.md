@@ -31,7 +31,7 @@ CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 AUTOLOADS
 SignalBus
 
-Path: res://autoloads/signalbus.gd
+Path: res://autoloads/signal_bus.gd
 Purpose: Central signal registry. All cross-system signals are declared here and only here. No logic, no state. Every module that emits or receives a cross-system signal does so through this singleton.
 Dependencies: None.
 Complete Signal Registry
@@ -146,7 +146,7 @@ SHOP
 
 DamageCalculator
 
-Path: res://autoloads/damagecalculator.gd
+Path: res://autoloads/damage_calculator.gd
 Purpose: Stateless pure-function singleton. Resolves final damage by applying the 4×4 damage_type × armor_type multiplier matrix. All damage in the game routes through this.
 Dependencies: None. No signals.
 
@@ -170,7 +170,7 @@ Public methods:
 Notes: per-enemy immunities via EnemyData.damage_immunities[] are applied before calling DamageCalculator.
 EconomyManager
 
-Path: res://autoloads/economymanager.gd
+Path: res://autoloads/economy_manager.gd
 Purpose: Single source of truth for gold, building_material, research_material. Emits resource_changed on every modification.
 Dependencies: SignalBus.
 
@@ -308,7 +308,7 @@ Internal: `_evaluate_conditions`, `_resolve_state_value`, `_compare`, `_sybil_re
 Consumes: SignalBus.game_state_changed, mission_started, mission_won, mission_failed, resource_changed, research_unlocked, shop_item_purchased, arnulf_state_changed, spell_cast (stubs where no logic yet).
 AutoTestDriver
 
-Path: res://autoloads/autotestdriver.gd
+Path: res://autoloads/auto_test_driver.gd
 Purpose: Headless integration smoke tester, active only with --autotest CLI flag.
 
 ArtPlaceholderHelper

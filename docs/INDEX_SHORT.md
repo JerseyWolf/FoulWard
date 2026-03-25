@@ -17,25 +17,25 @@ AutoTestDriver	res://autoloads/auto_test_driver.gd	Headless smoke-test driver. A
 SCRIPTS (attached to Manager nodes in main.tscn under /root/Main/Managers/)
 Class Name	Path	What it does
 Types	res://scripts/types.gd	All enums and shared constants. Prompt 11: `AllyClass` (MELEE/RANGED/SUPPORT); `TargetPriority` shared with allies (MVP: CLOSEST). Prompt 14: `HubRole` marks between-mission hub character categories. Not an autoload; referenced as Types.XXX.
-HealthComponent	res://scripts/healthcomponent.gd	Reusable HP tracker. Emits local signals health_depleted, health_changed.
+HealthComponent	res://scripts/health_component.gd	Reusable HP tracker. Emits local signals health_depleted, health_changed.
 WaveManager	res://scripts/wave_manager.gd	Spawns enemies per wave from FactionData-weighted roster (total N×6), countdown, wave signals. `_enemy_container` / `_spawn_points` via get_node_or_null(/root/Main/...); null-safe spawn. Prompt 10: boss_registry, ensure_boss_registry_loaded, set_day_context, boss wave on configured index + escorts.
-SpellManager	res://scripts/spellmanager.gd	Owns mana pool, spell cooldowns. Executes Shockwave AoE in MVP.
-ResearchManager	res://scripts/researchmanager.gd	Tracks unlocked research nodes. Gates locked buildings.
-ShopManager	res://scripts/shopmanager.gd	Processes shop purchases. Applies mission-start consumable effects.
-InputManager	res://scripts/inputmanager.gd	Translates mouse/keyboard input into public method calls on managers.
+SpellManager	res://scripts/spell_manager.gd	Owns mana pool, spell cooldowns. Executes Shockwave AoE in MVP.
+ResearchManager	res://scripts/research_manager.gd	Tracks unlocked research nodes. Gates locked buildings.
+ShopManager	res://scripts/shop_manager.gd	Processes shop purchases. Applies mission-start consumable effects.
+InputManager	res://scripts/input_manager.gd	Translates mouse/keyboard input into public method calls on managers.
 SimBot	res://scripts/sim_bot.gd	Headless automated simulation bot. Prompt 16 Phase 2: `run_single(profile_id,run_index,seed_value)` + `run_batch(profile_id,runs,base_seed,csv_path)` driven by `StrategyProfile` resources, with per-run CSV balance logging.
 ArtPlaceholderHelper	res://scripts/art/art_placeholder_helper.gd	Stateless utility resolving placeholder meshes, materials, and icons from res://art based on Types enums and string IDs. Handles caching, fallbacks, and generated-asset priority.
-MainRoot	res://scripts/mainroot.gd	Applies root window content scale at startup (stretch fix for Godot 4.4+).
+MainRoot	res://scripts/main_root.gd	Applies root window content scale at startup (stretch fix for Godot 4.4+).
 SCENES (runtime instantiated or statically placed)
 Class Name	Script Path	Scene Path	What it does
 Tower	res://scenes/tower/tower.gd	res://scenes/tower/tower.tscn	Player's stationary avatar. Fires crossbow + rapid missile.
 Arnulf	res://scenes/arnulf/arnulf.gd	res://scenes/arnulf/arnulf.tscn	AI melee companion. State machine: IDLE/PATROL/CHASE/ATTACK/DOWNED/RECOVERING. Prompt 11: emits generic `ally_*` with id `arnulf` + `ALLY_ID_ARNULF`.
 AllyBase	res://scenes/allies/ally_base.gd	res://scenes/allies/ally_base.tscn	Prompt 11: generic ally; CLOSEST targeting; nav chase; direct damage; ally_spawned / ally_killed.
-HexGrid	res://scenes/hexgrid/hexgrid.gd	res://scenes/hexgrid/hexgrid.tscn	24-slot ring grid. Manages building placement, sell, upgrade.
-BuildingBase	res://scenes/buildings/buildingbase.gd	res://scenes/buildings/buildingbase.tscn	Base class for all 8 building types. Auto-targets and fires.
-EnemyBase	res://scenes/enemies/enemybase.gd	res://scenes/enemies/enemybase.tscn	Base class for all 6 enemy types. Nav, attack, die, reward.
+HexGrid	res://scenes/hex_grid/hex_grid.gd	res://scenes/hex_grid/hex_grid.tscn	24-slot ring grid. Manages building placement, sell, upgrade.
+BuildingBase	res://scenes/buildings/building_base.gd	res://scenes/buildings/building_base.tscn	Base class for all 8 building types. Auto-targets and fires.
+EnemyBase	res://scenes/enemies/enemy_base.gd	res://scenes/enemies/enemy_base.tscn	Base class for all 6 enemy types. Nav, attack, die, reward.
 BossBase	res://scenes/bosses/boss_base.gd	res://scenes/bosses/boss_base.tscn	Prompt 10: extends EnemyBase; initialize_boss_data(BossData); emits boss_spawned / boss_killed.
-ProjectileBase	res://scenes/projectiles/projectilebase.gd	res://scenes/projectiles/projectilebase.tscn	Physics-driven projectile. Hits first valid enemy, self-destructs.
+ProjectileBase	res://scenes/projectiles/projectile_base.gd	res://scenes/projectiles/projectile_base.tscn	Physics-driven projectile. Hits first valid enemy, self-destructs.
 UI SCRIPTS & SCENES
 Class Name	Script Path	Scene Path	What it does
 UIManager	res://ui/ui_manager.gd	(Control node in main.tscn)	Lightweight state router + hub dialogue router. Shows/hides UI panels on game_state_changed and wires `Hub2DHub` + `DialoguePanel`. Prompt 14: `show_dialogue(display_name, entry)` + `clear_dialogue()`; still supports `show_dialogue_for_character` with queue.
@@ -43,20 +43,20 @@ Hub2DHub	res://ui/hub.gd	res://ui/hub.tscn	2D between-mission hub overlay. Insta
 DialoguePanel	res://ui/dialogue_panel.gd	res://ui/dialogue_panel.tscn	Global click-to-continue dialogue overlay (SpeakerLabel + TextLabel). Chains via `DialogueEntry.chain_next_id`.
 DialogueUI	res://ui/dialogueui.gd	res://ui/dialogueui.tscn	Legacy placeholder hub dialogue panel (Prompt 13). Kept for reference; hub now uses DialoguePanel.
 HUD	res://ui/hud.gd	res://ui/hud.tscn	Combat overlay: resources, wave counter, HP bar, spells.
-BuildMenu	res://ui/buildmenu.gd	res://ui/buildmenu.tscn	Radial building placement panel. Opens on hex slot click in BUILDMODE.
+BuildMenu	res://ui/build_menu.gd	res://ui/build_menu.tscn	Radial building placement panel. Opens on hex slot click in BUILDMODE.
 BetweenMissionScreen	res://ui/between_mission_screen.gd	res://ui/between_mission_screen.tscn	Post-mission tabs: World Map, Shop, Research, Buildings, Weapons, Mercenaries (Prompt 12). NEXT DAY. Prompt 13: on `BETWEEN_MISSIONS`, `_show_hub_dialogue()` → UIManager for SPELL_RESEARCHER then COMPANION_MELEE (queued).
 WorldMap	res://ui/world_map.gd	res://ui/world_map.tscn	Territory list + details (read-only; GameManager state).
-MainMenu	res://ui/mainmenu.gd	res://ui/mainmenu.tscn	Title screen. Start, Settings (placeholder), Quit.
-MissionBriefing	res://ui/missionbriefing.gd	(Control node in main.tscn)	Shows mission number. BEGIN button → GameManager.start_wave_countdown.
-EndScreen	res://ui/endscreen.gd	(Control node in main.tscn)	Final screen for win/lose. Restart and Quit buttons.
+MainMenu	res://ui/main_menu.gd	res://ui/main_menu.tscn	Title screen. Start, Settings (placeholder), Quit.
+MissionBriefing	res://ui/mission_briefing.gd	(Control node in main.tscn)	Shows mission number. BEGIN button → GameManager.start_wave_countdown.
+EndScreen	res://ui/end_screen.gd	(Control node in main.tscn)	Final screen for win/lose. Restart and Quit buttons.
 CUSTOM RESOURCE TYPES (script classes, not .tres files)
 Class Name	Script Path	Fields summary
-EnemyData	res://scripts/resources/enemydata.gd	enemy_type, display_name, max_hp, move_speed, damage, attack_range, attack_cooldown, armor_type, gold_reward, is_ranged, is_flying, color, damage_immunities[]
-BuildingData	res://scripts/resources/buildingdata.gd	building_type, display_name, gold_cost, material_cost, upgrade_gold_cost, upgrade_material_cost, damage, upgraded_damage, fire_rate, attack_range, upgraded_range, damage_type, targets_air, targets_ground, is_locked, unlock_research_id, color, dot_enabled, dot_total_damage, dot_tick_interval, dot_duration, dot_effect_type, dot_source_id, dot_in_addition_to_hit
-WeaponData	res://scripts/resources/weapondata.gd	weapon_slot, display_name, damage, projectile_speed, reload_time, burst_count, burst_interval, can_target_flying, assist_angle_degrees, assist_max_distance, base_miss_chance, max_miss_angle_degrees
-SpellData	res://scripts/resources/spelldata.gd	spell_id, display_name, mana_cost, cooldown, damage, radius, damage_type, hits_flying
-ResearchNodeData	res://scripts/resources/researchnodedata.gd	node_id, display_name, research_cost, prerequisite_ids[], description
-ShopItemData	res://scripts/resources/shopitemdata.gd	item_id, display_name, gold_cost, material_cost, description
+EnemyData	res://scripts/resources/enemy_data.gd	enemy_type, display_name, max_hp, move_speed, damage, attack_range, attack_cooldown, armor_type, gold_reward, is_ranged, is_flying, color, damage_immunities[]
+BuildingData	res://scripts/resources/building_data.gd	building_type, display_name, gold_cost, material_cost, upgrade_gold_cost, upgrade_material_cost, damage, upgraded_damage, fire_rate, attack_range, upgraded_range, damage_type, targets_air, targets_ground, is_locked, unlock_research_id, color, dot_enabled, dot_total_damage, dot_tick_interval, dot_duration, dot_effect_type, dot_source_id, dot_in_addition_to_hit
+WeaponData	res://scripts/resources/weapon_data.gd	weapon_slot, display_name, damage, projectile_speed, reload_time, burst_count, burst_interval, can_target_flying, assist_angle_degrees, assist_max_distance, base_miss_chance, max_miss_angle_degrees
+SpellData	res://scripts/resources/spell_data.gd	spell_id, display_name, mana_cost, cooldown, damage, radius, damage_type, hits_flying
+ResearchNodeData	res://scripts/resources/research_node_data.gd	node_id, display_name, research_cost, prerequisite_ids[], description
+ShopItemData	res://scripts/resources/shop_item_data.gd	item_id, display_name, gold_cost, material_cost, description
 TerritoryData	res://scripts/resources/territory_data.gd	territory_id, terrain_type, ownership, default_faction_id (POST-MVP), is_secured, has_boss_threat, bonus_flat_gold_end_of_day, bonus_percent_gold_end_of_day, POST-MVP bonus hooks
 TerritoryMapData	res://scripts/resources/territory_map_data.gd	territories: Array[TerritoryData], get_territory_by_id, has_territory
 FactionRosterEntry	res://scripts/resources/faction_roster_entry.gd	enemy_type, base_weight, min_wave_index, max_wave_index, tier
@@ -106,31 +106,31 @@ res://resources/character_data/flavor_npc_01.tres	EXAMPLE_CHARACTER (HubRole.FLA
 res://resources/character_catalog.tres	CharacterCatalog containing all hub cast entries.
 Enemy Data
 File	enemy_type	armor_type	Notes
-res://resources/enemydata/orcgrunt.tres	ORCGRUNT	UNARMORED	Basic melee runner
-res://resources/enemydata/orcbrute.tres	ORCBRUTE	HEAVYARMOR	Slow, high HP, melee
-res://resources/enemydata/goblinfirebug.tres	GOBLINFIREBUG	UNARMORED	Fast melee, fire immune
-res://resources/enemydata/plaguezombie.tres	PLAGUEZOMBIE	UNARMORED	Slow tank, poison immune
-res://resources/enemydata/orcarcher.tres	ORCARCHER	UNARMORED	Stops at range, fires
-res://resources/enemydata/batswarm.tres	BATSWARM	FLYING	Flying, anti-air only
+res://resources/enemy_data/orc_grunt.tres	ORCGRUNT	UNARMORED	Basic melee runner
+res://resources/enemy_data/orc_brute.tres	ORCBRUTE	HEAVYARMOR	Slow, high HP, melee
+res://resources/enemy_data/goblin_firebug.tres	GOBLINFIREBUG	UNARMORED	Fast melee, fire immune
+res://resources/enemy_data/plague_zombie.tres	PLAGUEZOMBIE	UNARMORED	Slow tank, poison immune
+res://resources/enemy_data/orc_archer.tres	ORCARCHER	UNARMORED	Stops at range, fires
+res://resources/enemy_data/bat_swarm.tres	BATSWARM	FLYING	Flying, anti-air only
 Building Data
 File	building_type	is_locked	unlock_research_id
-res://resources/buildingdata/arrowtower.tres	ARROWTOWER	false	—
-res://resources/buildingdata/firebrazier.tres	FIREBRAZIER	false	—
-res://resources/buildingdata/magicobelisk.tres	MAGICOBELISK	false	—
-res://resources/buildingdata/poisonvat.tres	POISONVAT	false	—
-res://resources/buildingdata/ballista.tres	BALLISTA	true	unlock_ballista
-res://resources/buildingdata/archerbarracks.tres	ARCHERBARRACKS	true	(POST-MVP stub)
-res://resources/buildingdata/antiairbolt.tres	ANTIAIRBOLT	false	—
-res://resources/buildingdata/shieldgenerator.tres	SHIELDGENERATOR	true	(POST-MVP stub)
+res://resources/building_data/arrow_tower.tres	ARROWTOWER	false	—
+res://resources/building_data/fire_brazier.tres	FIREBRAZIER	false	—
+res://resources/building_data/magic_obelisk.tres	MAGICOBELISK	false	—
+res://resources/building_data/poison_vat.tres	POISONVAT	false	—
+res://resources/building_data/ballista.tres	BALLISTA	true	unlock_ballista
+res://resources/building_data/archer_barracks.tres	ARCHERBARRACKS	true	(POST-MVP stub)
+res://resources/building_data/anti_air_bolt.tres	ANTIAIRBOLT	false	—
+res://resources/building_data/shield_generator.tres	SHIELDGENERATOR	true	(POST-MVP stub)
 Weapon Data
 File	weapon_slot	burst_count
-res://resources/weapondata/crossbow.tres	CROSSBOW	1
-res://resources/weapondata/rapidmissile.tres	RAPIDMISSILE	10
+res://resources/weapon_data/crossbow.tres	CROSSBOW	1
+res://resources/weapon_data/rapid_missile.tres	RAPIDMISSILE	10
 Spell / Research / Shop Data
 File	Class	Notes
-res://resources/spelldata/shockwave.tres	SpellData	Shockwave AoE, 50 mana, 60s cooldown
-res://resources/researchdata/basestructurestree.tres	ResearchNodeData	6 nodes: unlock_ballista, unlock_antiair, arrow_tower_dmg, unlock_shield_gen, fire_brazier_range, unlock_archer_barracks
-res://resources/shopdata/shopcatalog.tres	ShopItemData[]	4 items: tower_repair, building_repair, arrow_tower (voucher), mana_draught
+res://resources/spell_data/shockwave.tres	SpellData	Shockwave AoE, 50 mana, 60s cooldown
+res://resources/research_data/base_structures_tree.tres	ResearchNodeData	6 nodes: unlock_ballista, unlock_antiair, arrow_tower_dmg, unlock_shield_gen, fire_brazier_range, unlock_archer_barracks
+res://resources/shop_data/shop_catalog.tres	ShopItemData[]	4 items: tower_repair, building_repair, arrow_tower (voucher), mana_draught
 res://resources/territories/main_campaign_territories.tres	TerritoryMapData	Five placeholder territories for main campaign
 res://resources/campaign_main_50days.tres	CampaignConfig	50 linear days + territory_map_resource_path (Prompt 8 canonical)
 res://resources/campaigns/campaign_short_5_days.tres	CampaignConfig	Default MVP 5-day short campaign (mission_index 1–5)
@@ -237,7 +237,7 @@ SCENE TREE OVERVIEW (main.tscn)
 │ ├── TowerCollision (CollisionShape3D)
 │ ├── HealthComponent (Node)
 │ └── TowerLabel (Label3D)
-├── HexGrid (Node3D) [hexgrid.tscn]
+├── HexGrid (Node3D) [hex_grid.tscn]
 │ └── HexSlot00..HexSlot23 (Area3D ×24)
 ├── Arnulf (CharacterBody3D) [arnulf.tscn]
 ├── BuildingContainer (Node3D)
@@ -252,9 +252,9 @@ SCENE TREE OVERVIEW (main.tscn)
 └── UI (CanvasLayer)
   ├── UIManager (Control)
   ├── HUD [hud.tscn]
-  ├── BuildMenu [buildmenu.tscn]
-  ├── BetweenMissionScreen [betweenmissionscreen.tscn]
-  ├── MainMenu [mainmenu.tscn]
+  ├── BuildMenu [build_menu.tscn]
+  ├── BetweenMissionScreen [between_mission_screen.tscn]
+  ├── MainMenu [main_menu.tscn]
   ├── MissionBriefing (Control)
   └── EndScreen (Control)
 
