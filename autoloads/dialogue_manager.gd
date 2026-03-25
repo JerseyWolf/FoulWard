@@ -233,6 +233,12 @@ func _resolve_state_value(key: String) -> Variant:
 		"arnulf_research_unlocked_any":
 			return _arnulf_research_unlocked_any()
 		_:
+			# SOURCE: Dialogue variable-store pattern with namespaced keys ("florence.", "campaign.").
+			if key.begins_with("florence."):
+				return _resolve_florence_state_value(key)
+			if key.begins_with("campaign."):
+				return _resolve_campaign_state_value(key)
+
 			if key.begins_with("research_unlocked_"):
 				var node_id := key.substr("research_unlocked_".length())
 				return _is_research_unlocked(node_id)
@@ -240,6 +246,55 @@ func _resolve_state_value(key: String) -> Variant:
 				var item_id := key.substr("shop_item_purchased_".length())
 				return _is_shop_item_purchased(item_id)
 			push_warning("DialogueManager: unknown condition key '%s'" % key)
+			return null
+
+
+func _resolve_florence_state_value(key: String) -> Variant:
+	var florence := GameManager.get_florence_data()
+	if florence == null:
+		return null
+
+	match key:
+		"florence.run_count":
+			return florence.run_count
+		"florence.total_missions_played":
+			return florence.total_missions_played
+		"florence.total_days_played":
+			return florence.total_days_played
+		"florence.boss_attempts":
+			return florence.boss_attempts
+		"florence.boss_victories":
+			return florence.boss_victories
+		"florence.mission_failures":
+			return florence.mission_failures
+
+		"florence.flags.has_unlocked_research":
+			return florence.has_unlocked_research
+		"florence.flags.has_unlocked_enchantments":
+			return florence.has_unlocked_enchantments
+		"florence.flags.has_recruited_any_mercenary":
+			return florence.has_recruited_any_mercenary
+		"florence.flags.has_seen_any_mini_boss":
+			return florence.has_seen_any_mini_boss
+		"florence.flags.has_defeated_any_mini_boss":
+			return florence.has_defeated_any_mini_boss
+		"florence.flags.has_reached_day_25":
+			return florence.has_reached_day_25
+		"florence.flags.has_reached_day_50":
+			return florence.has_reached_day_50
+		"florence.flags.has_seen_first_boss":
+			return florence.has_seen_first_boss
+		_:
+			return null
+
+
+func _resolve_campaign_state_value(key: String) -> Variant:
+	match key:
+		"campaign.current_day":
+			return GameManager.current_day
+		"campaign.current_mission":
+			return GameManager.current_mission
+		_:
 			return null
 
 

@@ -93,6 +93,10 @@ signal mission_won(mission_number: int)
 @warning_ignore("unused_signal")
 signal mission_failed(mission_number: int)
 
+# Florence / campaign meta-state.
+@warning_ignore("unused_signal")
+signal florence_state_changed()
+
 # Campaign / day-level signals.
 # mission_* signals remain mission-level; in the current short campaign they
 # correspond 1:1 to days (one mission per day). CampaignManager wraps them.

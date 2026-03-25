@@ -241,6 +241,8 @@ SCENE TREE OVERVIEW (main.tscn)
 
 LATEST CHANGES (2026-03-25)
 
+    - Prompt 15 Florence meta-state: `FlorenceData` resource, `Types.DayAdvanceReason`, `SignalBus.florence_state_changed`, `GameManager` day/counter wiring, hub debug label, dialogue condition keys, and `tests/test_florence.gd` (parse-safety fixes: enum cast + type inference).
+
     - Prompt 13 hub dialogue (`docs/PROMPT_13_IMPLEMENTATION.md`): `DialogueManager` autoload; `DialogueEntry` / `DialogueCondition`; `res://resources/dialogue/**` pools; `dialogue_ui.tscn`; `UIManager.show_dialogue_for_character` + queue; `BetweenMissionScreen` hub lines for Sybil + Arnulf; `test_dialogue_manager.gd` + `run_gdunit_quick.sh` allowlist.
 
     - Prompt 12 mercenary roster + offers (`docs/PROMPT_12_IMPLEMENTATION.md`): `MercenaryOfferData`, `MercenaryCatalog`, `MiniBossData`, `res://resources/mercenary_catalog.tres` + offers; `CampaignManager` purchase/preview/defection/auto-select; `SignalBus` mercenary + roster signals; `BetweenMissionScreen` Mercenaries tab; `SimBot` strategy + `decide_mercenaries`; GdUnit suites in `run_gdunit_quick.sh` allowlist; `GameManager._transition_to` idempotent for same state.

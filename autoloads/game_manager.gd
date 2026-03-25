@@ -17,6 +17,8 @@ const TOTAL_MISSIONS: int = 5
 # Temporary dev/testing cap so we can reach "mission won" quickly.
 const WAVES_PER_MISSION: int = 3
 
+const FlorenceDataType = preload("res://scripts/florence_data.gd")
+
 ## Optional reference path for the main 50-day campaign asset (documentation / tools).
 ## ASSUMPTION: Runtime loads territory map from CampaignManager.campaign_config.territory_map_resource_path.
 const MAIN_CAMPAIGN_CONFIG_PATH: String = "res://resources/campaign_main_50days.tres"
@@ -26,7 +28,15 @@ var _ally_base_scene: PackedScene = preload("res://scenes/allies/ally_base.tscn"
 
 var current_mission: int = 1
 var current_wave: int = 0
+## ASSUMPTION: meta campaign day index, 1-based (independent from CampaignManager.current_day).
+var current_day: int = 1
 var game_state: Types.GameState = Types.GameState.MAIN_MENU
+
+## SOURCE: Roguelike meta-state Resource pattern (data-only model state).
+var florence_data: FlorenceDataType = null
+
+const INVALID_DAY_ADVANCE_REASON: int = -1
+var _pending_day_advance_reason: int = INVALID_DAY_ADVANCE_REASON
 
 ## Loaded from the active campaign's territory_map_resource_path when set; otherwise null.
 var territory_map: TerritoryMapData = null
@@ -69,10 +79,18 @@ func _on_mission_won_transition_to_hub(mission_number: int) -> void:
 	var campaign_len: int = CampaignManager.get_campaign_length()
 	var completed_day_index: int = mission_number
 	var is_final_day: bool = campaign_len > 0 and completed_day_index == campaign_len
+	var should_game_won: bool = false
 
 	if campaign_len == 0 and mission_number >= TOTAL_MISSIONS:
-		_transition_to(Types.GameState.GAME_WON)
+		should_game_won = true
 	elif is_final_day or final_boss_defeated:
+		should_game_won = true
+
+	if should_game_won:
+		# ASSUMPTION: run_count increments only on full campaign completion for now.
+		if florence_data != null:
+			florence_data.run_count += 1
+			SignalBus.florence_state_changed.emit()
 		_transition_to(Types.GameState.GAME_WON)
 	else:
 		_transition_to(Types.GameState.BETWEEN_MISSIONS)
@@ -98,6 +116,16 @@ func start_new_game() -> void:
 	var weapon_upgrade_manager: Node = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
 	if weapon_upgrade_manager != null:
 		weapon_upgrade_manager.reset_to_defaults()
+
+	# Florence meta-state bootstrap.
+	# ASSUMPTION: New game starts meta day index at 1.
+	current_day = 1
+	_pending_day_advance_reason = INVALID_DAY_ADVANCE_REASON
+	if florence_data == null:
+		florence_data = FlorenceDataType.new()
+	florence_data.reset_for_new_run()
+	florence_data.update_day_threshold_flags(current_day)
+	SignalBus.florence_state_changed.emit()
 	# DEVIATION: CampaignManager owns day/campaign state and mission kickoff.
 	CampaignManager.start_new_campaign()
 	reload_territory_map_from_active_campaign()
@@ -144,6 +172,50 @@ func get_current_mission() -> int:
 
 func get_current_wave() -> int:
 	return current_wave
+
+func get_florence_data() -> FlorenceDataType:
+	return florence_data
+
+func advance_day(reason: Types.DayAdvanceReason) -> void:
+	# SOURCE: Day/week advancement priority pattern using Types as central registry.
+	var reason_priority: int = Types.get_day_advance_priority(reason)
+
+	# ASSUMPTION: The “pending reasons” window is typically a mission resolution
+	# (from win/fail events through state transitions).
+	if _pending_day_advance_reason == INVALID_DAY_ADVANCE_REASON:
+		_pending_day_advance_reason = int(reason)
+		return
+
+	var pending_priority: int = _get_day_advance_priority_from_int(_pending_day_advance_reason)
+	if reason_priority > pending_priority:
+		_pending_day_advance_reason = int(reason)
+
+
+func _get_day_advance_priority_from_int(reason_id: int) -> int:
+	# Godot does not allow casting enums via `Types.DayAdvanceReason(reason_id)` syntax.
+	# We map the stored int back to the enum values via match.
+	match reason_id:
+		int(Types.DayAdvanceReason.MISSION_COMPLETED):
+			return Types.get_day_advance_priority(Types.DayAdvanceReason.MISSION_COMPLETED)
+		int(Types.DayAdvanceReason.ACHIEVEMENT_EARNED):
+			return Types.get_day_advance_priority(Types.DayAdvanceReason.ACHIEVEMENT_EARNED)
+		int(Types.DayAdvanceReason.MAJOR_STORY_EVENT):
+			return Types.get_day_advance_priority(Types.DayAdvanceReason.MAJOR_STORY_EVENT)
+		_:
+			return 0
+
+
+func _apply_pending_day_advance_if_any() -> void:
+	if _pending_day_advance_reason == INVALID_DAY_ADVANCE_REASON:
+		return
+
+	current_day += 1
+	if florence_data != null:
+		florence_data.total_days_played += 1
+		florence_data.update_day_threshold_flags(current_day)
+
+	SignalBus.florence_state_changed.emit()
+	_pending_day_advance_reason = INVALID_DAY_ADVANCE_REASON
 
 ## Linear day index within the active campaign (1-based). Delegates to CampaignManager.
 func get_current_day_index() -> int:
@@ -454,6 +526,12 @@ func _on_all_waves_cleared() -> void:
 		_synthetic_boss_attack_day = null
 		SignalBus.campaign_boss_attempted.emit(completed_day_index, true)
 
+	# Florence meta-state updates (run meta-progression).
+	if florence_data != null:
+		florence_data.total_missions_played += 1
+		advance_day(Types.DayAdvanceReason.MISSION_COMPLETED)
+		_apply_pending_day_advance_if_any()
+
 	SignalBus.mission_won.emit(current_mission)
 
 func _on_tower_destroyed() -> void:
@@ -461,6 +539,13 @@ func _on_tower_destroyed() -> void:
 	print("[GameManager] tower_destroyed → MISSION_FAILED")
 	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
 	var completed_day_index: int = CampaignManager.get_current_day()
+
+	# Florence meta-state updates (counts mission attempts).
+	if florence_data != null:
+		florence_data.total_missions_played += 1
+		florence_data.mission_failures += 1
+		advance_day(Types.DayAdvanceReason.MISSION_COMPLETED)
+		_apply_pending_day_advance_if_any()
 	if (
 			day_cfg != null
 			and day_cfg.boss_id != ""

@@ -62,6 +62,13 @@ func unlock_node(node_id: String) -> bool:
 
 	_unlocked_nodes.append(node_id)
 	SignalBus.research_unlocked.emit(node_id)
+
+	# Florence meta-state hook.
+	# ASSUMPTION: GameManager owns FlorenceData and exposes get_florence_data().
+	var florence_data := GameManager.get_florence_data()
+	if florence_data != null and florence_data.has_unlocked_research == false:
+		florence_data.has_unlocked_research = true
+		SignalBus.florence_state_changed.emit()
 	return true
 
 

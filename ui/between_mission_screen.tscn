@@ -28,6 +28,13 @@ offset_right = 780.0
 offset_bottom = 82.0
 text = "Day 1 - Rotting Fields"
 
+[node name="FlorenceDebugLabel" type="Label" parent="."]
+offset_left = 120.0
+offset_top = 86.0
+offset_right = 780.0
+offset_bottom = 116.0
+text = "Florence debug"
+
 [node name="TabContainer" type="TabContainer" parent="."]
 anchor_left = 0.1
 anchor_top = 0.1

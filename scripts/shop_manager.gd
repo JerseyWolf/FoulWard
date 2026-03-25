@@ -50,6 +50,14 @@ func purchase_item(item_id: String) -> bool:
 		_refund_item(item)
 		return false
 
+	# POST-MVP: Enchantments unlock hook into FlorenceData.
+	# PLACEHOLDER: replace this item_id with the real enchantments unlock item.
+	if item_id == "enchantments_unlock":
+		var florence_data := GameManager.get_florence_data()
+		if florence_data != null and florence_data.has_unlocked_enchantments == false:
+			florence_data.has_unlocked_enchantments = true
+			SignalBus.florence_state_changed.emit()
+
 	SignalBus.shop_item_purchased.emit(item_id)
 	return true
 

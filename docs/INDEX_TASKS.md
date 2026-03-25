@@ -148,3 +148,12 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - **`dialogue_ui.tscn`**, **`UIManager.show_dialogue_for_character`**, **`BetweenMissionScreen._show_hub_dialogue`**
   - Tests: **`test_dialogue_manager.gd`**; **`run_gdunit_quick.sh`** allowlist
   - **`INDEX_SHORT.md`**, **`INDEX_FULL.md`**, **`INDEX_MACHINE.md`**, **`ARCHITECTURE.md`** §1 updated
+
+- Prompt 15 (2026-03-25) — Florence meta-state + day progression:
+  - **`docs/PROMPT_15_IMPLEMENTATION.md`**
+  - `res://scripts/florence_data.gd` (`FlorenceData`), `Types.DayAdvanceReason`, `SignalBus.florence_state_changed`
+  - `GameManager` Florence ownership + meta day advancement + `get_florence_data()`
+  - `ResearchManager` / `ShopManager` technical unlock hooks
+  - `BetweenMissionScreen` Florence debug label + refresh on `florence_state_changed`
+  - `DialogueManager` resolver support for `florence.*` and `campaign.*`
+  - Tests: `res://tests/test_florence.gd` (+ quick allowlist update); parse-safety fixes (no invalid `Types.DayAdvanceReason(...)` cast; avoid `: FlorenceData` local type annotations)
