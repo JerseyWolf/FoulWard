@@ -120,6 +120,18 @@ Main (Node3D)                                  [main.tscn — root scene]
     └── EndScreen (Control)                    ["YOU SURVIVED" + Quit]
 ```
 
+#### Manager node path contracts (FOUL WARD)
+
+Several managers are resolved by absolute node path under `Main/Managers`:
+
+- `WaveManager` is expected at `/root/Main/Managers/WaveManager` (wave spawning, countdown, boss registry).
+- `ResearchManager` is expected at `/root/Main/Managers/ResearchManager` (DialogueManager research conditions; day-start resets).
+- `WeaponUpgradeManager` is expected at `/root/Main/Managers/WeaponUpgradeManager` (Tower stat lookup and upgrade resets).
+- `ShopManager` is expected at `/root/Main/Managers/ShopManager` (mission-start consumables, shop-driven mission modifiers).
+- `SpellManager` is expected at `/root/Main/Managers/SpellManager` (spell hotkeys and casting from InputManager).
+
+These paths are authoritative: any change to the `Main/Managers` subtree must keep these exact node names and positions, or the dependent systems will silently degrade.
+
 ---
 
 ## 3. CLASS RESPONSIBILITIES

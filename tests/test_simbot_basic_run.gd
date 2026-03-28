@@ -25,7 +25,7 @@ func test_simbot_can_run_and_place_buildings() -> void:
 			break
 	assert_bool(any_built).is_true()
 
-	assert_int(int(result.get("total_enemies_killed", 0))).is_greater_equal(0)
+	assert_int(int(result.get("enemies_killed", 0))).is_greater_equal(0)
 
 	main.queue_free()
 	simbot.queue_free()

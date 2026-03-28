@@ -42,8 +42,8 @@ func test_simbot_is_deterministic_for_fixed_seed() -> void:
 
 	# Assert
 	assert_int(int(result1.get("waves_cleared", 0))).is_equal(int(result2.get("waves_cleared", 0)))
-	assert_int(int(result1.get("total_enemies_killed", 0))).is_equal(
-		int(result2.get("total_enemies_killed", 0))
+	assert_int(int(result1.get("enemies_killed", 0))).is_equal(
+		int(result2.get("enemies_killed", 0))
 	)
 
 	main2.queue_free()

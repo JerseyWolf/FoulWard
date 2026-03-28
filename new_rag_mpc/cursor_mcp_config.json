@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "foulward-rag": {
+      "command": "/home/jerzy-wolf/LLM/rag_env/bin/python",
+      "args": ["/home/jerzy-wolf/LLM/rag_mcp_server.py"]
+    }
+  }
+}

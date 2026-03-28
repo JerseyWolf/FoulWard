@@ -434,7 +434,7 @@ func test_fire_crossbow_auto_fire_enabled_ignores_assist_and_miss() -> void:
 func test_sim_bot_activate_does_not_crash() -> void:
 	var sim_bot: SimBot = SimBot.new()
 	add_child(sim_bot)
-	sim_bot.activate()
+	sim_bot.activate(Types.StrategyProfile.BALANCED)
 	await get_tree().process_frame
 	sim_bot.deactivate()
 	sim_bot.queue_free()

@@ -90,7 +90,25 @@ func _begin_simbot_batch(profile_id: String, runs: int, base_seed: int) -> void:
 	await get_tree().process_frame
 
 	var simbot: SimBot = _find_or_create_simbot()
-	await simbot.run_batch(profile_id, runs, base_seed)
+	if runs == 1:
+		var single_result: Dictionary = await simbot.run_single(profile_id, 0, base_seed)
+		print("[SimBot] run_single: %s" % str(single_result))
+	else:
+		await simbot.run_batch(profile_id, runs, base_seed)
+		var log: Dictionary = simbot.get_log()
+		var entries: Array = log.get("entries", []) as Array
+		var wins: int = 0
+		var losses: int = 0
+		for e: Variant in entries:
+			if e is Dictionary:
+				var r: String = str((e as Dictionary).get("result", ""))
+				if r == "WIN":
+					wins += 1
+				elif r == "LOSS":
+					losses += 1
+		print("SimBot batch complete. Runs: %d, Wins: %d, Losses: %d" % [
+			int(log.get("runs", runs)), wins, losses
+		])
 
 	get_tree().quit(0)
 
