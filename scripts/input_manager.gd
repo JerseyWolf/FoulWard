@@ -15,11 +15,11 @@ class_name InputManager
 extends Node
 
 # ASSUMPTION: All node paths match ARCHITECTURE.md §2.
-@onready var _tower: Tower = get_node("/root/Main/Tower")
-@onready var _spell_manager: SpellManager = get_node("/root/Main/Managers/SpellManager")
-@onready var _hex_grid: HexGrid = get_node("/root/Main/HexGrid")
-@onready var _camera: Camera3D = get_node("/root/Main/Camera3D")
-@onready var _build_menu: BuildMenu = get_node("/root/Main/UI/BuildMenu")
+@onready var _tower: Tower = get_node_or_null("/root/Main/Tower")
+@onready var _spell_manager: SpellManager = get_node_or_null("/root/Main/Managers/SpellManager")
+@onready var _hex_grid: HexGrid = get_node_or_null("/root/Main/HexGrid")
+@onready var _camera: Camera3D = get_node_or_null("/root/Main/Camera3D")
+@onready var _build_menu: BuildMenu = get_node_or_null("/root/Main/UI/BuildMenu")
 
 const _RAY_MAX_DISTANCE: float = 10_000.0
 ## Physics layer 2 — enemies (see enemy_base.tscn collision_layer).
@@ -45,6 +45,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				or state == Types.GameState.WAVE_COUNTDOWN
 			)
 			if mb.button_index == MOUSE_BUTTON_LEFT and can_manual_fire:
+				if not is_instance_valid(_tower):
+					return
 				var aim: Vector3 = _get_fire_aim_position()
 				if aim != Vector3.ZERO:
 					print("[InputManager] LEFT click → fire_crossbow at (%.1f, %.1f, %.1f)" % [aim.x, aim.y, aim.z])
@@ -53,6 +55,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					print("[InputManager] LEFT click — no aim (ZERO)")
 
 			elif mb.button_index == MOUSE_BUTTON_RIGHT and can_manual_fire:
+				if not is_instance_valid(_tower):
+					return
 				var aim: Vector3 = _get_fire_aim_position()
 				if aim != Vector3.ZERO:
 					print("[InputManager] RIGHT click → fire_rapid_missile at (%.1f, %.1f, %.1f)" % [aim.x, aim.y, aim.z])
@@ -64,6 +68,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_handle_build_mode_left_click()
 
 	if event is InputEventKey and event.pressed and not event.echo:
+		if not is_instance_valid(_spell_manager):
+			return
 		if event.is_action("cast_selected_spell") or event.is_action("cast_shockwave"):
 			print("[InputManager] cast selected spell")
 			_spell_manager.cast_selected_spell()
@@ -99,6 +105,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## World point on Y=0 under the mouse (no enemy bias). Used for build slot picking.
 func _get_ground_plane_intersection() -> Vector3:
+	if not is_instance_valid(_camera):
+		return Vector3.ZERO
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
 	var ray_origin: Vector3 = _camera.project_ray_origin(mouse_pos)
 	var ray_normal: Vector3 = _camera.project_ray_normal(mouse_pos)
@@ -111,6 +119,8 @@ func _get_ground_plane_intersection() -> Vector3:
 
 ## Combat aim: raycast enemies first (hits flying units at real height), else ground plane.
 func _get_fire_aim_position() -> Vector3:
+	if not is_instance_valid(_camera):
+		return Vector3.ZERO
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
 	var ray_origin: Vector3 = _camera.project_ray_origin(mouse_pos)
 	var ray_normal: Vector3 = _camera.project_ray_normal(mouse_pos)
@@ -133,6 +143,8 @@ func _get_fire_aim_position() -> Vector3:
 
 
 func _handle_build_mode_left_click() -> void:
+	if not is_instance_valid(_hex_grid) or not is_instance_valid(_build_menu):
+		return
 	var slot_index: int = _get_clicked_hex_slot_index()
 	if slot_index < 0:
 		return

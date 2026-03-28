@@ -79,9 +79,9 @@ func _ready() -> void:
 	_research_manager = get_node_or_null("/root/Main/Managers/ResearchManager")
 	print("[HexGrid] _ready: ResearchManager found=%s" % (str(_research_manager != null)))
 
-	assert(building_data_registry.size() == 8,
-		"HexGrid: building_data_registry must have exactly 8 entries, got %d"
-		% building_data_registry.size())
+	if building_data_registry.size() != 8:
+		push_error("HexGrid: building_data_registry must have exactly 8 entries, got %d" % building_data_registry.size())
+		return
 
 	_initialize_slots()
 	_set_slots_visible(false)
@@ -187,9 +187,13 @@ func _try_place_building(
 			return false
 
 		var gold_spent: bool = EconomyManager.spend_gold(building_data.gold_cost)
-		assert(gold_spent, "HexGrid: spend_gold failed after can_afford returned true")
+		if not gold_spent:
+			push_warning("HexGrid: spend_gold failed after can_afford returned true")
+			return false
 		var mat_spent: bool = EconomyManager.spend_building_material(building_data.material_cost)
-		assert(mat_spent, "HexGrid: spend_building_material failed after can_afford returned true")
+		if not mat_spent:
+			push_warning("HexGrid: spend_building_material failed after can_afford returned true")
+			return false
 
 	var building: BuildingBase = BuildingScene.instantiate() as BuildingBase
 	_building_container.add_child(building)
@@ -277,9 +281,13 @@ func upgrade_building(slot_index: int) -> bool:
 		return false
 
 	var gold_spent: bool = EconomyManager.spend_gold(building_data.upgrade_gold_cost)
-	assert(gold_spent, "HexGrid: upgrade spend_gold failed after can_afford returned true")
+	if not gold_spent:
+		push_warning("HexGrid: upgrade spend_gold failed after can_afford returned true")
+		return false
 	var mat_spent: bool = EconomyManager.spend_building_material(building_data.upgrade_material_cost)
-	assert(mat_spent, "HexGrid: upgrade spend_building_material failed after can_afford returned true")
+	if not mat_spent:
+		push_warning("HexGrid: upgrade spend_building_material failed after can_afford returned true")
+		return false
 
 	building.upgrade()
 
@@ -289,8 +297,9 @@ func upgrade_building(slot_index: int) -> bool:
 
 ## Returns a shallow copy of the slot data Dictionary for the given index.
 func get_slot_data(slot_index: int) -> Dictionary:
-	assert(_is_valid_index(slot_index),
-		"HexGrid.get_slot_data: invalid slot_index %d" % slot_index)
+	if not _is_valid_index(slot_index):
+		push_warning("HexGrid.get_slot_data: invalid slot_index %d" % slot_index)
+		return {}
 	return _slots[slot_index].duplicate()
 
 
@@ -354,8 +363,9 @@ func is_building_available(building_type: Types.BuildingType) -> bool:
 
 ## Returns the world-space Vector3 position of the given slot.
 func get_slot_position(slot_index: int) -> Vector3:
-	assert(_is_valid_index(slot_index),
-		"HexGrid.get_slot_position: invalid slot_index %d" % slot_index)
+	if not _is_valid_index(slot_index):
+		push_warning("HexGrid.get_slot_position: invalid slot_index %d" % slot_index)
+		return Vector3.ZERO
 	return _slots[slot_index]["world_pos"]
 
 
@@ -399,8 +409,9 @@ func _initialize_slots() -> void:
 	# Ring 3 is offset 30° so its slots sit between ring-2 slots visually.
 	positions.append_array(_compute_ring_positions(RING3_COUNT, RING3_RADIUS, 30.0))
 
-	assert(positions.size() == TOTAL_SLOTS,
-		"HexGrid: expected %d positions, got %d" % [TOTAL_SLOTS, positions.size()])
+	if positions.size() != TOTAL_SLOTS:
+		push_error("HexGrid: expected %d positions, got %d" % [TOTAL_SLOTS, positions.size()])
+		return
 
 	for i: int in range(TOTAL_SLOTS):
 		var slot_data: Dictionary = {

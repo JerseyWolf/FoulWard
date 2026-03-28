@@ -9,7 +9,9 @@ var current_phase_index: int = 0
 
 
 func initialize_boss_data(data: BossData) -> void:
-	assert(data != null, "BossBase.initialize_boss_data: BossData is null")
+	if data == null:
+		push_error("BossBase.initialize_boss_data: BossData is null")
+		return
 	boss_data = data
 	var placeholder: EnemyData = data.build_placeholder_enemy_data()
 	initialize(placeholder)

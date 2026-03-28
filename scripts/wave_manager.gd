@@ -123,11 +123,9 @@ static func get_effective_spawn_count_multiplier_for_day(day_index: int) -> floa
 
 func _ready() -> void:
 	print("[WaveManager] _ready: enemy_data_registry size=%d" % enemy_data_registry.size())
-	assert(
-		enemy_data_registry.size() == 6,
-		"WaveManager: enemy_data_registry must have exactly 6 entries, got %d"
-		% enemy_data_registry.size()
-	)
+	if enemy_data_registry.size() != 6:
+		push_error("WaveManager: enemy_data_registry must have exactly 6 entries, got %d" % enemy_data_registry.size())
+		return
 	SignalBus.enemy_killed.connect(_on_enemy_killed)
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
 	_load_faction_registry()
@@ -160,10 +158,9 @@ func _process_countdown(delta: float) -> void:
 ## Begins the wave sequence for a mission. Starts countdown for wave 1.
 func start_wave_sequence() -> void:
 	print("[WaveManager] start_wave_sequence")
-	assert(
-		not _is_sequence_running,
-		"WaveManager: start_wave_sequence() called while already running."
-	)
+	if _is_sequence_running:
+		push_warning("WaveManager: start_wave_sequence() called while already running.")
+		return
 	_is_sequence_running = true
 	_current_wave = 0
 	_begin_countdown_for_next_wave()
@@ -171,10 +168,9 @@ func start_wave_sequence() -> void:
 
 ## Immediately spawns enemies for the given wave, skipping countdown.
 func force_spawn_wave(wave_number: int) -> void:
-	assert(
-		wave_number >= 1 and wave_number <= max_waves,
-		"WaveManager: force_spawn_wave() invalid wave_number %d." % wave_number
-	)
+	if wave_number < 1 or wave_number > max_waves:
+		push_warning("WaveManager: force_spawn_wave() invalid wave_number %d." % wave_number)
+		return
 	_current_wave = wave_number
 	_is_counting_down = false
 	_countdown_remaining = 0.0
@@ -467,8 +463,9 @@ func _begin_countdown_for_next_wave() -> void:
 
 ## Wave formula: total enemies = N × 6 (scaled by faction difficulty_offset), split by roster weights.
 func _spawn_wave(wave_number: int) -> void:
-	assert(wave_number >= 1 and wave_number <= max_waves,
-		"WaveManager: _spawn_wave() invalid wave_number %d." % wave_number)
+	if wave_number < 1 or wave_number > max_waves:
+		push_warning("WaveManager: _spawn_wave() invalid wave_number %d." % wave_number)
+		return
 
 	if _enemy_container == null or _spawn_points == null:
 		push_error(
@@ -498,10 +495,9 @@ func _spawn_wave(wave_number: int) -> void:
 		return
 
 	var spawn_point_nodes: Array[Node] = _spawn_points.get_children()
-	assert(
-		spawn_point_nodes.size() > 0,
-		"WaveManager: No spawn points found under SpawnPoints node."
-	)
+	if spawn_point_nodes.size() == 0:
+		push_warning("WaveManager: No spawn points found under SpawnPoints node.")
+		return
 
 	var total_enemies: int = _compute_total_enemies_for_wave(wave_number, _current_faction)
 	var per_entry_counts: Array[int] = _allocate_counts_for_roster(roster_entries, total_enemies, wave_number)

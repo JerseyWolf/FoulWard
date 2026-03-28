@@ -24,7 +24,7 @@ var _is_sell_mode: bool = false
 @onready var _sell_cancel_button: Button = $Panel/VBox/SellPanel/Buttons/CancelButton
 
 # ASSUMPTION: HexGrid path matches ARCHITECTURE.md §2.
-@onready var _hex_grid: HexGrid = get_node("/root/Main/HexGrid")
+@onready var _hex_grid: HexGrid = get_node_or_null("/root/Main/HexGrid")
 
 # ─────────────────────────────────────────────────────────────────────────
 
@@ -41,6 +41,9 @@ func _ready() -> void:
 ## Called by InputManager when player clicks a hex slot during BUILD_MODE.
 func open_for_slot(slot_index: int) -> void:
 	print("[BuildMenu] open_for_slot: slot=%d" % slot_index)
+	if not is_instance_valid(_hex_grid):
+		push_warning("BuildMenu: HexGrid not found")
+		return
 	_selected_slot = slot_index
 	_is_sell_mode = false
 	_slot_label.text = "Building on slot %d (yellow tile on ground)" % slot_index
@@ -52,6 +55,9 @@ func open_for_slot(slot_index: int) -> void:
 
 func open_for_sell_slot(slot_index: int, slot_data: Dictionary) -> void:
 	print("[BuildMenu] open_for_sell_slot: slot=%d" % slot_index)
+	if not is_instance_valid(_hex_grid):
+		push_warning("BuildMenu: HexGrid not found")
+		return
 	_selected_slot = slot_index
 	_is_sell_mode = true
 	_hex_grid.set_build_slot_highlight(slot_index)

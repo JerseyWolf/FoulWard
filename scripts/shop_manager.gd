@@ -106,11 +106,15 @@ func purchase_item(item_id: String) -> bool:
 		return false
 
 	var gold_spent: bool = EconomyManager.spend_gold(item.gold_cost)
-	assert(gold_spent, "ShopManager: spend_gold failed after can_afford returned true")
+	if not gold_spent:
+		push_warning("ShopManager: spend_gold failed after can_afford returned true")
+		return false
 
 	if item.material_cost > 0:
 		var mat_spent: bool = EconomyManager.spend_building_material(item.material_cost)
-		assert(mat_spent, "ShopManager: spend_building_material failed after can_afford returned true")
+		if not mat_spent:
+			push_warning("ShopManager: spend_building_material failed after can_afford returned true")
+			return false
 
 	var effect_ok: bool = _apply_effect(item_id)
 	if not effect_ok:

@@ -23,7 +23,7 @@ extends Control
 @onready var _missile_reload_bar: ProgressBar = $WeaponPanel/MissileReloadBar
 @onready var _build_mode_hint: Label = $BuildModeHint
 
-@onready var _tower: Tower = get_node("/root/Main/Tower")
+@onready var _tower: Tower = get_node_or_null("/root/Main/Tower")
 
 var _countdown_seconds: float = 0.0
 var _is_counting_down: bool = false

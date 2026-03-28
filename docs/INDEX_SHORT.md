@@ -3,7 +3,7 @@ INDEX_SHORT.md
 
 FOUL WARD — INDEX_SHORT.md
 
-Compact repository reference. One-liner per file. **Doc layout:** `docs/README.md`. Updated: 2026-03-28 (**Prompt 24:** programmatic PNG icons (`tools/generate_placeholder_icons.gd`, `addons/fw_placeholder_icons`), `ArtPlaceholderHelper` icon textures, `SettingsManager` + `scenes/ui/settings_screen`, UI wiring — `docs/PROMPT_24_IMPLEMENTATION.md`). **Prompt 23:** Endless Run — `Types.GameState.ENDLESS`, `CampaignManager.is_endless_mode` / `start_endless_run`, synthetic day scaling, main menu — `docs/PROMPT_23_IMPLEMENTATION.md`. **Prompt 22:** relationship tiers + affinity autoload, dialogue `relationship_tier` conditions — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs under `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `# TODO(ART)` in combat/hub scenes; see `docs/PROMPT_19_IMPLEMENTATION.md`. **Prompt 18:** local RAG + MCP pipeline under `~/LLM` — `docs/PROMPT_18_IMPLEMENTATION.md`. **Audit 6:** `AUDIT_IMPLEMENTATION_AUDIT_6.md` (multi-spell, structural weapon upgrades, barracks/shield specials, territory aggregates). **Prompt 20:** `docs/obsolete/` archive + INDEX autoload alignment; `docs/PROMPT_20_IMPLEMENTATION.md`.
+Compact repository reference. One-liner per file. **Doc layout:** `docs/README.md`. **Consolidated snapshot (Prompt 26+):** `docs/OPUS_ALL_ACTIONS.md` — single file merging improvement backlog, AGENTS standing orders, PROMPT_26 log, INDEX_SHORT, INDEX_FULL (regenerate after editing sources). Updated: 2026-03-28 (**Prompt 26:** Full project audit — 55 unindexed files added, AGENTS.md standing orders, IMPROVEMENTS_TO_BE_DONE.md backlog, test classification — `docs/PROMPT_26_IMPLEMENTATION.md`). **Prompt 24:** programmatic PNG icons (`tools/generate_placeholder_icons.gd`, `addons/fw_placeholder_icons`), `ArtPlaceholderHelper` icon textures, `SettingsManager` + `scenes/ui/settings_screen`, UI wiring — `docs/PROMPT_24_IMPLEMENTATION.md`. **Prompt 23:** Endless Run — `Types.GameState.ENDLESS`, `CampaignManager.is_endless_mode` / `start_endless_run`, synthetic day scaling, main menu — `docs/PROMPT_23_IMPLEMENTATION.md`. **Prompt 22:** relationship tiers + affinity autoload, dialogue `relationship_tier` conditions — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs under `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `# TODO(ART)` in combat/hub scenes; see `docs/PROMPT_19_IMPLEMENTATION.md`. **Prompt 18:** local RAG + MCP pipeline under `~/LLM` — `docs/PROMPT_18_IMPLEMENTATION.md`. **Audit 6:** `AUDIT_IMPLEMENTATION_AUDIT_6.md` (multi-spell, structural weapon upgrades, barracks/shield specials, territory aggregates). **Prompt 20:** `docs/obsolete/` archive + INDEX autoload alignment; `docs/PROMPT_20_IMPLEMENTATION.md`.
 Source of truth: REPO_DUMP_AFTER_MVP.md; **re-run** `./tools/run_gdunit.sh` after Prompt 12/13 (use `./tools/run_gdunit_quick.sh` for iteration). **Handoff:** `docs/PROBLEM_REPORT.md` lists files and log snippets for GdUnit / `mission_won` / `push_warning` work.
 AUTOLOADS (registered in project.godot, in init order)
 Autoload Name	Path	What it does
@@ -33,6 +33,8 @@ ArtPlaceholderHelper	res://scripts/art/art_placeholder_helper.gd	Stateless utili
 PlaceholderIconGenerator	res://tools/generate_placeholder_icons.gd	Prompt 24: `class_name PlaceholderIconGenerator` — 64×64 PNG placeholders (editor Project menu or `run_generate_placeholder_icons.gd`).
 fw_placeholder_icons	res://addons/fw_placeholder_icons/plugin.cfg	Prompt 24: EditorPlugin — Project → Generate Placeholder Icons.
 tools/generate_placeholder_glbs_blender.py	res://tools/generate_placeholder_glbs_blender.py	Blender 4.x headless: Rigify/blockout GLBs → `res://art/generated/{enemies,allies,buildings,bosses,misc}/`; writes `art/generated/generation_log.json`. Requires system numpy for glTF exporter.
+tools/run_gdunit_unit.sh	tools/run_gdunit_unit.sh	Prompt 27: Runs only 33 pure unit tests (no await/scenes/timers). ~65s wall-clock.
+tools/run_gdunit_parallel.sh	tools/run_gdunit_parallel.sh	Prompt 27: 8-parallel-process test runner for all 58 test files. ~2m45s wall-clock (37% faster than sequential).
 art/generated/generation_log.json	res://art/generated/generation_log.json	Batch export inventory (entity_id, paths, animation_count, has_rig); optional `godot_mcp.reload_project` metadata.
 FUTURE_3D_MODELS_PLAN.md	res://FUTURE_3D_MODELS_PLAN.md	Production 3D + hub portrait roadmap; placeholder table; scene art audit appendix; PhysicalBone3D + AnimationPlayer wiring notes.
 MainRoot	res://scripts/main_root.gd	Applies root window content scale at startup (stretch fix for Godot 4.4+).
@@ -213,6 +215,30 @@ testbuildingbase.gd	Combat loop, targeting, fire rate, upgrade stats
 testprojectilesystem.gd	Init paths, travel, collision, damage matrix, immunity, miss
 testsimulationapi.gd	All manager public methods callable without UI
 testenemypathfinding.gd	EnemyBase nav, attack, health_depleted → gold signal
+test_boss_day_flow.gd	Prompt 21: Boss day progression, territory secure on mini-boss kill
+test_campaign_autoload_and_day_flow.gd	Prompt 21: Autoload registration order, campaign start/day progression
+test_consumables.gd	Prompt 25: Consumable stacking, effect_tags handling, mission-start application
+test_endless_mode.gd	Prompt 23: Endless run start, wave scaling past day 50, hub suppression
+test_enemy_dot_system.gd	Prompt 6: DoT burn/poison stacking, tick damage, duration, cleanup
+test_florence.gd	Prompt 15: Florence meta-state counters, day advance priority, dialogue conditions
+test_relationship_manager.gd	Prompt 22: Affinity add/get, tier lookup, save/restore, event-driven deltas
+test_save_manager.gd	Prompt 25: Save/load round-trip, slot management, payload structure
+test_settings_manager.gd	Prompt 24: Volume set/get, keybind remap, config file persistence
+test_simbot_handlers.gd	Prompt 25: SimBot signal handlers, wave/mission counters, metrics
+test_tower_enchantments.gd	Prompt 4: Tower enchantment composition, projectile damage/type override
+test_weapon_structural.gd	Audit 6: WeaponLevelData structural fields validation
+test_building_specials.gd	Audit 6: Archer Barracks/Shield Generator special behavior validation
+test_weapon_upgrade_manager.gd	Prompt 3: Weapon level progression, cost checks, stat lookup, reset
+ADDITIONAL SCRIPTS (not previously indexed)
+File	What it does
+scenes/hub/character_base_2d.gd	Prompt 14: Clickable hub character node — exports CharacterData, emits character_interacted
+scripts/florence_data.gd	Prompt 15: FlorenceData resource class — run meta-state (counters, unlock flags)
+scripts/resources/strategyprofileconfig.gd	Prompt 16: StrategyProfileConfig wrapper for SimBot profile loading
+scripts/resources/test_strategyprofileconfig.gd	Prompt 16: Test helper resource class for SimBot profile tests
+scripts/simbot_logger.gd	Prompt 16: SimBot CSV logging utility — writes batch results to user://simbot/logs/
+scripts/weapon_upgrade_manager.gd	Prompt 3: WeaponUpgradeManager — per-weapon level tracking, upgrade cost, stat lookup
+scripts/ui/settings_screen.gd	Prompt 24: SettingsScreen — audio sliders, graphics quality, keybind remap, Back button
+ui/dialogue_ui.gd	Prompt 13: Legacy DialogueUI placeholder panel (kept for reference; DialoguePanel is active)
 KNOWN OPEN ISSUES (as of Autonomous Session 3)
 
     Sell UX is now wired in build mode: InputManager routes slot clicks to BuildMenu placement/sell mode.
@@ -272,6 +298,10 @@ SCENE TREE OVERVIEW (main.tscn)
   ├── MainMenu [main_menu.tscn]
   ├── MissionBriefing (Control)
   └── EndScreen (Control)
+
+LATEST CHANGES (2026-03-28 Prompt 27)
+
+    - Prompt 27 audit backlog execution (`docs/PROMPT_27_IMPLEMENTATION.md`): RAG pipeline MCP wiring; assert→push_warning in 9 production files; RelationshipManager wired into SaveManager; get_node→get_node_or_null in 4 UI/input files; removed obsolete `wave_failed`/`wave_completed` signals; orphan leak fixes in 4 test files (17→6 orphans); `tools/run_gdunit_unit.sh` (33 unit tests, ~65s); `tools/run_gdunit_parallel.sh` (8-process parallel runner, ~2m45s vs 4m22s baseline); deleted 3 redundant root-level audit docs. Full suite: 522 cases, 0 failures, 6 orphans.
 
 LATEST CHANGES (2026-03-25)
 

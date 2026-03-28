@@ -36,13 +36,17 @@ func _on_enemy_killed(_enemy_type: Types.EnemyType, _position: Vector3, gold_rew
 
 ## Adds amount to gold. Emits resource_changed(GOLD, new_amount).
 func add_gold(amount: int) -> void:
-	assert(amount > 0, "add_gold called with non-positive amount: %d" % amount)
+	if amount <= 0:
+		push_warning("add_gold called with non-positive amount: %d" % amount)
+		return
 	gold += amount
 	SignalBus.resource_changed.emit(Types.ResourceType.GOLD, gold)
 
 ## Deducts amount from gold. Returns false without modifying state if insufficient.
 func spend_gold(amount: int) -> bool:
-	assert(amount > 0, "spend_gold called with non-positive amount: %d" % amount)
+	if amount <= 0:
+		push_warning("spend_gold called with non-positive amount: %d" % amount)
+		return false
 	if gold < amount:
 		return false
 	gold -= amount
@@ -53,13 +57,17 @@ func spend_gold(amount: int) -> bool:
 
 ## Adds amount to building_material. Emits resource_changed(BUILDING_MATERIAL, new_amount).
 func add_building_material(amount: int) -> void:
-	assert(amount > 0, "add_building_material called with non-positive amount: %d" % amount)
+	if amount <= 0:
+		push_warning("add_building_material called with non-positive amount: %d" % amount)
+		return
 	building_material += amount
 	SignalBus.resource_changed.emit(Types.ResourceType.BUILDING_MATERIAL, building_material)
 
 ## Deducts amount from building_material. Returns false without modifying state if insufficient.
 func spend_building_material(amount: int) -> bool:
-	assert(amount > 0, "spend_building_material called with non-positive amount: %d" % amount)
+	if amount <= 0:
+		push_warning("spend_building_material called with non-positive amount: %d" % amount)
+		return false
 	if building_material < amount:
 		return false
 	building_material -= amount
@@ -70,13 +78,17 @@ func spend_building_material(amount: int) -> bool:
 
 ## Adds amount to research_material. Emits resource_changed(RESEARCH_MATERIAL, new_amount).
 func add_research_material(amount: int) -> void:
-	assert(amount > 0, "add_research_material called with non-positive amount: %d" % amount)
+	if amount <= 0:
+		push_warning("add_research_material called with non-positive amount: %d" % amount)
+		return
 	research_material += amount
 	SignalBus.resource_changed.emit(Types.ResourceType.RESEARCH_MATERIAL, research_material)
 
 ## Deducts amount from research_material. Returns false without modifying state if insufficient.
 func spend_research_material(amount: int) -> bool:
-	assert(amount > 0, "spend_research_material called with non-positive amount: %d" % amount)
+	if amount <= 0:
+		push_warning("spend_research_material called with non-positive amount: %d" % amount)
+		return false
 	if research_material < amount:
 		return false
 	research_material -= amount

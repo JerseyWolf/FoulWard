@@ -56,6 +56,16 @@
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_PERSONAL_ACCESS_TOKEN}"
       },
       "envFile": "${userHome}/.cursor/github-mcp.env"
+    },
+    "foulward-rag": {
+      "command": "/home/jerzy-wolf/LLM/rag_env/bin/python",
+      "args": [
+        "/home/jerzy-wolf/LLM/rag_mcp_server.py"
+      ],
+      "cwd": "/home/jerzy-wolf/LLM",
+      "env": {
+        "PATH": "/home/jerzy-wolf/.local/bin:/usr/bin:/usr/local/bin:/bin"
+      }
     }
   }
 }

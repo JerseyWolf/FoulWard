@@ -10,14 +10,14 @@
 class_name UIManager
 extends Control
 
-@onready var _hud: Control = get_node("/root/Main/UI/HUD")
-@onready var _build_menu: Control = get_node("/root/Main/UI/BuildMenu")
-@onready var _between_mission_screen: Control = get_node(
+@onready var _hud: Control = get_node_or_null("/root/Main/UI/HUD")
+@onready var _build_menu: Control = get_node_or_null("/root/Main/UI/BuildMenu")
+@onready var _between_mission_screen: Control = get_node_or_null(
 	"/root/Main/UI/BetweenMissionScreen"
 )
-@onready var _main_menu: Control = get_node("/root/Main/UI/MainMenu")
-@onready var _mission_briefing: Control = get_node("/root/Main/UI/MissionBriefing")
-@onready var _end_screen: Control = get_node("/root/Main/UI/EndScreen")
+@onready var _main_menu: Control = get_node_or_null("/root/Main/UI/MainMenu")
+@onready var _mission_briefing: Control = get_node_or_null("/root/Main/UI/MissionBriefing")
+@onready var _end_screen: Control = get_node_or_null("/root/Main/UI/EndScreen")
 
 @onready var _hub: Control = get_node_or_null("/root/Main/UI/Hub") as Control
 var _dialogue_panel: DialoguePanel = null
@@ -123,19 +123,28 @@ func _on_game_state_changed(
 
 ## Single source of truth for UI panel visibility.
 func _apply_state(state: Types.GameState) -> void:
+	if not is_instance_valid(_hud):
+		return
 	_hud.hide()
-	_build_menu.hide()
-	_between_mission_screen.hide()
-	_main_menu.hide()
-	_mission_briefing.hide()
-	_end_screen.hide()
+	if is_instance_valid(_build_menu):
+		_build_menu.hide()
+	if is_instance_valid(_between_mission_screen):
+		_between_mission_screen.hide()
+	if is_instance_valid(_main_menu):
+		_main_menu.hide()
+	if is_instance_valid(_mission_briefing):
+		_mission_briefing.hide()
+	if is_instance_valid(_end_screen):
+		_end_screen.hide()
 
 	match state:
 		Types.GameState.MAIN_MENU:
-			_main_menu.show()
+			if is_instance_valid(_main_menu):
+				_main_menu.show()
 
 		Types.GameState.MISSION_BRIEFING:
-			_mission_briefing.show()
+			if is_instance_valid(_mission_briefing):
+				_mission_briefing.show()
 
 		Types.GameState.COMBAT, \
 		Types.GameState.WAVE_COUNTDOWN:
@@ -143,18 +152,18 @@ func _apply_state(state: Types.GameState) -> void:
 
 		Types.GameState.BUILD_MODE:
 			_hud.show()
-			# BuildMenu is shown only after selecting a hex slot (see `BuildMenu.open_for_slot()`).
-			# Keeping it hidden at build-mode entry prevents it from covering most of the grid.
 
 		Types.GameState.BETWEEN_MISSIONS, \
 		Types.GameState.ENDLESS:
-			_between_mission_screen.show()
+			if is_instance_valid(_between_mission_screen):
+				_between_mission_screen.show()
 
 		Types.GameState.MISSION_WON, \
 		Types.GameState.GAME_WON, \
 		Types.GameState.MISSION_FAILED, \
 		Types.GameState.GAME_OVER:
-			_end_screen.show()
+			if is_instance_valid(_end_screen):
+				_end_screen.show()
 
 
 func _ensure_dialogue_panel() -> void:
