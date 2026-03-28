@@ -98,14 +98,14 @@ Under **`Main`** (Node3D):
 ## Tests
 
 - **Framework:** GdUnit4 (`addons/gdUnit4`).
-- **Last known full run:** **289** test cases, **0** failures (headless `GdUnitCmdTool.gd`; see `CURRENT_STATUS.md` for command).
+- **Last known full run:** on the order of **~485** test cases (see `docs/INDEX_SHORT.md`; run `./tools/run_gdunit.sh` to refresh), **0** failures expected (headless `GdUnitCmdTool.gd`; see `CURRENT_STATUS.md` for command).
 - **Note:** On some Windows setups Godot may **SIGSEGV after** the test run; use the **Overall Summary** line as the pass/fail truth.
 
 ---
 
 ## What is implemented vs open (MVP tracking)
 
-Detailed checklist: **`AUTONOMOUS_SESSION_2.md`**.
+Detailed checklist: **`docs/INDEX_SHORT.md`** (compact map and “Known open issues”) and **`docs/PROBLEM_REPORT.md`** for active defects.
 
 **Largely in place:** wave scaling, damage matrix, economy, shop (four items), research tree (six nodes), mission briefing path, simulation API tests, SimBot activate/deactivate hygiene, git LF/binary attributes for Linux clones.
 
@@ -116,7 +116,7 @@ Detailed checklist: **`AUTONOMOUS_SESSION_2.md`**.
 ## Related handoff files
 
 - **`CURRENT_STATUS.md`** — How to recreate this workspace (Godot, Cursor, MCP, npm, tests) on a new machine.
-- **`AUTONOMOUS_SESSION_2.md`** — Phase checklist and session notes.
+- **`docs/README.md`** — What each documentation file is for; **`docs/obsolete/`** — archived session logs and one-off snapshots.
 
 ---
 

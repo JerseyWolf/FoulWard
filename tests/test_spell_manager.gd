@@ -266,3 +266,110 @@ func test_set_mana_to_full_sets_max() -> void:
 	assert_that(_spell_manager.get_current_mana()).is_equal(_spell_manager.max_mana)
 	await assert_signal(SignalBus).is_emitted("mana_changed", [100, 100])
 
+
+func _build_slow_field_data() -> SpellData:
+	var sd: SpellData = SpellData.new()
+	sd.spell_id = "slow_field"
+	sd.mana_cost = 10
+	sd.cooldown = 5.0
+	sd.damage = 0.0
+	sd.radius = 50.0
+	sd.slow_speed_multiplier = 0.4
+	sd.slow_duration_seconds = 10.0
+	sd.damage_type = Types.DamageType.MAGICAL
+	sd.hits_flying = false
+	return sd
+
+
+func _build_beam_data() -> SpellData:
+	var sd: SpellData = SpellData.new()
+	sd.spell_id = "arcane_beam"
+	sd.mana_cost = 10
+	sd.cooldown = 5.0
+	sd.damage = 18.0
+	sd.radius = 60.0
+	sd.beam_lateral_half_width = 4.0
+	sd.damage_type = Types.DamageType.MAGICAL
+	sd.hits_flying = true
+	return sd
+
+
+func _build_shield_data() -> SpellData:
+	var sd: SpellData = SpellData.new()
+	sd.spell_id = "tower_shield"
+	sd.mana_cost = 10
+	sd.cooldown = 5.0
+	sd.damage = 50.0
+	sd.shield_duration_seconds = 20.0
+	sd.damage_type = Types.DamageType.MAGICAL
+	return sd
+
+
+func test_slow_field_applies_slow_in_radius() -> void:
+	_spell_manager.queue_free()
+	_spell_manager = SpellManager.new()
+	_spell_manager.max_mana = 100
+	_spell_manager.spell_registry = [_build_slow_field_data()]
+	add_child(_spell_manager)
+	var enemy: EnemyBase = _spawn_enemy(false, Types.ArmorType.UNARMORED)
+	enemy.global_position = Vector3(8.0, 0.0, 6.0)
+	_spell_manager.set_mana_to_full()
+	var ok: bool = _spell_manager.cast_spell("slow_field")
+	assert_that(ok).is_true()
+	await get_tree().process_frame
+	assert_float(enemy.get_move_speed_slow_multiplier()).is_equal(0.4)
+
+
+func test_arcane_beam_hits_enemy_along_beam() -> void:
+	_spell_manager.queue_free()
+	_spell_manager = SpellManager.new()
+	_spell_manager.max_mana = 100
+	_spell_manager.spell_registry = [_build_beam_data()]
+	add_child(_spell_manager)
+	var enemy: EnemyBase = _spawn_enemy(false, Types.ArmorType.UNARMORED)
+	enemy.global_position = Vector3(1.0, 0.0, 25.0)
+	_spell_manager.set_mana_to_full()
+	_spell_manager.cast_spell("arcane_beam")
+	await get_tree().process_frame
+	assert_that(enemy.health_component.get_current_hp()).is_equal(200 - 18)
+
+
+func test_tower_shield_adds_absorb_hp() -> void:
+	_spell_manager.queue_free()
+	_spell_manager = SpellManager.new()
+	_spell_manager.max_mana = 100
+	_spell_manager.spell_registry = [_build_shield_data()]
+	add_child(_spell_manager)
+	var tower_scene: PackedScene = load("res://scenes/tower/tower.tscn")
+	var tower: Tower = tower_scene.instantiate() as Tower
+	add_child(tower)
+	_spell_manager.set_mana_to_full()
+	_spell_manager.cast_spell("tower_shield")
+	await get_tree().process_frame
+	assert_float(tower.get_spell_shield_hp()).is_equal(50.0)
+	tower.take_damage(30)
+	assert_float(tower.get_spell_shield_hp()).is_equal(20.0)
+	assert_that(tower.get_current_hp()).is_equal(tower.get_max_hp())
+	tower.queue_free()
+
+
+func test_cast_selected_spell_uses_registry_index() -> void:
+	_spell_manager.queue_free()
+	_spell_manager = SpellManager.new()
+	_spell_manager.max_mana = 100
+	_spell_manager.spell_registry = [
+		_build_shockwave_data(),
+		_build_slow_field_data(),
+	]
+	add_child(_spell_manager)
+	assert_that(_spell_manager.get_selected_spell_id()).is_equal("shockwave")
+	_spell_manager.set_selected_spell_index(1)
+	assert_that(_spell_manager.get_selected_spell_id()).is_equal("slow_field")
+	_spell_manager.set_mana_to_full()
+	var enemy: EnemyBase = _spawn_enemy(false, Types.ArmorType.UNARMORED)
+	enemy.global_position = Vector3(2.0, 0.0, 2.0)
+	var cast_ok: bool = _spell_manager.cast_selected_spell()
+	assert_that(cast_ok).is_true()
+	await get_tree().process_frame
+	assert_float(enemy.get_move_speed_slow_multiplier()).is_equal(0.4)
+

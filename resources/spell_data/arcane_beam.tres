@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/spell_data.gd" id="1_spell_data"]
+
+[resource]
+script = ExtResource("1_spell_data")
+spell_id = "arcane_beam"
+display_name = "Arcane Beam"
+mana_cost = 35
+cooldown = 30.0
+damage = 22.0
+radius = 45.0
+damage_type = 2
+hits_flying = true
+slow_speed_multiplier = 0.5
+slow_duration_seconds = 4.0
+beam_lateral_half_width = 2.5
+shield_duration_seconds = 0.0

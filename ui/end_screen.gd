@@ -24,7 +24,8 @@ func _on_game_state_changed(
 			_message_label.text = "YOU SURVIVED 5 MISSIONS"
 		Types.GameState.MISSION_WON:
 			_message_label.text = "MISSION %d COMPLETE" % GameManager.get_current_mission()
-		Types.GameState.MISSION_FAILED:
+		Types.GameState.MISSION_FAILED, \
+		Types.GameState.GAME_OVER:
 			_message_label.text = "TOWER DESTROYED"
 		_:
 			pass

@@ -40,3 +40,64 @@ func _find_enemy_data_for_type(enemy_type: Types.EnemyType) -> EnemyData:
 		if data != null and data.enemy_type == enemy_type:
 			return data
 	return null
+
+
+func test_empty_faction_roster_configures_without_crash() -> void:
+	var wm: WaveManager = WaveManager.new()
+	var enemy_container: Node3D = Node3D.new()
+	var spawn_points: Node3D = Node3D.new()
+	for i: int in range(4):
+		var marker: Marker3D = Marker3D.new()
+		marker.global_position = Vector3(float(i) * 4.0, 0.0, 0.0)
+		spawn_points.add_child(marker)
+	add_child(enemy_container)
+	add_child(spawn_points)
+	wm.wave_countdown_duration = 5.0
+	wm.max_waves = 3
+	wm.enemy_data_registry = _audit5_six_enemy_data()
+	add_child(wm)
+	wm._enemy_container = enemy_container
+	wm._spawn_points = spawn_points
+
+	var faction: FactionData = FactionData.new()
+	faction.faction_id = "EMPTY_ROSTER_AUDIT5"
+	faction.roster = []
+
+	var day: DayConfig = DayConfig.new()
+	day.day_index = 1
+	day.base_wave_count = 3
+	day.faction_id = "EMPTY_ROSTER_AUDIT5"
+	wm.set_day_context(day, faction)
+	wm.force_spawn_wave(1)
+	await get_tree().process_frame
+	assert_int(enemy_container.get_child_count()).is_equal(0)
+	wm.queue_free()
+	enemy_container.queue_free()
+	spawn_points.queue_free()
+
+
+func _audit5_six_enemy_data() -> Array[EnemyData]:
+	var registry: Array[EnemyData] = []
+	var types: Array = [
+		Types.EnemyType.ORC_GRUNT,
+		Types.EnemyType.ORC_BRUTE,
+		Types.EnemyType.GOBLIN_FIREBUG,
+		Types.EnemyType.PLAGUE_ZOMBIE,
+		Types.EnemyType.ORC_ARCHER,
+		Types.EnemyType.BAT_SWARM
+	]
+	for t: Types.EnemyType in types:
+		var d: EnemyData = EnemyData.new()
+		d.enemy_type = t
+		d.max_hp = 50
+		d.move_speed = 3.0
+		d.damage = 5
+		d.attack_range = 1.5
+		d.attack_cooldown = 1.0
+		d.armor_type = Types.ArmorType.UNARMORED
+		d.gold_reward = 5
+		d.is_flying = (t == Types.EnemyType.BAT_SWARM)
+		d.is_ranged = (t == Types.EnemyType.ORC_ARCHER)
+		d.damage_immunities = []
+		registry.append(d)
+	return registry

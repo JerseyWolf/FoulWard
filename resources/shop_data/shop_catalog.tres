@@ -17,6 +17,11 @@ display_name = "Mana Draught"
 gold_cost = 20
 material_cost = 0
 description = "Start next mission at full mana"
+item_type = "consumable"
+effect_tags = Array[String](["mana_restore"])
+duration = 0.0
+cooldown = 0.0
+value = 0
 
 [resource]
 

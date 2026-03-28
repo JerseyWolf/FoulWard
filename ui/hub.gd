@@ -32,6 +32,8 @@ func _set_ui_manager(ui_manager: Node) -> void:
 
 
 func _initialize_characters() -> void:
+	# TODO(ART): Hub characters use ColorRect placeholders in character_base_2d — swap to 512×512
+	# portrait Texture2D per CharacterData when commissioned (see FUTURE_3D_MODELS_PLAN.md §6).
 	if _characters_container == null:
 		return
 
@@ -99,7 +101,7 @@ func _handle_character_focus(character_id: String) -> void:
 				pass
 
 	# Request dialogue from DialogueManager and display it via UIManager.
-	if _ui_manager != null and _ui_manager.has_method("show_dialogue"):
+	if not CampaignManager.is_endless_mode and _ui_manager != null and _ui_manager.has_method("show_dialogue"):
 		var entry: DialogueEntry = DialogueManager.request_entry_for_character(
 			char_data.character_id,
 			char_data.default_dialogue_tags

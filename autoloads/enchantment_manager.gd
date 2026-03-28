@@ -69,10 +69,16 @@ func get_all_equipped_enchantments_for_weapon(weapon_slot: Types.WeaponSlot) -> 
 
 
 func try_apply_enchantment(weapon_slot: Types.WeaponSlot, slot_type: String, enchantment_id: String, gold_cost: int) -> bool:
+	var eff_gold: int = gold_cost
 	if gold_cost > 0:
-		if not EconomyManager.can_afford(gold_cost, 0):
+		eff_gold = int(
+			ceilf(float(gold_cost) * GameManager.get_aggregate_enchanting_cost_multiplier())
+		)
+		if eff_gold < 1:
+			eff_gold = 1
+		if not EconomyManager.can_afford(eff_gold, 0):
 			return false
-		var spent: bool = EconomyManager.spend_gold(gold_cost)
+		var spent: bool = EconomyManager.spend_gold(eff_gold)
 		if not spent:
 			return false
 
@@ -124,3 +130,38 @@ func gain_affinity_xp(weapon_slot: Types.WeaponSlot, amount: float) -> void:
 	if not _affinity_xp.has(weapon_slot):
 		_affinity_xp[weapon_slot] = 0.0
 	_affinity_xp[weapon_slot] = (_affinity_xp[weapon_slot] as float) + amount
+
+
+func get_save_data() -> Dictionary:
+	var flat: Dictionary = {}
+	for weapon_slot_value: int in Types.WeaponSlot.values():
+		var weapon_slot: Types.WeaponSlot = weapon_slot_value as Types.WeaponSlot
+		var slots: Dictionary = _equipped_enchantments.get(weapon_slot, {
+			"elemental": "",
+			"power": "",
+		})
+		for st: String in ["elemental", "power"]:
+			var key: String = "%d_%s" % [int(weapon_slot), st]
+			flat[key] = str(slots.get(st, ""))
+	return {"enchantments_by_slot": flat}
+
+
+func restore_from_save(data: Dictionary) -> void:
+	_reset_to_defaults_internal()
+	var raw: Variant = data.get("enchantments_by_slot", {})
+	if raw is not Dictionary:
+		return
+	var flat: Dictionary = raw as Dictionary
+	for k: Variant in flat.keys():
+		var ks: String = str(k)
+		var sep: int = ks.find("_")
+		if sep < 1:
+			continue
+		var slot_num: int = int(ks.left(sep))
+		var st: String = ks.substr(sep + 1)
+		var slot_enum: Types.WeaponSlot = slot_num as Types.WeaponSlot
+		if not _equipped_enchantments.has(slot_enum):
+			continue
+		var slots: Dictionary = _equipped_enchantments[slot_enum]
+		slots[st] = str(flat[k])
+		_equipped_enchantments[slot_enum] = slots

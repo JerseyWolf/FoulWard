@@ -53,11 +53,16 @@ func unlock_node(node_id: String) -> bool:
 				% [prereq_id, node_id])
 			return false
 
-	# Research costs research_material, not gold.
-	if EconomyManager.get_research_material() < node_data.research_cost:
+	# Research costs research_material, not gold (territory multipliers apply).
+	var eff_cost: int = int(
+		ceilf(float(node_data.research_cost) * GameManager.get_aggregate_research_cost_multiplier())
+	)
+	if eff_cost < 1:
+		eff_cost = 1
+	if EconomyManager.get_research_material() < eff_cost:
 		return false
 
-	var spent: bool = EconomyManager.spend_research_material(node_data.research_cost)
+	var spent: bool = EconomyManager.spend_research_material(eff_cost)
 	assert(spent, "ResearchManager: spend_research_material failed after balance check")
 
 	_unlocked_nodes.append(node_id)
@@ -101,6 +106,20 @@ func reset_to_defaults() -> void:
 			_unlocked_nodes.append(node_data.node_id)
 	elif dev_unlock_anti_air_only:
 		_unlocked_nodes.append("unlock_anti_air")
+
+
+func get_save_data() -> Dictionary:
+	return {"unlocked_node_ids": _unlocked_nodes.duplicate()}
+
+
+func restore_from_save(data: Dictionary) -> void:
+	_unlocked_nodes.clear()
+	var arr: Variant = data.get("unlocked_node_ids", [])
+	if arr is Array:
+		for x: Variant in arr as Array:
+			if x is String:
+				_unlocked_nodes.append(x as String)
+
 
 # ---------------------------------------------------------------------------
 # Private helpers

@@ -86,3 +86,51 @@ func test_tower_projectile_damage_scaled_by_both_slots() -> void:
 	assert_object(projectile).is_not_null()
 	var actual_damage: float = projectile.get("_damage") as float
 	assert_float(actual_damage).is_equal_approx(expected_damage, 0.001)
+
+
+func test_remove_enchantment_subsequent_shot_uses_physical_damage_type() -> void:
+	EnchantmentManager.reset_to_defaults()
+	EconomyManager.reset_to_defaults()
+	EnchantmentManager.try_apply_enchantment(
+		Types.WeaponSlot.CROSSBOW, "elemental", "scorching_bolts", 0
+	)
+	var target_pos: Vector3 = _tower.global_position + Vector3(10.0, 0.0, 0.0)
+	_tower.fire_crossbow(target_pos)
+	await get_tree().process_frame
+	var first: ProjectileBase = _get_single_projectile()
+	assert_int(first.get("_damage_type") as int).is_equal(Types.DamageType.FIRE)
+
+	EnchantmentManager.remove_enchantment(Types.WeaponSlot.CROSSBOW, "elemental")
+	for c: Node in _projectile_container.get_children():
+		c.queue_free()
+	await get_tree().process_frame
+
+	_tower._crossbow_reload_remaining = 0.0
+	_tower.fire_crossbow(target_pos)
+	await get_tree().process_frame
+	var second: ProjectileBase = _get_single_projectile()
+	assert_object(second).is_not_null()
+	assert_int(second.get("_damage_type") as int).is_equal(Types.DamageType.PHYSICAL)
+
+
+func test_swap_enchantment_elemental_changes_second_shot_damage_type() -> void:
+	EnchantmentManager.reset_to_defaults()
+	EconomyManager.reset_to_defaults()
+	EnchantmentManager.try_apply_enchantment(
+		Types.WeaponSlot.CROSSBOW, "elemental", "scorching_bolts", 0
+	)
+	_tower.fire_crossbow(_tower.global_position + Vector3(10.0, 0.0, 0.0))
+	await get_tree().process_frame
+	for c: Node in _projectile_container.get_children():
+		c.queue_free()
+	await get_tree().process_frame
+
+	EnchantmentManager.remove_enchantment(Types.WeaponSlot.CROSSBOW, "elemental")
+	EnchantmentManager.try_apply_enchantment(
+		Types.WeaponSlot.CROSSBOW, "elemental", "toxic_payload", 0
+	)
+	_tower._crossbow_reload_remaining = 0.0
+	_tower.fire_crossbow(_tower.global_position + Vector3(10.0, 0.0, 0.0))
+	await get_tree().process_frame
+	var p: ProjectileBase = _get_single_projectile()
+	assert_int(p.get("_damage_type") as int).is_equal(Types.DamageType.POISON)

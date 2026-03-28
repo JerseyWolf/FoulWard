@@ -37,6 +37,7 @@ var _building_data: BuildingData = null
 var _is_upgraded: bool = false
 var _attack_timer: float = 0.0
 var _current_target: EnemyBase = null
+var _special_timer: float = 0.0
 
 # ---------------------------------------------------------------------------
 # Children
@@ -113,6 +114,7 @@ func initialize(data: BuildingData) -> void:
 	_is_upgraded = false
 	_attack_timer = 0.0
 	_current_target = null
+	_special_timer = data.special_pulse_interval * 0.25
 
 	# MVP visual: colored cube + label (use get_node — @onready is not set before _ready()).
 	var mesh_inst: MeshInstance3D = get_node_or_null("BuildingMesh") as MeshInstance3D
@@ -121,6 +123,7 @@ func initialize(data: BuildingData) -> void:
 		mat.albedo_color = data.color
 		mesh_inst.material_override = mat
 
+	# TODO(ART): Optional GLB sub-scene per building_type under res://art/generated/buildings/.
 	# Art pipeline placeholder assignment (runtime override).
 	# NOTE: keep existing MVP color material generation for now; we override it via helper.
 	if mesh_inst != null:
@@ -198,8 +201,14 @@ func _combat_process(delta: float) -> void:
 	if _building_data == null:
 		return
 
-	# POST-MVP stub guard: Archer Barracks and Shield Generator have fire_rate = 0.
-	# This prevents any division-by-zero and combat attempt for stubs.
+	if _building_data.building_type == Types.BuildingType.ARCHER_BARRACKS:
+		_tick_archer_barracks(delta)
+		return
+	if _building_data.building_type == Types.BuildingType.SHIELD_GENERATOR:
+		_tick_shield_generator(delta)
+		return
+
+	# Legacy stub guard for any other zero fire_rate types.
 	if _building_data.fire_rate <= 0.0:
 		return
 
@@ -302,4 +311,39 @@ func _fire_at_target() -> void:
 		_building_data.dot_in_addition_to_hit
 	)
 	proj.add_to_group("projectiles")
+
+
+func _tick_archer_barracks(delta: float) -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	_special_timer -= delta
+	if _special_timer > 0.0:
+		return
+	_special_timer = _building_data.special_pulse_interval
+	var r2: float = _building_data.barracks_buff_radius * _building_data.barracks_buff_radius
+	var bonus: float = _building_data.barracks_ally_damage_bonus
+	for node: Node in tree.get_nodes_in_group("allies"):
+		var ally: AllyBase = node as AllyBase
+		if ally == null or not is_instance_valid(ally):
+			continue
+		if ally.health_component == null or not ally.health_component.is_alive():
+			continue
+		if global_position.distance_squared_to(ally.global_position) > r2:
+			continue
+		ally.add_barracks_strike_bonus(bonus)
+
+
+func _tick_shield_generator(delta: float) -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	_special_timer -= delta
+	if _special_timer > 0.0:
+		return
+	_special_timer = _building_data.special_pulse_interval
+	var tower: Tower = tree.get_first_node_in_group("tower") as Tower
+	if tower == null:
+		return
+	tower.add_spell_shield(_building_data.shield_hp_per_pulse, _building_data.shield_pulse_duration)
 

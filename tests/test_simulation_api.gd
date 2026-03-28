@@ -480,3 +480,51 @@ func test_shop_item_purchased_emitted_after_purchase() -> void:
 	_shop_manager.purchase_item("mana_draught")
 	await assert_signal(monitor).is_emitted("shop_item_purchased", ["mana_draught"])
 
+
+# ═════════════════════════════════════════════════════════════════════════
+# Audit 5 — Firing assist / miss perturbation
+# ═════════════════════════════════════════════════════════════════════════
+
+
+func test_assist_not_applied_when_enemy_beyond_assist_max_distance() -> void:
+	_tower.crossbow_data.assist_angle_degrees = 45.0
+	_tower.crossbow_data.assist_max_distance = 10.0
+	_tower.crossbow_data.base_miss_chance = 0.0
+	_tower.crossbow_data.max_miss_angle_degrees = 0.0
+	_create_enemy_at(Vector3(30.0, 0.0, 0.0), false)
+	var raw_target: Vector3 = Vector3(10.0, 0.0, 0.0)
+	var resolved: Vector3 = _tower._resolve_manual_aim_target(_tower.crossbow_data, raw_target)
+	assert_float(resolved.distance_to(raw_target)).is_less(0.001)
+
+
+func test_miss_perturbation_respects_max_miss_angle_degrees() -> void:
+	_tower.crossbow_data.assist_angle_degrees = 0.0
+	_tower.crossbow_data.assist_max_distance = 0.0
+	_tower.crossbow_data.base_miss_chance = 1.0
+	_tower.crossbow_data.max_miss_angle_degrees = 2.0
+	_tower._shot_rng.seed = 99999
+	var aim: Vector3 = Vector3(15.0, 0.0, 0.0)
+	for _i in range(20):
+		var out: Vector3 = _tower._resolve_manual_aim_target(_tower.crossbow_data, aim)
+		var dir_a: Vector3 = (aim - _tower.global_position).normalized()
+		var dir_b: Vector3 = (out - _tower.global_position).normalized()
+		var ang: float = rad_to_deg(dir_a.angle_to(dir_b))
+		assert_float(ang).is_less_equal(2.01)
+
+
+func test_auto_fire_autofire_path_matches_raw_target_with_assist_enabled() -> void:
+	_tower.auto_fire_enabled = true
+	_tower.crossbow_data.assist_angle_degrees = 45.0
+	_tower.crossbow_data.assist_max_distance = 0.0
+	_tower.crossbow_data.base_miss_chance = 1.0
+	_tower.crossbow_data.max_miss_angle_degrees = 15.0
+	_create_enemy_at(Vector3(10.0, 0.0, 0.0), false)
+	var raw_target: Vector3 = Vector3(7.0, 0.0, 2.0)
+	var monitor := monitor_signals(SignalBus, false)
+	_tower.fire_crossbow(raw_target)
+	await assert_signal(monitor).is_emitted(
+		"projectile_fired",
+		[Types.WeaponSlot.CROSSBOW, _tower.global_position, raw_target]
+	)
+	_tower.auto_fire_enabled = false
+

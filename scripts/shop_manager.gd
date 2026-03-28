@@ -1,12 +1,14 @@
 # scripts/shop_manager.gd
 # ShopManager – owns the shop catalog and handles item purchases.
-# Effects: tower_repair / building_repair immediate; mana_draught + arrow_tower_placed
-# pending flags consumed by apply_mission_start_consumables() from GameManager.
+# Effects: tower_repair / building_repair immediate; consumables stack (cap 20) and apply on mission_started.
+# Arrow tower voucher uses a pending flag consumed by apply_mission_start_consumables() from GameManager.
 # All resource spending goes through EconomyManager.
 # Emits SignalBus.shop_item_purchased(item_id) on success.
 
 class_name ShopManager
 extends Node
+
+const CONSUMABLE_STACK_CAP: int = 20
 
 # ---------------------------------------------------------------------------
 # Exports
@@ -19,11 +21,70 @@ extends Node
 # Private state
 # ---------------------------------------------------------------------------
 
-var _mana_draught_pending: bool = false
+var _consumable_stacks: Dictionary = {} ## String -> int
 var _arrow_tower_shop_pending: bool = false
 
 # ---------------------------------------------------------------------------
-# Public API
+# Ready
+# ---------------------------------------------------------------------------
+
+func _ready() -> void:
+	if not SignalBus.mission_started.is_connected(_on_mission_started):
+		SignalBus.mission_started.connect(_on_mission_started)
+
+
+func _exit_tree() -> void:
+	if SignalBus.mission_started.is_connected(_on_mission_started):
+		SignalBus.mission_started.disconnect(_on_mission_started)
+
+
+# ---------------------------------------------------------------------------
+# Public API — consumable stacks
+# ---------------------------------------------------------------------------
+
+func add_consumable(item_id: String, amount: int = 1) -> void:
+	if amount <= 0:
+		return
+	var cur: int = int(_consumable_stacks.get(item_id, 0))
+	_consumable_stacks[item_id] = mini(cur + amount, CONSUMABLE_STACK_CAP)
+
+
+func consume(item_id: String) -> bool:
+	var cur: int = int(_consumable_stacks.get(item_id, 0))
+	if cur <= 0:
+		return false
+	var next: int = cur - 1
+	if next <= 0:
+		_consumable_stacks.erase(item_id)
+	else:
+		_consumable_stacks[item_id] = next
+	return true
+
+
+func get_stack_count(item_id: String) -> int:
+	return int(_consumable_stacks.get(item_id, 0))
+
+
+func get_save_data() -> Dictionary:
+	return {"consumable_stacks": _consumable_stacks.duplicate(true)}
+
+
+func restore_from_save(data: Dictionary) -> void:
+	_consumable_stacks.clear()
+	var raw: Variant = data.get("consumable_stacks", {})
+	if raw is Dictionary:
+		var d: Dictionary = raw
+		for k: Variant in d.keys():
+			if k is String:
+				var v: Variant = d[k]
+				if v is int:
+					var n: int = clampi(v, 0, CONSUMABLE_STACK_CAP)
+					if n > 0:
+						_consumable_stacks[k] = n
+
+
+# ---------------------------------------------------------------------------
+# Public API — shop
 # ---------------------------------------------------------------------------
 
 ## Purchases the item with the given item_id.
@@ -88,14 +149,6 @@ func can_purchase(item_id: String) -> bool:
 			return true
 
 
-## Returns and clears the mana draught pending flag.
-## Called by GameManager at the start of a new mission.
-func consume_mana_draught_pending() -> bool:
-	var was_pending: bool = _mana_draught_pending
-	_mana_draught_pending = false
-	return was_pending
-
-
 func consume_arrow_tower_pending() -> bool:
 	var was_pending: bool = _arrow_tower_shop_pending
 	_arrow_tower_shop_pending = false
@@ -103,17 +156,56 @@ func consume_arrow_tower_pending() -> bool:
 
 
 ## Called by GameManager when entering COMBAT for a mission (after mission_started).
+## Applies non-consumable mission-start effects (arrow tower voucher).
 func apply_mission_start_consumables() -> void:
-	var spell: SpellManager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
-	if consume_mana_draught_pending() and spell != null:
-		spell.set_mana_to_full()
-		SignalBus.mana_draught_consumed.emit()
 	var hex: HexGrid = get_node_or_null("/root/Main/HexGrid") as HexGrid
 	if consume_arrow_tower_pending() and hex != null:
 		if not hex.place_building_shop_free(Types.BuildingType.ARROW_TOWER):
 			push_warning(
 				"ShopManager: arrow_tower_placed voucher could not place (no slot or locked)"
 			)
+
+
+# ---------------------------------------------------------------------------
+# Mission start — consumables (stacked)
+# ---------------------------------------------------------------------------
+
+func _on_mission_started(_mission_number: int) -> void:
+	var to_process: Array[String] = []
+	for k: Variant in _consumable_stacks.keys():
+		if k is String and int(_consumable_stacks[k]) > 0:
+			to_process.append(k)
+	for item_id: String in to_process:
+		if get_stack_count(item_id) <= 0:
+			continue
+		_apply_consumable_effect(item_id)
+		consume(item_id)
+
+
+func _apply_consumable_effect(item_id: String) -> void:
+	var item_data: ShopItemData = _find_item(item_id)
+	if item_data == null:
+		push_warning("ShopManager._apply_consumable_effect: no ShopItemData for '%s'" % item_id)
+		return
+	for tag: String in item_data.effect_tags:
+		match tag:
+			"mana_restore":
+				var spell: SpellManager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
+				if spell != null:
+					spell.restore_mana(item_data.value)
+					SignalBus.mana_draught_consumed.emit()
+			"gold_bonus":
+				EconomyManager.add_gold(item_data.value)
+			"shield":
+				var tower: Node = get_node_or_null("/root/Main/Tower")
+				if tower != null and tower.has_method("add_spell_shield"):
+					var dur: float = item_data.duration
+					if dur <= 0.0:
+						dur = 1.0
+					tower.add_spell_shield(float(item_data.value), dur)
+			_:
+				push_warning("ShopManager._apply_consumable_effect: unknown effect tag '%s'" % tag)
+
 
 # ---------------------------------------------------------------------------
 # Private helpers
@@ -153,8 +245,7 @@ func _apply_effect(item_id: String) -> bool:
 			return true
 
 		"mana_draught":
-			_mana_draught_pending = true
-			# Immediate feedback (between-mission shop); mission start still consumes flag via GameManager.
+			add_consumable("mana_draught", 1)
 			var spell: SpellManager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
 			if spell != null:
 				spell.set_mana_to_full()

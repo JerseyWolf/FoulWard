@@ -1,36 +1,46 @@
-INDEXSHORT.md
-=============
+INDEX_SHORT.md
+==============
 
-FOUL WARD — INDEXSHORT.md
+FOUL WARD — INDEX_SHORT.md
 
-Compact repository reference. One-liner per file. Updated: 2026-03-25 (Prompt 13 hub dialogue: DialogueManager + DialogueEntry/Condition + DialogueUI; see `docs/PROMPT_13_IMPLEMENTATION.md`).
+Compact repository reference. One-liner per file. **Doc layout:** `docs/README.md`. Updated: 2026-03-28 (**Prompt 24:** programmatic PNG icons (`tools/generate_placeholder_icons.gd`, `addons/fw_placeholder_icons`), `ArtPlaceholderHelper` icon textures, `SettingsManager` + `scenes/ui/settings_screen`, UI wiring — `docs/PROMPT_24_IMPLEMENTATION.md`). **Prompt 23:** Endless Run — `Types.GameState.ENDLESS`, `CampaignManager.is_endless_mode` / `start_endless_run`, synthetic day scaling, main menu — `docs/PROMPT_23_IMPLEMENTATION.md`. **Prompt 22:** relationship tiers + affinity autoload, dialogue `relationship_tier` conditions — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs under `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `# TODO(ART)` in combat/hub scenes; see `docs/PROMPT_19_IMPLEMENTATION.md`. **Prompt 18:** local RAG + MCP pipeline under `~/LLM` — `docs/PROMPT_18_IMPLEMENTATION.md`. **Audit 6:** `AUDIT_IMPLEMENTATION_AUDIT_6.md` (multi-spell, structural weapon upgrades, barracks/shield specials, territory aggregates). **Prompt 20:** `docs/obsolete/` archive + INDEX autoload alignment; `docs/PROMPT_20_IMPLEMENTATION.md`.
 Source of truth: REPO_DUMP_AFTER_MVP.md; **re-run** `./tools/run_gdunit.sh` after Prompt 12/13 (use `./tools/run_gdunit_quick.sh` for iteration). **Handoff:** `docs/PROBLEM_REPORT.md` lists files and log snippets for GdUnit / `mission_won` / `push_warning` work.
 AUTOLOADS (registered in project.godot, in init order)
 Autoload Name	Path	What it does
 SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. Prompt 10: boss_spawned, boss_killed, campaign_boss_attempted. Prompt 11: ally_spawned, ally_downed, ally_recovered, ally_killed, ally_state_changed (POST-MVP). Prompt 12: mercenary_offer_generated, mercenary_recruited, ally_roster_changed. No logic, no state.
-CampaignManager	res://autoloads/campaign_manager.gd	Day/campaign progress; faction_registry + validate_day_configs; **owned_allies / active_allies_for_next_day**, mercenary catalog + offers, purchase + defection + `auto_select_best_allies` (Prompt 12); **current_ally_roster** sync for spawn (Prompt 11). **Init order:** must load **before** GameManager in `project.godot` so `SignalBus.mission_won` runs `_on_mission_won` (day increment) before GameManager hub transition.
 DamageCalculator	res://autoloads/damage_calculator.gd	Stateless 4×4 damage-type × armor-type matrix. Pure function singleton.
 EconomyManager	res://autoloads/economy_manager.gd	Owns gold, building_material, research_material. Emits resource_changed.
+CampaignManager	res://autoloads/campaign_manager.gd	Day/campaign progress; faction_registry + validate_day_configs; **owned_allies / active_allies_for_next_day**, mercenary catalog + offers, purchase + defection + `auto_select_best_allies` (Prompt 12); **current_ally_roster** sync for spawn (Prompt 11). **Init order:** must load **before** GameManager in `project.godot` so `SignalBus.mission_won` runs `_on_mission_won` (day increment) before GameManager hub transition.
+RelationshipManager	res://autoloads/relationship_manager.gd	Prompt 22: affinity −100..100 per `character_id`, tiers from `relationship_tier_config.tres`; loads `character_relationship/*.tres` + `relationship_events/*.tres`, applies deltas on SignalBus; `get_tier` / `get_save_data` / `restore_from_save`. **Init order:** after CampaignManager, before GameManager.
+SettingsManager	res://autoloads/settings_manager.gd	Prompt 24: `user://settings.cfg` — master/music/SFX linear volumes, graphics quality string, keybind mirror; `AudioServer` Music+SFX buses; `load_settings`/`save_settings`/`set_volume`/`remap_action`. **Init order:** after RelationshipManager, before GameManager.
 GameManager	res://autoloads/game_manager.gd	Owns game state, mission index, wave index, territory map runtime; mission rewards + territory bonuses. Prompt 10: final boss state, synthetic boss-attack days, held_territory_ids, prepare_next_campaign_day_if_needed / advance_to_next_day / get_day_config_for_index. Prompt 11: `_spawn_allies_for_current_mission` / `_cleanup_allies` (Main/AllyContainer, AllySpawnPoints). Prompt 12: `notify_mini_boss_defeated` → CampaignManager; `_transition_to` skips duplicate same-state transitions. `_begin_mission_wave_sequence`: Main→Managers→WaveManager via get_node_or_null; `push_warning` if absent (not `push_error` — GdUnit). Subscribes to `mission_won` for BETWEEN_MISSIONS / GAME_WON after CampaignManager (see `PROBLEM_REPORT.md`).
+SaveManager	res://autoloads/save_manager.gd	Audit 6: rolling autosaves `user://saves/attempt_*/slot_*.json`; autoload singleton only (no `class_name`).
 DialogueManager	res://autoloads/dialogue_manager.gd	Prompt 13: loads `DialogueEntry` `.tres` under `res://resources/dialogue/**`; priority, AND conditions, once-only, chain_next_id; signals `dialogue_line_started` / `dialogue_line_finished`; ResearchManager heuristics for `sybil_research_unlocked_any` (`spell` in node_id) and `arnulf_research_unlocked_any` (`arnulf` in node_id). See `docs/PROMPT_13_IMPLEMENTATION.md`.
 AutoTestDriver	res://autoloads/auto_test_driver.gd	Headless smoke-test driver. Active only when --autotest flag is present.
+GDAIMCPRuntime	(uid plugin autoload in project.godot)	GDAI MCP GDExtension bridge — editor HTTP API for MCP when `addons/gdai-mcp-plugin-godot` is enabled.
+EnchantmentManager	res://autoloads/enchantment_manager.gd	Phase 4: per-weapon enchantment slots (elemental/power); Tower + BetweenMissionScreen integration.
 SCRIPTS (attached to Manager nodes in main.tscn under /root/Main/Managers/)
 Class Name	Path	What it does
 Types	res://scripts/types.gd	All enums and shared constants. Prompt 11: `AllyClass` (MELEE/RANGED/SUPPORT); `TargetPriority` shared with allies (MVP: CLOSEST). Prompt 14: `HubRole` marks between-mission hub character categories. Not an autoload; referenced as Types.XXX.
 HealthComponent	res://scripts/health_component.gd	Reusable HP tracker. Emits local signals health_depleted, health_changed.
 WaveManager	res://scripts/wave_manager.gd	Spawns enemies per wave from FactionData-weighted roster (total N×6), countdown, wave signals. `_enemy_container` / `_spawn_points` via get_node_or_null(/root/Main/...); null-safe spawn. Prompt 10: boss_registry, ensure_boss_registry_loaded, set_day_context, boss wave on configured index + escorts.
-SpellManager	res://scripts/spell_manager.gd	Owns mana pool, spell cooldowns. Executes Shockwave AoE in MVP.
+SpellManager	res://scripts/spell_manager.gd	Owns mana pool, spell cooldowns. Multi-spell registry + `cast_selected_spell` / hotkeys (Audit 6); effects include shockwave, slow_field, arcane_beam, tower_shield.
 ResearchManager	res://scripts/research_manager.gd	Tracks unlocked research nodes. Gates locked buildings.
 ShopManager	res://scripts/shop_manager.gd	Processes shop purchases. Applies mission-start consumable effects.
 InputManager	res://scripts/input_manager.gd	Translates mouse/keyboard input into public method calls on managers.
 SimBot	res://scripts/sim_bot.gd (+ alias `res://scripts/simbot.gd`)	Headless automated simulation bot. Audit 4: `get_log()` → Dictionary; `run_single` / `run_batch` CSV under `user://simbot/logs/`. Prompt 16 Phase 2: `StrategyProfile` resources.
 ArtPlaceholderHelper	res://scripts/art/art_placeholder_helper.gd	Stateless utility resolving placeholder meshes, materials, and icons from res://art based on Types enums and string IDs. Handles caching, fallbacks, and generated-asset priority.
+PlaceholderIconGenerator	res://tools/generate_placeholder_icons.gd	Prompt 24: `class_name PlaceholderIconGenerator` — 64×64 PNG placeholders (editor Project menu or `run_generate_placeholder_icons.gd`).
+fw_placeholder_icons	res://addons/fw_placeholder_icons/plugin.cfg	Prompt 24: EditorPlugin — Project → Generate Placeholder Icons.
+tools/generate_placeholder_glbs_blender.py	res://tools/generate_placeholder_glbs_blender.py	Blender 4.x headless: Rigify/blockout GLBs → `res://art/generated/{enemies,allies,buildings,bosses,misc}/`; writes `art/generated/generation_log.json`. Requires system numpy for glTF exporter.
+art/generated/generation_log.json	res://art/generated/generation_log.json	Batch export inventory (entity_id, paths, animation_count, has_rig); optional `godot_mcp.reload_project` metadata.
+FUTURE_3D_MODELS_PLAN.md	res://FUTURE_3D_MODELS_PLAN.md	Production 3D + hub portrait roadmap; placeholder table; scene art audit appendix; PhysicalBone3D + AnimationPlayer wiring notes.
 MainRoot	res://scripts/main_root.gd	Applies root window content scale at startup (stretch fix for Godot 4.4+).
 SCENES (runtime instantiated or statically placed)
 Class Name	Script Path	Scene Path	What it does
 Tower	res://scenes/tower/tower.gd	res://scenes/tower/tower.tscn	Player's stationary avatar. Fires crossbow + rapid missile.
 Arnulf	res://scenes/arnulf/arnulf.gd	res://scenes/arnulf/arnulf.tscn	AI melee companion. State machine: IDLE/PATROL/CHASE/ATTACK/DOWNED/RECOVERING. Prompt 11: emits generic `ally_*` with id `arnulf` + `ALLY_ID_ARNULF`.
-AllyBase	res://scenes/allies/ally_base.gd	res://scenes/allies/ally_base.tscn	Prompt 11: generic ally; CLOSEST targeting; nav chase; direct damage; ally_spawned / ally_killed.
+AllyBase	res://scenes/allies/ally_base.gd	res://scenes/allies/ally_base.tscn	Prompt 11 + Audit 6: DOWNED/RECOVERING when `uses_downed_recovering`; `can_target_flying` / `preferred_targeting` (CLOSEST, LOWEST_HP, …); ally_spawned / ally_downed / ally_recovered / ally_killed.
 HexGrid	res://scenes/hex_grid/hex_grid.gd	res://scenes/hex_grid/hex_grid.tscn	24-slot ring grid. Manages building placement, sell, upgrade.
 BuildingBase	res://scenes/buildings/building_base.gd	res://scenes/buildings/building_base.tscn	Base class for all 8 building types. Auto-targets and fires.
 EnemyBase	res://scenes/enemies/enemy_base.gd	res://scenes/enemies/enemy_base.tscn	Base class for all 6 enemy types. Nav, attack, die, reward.
@@ -46,7 +56,8 @@ HUD	res://ui/hud.gd	res://ui/hud.tscn	Combat overlay: resources, wave counter, H
 BuildMenu	res://ui/build_menu.gd	res://ui/build_menu.tscn	Radial building placement panel. Opens on hex slot click in BUILDMODE.
 BetweenMissionScreen	res://ui/between_mission_screen.gd	res://ui/between_mission_screen.tscn	Post-mission tabs: World Map, Shop, Research, Buildings, Weapons, Mercenaries (Prompt 12). NEXT DAY. Prompt 13: on `BETWEEN_MISSIONS`, `_show_hub_dialogue()` → UIManager for SPELL_RESEARCHER then COMPANION_MELEE (queued).
 WorldMap	res://ui/world_map.gd	res://ui/world_map.tscn	Territory list + details (read-only; GameManager state).
-MainMenu	res://ui/main_menu.gd	res://ui/main_menu.tscn	Title screen. Start, Settings (placeholder), Quit.
+MainMenu	res://ui/main_menu.gd	res://ui/main_menu.tscn	Title screen. Start, Settings → `settings_screen.tscn` overlay, Quit.
+SettingsScreen	res://scripts/ui/settings_screen.gd	res://scenes/ui/settings_screen.tscn	Prompt 24: audio sliders, graphics quality, keybind remap, Back.
 MissionBriefing	res://ui/mission_briefing.gd	(Control node in main.tscn)	Shows mission number. BEGIN button → GameManager.start_wave_countdown.
 EndScreen	res://ui/end_screen.gd	(Control node in main.tscn)	Final screen for win/lose. Restart and Quit buttons.
 CUSTOM RESOURCE TYPES (script classes, not .tres files)
@@ -69,7 +80,10 @@ AllyData	res://scripts/resources/ally_data.gd	Prompt 11: ally_id, ally_class, st
 MercenaryOfferData	res://scripts/resources/mercenary_offer_data.gd	Prompt 12: ally_id, costs, day range, is_defection_offer.
 MercenaryCatalog	res://scripts/resources/mercenary_catalog.gd	Prompt 12: offers pool, max_offers_per_day, get_daily_offers.
 MiniBossData	res://scripts/resources/mini_boss_data.gd	Prompt 12: defection metadata (defected_ally_id, costs).
-DialogueCondition	res://scripts/resources/dialogue/dialogue_condition.gd	key, comparison (==, !=, >, >=, <, <=), value (Variant) — AND only; evaluated by DialogueManager
+DialogueCondition	res://scripts/resources/dialogue/dialogue_condition.gd	key, comparison (==, !=, >, >=, <, <=), value (Variant); optional `condition_type` **relationship_tier** + `character_id` / `required_tier` (Prompt 22); AND only; evaluated by DialogueManager
+RelationshipTierConfig	res://scripts/resources/relationship_tier_config.gd	Prompt 22: `tiers` Array[Dictionary] `{ name, min_affinity }` ascending; shared tier names for `RelationshipManager.get_tier`.
+CharacterRelationshipData	res://scripts/resources/character_relationship_data.gd	Prompt 22: `character_id`, `starting_affinity`, `display_name` — one `.tres` per character under `res://resources/character_relationship/`.
+RelationshipEventData	res://scripts/resources/relationship_event_data.gd	Prompt 22: `signal_name` (SignalBus), `character_deltas` Dictionary id → float.
 DialogueEntry	res://scripts/resources/dialogue/dialogue_entry.gd	entry_id, character_id, text, priority, once_only, chain_next_id, conditions[]
 CharacterData	res://scripts/resources/character_data.gd	data resource for a single between-mission hub character (id, display_name, HubRole, dialogue tags, 2D placement).
 CharacterCatalog	res://scripts/resources/character_catalog.gd	resource holding the hub character set loaded by `Hub2DHub`.
@@ -182,6 +196,7 @@ testspellmanager.gd	Mana regen, deduct, cooldown, shockwave AoE damage
 testarnulfstatemachine.gd	All state transitions, downed/recover cycle
 testallydata.gd	AllyData defaults + all res://resources/ally_data/*.tres loads
 testallybase.gd	AllyBase find_target, attack in range, ally_killed on HP depletion
+testallycombat.gd	Downed→recover timer; skip flying when `can_target_flying` false; LOWEST_HP targeting
 testallysignals.gd	ally_spawned, ally_killed, Arnulf generic ally_* + reset ally_spawned
 testallyspawning.gd	Campaign roster count under AllyContainer; cleanup on waves cleared / new game
 testhealthcomponent.gd	take_damage, heal, reset, health_depleted signal
@@ -212,7 +227,7 @@ KNOWN OPEN ISSUES (as of Autonomous Session 3)
 
     Windows headless main.tscn run may SIGSEGV; use editor F5 for full loop on Windows.
 
-    GDAI MCP Runtime autoload removed from project.godot (resolved noise issue).
+    `GDAIMCPRuntime` is registered in `project.godot` for the GDAI MCP plugin; requires the plugin enabled in the editor for full behavior.
 
 PHYSICS LAYERS
 Layer	Assigned to

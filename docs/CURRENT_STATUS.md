@@ -178,7 +178,7 @@ Project rules may live under **`.cursor/rules/`** (e.g. `mcp-godot-workflow.mdc`
 
 - **No save system** — single session; state is whatever is in `GameManager` / managers at runtime.
 - **Balance** — driven by `resources/**/*.tres`; see **`FULL_PROJECT_SUMMARY.md`** for system map.
-- **Latest feature checklist** — **`AUTONOMOUS_SESSION_2.md`**.
+- **Latest feature checklist / repo map** — **`docs/INDEX_SHORT.md`**; defects — **`docs/PROBLEM_REPORT.md`**. Archived logs — **`docs/obsolete/`**.
 
 ---
 

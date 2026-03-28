@@ -63,9 +63,22 @@ func _unhandled_input(event: InputEvent) -> void:
 				_handle_build_mode_left_click()
 
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.is_action("cast_shockwave"):
-			print("[InputManager] cast_shockwave key pressed")
-			_spell_manager.cast_spell("shockwave")
+		if event.is_action("cast_selected_spell") or event.is_action("cast_shockwave"):
+			print("[InputManager] cast selected spell")
+			_spell_manager.cast_selected_spell()
+
+		elif event.is_action("spell_cycle_next"):
+			_spell_manager.cycle_selected_spell(1)
+		elif event.is_action("spell_cycle_prev"):
+			_spell_manager.cycle_selected_spell(-1)
+		elif event.is_action("spell_slot_1"):
+			_spell_manager.set_selected_spell_index(0)
+		elif event.is_action("spell_slot_2"):
+			_spell_manager.set_selected_spell_index(1)
+		elif event.is_action("spell_slot_3"):
+			_spell_manager.set_selected_spell_index(2)
+		elif event.is_action("spell_slot_4"):
+			_spell_manager.set_selected_spell_index(3)
 
 		elif event.is_action("toggle_build_mode"):
 			if state == Types.GameState.COMBAT or state == Types.GameState.WAVE_COUNTDOWN:

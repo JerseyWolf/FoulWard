@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CharacterRelationshipData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/character_relationship_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+character_id = "WEAPONS_ENGINEER"
+starting_affinity = 0.0
+display_name = "Weapons Engineer"

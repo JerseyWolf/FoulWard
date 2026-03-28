@@ -8,6 +8,8 @@
 class_name BetweenMissionScreen
 extends Control
 
+const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
+
 @onready var _next_mission_btn: Button = $NextMissionButton
 @onready var _day_progress_label: Label = $DayProgressLabel
 @onready var _day_name_label: Label = $DayNameLabel
@@ -66,9 +68,10 @@ func _on_game_state_changed(
 		_old: Types.GameState,
 		new_state: Types.GameState
 ) -> void:
-	if new_state == Types.GameState.BETWEEN_MISSIONS:
+	if new_state == Types.GameState.BETWEEN_MISSIONS or new_state == Types.GameState.ENDLESS:
 		_refresh_all()
-		_show_hub_dialogue()
+		if not CampaignManager.is_endless_mode:
+			_show_hub_dialogue()
 
 
 func open_shop_panel() -> void:
@@ -196,7 +199,10 @@ func _refresh_day_info() -> void:
 	var cfg: DayConfig = CampaignManager.get_current_day_config()
 
 	if is_instance_valid(_day_progress_label):
-		_day_progress_label.text = "Day %d / %d" % [cur, maxi(len, 1)]
+		if CampaignManager.is_endless_mode:
+			_day_progress_label.text = "Day %d (Endless)" % cur
+		else:
+			_day_progress_label.text = "Day %d / %d" % [cur, maxi(len, 1)]
 
 	if is_instance_valid(_day_name_label):
 		if cfg != null:
@@ -206,12 +212,17 @@ func _refresh_day_info() -> void:
 
 
 func _on_florence_state_changed() -> void:
+	if CampaignManager.is_endless_mode:
+		return
 	_refresh_florence_debug()
 
 
 func _refresh_florence_debug() -> void:
 	# Pure UI: read-only presentation of Florence meta-state.
 	if not is_instance_valid(_florence_debug_label):
+		return
+	if CampaignManager.is_endless_mode:
+		_florence_debug_label.text = "Florence: (disabled in Endless)"
 		return
 
 	var florence := GameManager.get_florence_data()
@@ -232,6 +243,32 @@ func _refresh_florence_debug() -> void:
 	_florence_debug_label.text = text
 
 
+func _texture_for_shop_item(item: ShopItemData) -> Texture2D:
+	match item.item_id:
+		"arrow_tower_placed":
+			return ArtPlaceholderHelper.get_building_icon(Types.BuildingType.ARROW_TOWER)
+		_:
+			return ArtPlaceholderHelper.get_ally_icon("ally_melee_generic")
+
+
+func _texture_for_research_node_id(node_id: String) -> Texture2D:
+	match node_id:
+		"unlock_ballista":
+			return ArtPlaceholderHelper.get_building_icon(Types.BuildingType.BALLISTA)
+		"unlock_anti_air":
+			return ArtPlaceholderHelper.get_building_icon(Types.BuildingType.ANTI_AIR_BOLT)
+		"unlock_shield_generator":
+			return ArtPlaceholderHelper.get_building_icon(Types.BuildingType.SHIELD_GENERATOR)
+		"unlock_archer_barracks":
+			return ArtPlaceholderHelper.get_building_icon(Types.BuildingType.ARCHER_BARRACKS)
+		"fire_brazier_plus_range":
+			return ArtPlaceholderHelper.get_building_icon(Types.BuildingType.FIRE_BRAZIER)
+		"arrow_tower_plus_damage":
+			return ArtPlaceholderHelper.get_building_icon(Types.BuildingType.ARROW_TOWER)
+		_:
+			return ArtPlaceholderHelper.get_building_icon(Types.BuildingType.ARROW_TOWER)
+
+
 func _refresh_shop() -> void:
 	for child: Node in _shop_list.get_children():
 		child.queue_free()
@@ -248,6 +285,8 @@ func _refresh_shop() -> void:
 		lbl.text = price_text
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var btn: Button = Button.new()
+		btn.icon = _texture_for_shop_item(item)
+		btn.expand_icon = true
 		btn.text = "Buy"
 		btn.disabled = not _shop_manager.can_purchase(item.item_id)
 		var captured_id: String = item.item_id
@@ -268,6 +307,8 @@ func _refresh_research() -> void:
 		lbl.text = "%s — %d res" % [node_data.display_name, node_data.research_cost]
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var btn: Button = Button.new()
+		btn.icon = _texture_for_research_node_id(node_data.node_id)
+		btn.expand_icon = true
 		btn.text = "Unlock"
 		btn.disabled = (
 			EconomyManager.get_research_material() < node_data.research_cost
@@ -423,7 +464,8 @@ func _on_weapon_upgraded(_weapon_slot: Types.WeaponSlot, _new_level: int) -> voi
 ## Called when resources change — refreshes button affordability states.
 func _on_resource_changed_weapons(_resource_type: Types.ResourceType, _new_amount: int) -> void:
 	_refresh_weapons_tab()
-	if GameManager.get_game_state() == Types.GameState.BETWEEN_MISSIONS:
+	var gs: Types.GameState = GameManager.get_game_state()
+	if gs == Types.GameState.BETWEEN_MISSIONS or gs == Types.GameState.ENDLESS:
 		_refresh_offers("")
 
 

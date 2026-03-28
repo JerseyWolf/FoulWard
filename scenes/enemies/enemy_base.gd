@@ -81,6 +81,8 @@ func initialize(enemy_data: EnemyData) -> void:
 	if _label != null:
 		_label.text = _enemy_data.display_name
 
+	# TODO(ART): Swap MeshInstance3D for res://art/generated/enemies/<enemy_id>.glb (PackedScene)
+	# when AnimationPlayer-driven visuals replace primitive mesh; wire idle/walk/death clips.
 	# Art pipeline placeholder assignment (runtime override).
 	if _mesh != null:
 		var _art_mesh: Mesh = ArtPlaceholderHelper.get_enemy_mesh(enemy_data.enemy_type)
@@ -128,6 +130,32 @@ func _physics_process(delta: float) -> void:
 ## - "tick_interval": float      # seconds between ticks
 ## - "duration": float           # total duration in seconds
 ## - "source_id": String         # stable source identifier
+## Applies a non-stacking slow: worst (lowest) multiplier wins while any slow is active.
+func apply_slow_effect(speed_multiplier: float, duration_seconds: float, source_id: String) -> void:
+	if duration_seconds <= 0.0:
+		return
+	var mult: float = clampf(speed_multiplier, 0.05, 1.0)
+	var effect: Dictionary = {
+		"effect_type": "slow",
+		"remaining_time": duration_seconds,
+		"speed_multiplier": mult,
+		"source_id": source_id,
+	}
+	# Replace existing slow from same source, else append (worst multiplier kept in movement).
+	var idx: int = -1
+	for i: int in range(active_status_effects.size()):
+		var e: Dictionary = active_status_effects[i]
+		if e.get("effect_type", "") == "slow" and e.get("source_id", "") == source_id:
+			idx = i
+			break
+	if idx >= 0:
+		var old: Dictionary = active_status_effects[idx]
+		if float(effect["remaining_time"]) > float(old.get("remaining_time", 0.0)):
+			active_status_effects[idx] = effect
+	else:
+		active_status_effects.append(effect)
+
+
 func apply_dot_effect(effect_data: Dictionary) -> void:
 	if not effect_data.has("effect_type"):
 		return
@@ -206,6 +234,16 @@ func _update_status_effects(delta: float) -> void:
 	var i: int = 0
 	while i < active_status_effects.size():
 		var effect: Dictionary = active_status_effects[i]
+		if effect.get("effect_type", "") == "slow":
+			var slow_rem: float = float(effect.get("remaining_time", 0.0)) - delta
+			effect["remaining_time"] = slow_rem
+			if slow_rem <= 0.0:
+				active_status_effects.remove_at(i)
+			else:
+				active_status_effects[i] = effect
+				i += 1
+			continue
+
 		var previous_remaining_time: float = float(effect.get("remaining_time", 0.0))
 		var remaining_time: float = previous_remaining_time - delta
 		effect["remaining_time"] = remaining_time
@@ -244,6 +282,17 @@ func _update_status_effects(delta: float) -> void:
 
 # === MOVEMENT =======================================================
 
+## Returns combined slow multiplier from active slow effects (1.0 = no slow).
+func get_move_speed_slow_multiplier() -> float:
+	var worst: float = 1.0
+	for effect: Dictionary in active_status_effects:
+		if effect.get("effect_type", "") != "slow":
+			continue
+		var m: float = float(effect.get("speed_multiplier", 1.0))
+		worst = minf(worst, m)
+	return worst
+
+
 func _physics_process_ground(delta: float) -> void:
 	navigation_agent.target_position = TARGET_POSITION
 	if navigation_agent.is_navigation_finished():
@@ -259,8 +308,9 @@ func _physics_process_ground(delta: float) -> void:
 		direction = Vector3.ZERO
 	else:
 		direction = direction.normalized()
+	var speed_mult: float = get_move_speed_slow_multiplier()
 	if direction != Vector3.ZERO:
-		velocity = direction * _enemy_data.move_speed
+		velocity = direction * _enemy_data.move_speed * speed_mult
 	else:
 		velocity = Vector3.ZERO
 	move_and_slide()
@@ -277,7 +327,8 @@ func _physics_process_flying(delta: float) -> void:
 	var direction: Vector3 = target_pos - global_position
 	if direction.length_squared() > 0.0001:
 		direction = direction.normalized()
-	velocity = direction * _enemy_data.move_speed
+	var speed_mult: float = get_move_speed_slow_multiplier()
+	velocity = direction * _enemy_data.move_speed * speed_mult
 	move_and_slide()
 	if global_position.distance_to(target_pos) <= _enemy_data.attack_range:
 		_update_attack_tower(delta)

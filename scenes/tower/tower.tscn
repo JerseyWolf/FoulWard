@@ -24,6 +24,7 @@ starting_hp = 500
 crossbow_data = ExtResource("3_crossbow")
 rapid_missile_data = ExtResource("4_rapid")
 
+; TODO(ART): CylinderMesh placeholder — replace mesh with tower_core.glb import or production asset.
 [node name="TowerMesh" type="MeshInstance3D" parent="."]
 mesh = ExtResource("5_tower_core_mesh")
 material_override = ExtResource("6_neutral_faction_mat")

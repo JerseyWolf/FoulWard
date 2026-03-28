@@ -14,6 +14,10 @@ enum GameState {
 	MISSION_WON,
 	MISSION_FAILED,
 	GAME_WON,
+	## Terminal failure / game over (SimBot, meta-flow); distinct from per-mission MISSION_FAILED.
+	GAME_OVER,
+	## Between-mission hub while in Endless Run (same UI as BETWEEN_MISSIONS; no campaign cap).
+	ENDLESS,
 }
 
 enum DamageType {
@@ -77,11 +81,12 @@ enum WeaponSlot {
 }
 
 # Used by buildings and allies for target selection preferences.
-# MVP ally AI implements CLOSEST only (nearest enemy by distance).
+# AllyBase: CLOSEST / LOWEST_HP / HIGHEST_HP / FLYING_FIRST (see AllyData.preferred_targeting).
 enum TargetPriority {
 	CLOSEST,
 	HIGHEST_HP,
 	FLYING_FIRST,
+	LOWEST_HP,
 }
 
 # NEW enums for ally roles and SimBot strategy profiles (Prompt 12).

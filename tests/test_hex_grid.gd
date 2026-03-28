@@ -197,6 +197,27 @@ func test_sell_empty_slot_fails() -> void:
 	assert_bool(result).is_false()
 
 
+func test_sell_empty_slot_5_is_safe_no_op() -> void:
+	_hex_grid = _create_hex_grid()
+	_hex_grid.building_data_registry = _make_building_data_registry()
+	add_child(_hex_grid)
+	await get_tree().process_frame
+	var gold_before: int = EconomyManager.get_gold()
+	assert_bool(_hex_grid.sell_building(5)).is_false()
+	assert_int(EconomyManager.get_gold()).is_equal(gold_before)
+
+
+func test_sell_invalid_indices_leave_gold_unchanged() -> void:
+	_hex_grid = _create_hex_grid()
+	_hex_grid.building_data_registry = _make_building_data_registry()
+	add_child(_hex_grid)
+	await get_tree().process_frame
+	var g: int = EconomyManager.get_gold()
+	assert_bool(_hex_grid.sell_building(-1)).is_false()
+	assert_bool(_hex_grid.sell_building(99)).is_false()
+	assert_int(EconomyManager.get_gold()).is_equal(g)
+
+
 func test_sell_invalid_index_fails() -> void:
 	_hex_grid = _create_hex_grid()
 	_hex_grid.building_data_registry = _make_building_data_registry()

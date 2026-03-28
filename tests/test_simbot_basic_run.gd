@@ -31,3 +31,21 @@ func test_simbot_can_run_and_place_buildings() -> void:
 	simbot.queue_free()
 	await get_tree().process_frame
 
+
+func test_simbot_run_batch_short_campaign_no_throw() -> void:
+	CampaignManager.set_active_campaign_config_for_test(
+		load("res://resources/campaigns/campaign_short_5_days.tres") as CampaignConfig
+	)
+	GameManager.start_new_game()
+	var main_scene: PackedScene = load("res://scenes/main.tscn")
+	var main: Node = main_scene.instantiate()
+	get_tree().root.add_child(main)
+	var simbot: SimBot = SimBot.new()
+	get_tree().root.add_child(simbot)
+	await simbot.run_batch("BALANCED_DEFAULT", 3, 1234, "user://simbot/logs/audit5_batch_smoke.csv")
+	var day: int = GameManager.current_day
+	assert_bool(day >= 1 and day <= CampaignManager.campaign_length + 2).is_true()
+	main.queue_free()
+	simbot.queue_free()
+	await get_tree().process_frame
+

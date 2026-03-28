@@ -10,6 +10,7 @@ const BUILTIN_BOSS_RESOURCE_PATHS: Array[String] = [
 	"res://resources/bossdata_plague_cult_miniboss.tres",
 	"res://resources/bossdata_orc_warlord_miniboss.tres",
 	"res://resources/bossdata_final_boss.tres",
+	"res://resources/bossdata_audit5_territory_miniboss.tres",
 ]
 
 @export var boss_id: String = ""

@@ -212,3 +212,10 @@ func test_clear_cache_allows_reload_and_returns_non_null_mesh() -> void:
 	var mesh2: Mesh = ArtPlaceholderHelper.get_enemy_mesh(Types.EnemyType.ORC_GRUNT)
 	assert_object(mesh2).is_not_null()
 
+
+func test_generated_orc_grunt_mesh_file_exists_under_art_generated() -> void:
+	ArtPlaceholderHelper.clear_cache()
+	assert_bool(ResourceLoader.exists("res://art/generated/meshes/enemy_orc_grunt.tres")).is_true()
+	var mesh: Mesh = ArtPlaceholderHelper.get_enemy_mesh(Types.EnemyType.ORC_GRUNT)
+	assert_object(mesh).is_not_null()
+

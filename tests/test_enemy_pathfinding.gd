@@ -118,3 +118,15 @@ func _wait_for_flying_enemy(max_steps: int) -> EnemyBase:
 				return enemy
 	return null
 
+
+func test_ground_enemy_position_changes_over_time_dense_layout() -> void:
+	for i: int in range(INNER_RING_SLOT_COUNT):
+		assert_bool(_hex_grid.place_building(i, Types.BuildingType.ARROW_TOWER)).is_true()
+	_wave_manager.force_spawn_wave(1)
+	var enemy: EnemyBase = await _wait_for_ground_enemy(400)
+	assert_object(enemy).is_not_null()
+	var p0: Vector3 = enemy.global_position
+	await _run_steps(600)
+	var p1: Vector3 = enemy.global_position
+	assert_float(p0.distance_to(p1)).is_greater(0.05)
+

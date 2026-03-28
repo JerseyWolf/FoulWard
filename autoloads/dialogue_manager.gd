@@ -18,6 +18,9 @@ var current_gamestate: Types.GameState = Types.GameState.MAIN_MENU
 
 var _rng := RandomNumberGenerator.new() # TUNING
 
+## Test-only: incremented when CampaignManager starts a campaign day (non–endless mode).
+var _campaign_day_started_calls_for_test: int = 0
+
 signal dialogue_line_started(entry_id: String, character_id: String)
 signal dialogue_line_finished(entry_id: String, character_id: String)
 
@@ -32,6 +35,20 @@ func _ready() -> void:
 func _sync_from_game_manager() -> void:
 	current_mission_number = GameManager.get_current_mission()
 	current_gamestate = GameManager.get_game_state()
+
+
+## Called from CampaignManager when a new campaign day begins (skipped in endless mode).
+func on_campaign_day_started() -> void:
+	_campaign_day_started_calls_for_test += 1
+	_sync_from_game_manager()
+
+
+func get_campaign_day_started_calls_for_test() -> int:
+	return _campaign_day_started_calls_for_test
+
+
+func reset_campaign_day_started_calls_for_test() -> void:
+	_campaign_day_started_calls_for_test = 0
 
 
 func _load_all_dialogue_entries() -> void:
@@ -206,10 +223,34 @@ func _find_max_priority(candidates: Array[DialogueEntry]) -> int:
 
 func _evaluate_conditions(entry: DialogueEntry) -> bool:
 	for cond: DialogueCondition in entry.conditions:
+		if cond.condition_type == "relationship_tier":
+			if not _evaluate_relationship_tier_condition(cond):
+				return false
+			continue
 		var current_value: Variant = _resolve_state_value(cond.key)
 		if not _compare(current_value, cond.comparison, cond.value):
 			return false
 	return true
+
+
+## Neutral tier index in `relationship_tier_config.tres` (Hostile=0, Cold=1, Neutral=2, …).
+const _REL_TIER_NEUTRAL_INDEX: int = 2
+
+
+func _evaluate_relationship_tier_condition(cond: DialogueCondition) -> bool:
+	var current_tier: String = RelationshipManager.get_tier(cond.character_id)
+	var required: String = cond.required_tier
+	if current_tier == required:
+		return true
+	var cur_i: int = RelationshipManager.get_tier_rank_index(current_tier)
+	var req_i: int = RelationshipManager.get_tier_rank_index(required)
+	if cur_i < 0 or req_i < 0:
+		return false
+	# Neutral and warmer: "at least this warm" (higher index = friendlier).
+	# Below Neutral: "at most this cold" (Hostile/Cold-gated lines).
+	if req_i >= _REL_TIER_NEUTRAL_INDEX:
+		return cur_i >= req_i
+	return cur_i <= req_i
 
 
 func _resolve_state_value(key: String) -> Variant:

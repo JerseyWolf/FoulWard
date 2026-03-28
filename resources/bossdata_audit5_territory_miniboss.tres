@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BossData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/boss_data.gd" id="1_boss"]
+[ext_resource type="PackedScene" path="res://scenes/bosses/boss_base.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_boss")
+boss_id = "audit5_territory_mini"
+display_name = "Audit5 Territory Mini"
+description = "GdUnit Audit 5 — territory secure test boss."
+faction_id = "DEFAULT_MIXED"
+associated_territory_id = "blackwood_forest"
+max_hp = 100
+move_speed = 3.0
+damage = 10
+attack_range = 2.0
+attack_cooldown = 1.0
+gold_reward = 50
+escort_unit_ids = Array[String](["ORC_GRUNT"])
+is_mini_boss = true
+is_final_boss = false
+boss_scene = ExtResource("2_scene")

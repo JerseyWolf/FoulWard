@@ -1,11 +1,11 @@
-INDEXFULL.md
-============
+INDEX_FULL.md
+=============
 
-FOUL WARD — INDEXFULL.md
+FOUL WARD — INDEX_FULL.md
 
 Full public API reference for every script, resource type, and system.
-Source of truth: REPO_DUMP_AFTER_MVP.md. Updated: 2026-03-25 (Prompt 13 hub dialogue; see `docs/PROMPT_13_IMPLEMENTATION.md`).
-Use INDEXSHORT.md for fast orientation, INDEXFULL.md for exact method signatures, signals, and dependencies.
+Source of truth: REPO_DUMP_AFTER_MVP.md. **Doc layout:** `docs/README.md`. Updated: 2026-03-28 (**Prompt 24:** `PlaceholderIconGenerator` `tools/generate_placeholder_icons.gd` + editor plugin `addons/fw_placeholder_icons`; `ArtPlaceholderHelper` icon PNGs; `SettingsManager` autoload `user://settings.cfg`; `scenes/ui/settings_screen`; UI wiring `build_menu` / `between_mission_screen` / `world_map` / `main_menu`; `tests/test_settings_manager.gd` — `docs/PROMPT_24_IMPLEMENTATION.md`). **Prompt 22:** `RelationshipManager` autoload, `relationship_tier` dialogue conditions, resources under `res://resources/relationship_*` / `character_relationship/` — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `docs/PROMPT_19_IMPLEMENTATION.md`; `# TODO(ART)` in enemy/ally/arnulf/tower/building/boss/hub scripts. Prompt 18: RAG + MCP — `docs/PROMPT_18_IMPLEMENTATION.md`. Audit 6 delta: `AUDIT_IMPLEMENTATION_AUDIT_6.md` — SpellManager multi-spell; WeaponLevelData structural fields; BuildingBase archer barracks / shield generator; GameManager territory aggregates; tests `test_weapon_structural.gd`, `test_building_specials.gd`. Prompt 20: `docs/obsolete/` + INDEX header/autoload alignment — `docs/PROMPT_20_IMPLEMENTATION.md`.
+Use INDEX_SHORT.md for fast orientation, INDEX_FULL.md for exact method signatures, signals, and dependencies.
 CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 
     Files: snake_case.gd / .tscn / .tres
@@ -207,6 +207,33 @@ Public methods (summarized):
     get_gold(), get_building_material(), get_research_material() -> int
 
 Consumes: SignalBus.enemy_killed (adds gold_reward).
+RelationshipManager
+
+Path: res://autoloads/relationship_manager.gd
+Purpose: Data-driven per-character affinity [−100, 100] and named tiers from `res://resources/relationship_tier_config.tres`. Loads `res://resources/character_relationship/*.tres` and `res://resources/relationship_events/*.tres`; connects to SignalBus signals listed in each `RelationshipEventData` (skips unknown signal names with `push_warning`). No `class_name` — autoload singleton name only (avoids shadowing in GdUnit).
+Dependencies: SignalBus.
+
+Public methods (summarized):
+
+    get_affinity(character_id: String) -> float
+
+    get_tier(character_id: String) -> String
+
+    get_tier_rank_index(tier_name: String) -> int
+
+    add_affinity(character_id: String, delta: float) -> void
+
+    get_save_data() -> Dictionary
+
+    restore_from_save(data: Dictionary) -> void
+
+    reload_from_resources() -> void
+
+    test_relationship_events_override: Array — tests only; if non-empty, replaces directory scan for event `.tres` files.
+
+DialogueManager (delta): `DialogueCondition` may set `condition_type` to `relationship_tier` with `character_id` and `required_tier`; evaluated via `RelationshipManager` (see `dialogue_manager.gd`).
+
+Tests: `res://tests/test_relationship_manager.gd`.
 GameManager
 
 Path: res://autoloads/game_manager.gd
@@ -333,9 +360,19 @@ exported variables: none
 signals emitted: none
 dependencies: Types, ResourceLoader (built-in)
 
+Placeholder GLB batch (Prompt 19)
+
+Path: res://tools/generate_placeholder_glbs_blender.py  
+Purpose: Run with `blender --background --python tools/generate_placeholder_glbs_blender.py`. Generates Rigify-based low-poly humanoid/boss GLBs, static buildings/misc, bat swarm with Empty-driven animation; writes `res://art/generated/generation_log.json`. Requires numpy available to Blender’s Python for glTF export.
+
+Path: res://FUTURE_3D_MODELS_PLAN.md  
+Purpose: authoritative transition plan from placeholders to production assets (Hyper3D/Rodin, Mixamo, Blender combine, Godot validation); includes `generation_log` table, scene audit appendix, PhysicalBone3D ragdoll plan, AnimationPlayer wiring, hub portrait TODOs.
+
+`# TODO(ART)` annotations (2026-03-28): `scenes/enemies/enemy_base.gd`, `enemy_base.tscn`, `scenes/allies/ally_base.gd`, `ally_base.tscn`, `scenes/arnulf/arnulf.gd`, `arnulf.tscn`, `scenes/tower/tower.gd`, `tower.tscn`, `scenes/buildings/building_base.gd`, `scenes/bosses/boss_base.gd`, `ui/hub.gd`, `ui/hub.tscn`.
+
 SCENE SCRIPTS (Tower, Arnulf, HexGrid, BuildingBase, EnemyBase, ProjectileBase)
 
-(Details are as previously summarized in INDEXSHORT, expanded with method behavior and signals.)
+(Details are as previously summarized in INDEX_SHORT.md, expanded with method behavior and signals.)
 
 ## 2026-03-24 Prompt 6 delta
 
@@ -579,12 +616,12 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
   - Shows `Hub2DHub` when entering `Types.GameState.BETWEEN_MISSIONS`
   - Closes Hub + clears dialogue when leaving `BETWEEN_MISSIONS`
 
-**AllyBase** (`res://scenes/allies/ally_base.gd` / `ally_base.tscn`) — Prompt 11
+**AllyBase** (`res://scenes/allies/ally_base.gd` / `ally_base.tscn`) — Prompt 11 + Audit 6 Group 4
 
 - `initialize_ally_data(p_ally_data: Variant) -> void` — HP reset, shapes from `attack_range`, emits `ally_spawned`.
-- `find_target() -> EnemyBase` — nearest living enemy in `enemies` group (CLOSEST).
+- `find_target() -> EnemyBase` — filters by `can_target_flying`; scores by `preferred_targeting` (`Types.TargetPriority`: CLOSEST, LOWEST_HP, HIGHEST_HP, FLYING_FIRST).
 - `_perform_attack_on_target` — `EnemyBase.take_damage` (direct damage; POST-MVP projectiles).
-- Death: `ally_killed` + `queue_free()` unless `uses_downed_recovering` (POST-MVP).
+- Death: if `uses_downed_recovering`, DOWNED for `recovery_time` → RECOVERING (full heal) → IDLE with `ally_downed` / `ally_recovered`; else `ally_killed` + `queue_free()`.
 
 **CampaignManager** — Prompt 11 roster arrays + **Prompt 12**: `owned_allies` / `active_allies_for_next_day` / `max_active_allies_per_day`; `mercenary_catalog` export; `is_ally_owned`, `get_owned_allies`, `get_active_allies`, `add_ally_to_roster`, `remove_ally_from_roster`, `toggle_ally_active`, `set_active_allies_from_list`, `get_allies_for_mission_start`; `generate_offers_for_day`, `preview_mercenary_offers_for_day`, `get_current_offers`, `purchase_mercenary_offer`; `notify_mini_boss_defeated`, `register_mini_boss`, `auto_select_best_allies`; legacy `current_ally_roster` sync for spawn; `has_ally`, `get_ally_data`, `reinitialize_ally_roster_for_test()`.
 
@@ -598,7 +635,7 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
   - All default to `0.0` (MVP behavior preserved until tuned in `.tres` data).
 TYPES ENUMS (res://scripts/types.gd)
 
-GameState, DamageType, ArmorType, BuildingType, ArnulfState, ResourceType, EnemyType, **AllyClass**, **HubRole**, WeaponSlot, TargetPriority (buildings + allies; ally MVP uses CLOSEST).
+GameState, DamageType, ArmorType, BuildingType, ArnulfState, ResourceType, EnemyType, **AllyClass**, **HubRole**, WeaponSlot, TargetPriority (buildings + allies; includes **LOWEST_HP** for ally pick-lowest-HP mode).
 GAME FLOW, SIGNAL FLOW, POST-MVP STUB INVENTORY
 
 These sections describe the complete main-menu → mission → between-mission → end-screen loop, the major signal chains (enemy dies, tower dies, wave clears, research unlock, build mode, etc.), and which hooks exist but are not yet used (building_destroyed, DoT, SimBot profiles, etc.).
