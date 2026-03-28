@@ -150,7 +150,9 @@ func start_next_mission() -> void:
 
 ## Begins the countdown timer before the first wave spawns.
 func start_wave_countdown() -> void:
-	assert(game_state == Types.GameState.MISSION_BRIEFING, "start_wave_countdown called from invalid state")
+	if game_state != Types.GameState.MISSION_BRIEFING:
+		push_warning("start_wave_countdown called from invalid state: %s" % Types.GameState.keys()[game_state])
+		return
 	_transition_to(Types.GameState.COMBAT)
 	SignalBus.mission_started.emit(current_mission)
 	_spawn_allies_for_current_mission()
@@ -161,10 +163,9 @@ func start_wave_countdown() -> void:
 ## Transitions the game state to BUILD_MODE, pausing enemy movement.
 func enter_build_mode() -> void:
 	print("[GameManager] enter_build_mode: from=%s" % Types.GameState.keys()[game_state])
-	assert(
-		game_state == Types.GameState.COMBAT or game_state == Types.GameState.WAVE_COUNTDOWN,
-		"enter_build_mode called from invalid state: %s" % Types.GameState.keys()[game_state]
-	)
+	if game_state != Types.GameState.COMBAT and game_state != Types.GameState.WAVE_COUNTDOWN:
+		push_warning("enter_build_mode called from invalid state: %s" % Types.GameState.keys()[game_state])
+		return
 	Engine.time_scale = 0.1
 	var old: Types.GameState = game_state
 	game_state = Types.GameState.BUILD_MODE

@@ -36,16 +36,27 @@ func _make_building_data(
 	return bd
 
 
+var _tracked_bare_buildings: Array[BuildingBase] = []
+
+
 func _make_bare_building(bd: BuildingData) -> BuildingBase:
 	var building: BuildingBase = BuildingBase.new()
 	building._building_data = bd
 	building._is_upgraded = false
 	building._attack_timer = 0.0
 	building._current_target = null
+	_tracked_bare_buildings.append(building)
 	return building
 
 
 func after_test() -> void:
+	for b: BuildingBase in _tracked_bare_buildings:
+		if is_instance_valid(b):
+			b.queue_free()
+	_tracked_bare_buildings.clear()
+	for child: Node in get_children():
+		if child is BuildingBase and is_instance_valid(child):
+			child.queue_free()
 	await get_tree().process_frame
 
 # ---------------------------------------------------------------------------
@@ -119,6 +130,7 @@ func test_combat_process_skips_when_fire_rate_zero() -> void:
 
 func test_combat_process_skips_when_building_data_null() -> void:
 	var building: BuildingBase = BuildingBase.new()
+	_tracked_bare_buildings.append(building)
 	building._building_data = null
 	building._combat_process(0.016)
 	assert_bool(building._current_target == null).is_true()

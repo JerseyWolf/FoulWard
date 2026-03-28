@@ -100,6 +100,7 @@ func _build_save_payload() -> Dictionary:
 		"attempt_id": current_attempt_id,
 		"campaign": CampaignManager.get_save_data(),
 		"game": GameManager.get_save_data(),
+		"relationship": RelationshipManager.get_save_data(),
 		"research": _get_research_save(),
 		"shop": _get_shop_save(),
 		"enchantments": EnchantmentManager.get_save_data(),
@@ -191,6 +192,9 @@ func _apply_save_payload(d: Dictionary) -> void:
 	var game: Variant = d.get("game", {})
 	if game is Dictionary:
 		GameManager.restore_from_save(game as Dictionary)
+	var rel: Variant = d.get("relationship", {})
+	if rel is Dictionary:
+		RelationshipManager.restore_from_save(rel as Dictionary)
 	var res: Variant = d.get("research", {})
 	if res is Dictionary:
 		var rm: ResearchManager = _get_research_manager()

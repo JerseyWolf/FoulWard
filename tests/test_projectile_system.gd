@@ -10,6 +10,14 @@ extends GdUnitTestSuite
 const ProjectileScene: PackedScene = preload("res://scenes/projectiles/projectile_base.tscn")
 const EnemyScene: PackedScene = preload("res://scenes/enemies/enemy_base.tscn")
 
+func after_test() -> void:
+	for child: Node in get_children():
+		if child is ProjectileBase or child is EnemyBase:
+			if is_instance_valid(child):
+				child.queue_free()
+	await get_tree().process_frame
+
+
 func _create_enemy_at(pos: Vector3, armor: Types.ArmorType = Types.ArmorType.UNARMORED) -> EnemyBase:
 	var data := EnemyData.new()
 	data.max_hp = 100

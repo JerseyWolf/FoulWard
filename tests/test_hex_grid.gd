@@ -319,6 +319,7 @@ func test_upgrade_sets_is_upgraded_true() -> void:
 	building._is_upgraded = false
 	building.upgrade()
 	assert_bool(building.is_upgraded).is_true()
+	building.queue_free()
 
 
 func test_upgrade_unoccupied_slot_fails() -> void:

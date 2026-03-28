@@ -65,7 +65,9 @@ func unlock_node(node_id: String) -> bool:
 		return false
 
 	var spent: bool = EconomyManager.spend_research_material(eff_cost)
-	assert(spent, "ResearchManager: spend_research_material failed after balance check")
+	if not spent:
+		push_warning("ResearchManager: spend_research_material failed after balance check")
+		return false
 
 	_unlocked_nodes.append(node_id)
 	SignalBus.research_unlocked.emit(node_id)

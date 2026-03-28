@@ -47,7 +47,9 @@ func _ready() -> void:
 
 ## Initializes this enemy instance from its EnemyData resource.
 func initialize(enemy_data: EnemyData) -> void:
-	assert(enemy_data != null, "EnemyBase.initialize called with null EnemyData")
+	if enemy_data == null:
+		push_error("EnemyBase.initialize called with null EnemyData")
+		return
 	_enemy_data = enemy_data
 	_attack_timer = 0.0
 	_is_attacking = false

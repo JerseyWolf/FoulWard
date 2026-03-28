@@ -8,6 +8,13 @@ const ALLY_DATA_SCRIPT: GDScript = preload("res://scripts/resources/ally_data.gd
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
 
 
+func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
+	await get_tree().process_frame
+
+
 func _make_enemy_data() -> EnemyData:
 	var d: EnemyData = EnemyData.new()
 	d.is_flying = false

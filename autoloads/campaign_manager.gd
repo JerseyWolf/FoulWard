@@ -558,15 +558,17 @@ func _load_faction_registry() -> void:
 ## Validates that all DayConfig entries reference known faction and boss IDs.
 func validate_day_configs(day_configs: Array[DayConfig]) -> void:
 	for dc: DayConfig in day_configs:
-		assert(dc != null, "CampaignManager.validate_day_configs: null DayConfig in array.")
+		if dc == null:
+			push_warning("CampaignManager.validate_day_configs: null DayConfig in array.")
+			continue
 		var fid: String = dc.faction_id.strip_edges()
 		if fid.is_empty():
 			fid = "DEFAULT_MIXED"
-		assert(not fid.is_empty(), "CampaignManager.validate_day_configs: resolved faction_id empty.")
-		assert(
-			faction_registry.has(fid),
-			"CampaignManager.validate_day_configs: unknown faction_id '%s'." % fid
-		)
+		if fid.is_empty():
+			push_warning("CampaignManager.validate_day_configs: resolved faction_id empty.")
+			continue
+		if not faction_registry.has(fid):
+			push_warning("CampaignManager.validate_day_configs: unknown faction_id '%s'." % fid)
 
 
 func _set_campaign_config(config: CampaignConfig) -> void:
