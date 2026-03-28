@@ -9,12 +9,14 @@ extends Node
 const DEFAULT_SHORT_CAMPAIGN: CampaignConfig = preload("res://resources/campaigns/campaign_short_5_days.tres")
 const FactionDataType = preload("res://scripts/resources/faction_data.gd")
 const DEFAULT_MERCENARY_CATALOG_PATH: String = "res://resources/mercenary_catalog.tres"
-const _MercenaryOfferDataGd: GDScript = preload("res://scripts/resources/mercenary_offer_data.gd")
+const _MERCENARY_OFFER_DATA_GD: GDScript = preload("res://scripts/resources/mercenary_offer_data.gd")
 
 var current_day: int = 1
 var campaign_length: int = 0
 var campaign_id: String = ""
 var campaign_completed: bool = false
+## When false, day progression handlers ignore `mission_won` / `mission_failed` (no `start_new_campaign()` yet).
+var _has_active_campaign_run: bool = false
 var failed_attempts_on_current_day: int = 0
 var current_day_config: DayConfig = null
 var campaign_config: CampaignConfig = null
@@ -97,6 +99,7 @@ func _load_mini_boss_registry() -> void:
 
 
 func start_new_campaign() -> void:
+	_has_active_campaign_run = true
 	if active_campaign_config != null and campaign_config != active_campaign_config:
 		_set_campaign_config(active_campaign_config)
 
@@ -288,7 +291,7 @@ func register_mini_boss(boss_data: Resource) -> void:
 
 
 func _inject_defection_offer(boss_data: Resource) -> void:
-	var offer: Resource = _MercenaryOfferDataGd.new() as Resource
+	var offer: Resource = _MERCENARY_OFFER_DATA_GD.new() as Resource
 	offer.set("ally_id", str(boss_data.get("defected_ally_id")))
 	offer.set("cost_gold", int(boss_data.get("defection_cost_gold")))
 	offer.set("cost_building_material", 0)
@@ -552,6 +555,8 @@ func _start_current_day_internal() -> void:
 
 
 func _on_mission_won(mission_number: int) -> void:
+	if not _has_active_campaign_run:
+		return
 	if mission_number != current_day:
 		return
 
@@ -572,6 +577,8 @@ func _on_mission_won(mission_number: int) -> void:
 
 
 func _on_mission_failed(mission_number: int) -> void:
+	if not _has_active_campaign_run:
+		return
 	if mission_number != current_day:
 		return
 
@@ -582,6 +589,13 @@ func _on_mission_failed(mission_number: int) -> void:
 func set_active_campaign_config_for_test(config: CampaignConfig) -> void:
 	active_campaign_config = config
 	_set_campaign_config(config)
+
+
+func remove_all_allies() -> void:
+	owned_allies.clear()
+	active_allies_for_next_day.clear()
+	_sync_current_ally_roster_for_spawn()
+	SignalBus.ally_roster_changed.emit()
 
 
 func reinitialize_ally_roster_for_test() -> void:

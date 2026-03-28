@@ -52,6 +52,10 @@ signal wave_started(wave_number: int, enemy_count: int)
 @warning_ignore("unused_signal")
 signal wave_cleared(wave_number: int)
 @warning_ignore("unused_signal")
+signal wave_failed(wave_number: int)
+@warning_ignore("unused_signal")
+signal wave_completed(wave_number: int)
+@warning_ignore("unused_signal")
 signal all_waves_cleared()
 
 # === ECONOMY ===

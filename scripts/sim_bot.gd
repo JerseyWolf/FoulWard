@@ -1,4 +1,4 @@
-# scripts/sim_bot.gd
+# scripts/sim_bot.gd — SimBot implementation (`res://scripts/simbot.gd` extends this file for Audit 4).
 # PRE_GENERATION_VERIFICATION: Mentally ran the required checklist for this file
 # (signal wiring, no UI dependencies, data-driven build/spell via StrategyProfile).
 # SimBot — headless simulation bot. Observes signals and can drive mercenary APIs (Prompt 12).
@@ -12,7 +12,16 @@ var is_active: bool:
 		return _is_active
 
 var _strategy: Types.StrategyProfile = Types.StrategyProfile.BALANCED
-var _log: Array[String] = []
+## Internal lines from decide_mercenaries / mercenary hooks (not the batch log API).
+var _mercenary_log_lines: Array[String] = []
+
+var _last_batch_entries: Array[Dictionary] = []
+var _last_batch_profile_id: String = ""
+var _last_batch_runs: int = 0
+var _last_batch_base_seed: int = 0
+var _last_batch_csv_path: String = ""
+
+var _run_start_usec: int = 0
 
 var _tower: Tower = null
 var _wave_manager: WaveManager = null
@@ -40,7 +49,7 @@ var _decision_frame: int = 0
 var _last_spell_eval_frame: int = -1
 
 const _SPELL_ID_SHOCKWAVE: String = "shockwave"
-const _CSV_LOG_DIR: String = "user://simbot_logs"
+const _CSV_LOG_DIR: String = "user://simbot/logs"
 const _CSV_DEFAULT_FILENAME: String = "simbot_balance_log.csv"
 
 func _ready() -> void:
@@ -49,12 +58,13 @@ func _ready() -> void:
 		_csv_columns = _build_csv_columns()
 
 
-func activate(strategy: Types.StrategyProfile = Types.StrategyProfile.BALANCED) -> void:
+func activate(strategy: Types.StrategyProfile) -> void:
 	if _is_active:
 		return
 	_is_active = true
 	_strategy = strategy
-	_log.clear()
+	_profile = _load_strategy_profile_for_enum(strategy)
+	_mercenary_log_lines.clear()
 
 	_tower = get_node_or_null("/root/Main/Tower") as Tower
 	_wave_manager = get_node_or_null("/root/Main/Managers/WaveManager") as WaveManager
@@ -72,8 +82,14 @@ func activate(strategy: Types.StrategyProfile = Types.StrategyProfile.BALANCED) 
 	GameManager.start_new_game()
 
 
-func get_log() -> Array[String]:
-	return _log.duplicate()
+func get_log() -> Dictionary:
+	return {
+		"entries": _last_batch_entries.duplicate(true),
+		"profile_id": _last_batch_profile_id,
+		"runs": _last_batch_runs,
+		"base_seed": _last_batch_base_seed,
+		"csv_path": _last_batch_csv_path,
+	}
 
 
 func decide_mercenaries() -> void:
@@ -81,7 +97,7 @@ func decide_mercenaries() -> void:
 			CampaignManager.current_day,
 			CampaignManager.get_owned_allies()
 	)
-	_log.append("preview_offers_count=%d" % preview.size())
+	_mercenary_log_lines.append("preview_offers_count=%d" % preview.size())
 	var result: Dictionary = CampaignManager.auto_select_best_allies(
 			_strategy,
 			CampaignManager.get_current_offers(),
@@ -99,7 +115,7 @@ func decide_mercenaries() -> void:
 	sorted_idx.reverse()
 	for idx: int in sorted_idx:
 		var ok: bool = CampaignManager.purchase_mercenary_offer(idx)
-		_log.append("purchase_index_%d=%s" % [idx, str(ok)])
+		_mercenary_log_lines.append("purchase_index_%d=%s" % [idx, str(ok)])
 	var raw_active: Variant = result.get("recommended_active_allies", [])
 	var act: Array[String] = []
 	if raw_active is Array:
@@ -192,7 +208,7 @@ func _on_mission_started(_mission_number: int) -> void:
 
 
 func _on_mercenary_recruited(ally_id: String) -> void:
-	_log.append("mercenary_recruited:%s" % ally_id)
+	_mercenary_log_lines.append("mercenary_recruited:%s" % ally_id)
 
 # ============================================================================
 # Prompt 16 Phase 2: StrategyProfile-driven headless simulation
@@ -217,7 +233,9 @@ func run_single(profile_id: String, run_index: int, seed_value: int) -> Dictiona
 	# Cleanup
 	_disconnect_metric_signals()
 	_finalize_metrics()
-	return _metrics.duplicate(true)
+	var result: Dictionary = _build_audit_run_result()
+	_store_run_single_batch_log(result, profile_id, seed_value)
+	return result
 
 ## Runs multiple missions for one profile and appends results to CSV.
 func run_batch(profile_id: String, runs: int, base_seed: int = 0, csv_path: String = "") -> void:
@@ -232,10 +250,83 @@ func run_batch(profile_id: String, runs: int, base_seed: int = 0, csv_path: Stri
 	
 	_csv_write_header_if_needed(csv_path, _csv_columns)
 
+	var batch_entries: Array[Dictionary] = []
 	for i: int in range(runs):
 		var run_seed: int = base_seed + i
 		var row: Dictionary = await run_single(profile_id, i, run_seed)
+		batch_entries.append(row)
 		_csv_append_row(csv_path, _csv_columns, row)
+
+	_last_batch_entries = batch_entries
+	_last_batch_profile_id = profile_id
+	_last_batch_runs = runs
+	_last_batch_base_seed = base_seed
+	_last_batch_csv_path = csv_path
+
+## Runs multiple missions using a StrategyProfileConfig.
+## Each profile in the config will be run for runs_per_profile times with unique seeds.
+## Results are written to separate CSV files in the output_directory.
+func run_batch_with_config(config: StrategyProfileConfig) -> void:
+	if config == null:
+		push_error("SimBot.run_batch_with_config: config is null")
+		return
+
+	if config.profile_ids.is_empty():
+		push_error("SimBot.run_batch_with_config: profile_ids is empty")
+		return
+
+	if _csv_columns.is_empty():
+		_csv_columns = _build_csv_columns()
+
+	var base_seed: int = config.base_seed
+	var output_dir: String = config.output_directory
+	var append_to_existing: bool = config.append_to_existing
+
+	# Create output directory if it doesn't exist
+	var dir: DirAccess = DirAccess.open("user://")
+	if dir == null:
+		push_error("SimBot.run_batch_with_config: Cannot open user:// directory")
+		return
+
+	if not dir.dir_exists(output_dir):
+		dir.make_dir_recursive(output_dir)
+
+	# Process each profile
+	for i: int in range(config.profile_ids.size()):
+		var profile_id: String = config.profile_ids[i]
+		var runs_for_profile: int = config.runs_per_profile
+		var seed: int = base_seed
+		var custom_seeds: Array[int] = config.custom_seeds
+		
+		# Use custom seed if provided
+		if i < custom_seeds.size():
+			seed = custom_seeds[i]
+		
+		# Generate CSV path for this profile
+		var filename: String = config.filename_pattern
+		filename = filename.replace("{profile_id}", profile_id)
+		filename = filename.replace("{seed}", str(seed))
+		filename = filename.replace("{runs}", str(runs_for_profile))
+		
+		var csv_path: String = output_dir + "/" + filename
+		
+		# Write header if needed
+		if not append_to_existing:
+			_csv_write_header_if_needed(csv_path, _csv_columns)
+		
+		# Run multiple iterations for this profile
+		var profile_entries: Array[Dictionary] = []
+		for j: int in range(runs_for_profile):
+			var run_seed: int = seed + (j * 1000)  # Increase seed to prevent collisions
+			var row: Dictionary = await run_single(profile_id, j, run_seed)
+			profile_entries.append(row)
+			_csv_append_row(csv_path, _csv_columns, row)
+
+		_last_batch_entries = profile_entries
+		_last_batch_profile_id = profile_id
+		_last_batch_runs = runs_for_profile
+		_last_batch_base_seed = seed
+		_last_batch_csv_path = csv_path
 
 func _get_default_csv_path() -> String:
 	return _CSV_LOG_DIR + "/" + _CSV_DEFAULT_FILENAME
@@ -244,8 +335,10 @@ func _ensure_csv_dir_exists() -> void:
 	var dir: DirAccess = DirAccess.open("user://")
 	if dir == null:
 		return
-	if not dir.dir_exists("simbot_logs"):
-		dir.make_dir_recursive("simbot_logs")
+	if not dir.dir_exists("simbot"):
+		dir.make_dir_recursive("simbot/logs")
+	elif not dir.dir_exists("simbot/logs"):
+		dir.make_dir_recursive("simbot/logs")
 
 func _csv_write_header_if_needed(file_path: String, columns: Array[String]) -> void:
 	_ensure_csv_dir_exists()
@@ -274,7 +367,10 @@ func _csv_append_row(file_path: String, columns: Array[String], row: Dictionary)
 	for i: int in range(columns.size()):
 		var col: String = columns[i]
 		if row.has(col):
-			values[i] = str(row[col])
+			if col == "duration_seconds":
+				values[i] = "%.3f" % float(row[col])
+			else:
+				values[i] = str(row[col])
 		else:
 			values[i] = "0"
 
@@ -308,6 +404,24 @@ func _activate_for_run(profile_id: String, run_index: int, seed_value: int) -> v
 	assert(_hex_grid != null, "SimBot.run_single: HexGrid missing from scene tree.")
 
 	_reset_run_metrics()
+
+func _load_strategy_profile_for_enum(strategy: Types.StrategyProfile) -> StrategyProfile:
+	var base_path: String = "res://resources/strategyprofiles/"
+	var path: String = base_path + "strategy_balanced_default.tres"
+	match strategy:
+		Types.StrategyProfile.BALANCED:
+			path = base_path + "strategy_balanced_default.tres"
+		Types.StrategyProfile.ALLY_HEAVY_PHYSICAL:
+			path = base_path + "strategy_greedy_econ.tres"
+		Types.StrategyProfile.ANTI_AIR_FOCUS, Types.StrategyProfile.BUILDING_FOCUS:
+			path = base_path + "strategy_heavy_fire.tres"
+		Types.StrategyProfile.SPELL_FOCUS:
+			path = base_path + "strategy_heavy_fire.tres"
+		_:
+			path = base_path + "strategy_balanced_default.tres"
+	var res: Resource = load(path)
+	return res as StrategyProfile
+
 
 func _load_profile(profile_id: String) -> StrategyProfile:
 	# ASSUMPTION: Phase 2 ships exactly three StrategyProfile resources under this folder.
@@ -358,9 +472,13 @@ func _capture_starting_resource_state() -> void:
 
 func _start_new_game_for_run() -> void:
 	GameManager.start_new_game()
+	var tw: Tower = get_node_or_null("/root/Main/Tower") as Tower
+	if tw != null:
+		_metrics["tower_hp_start"] = tw.get_current_hp()
 
 func _run_loop_until_mission_finished() -> void:
 	# Hard upper bound to prevent test hangs if mission won/failed signals are not delivered.
+	_run_start_usec = Time.get_ticks_usec()
 	var max_frames: int = 1200
 	var frame_count: int = 0
 
@@ -383,7 +501,7 @@ func _run_loop_until_mission_finished() -> void:
 		await get_tree().process_frame
 
 	if not _run_done:
-		# Timeout fallback for robustness.
+		_metrics["outcome"] = "timeout"
 		_run_done = true
 
 func _process_combat_tick() -> void:
@@ -715,6 +833,9 @@ func _reset_run_metrics() -> void:
 
 	_metrics["tower_damage_taken"] = 0
 	_metrics["spells_cast_shockwave"] = 0
+	_metrics["spell_casts"] = 0
+	_metrics["tower_hp_start"] = 0
+	_metrics["duration_seconds"] = 0.0
 	_metrics["difficulty_score"] = 0.0
 
 	for enemy_type: Types.EnemyType in Types.EnemyType.values():
@@ -728,31 +849,17 @@ func _build_csv_columns() -> Array[String]:
 	var cols: Array[String] = []
 	cols.append("profile_id")
 	cols.append("run_index")
-	cols.append("mission_number")
+	cols.append("seed_value")
+	cols.append("result")
 	cols.append("waves_cleared")
-	cols.append("outcome")
+	cols.append("final_wave")
+	cols.append("enemies_killed")
+	cols.append("tower_hp_start")
 	cols.append("tower_hp_end")
-	cols.append("total_enemies_killed")
-	cols.append("total_gold_earned")
-	cols.append("total_gold_spent")
-	cols.append("total_building_material_earned")
-	cols.append("total_building_material_spent")
-	cols.append("total_research_material_earned")
-	cols.append("total_research_material_spent")
-	cols.append("gold_end")
-	cols.append("building_material_end")
-	cols.append("research_material_end")
-
-	for enemy_type: Types.EnemyType in Types.EnemyType.values():
-		cols.append("enemies_killed_%s" % str(enemy_type))
-	for btype: Types.BuildingType in Types.BuildingType.values():
-		cols.append("buildings_built_%s" % str(btype))
-		cols.append("buildings_sold_%s" % str(btype))
-		cols.append("buildings_upgraded_%s" % str(btype))
-
-	cols.append("spells_cast_shockwave")
-	cols.append("tower_damage_taken")
-	cols.append("difficulty_score")
+	cols.append("gold_earned")
+	cols.append("building_material_spent")
+	cols.append("spell_casts")
+	cols.append("duration_seconds")
 	return cols
 
 func _connect_metric_signals() -> void:
@@ -856,6 +963,7 @@ func _on_metric_building_upgraded(_slot_index: int, building_type: Types.Buildin
 func _on_metric_spell_cast(spell_id: String) -> void:
 	if spell_id == _SPELL_ID_SHOCKWAVE:
 		_metrics["spells_cast_shockwave"] += 1
+	_metrics["spell_casts"] = int(_metrics.get("spell_casts", 0)) + 1
 
 func _on_metric_tower_damaged(current_hp: int, max_hp: int) -> void:
 	_metrics["tower_hp_end"] = current_hp
@@ -872,8 +980,63 @@ func _finalize_metrics() -> void:
 
 	var waves_cleared: int = int(_metrics.get("waves_cleared", 0))
 
+	var elapsed_usec: int = Time.get_ticks_usec() - _run_start_usec
+	_metrics["duration_seconds"] = float(elapsed_usec) / 1000000.0
+
 	# TUNING: simple difficulty score.
 	var base: float = float(waves_cleared) / float(max_waves) * 1000.0
 	var tower_penalty: float = float(_metrics.get("tower_damage_taken", 0)) * 0.3
 	var unspent_gold_penalty: float = float(_metrics.get("gold_end", 0)) * 0.1
 	_metrics["difficulty_score"] = base - tower_penalty - unspent_gold_penalty
+
+
+func _build_audit_run_result() -> Dictionary:
+	var outcome_str: String = str(_metrics.get("outcome", "unknown"))
+	var result_code: String = "ERROR"
+	match outcome_str:
+		"mission_won":
+			result_code = "WIN"
+		"mission_failed":
+			result_code = "LOSS"
+		"timeout":
+			result_code = "TIMEOUT"
+		_:
+			result_code = "ERROR"
+
+	var tw: Tower = get_node_or_null("/root/Main/Tower") as Tower
+	var tower_end: int = int(_metrics.get("tower_hp_end", 0))
+	if tw != null:
+		tower_end = tw.get_current_hp()
+
+	var pid: String = ""
+	if _profile != null:
+		pid = _profile.profile_id
+
+	var result: Dictionary = {
+		"profile_id": pid,
+		"run_index": _current_run_index,
+		"seed_value": _base_seed,
+		"result": result_code,
+		"waves_cleared": int(_metrics.get("waves_cleared", 0)),
+		"final_wave": _wave_manager.get_current_wave_number() if _wave_manager != null else 0,
+		"enemies_killed": int(_metrics.get("total_enemies_killed", 0)),
+		"tower_hp_start": int(_metrics.get("tower_hp_start", 0)),
+		"tower_hp_end": tower_end,
+		"gold_earned": int(_metrics.get("total_gold_earned", 0)),
+		"building_material_spent": int(_metrics.get("total_building_material_spent", 0)),
+		"spell_casts": int(_metrics.get("spell_casts", 0)),
+		"duration_seconds": float(_metrics.get("duration_seconds", 0.0)),
+	}
+	for k: Variant in _metrics.keys():
+		var ks: String = str(k)
+		if not result.has(ks):
+			result[ks] = _metrics[k]
+	return result
+
+
+func _store_run_single_batch_log(result: Dictionary, profile_id: String, seed_value: int) -> void:
+	_last_batch_entries = [result]
+	_last_batch_profile_id = profile_id
+	_last_batch_runs = 1
+	_last_batch_base_seed = seed_value
+	_last_batch_csv_path = ""

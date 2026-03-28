@@ -1,0 +1,32 @@
+# Foul Ward RAG + MCP Pipeline
+# Python 3.10+ required
+
+# --- LLM & Embeddings ---
+langchain==0.3.25
+langchain-community==0.3.24
+langchain-ollama==0.3.3
+langchain-chroma==0.2.4
+langchain-core==0.3.59
+
+# --- LangGraph (memory / agent orchestration) ---
+langgraph==0.4.7
+langgraph-checkpoint-sqlite==2.0.6
+
+# --- Vector store ---
+chromadb==1.0.12
+
+# --- Retrieval ---
+rank-bm25==0.2.2
+
+# --- MCP server ---
+mcp==1.9.3
+
+# --- File watching (Python-side hash checks) ---
+watchdog==6.0.0
+
+# --- Document parsing ---
+tiktoken==0.9.0
+
+# --- Utilities ---
+aiosqlite==0.21.0
+pydantic==2.11.3

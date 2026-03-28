@@ -23,7 +23,7 @@ SpellManager	res://scripts/spell_manager.gd	Owns mana pool, spell cooldowns. Exe
 ResearchManager	res://scripts/research_manager.gd	Tracks unlocked research nodes. Gates locked buildings.
 ShopManager	res://scripts/shop_manager.gd	Processes shop purchases. Applies mission-start consumable effects.
 InputManager	res://scripts/input_manager.gd	Translates mouse/keyboard input into public method calls on managers.
-SimBot	res://scripts/sim_bot.gd	Headless automated simulation bot. Prompt 16 Phase 2: `run_single(profile_id,run_index,seed_value)` + `run_batch(profile_id,runs,base_seed,csv_path)` driven by `StrategyProfile` resources, with per-run CSV balance logging.
+SimBot	res://scripts/sim_bot.gd (+ alias `res://scripts/simbot.gd`)	Headless automated simulation bot. Audit 4: `get_log()` → Dictionary; `run_single` / `run_batch` CSV under `user://simbot/logs/`. Prompt 16 Phase 2: `StrategyProfile` resources.
 ArtPlaceholderHelper	res://scripts/art/art_placeholder_helper.gd	Stateless utility resolving placeholder meshes, materials, and icons from res://art based on Types enums and string IDs. Handles caching, fallbacks, and generated-asset priority.
 MainRoot	res://scripts/main_root.gd	Applies root window content scale at startup (stretch fix for Godot 4.4+).
 SCENES (runtime instantiated or statically placed)

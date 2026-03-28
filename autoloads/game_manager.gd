@@ -58,11 +58,11 @@ func _ready() -> void:
 	SignalBus.tower_destroyed.connect(_on_tower_destroyed)
 	# Autoload order: CampaignManager before GameManager — connect second so day increments first on mission_won.
 	_connect_mission_won_transition_to_hub()
-	var shop: Node = get_node_or_null("/root/ShopManager")
+	var shop: Node = get_node_or_null("/root/Main/Managers/ShopManager")
 	var tower: Node = get_node_or_null("/root/Main/Tower")
 	if shop != null and tower != null and shop.has_method("initialize_tower"):
 		shop.initialize_tower(tower)
-		print("[GameManager] _ready: ShopManager wired to Tower")
+	print("[GameManager] _ready: ShopManager wired to Tower")
 	reload_territory_map_from_active_campaign()
 	SignalBus.boss_killed.connect(_on_boss_killed)
 	_sync_held_territories_from_map()
