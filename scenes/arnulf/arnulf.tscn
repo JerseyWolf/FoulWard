@@ -30,6 +30,8 @@ script = ExtResource("1_arnulf")
 collision_layer = 4
 collision_mask = 0
 
+; TODO(ART): Add child AnimationPlayer sibling when using allies/arnulf.glb; MeshInstance3D may
+; become root of imported scene instance.
 [node name="ArnulfMesh" type="MeshInstance3D" parent="."]
 mesh = ExtResource("3_arnulf_mesh")
 material_override = ExtResource("4_allies_faction_mat")

@@ -36,6 +36,9 @@
 [ext_resource type="Resource" path="res://resources/building_data/shield_generator.tres" id="14_vc5cj"]
 [ext_resource type="Script" uid="uid://ct0jcmhqil53d" path="res://scripts/resources/spell_data.gd" id="15_kmb1v"]
 [ext_resource type="Resource" path="res://resources/spell_data/shockwave.tres" id="16_fuf3a"]
+[ext_resource type="Resource" path="res://resources/spell_data/slow_field.tres" id="spell_sf"]
+[ext_resource type="Resource" path="res://resources/spell_data/arcane_beam.tres" id="spell_bm"]
+[ext_resource type="Resource" path="res://resources/spell_data/tower_shield.tres" id="spell_ts"]
 [ext_resource type="Script" uid="uid://dwrewkv7itq4c" path="res://scripts/resources/research_node_data.gd" id="18_pibwh"]
 [ext_resource type="Resource" path="res://resources/research_data/base_structures_tree.tres" id="19_c6pm6"]
 [ext_resource type="Resource" path="res://resources/research_data/unlock_anti_air.tres" id="25_raa"]
@@ -163,7 +166,7 @@ enemy_data_registry = Array[ExtResource("7_yq6so")]([ExtResource("8_fv21b"), Ext
 
 [node name="SpellManager" type="Node" parent="Managers" unique_id=1971048015]
 script = ExtResource("5_spellmanager")
-spell_registry = Array[ExtResource("15_kmb1v")]([ExtResource("16_fuf3a")])
+spell_registry = Array[ExtResource("15_kmb1v")]([ExtResource("16_fuf3a"), ExtResource("spell_sf"), ExtResource("spell_bm"), ExtResource("spell_ts")])
 
 [node name="ResearchManager" type="Node" parent="Managers" unique_id=1112433558]
 script = ExtResource("6_researchmanager")

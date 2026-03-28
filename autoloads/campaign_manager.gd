@@ -15,6 +15,8 @@ var current_day: int = 1
 var campaign_length: int = 0
 var campaign_id: String = ""
 var campaign_completed: bool = false
+## Endless Run from main menu: no campaign cap, no narrative/dialogue hooks from day start.
+var is_endless_mode: bool = false
 ## When false, day progression handlers ignore `mission_won` / `mission_failed` (no `start_new_campaign()` yet).
 var _has_active_campaign_run: bool = false
 var failed_attempts_on_current_day: int = 0
@@ -100,8 +102,9 @@ func _load_mini_boss_registry() -> void:
 
 func start_new_campaign() -> void:
 	_has_active_campaign_run = true
-	if active_campaign_config != null and campaign_config != active_campaign_config:
-		_set_campaign_config(active_campaign_config)
+	if not is_endless_mode:
+		if active_campaign_config != null and campaign_config != active_campaign_config:
+			_set_campaign_config(active_campaign_config)
 
 	current_day = 1
 	failed_attempts_on_current_day = 0
@@ -116,8 +119,21 @@ func start_new_campaign() -> void:
 	if campaign_config != null:
 		campaign_length = campaign_config.get_effective_length()
 
-	SignalBus.campaign_started.emit(campaign_id)
+	if not is_endless_mode:
+		SignalBus.campaign_started.emit(campaign_id)
 	_start_current_day_internal()
+
+
+func start_endless_run() -> void:
+	is_endless_mode = true
+	campaign_completed = false
+	current_day = 1
+	var stub: CampaignConfig = CampaignConfig.new()
+	stub.campaign_id = "endless"
+	stub.day_configs = []
+	active_campaign_config = stub
+	_set_campaign_config(stub)
+	SignalBus.campaign_started.emit("endless")
 
 
 func _bootstrap_starter_allies() -> void:
@@ -550,6 +566,9 @@ func _start_current_day_internal() -> void:
 		push_error("CampaignManager: no DayConfig for day %d" % current_day)
 		return
 
+	if not is_endless_mode:
+		DialogueManager.on_campaign_day_started()
+
 	SignalBus.day_started.emit(current_day)
 	GameManager.start_mission_for_day(current_day, current_day_config)
 
@@ -562,6 +581,12 @@ func _on_mission_won(mission_number: int) -> void:
 
 	failed_attempts_on_current_day = 0
 	SignalBus.day_won.emit(current_day)
+	if is_endless_mode:
+		current_day += 1
+		current_day_config = GameManager.get_day_config_for_index(current_day)
+		generate_offers_for_day(current_day)
+		return
+
 	if GameManager.final_boss_defeated:
 		campaign_completed = true
 		SignalBus.campaign_completed.emit(campaign_id)
@@ -573,6 +598,7 @@ func _on_mission_won(mission_number: int) -> void:
 		SignalBus.campaign_completed.emit(campaign_id)
 		return
 
+	current_day_config = GameManager.get_day_config_for_index(current_day)
 	generate_offers_for_day(current_day)
 
 
@@ -607,4 +633,75 @@ func reinitialize_ally_roster_for_test() -> void:
 			owned_allies.append(legacy_id)
 	_apply_default_active_selection()
 	_sync_current_ally_roster_for_spawn()
+	SignalBus.ally_roster_changed.emit()
+
+
+func get_save_data() -> Dictionary:
+	var cfg_path: String = ""
+	if active_campaign_config != null:
+		cfg_path = active_campaign_config.resource_path
+	return {
+		"current_day": current_day,
+		"campaign_completed": campaign_completed,
+		"is_endless_mode": is_endless_mode,
+		"held_territory_ids": GameManager.held_territory_ids.duplicate(),
+		"owned_ally_ids": owned_allies.duplicate(),
+		"active_ally_ids": active_allies_for_next_day.duplicate(),
+		"failed_attempts_on_current_day": failed_attempts_on_current_day,
+		"campaign_config_resource_path": cfg_path,
+	}
+
+
+func restore_from_save(data: Dictionary) -> void:
+	current_day = int(data.get("current_day", 1))
+	campaign_completed = bool(data.get("campaign_completed", false))
+	is_endless_mode = bool(data.get("is_endless_mode", false))
+	failed_attempts_on_current_day = int(data.get("failed_attempts_on_current_day", 0))
+
+	owned_allies.clear()
+	var owned: Variant = data.get("owned_ally_ids", [])
+	if owned is Array:
+		for x: Variant in owned as Array:
+			if x is String:
+				owned_allies.append(x as String)
+
+	active_allies_for_next_day.clear()
+	var active: Variant = data.get("active_ally_ids", [])
+	if active is Array:
+		for x2: Variant in active as Array:
+			if x2 is String:
+				active_allies_for_next_day.append(x2 as String)
+
+	_sync_current_ally_roster_for_spawn()
+
+	var cfg_path: String = str(data.get("campaign_config_resource_path", ""))
+	if is_endless_mode:
+		var stub: CampaignConfig = CampaignConfig.new()
+		stub.campaign_id = "endless"
+		stub.day_configs = []
+		active_campaign_config = stub
+		_set_campaign_config(stub)
+	elif cfg_path != "" and ResourceLoader.exists(cfg_path):
+		var lr: Resource = load(cfg_path)
+		if lr is CampaignConfig:
+			active_campaign_config = lr as CampaignConfig
+			_set_campaign_config(active_campaign_config)
+	else:
+		if active_campaign_config == null:
+			active_campaign_config = DEFAULT_SHORT_CAMPAIGN
+		_set_campaign_config(active_campaign_config)
+
+	_has_active_campaign_run = true
+
+	var held: Array[String] = []
+	var held_raw: Variant = data.get("held_territory_ids", [])
+	if held_raw is Array:
+		for h: Variant in held_raw as Array:
+			if h is String:
+				held.append(h as String)
+
+	current_day_config = GameManager.get_day_config_for_index(current_day)
+	GameManager.apply_save_held_territory_ids(held)
+	if not is_endless_mode:
+		generate_offers_for_day(current_day)
 	SignalBus.ally_roster_changed.emit()

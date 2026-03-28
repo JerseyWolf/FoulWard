@@ -41,3 +41,5 @@ extends Resource
 @export var enemy_hp_multiplier: float = 1.0
 @export var enemy_damage_multiplier: float = 1.0
 @export var gold_reward_multiplier: float = 1.0
+## Scales total wave spawn count (WaveManager: applied to N×6 base). Default 1.0 = unchanged.
+@export var spawn_count_multiplier: float = 1.0

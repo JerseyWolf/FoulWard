@@ -114,6 +114,8 @@ func _ready() -> void:
 	SignalBus.enemy_killed.connect(_on_enemy_killed)
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
 
+	# TODO(ART): Replace ArnulfMesh with res://art/generated/allies/arnulf.glb instance; add
+	# AnimationPlayer clips (idle/walk/attack/death) and drive from ArnulfState transitions.
 	# Art pipeline placeholder assignment.
 	var mesh_node: MeshInstance3D = get_node_or_null("ArnulfMesh") as MeshInstance3D
 	if mesh_node != null:

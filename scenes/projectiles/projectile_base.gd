@@ -44,6 +44,12 @@ var _mesh: MeshInstance3D = null
 ## Prevents double application when both overlap scan and body_entered run same frame.
 var _hit_processed: bool = false
 
+## Piercing: total successful hits allowed (1 = default single-target).
+var _hits_remaining: int = 1
+var _splash_radius: float = 0.0
+const SPLASH_DAMAGE_FRACTION: float = 0.5
+var _struck_instance_ids: Array[int] = []
+
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	monitoring = true
@@ -56,7 +62,9 @@ func initialize_from_weapon(
 	origin: Vector3,
 	target_position: Vector3,
 	custom_damage: float = -1.0,
-	custom_damage_type: Types.DamageType = Types.DamageType.PHYSICAL
+	custom_damage_type: Types.DamageType = Types.DamageType.PHYSICAL,
+	pierce_extra_hits: int = 0,
+	splash_radius_world: float = 0.0
 ) -> void:
 	# Credit (two-path initialization pattern, overshoot buffer):
 	#   FOUL WARD SYSTEMS_part2.md §6.5 initialize_from_weapon.
@@ -66,10 +74,16 @@ func initialize_from_weapon(
 	_origin = origin
 	_target_position = target_position
 	_direction = (target_position - origin).normalized()
-	_max_travel_distance = origin.distance_to(target_position) + 5.0
+	var base_dist: float = origin.distance_to(target_position) + 5.0
+	var pierce_bonus: float = float(maxi(0, pierce_extra_hits)) * 30.0
+	_max_travel_distance = base_dist + pierce_bonus
 	_distance_traveled = 0.0
 	_lifetime = 0.0
 	_targets_air_only = false  # Florence cannot target flying in MVP.
+	_hits_remaining = 1 + maxi(0, pierce_extra_hits)
+	_splash_radius = maxf(0.0, splash_radius_world)
+	_struck_instance_ids.clear()
+	_hit_processed = false
 
 	global_position = origin
 	_configure_collision(false)
@@ -196,44 +210,63 @@ func _physics_process(delta: float) -> void:
 
 # === COLLISION HANDLER =============================================
 
-func _on_body_entered(body: Node3D) -> void:
+func _on_body_entered(_body: Node3D) -> void:
 	if _hit_processed:
 		return
-	var enemy := body as EnemyBase
-	if enemy == null:
-		return
-	if not is_instance_valid(enemy):
-		return
-	# Credit (skip dead enemies to avoid double-hit):
-	#   FOUL WARD SYSTEMS_part2.md §6.6 Edge case "Projectile hits dead enemy".
-	if not enemy.health_component.is_alive():
-		return
+	# Resolve all overlaps and strike the closest enemy along the flight vector first.
+	_try_hit_overlapping_enemy()
 
-	if _apply_damage_to_enemy(enemy):
-		_hit_processed = true
-		queue_free()
+
+func _ray_projection_t(enemy: EnemyBase) -> float:
+	var rel: Vector3 = enemy.global_position - global_position
+	return rel.dot(_direction)
 
 
 func _try_hit_overlapping_enemy() -> bool:
+	var candidates: Array[EnemyBase] = []
 	for body: Node3D in get_overlapping_bodies():
-		if _try_damage_enemy_body(body):
-			return true
+		var e: EnemyBase = body as EnemyBase
+		if e == null or not is_instance_valid(e):
+			continue
+		if not e.health_component.is_alive():
+			continue
+		if not _candidate_contains(candidates, e):
+			candidates.append(e)
 	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state \
 		if get_world_3d() != null else null
-	if space == null:
+	if space != null:
+		var sphere := SphereShape3D.new()
+		sphere.radius = BASE_HIT_OVERLAP_SPHERE_RADIUS * PROJECTILE_VISUAL_SCALE
+		var params := PhysicsShapeQueryParameters3D.new()
+		params.shape = sphere
+		params.transform = global_transform
+		params.collide_with_areas = false
+		params.collide_with_bodies = true
+		params.collision_mask = 2
+		for r: Dictionary in space.intersect_shape(params, 16):
+			var collider: Variant = r.get("collider", null)
+			var node3: Node3D = collider as Node3D
+			var e2: EnemyBase = node3 as EnemyBase
+			if e2 == null or not is_instance_valid(e2):
+				continue
+			if not e2.health_component.is_alive():
+				continue
+			if not _candidate_contains(candidates, e2):
+				candidates.append(e2)
+	if candidates.is_empty():
 		return false
-	var sphere := SphereShape3D.new()
-	sphere.radius = BASE_HIT_OVERLAP_SPHERE_RADIUS * PROJECTILE_VISUAL_SCALE
-	var params := PhysicsShapeQueryParameters3D.new()
-	params.shape = sphere
-	params.transform = global_transform
-	params.collide_with_areas = false
-	params.collide_with_bodies = true
-	params.collision_mask = 2
-	for r: Dictionary in space.intersect_shape(params, 8):
-		var collider: Variant = r.get("collider", null)
-		var node3: Node3D = collider as Node3D
-		if _try_damage_enemy_body(node3):
+	candidates.sort_custom(func(a: EnemyBase, b: EnemyBase) -> bool:
+		return _ray_projection_t(a) < _ray_projection_t(b)
+	)
+	for e3: EnemyBase in candidates:
+		if _try_damage_enemy_body(e3):
+			return true
+	return false
+
+
+func _candidate_contains(arr: Array[EnemyBase], e: EnemyBase) -> bool:
+	for x: EnemyBase in arr:
+		if x == e:
 			return true
 	return false
 
@@ -244,13 +277,54 @@ func _try_damage_enemy_body(body: Node3D) -> bool:
 		return false
 	if not enemy.health_component.is_alive():
 		return false
-	if _apply_damage_to_enemy(enemy):
+	return _resolve_hit_on_enemy(enemy)
+
+
+## Returns true when the projectile should stop processing (destroyed or pierce exhausted this frame).
+func _resolve_hit_on_enemy(enemy: EnemyBase) -> bool:
+	var eid: int = enemy.get_instance_id()
+	if eid in _struck_instance_ids:
+		return false
+	if not _apply_damage_to_enemy(enemy):
+		return false
+	_struck_instance_ids.append(eid)
+	if _splash_radius > 0.001:
+		_apply_splash_damage(enemy.global_position, enemy)
+	_hits_remaining -= 1
+	if _hits_remaining <= 0:
 		_hit_processed = true
 		queue_free()
 		return true
+	# Nudge forward so overlap does not re-trigger the same body this frame.
+	global_position += _direction * 0.75
 	return false
 
 # === DAMAGE APPLICATION ============================================
+
+func _apply_splash_damage(center: Vector3, primary: EnemyBase) -> void:
+	var r2: float = _splash_radius * _splash_radius
+	var splash_damage: float = _damage * SPLASH_DAMAGE_FRACTION
+	for node: Node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(node):
+			continue
+		var e: EnemyBase = node as EnemyBase
+		if e == null or e == primary:
+			continue
+		if not e.health_component.is_alive():
+			continue
+		if e.global_position.distance_squared_to(center) > r2:
+			continue
+		var ed := e.get_enemy_data()
+		if ed == null or _damage_type in ed.damage_immunities:
+			continue
+		var fd: float = DamageCalculator.calculate_damage(
+			splash_damage,
+			_damage_type,
+			ed.armor_type
+		)
+		if fd > 0.0:
+			e.take_damage(splash_damage, _damage_type)
+
 
 ## Returns true if at least one point of damage was applied (not fully immunized).
 func _apply_damage_to_enemy(enemy: EnemyBase) -> bool:

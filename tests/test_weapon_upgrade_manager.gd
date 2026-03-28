@@ -123,6 +123,14 @@ func test_upgrade_crossbow_insufficient_gold_returns_false() -> void:
 	assert_int(_manager.get_current_level(Types.WeaponSlot.CROSSBOW)).is_equal(0)
 
 
+func test_upgrade_insufficient_gold_does_not_emit_weapon_upgraded() -> void:
+	EconomyManager.spend_gold(950)
+	var monitor := monitor_signals(SignalBus, false)
+	var ok: bool = _manager.upgrade_weapon(Types.WeaponSlot.CROSSBOW)
+	assert_bool(ok).is_false()
+	await assert_signal(monitor).is_not_emitted("weapon_upgraded")
+
+
 func test_upgrade_beyond_max_level_returns_false() -> void:
 	EconomyManager.add_gold(9999)
 	_manager.upgrade_weapon(Types.WeaponSlot.CROSSBOW)

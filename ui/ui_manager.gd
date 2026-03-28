@@ -69,7 +69,7 @@ func _ready() -> void:
 
 	# Ensure hub visibility is correct when syncing to an already-active state.
 	var state_now: Types.GameState = GameManager.get_game_state()
-	if state_now == Types.GameState.BETWEEN_MISSIONS:
+	if state_now == Types.GameState.BETWEEN_MISSIONS or state_now == Types.GameState.ENDLESS:
 		var hub2: Control = _get_hub()
 		if hub2 != null:
 			if hub2.has_method("open_hub"):
@@ -104,7 +104,15 @@ func _on_game_state_changed(
 
 	_apply_state(new_state)
 
-	if _old_state != Types.GameState.BETWEEN_MISSIONS and new_state == Types.GameState.BETWEEN_MISSIONS:
+	var was_between: bool = (
+			_old_state == Types.GameState.BETWEEN_MISSIONS
+			or _old_state == Types.GameState.ENDLESS
+	)
+	var is_between: bool = (
+			new_state == Types.GameState.BETWEEN_MISSIONS
+			or new_state == Types.GameState.ENDLESS
+	)
+	if not was_between and is_between:
 		if hub != null:
 			if hub.has_method("open_hub"):
 				hub.open_hub()
@@ -137,12 +145,14 @@ func _apply_state(state: Types.GameState) -> void:
 			# BuildMenu is shown only after selecting a hex slot (see `BuildMenu.open_for_slot()`).
 			# Keeping it hidden at build-mode entry prevents it from covering most of the grid.
 
-		Types.GameState.BETWEEN_MISSIONS:
+		Types.GameState.BETWEEN_MISSIONS, \
+		Types.GameState.ENDLESS:
 			_between_mission_screen.show()
 
 		Types.GameState.MISSION_WON, \
 		Types.GameState.GAME_WON, \
-		Types.GameState.MISSION_FAILED:
+		Types.GameState.MISSION_FAILED, \
+		Types.GameState.GAME_OVER:
 			_end_screen.show()
 
 

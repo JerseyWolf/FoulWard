@@ -5,6 +5,9 @@
 class_name WorldMap
 extends Control
 
+const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
+const FactionDataType = preload("res://scripts/resources/faction_data.gd")
+
 @onready var territory_buttons_container: VBoxContainer = %TerritoryButtons
 @onready var day_label: Label = %DayLabel
 @onready var territory_name_label: Label = %TerritoryNameLabel
@@ -31,6 +34,22 @@ func _clear_buttons() -> void:
 		child.queue_free()
 
 
+func _get_primary_enemy_for_territory(territory: TerritoryData) -> Types.EnemyType:
+	var fid: String = territory.default_faction_id.strip_edges()
+	if fid.is_empty():
+		return Types.EnemyType.ORC_GRUNT
+	var fd: FactionDataType = CampaignManager.faction_registry.get(fid) as FactionDataType
+	if fd == null or fd.roster.is_empty():
+		return Types.EnemyType.ORC_GRUNT
+	var best: FactionRosterEntry = fd.roster[0]
+	var best_w: float = best.base_weight
+	for entry: FactionRosterEntry in fd.roster:
+		if entry.base_weight > best_w:
+			best_w = entry.base_weight
+			best = entry
+	return best.enemy_type
+
+
 func _build_territory_buttons() -> void:
 	_clear_buttons()
 	var territories: Array[TerritoryData] = GameManager.get_all_territories()
@@ -38,6 +57,9 @@ func _build_territory_buttons() -> void:
 		if territory == null:
 			continue
 		var button: Button = Button.new()
+		var et: Types.EnemyType = _get_primary_enemy_for_territory(territory)
+		button.icon = ArtPlaceholderHelper.get_enemy_icon(et)
+		button.expand_icon = true
 		button.text = _get_button_text_for_territory(territory)
 		button.modulate = territory.color
 		button.pressed.connect(_on_territory_button_pressed.bind(territory.territory_id))
@@ -125,5 +147,5 @@ func _on_world_map_updated() -> void:
 
 
 func _on_game_state_changed(_old_state: Types.GameState, new_state: Types.GameState) -> void:
-	if new_state == Types.GameState.BETWEEN_MISSIONS:
+	if new_state == Types.GameState.BETWEEN_MISSIONS or new_state == Types.GameState.ENDLESS:
 		_update_day_and_current_territory()

@@ -23,4 +23,9 @@ unlock_research_id = "unlock_shield_generator"
 research_damage_boost_id = ""
 research_range_boost_id = ""
 color = Color(0.0, 0.8, 0.8, 1.0)
+special_pulse_interval = 10.0
+barracks_buff_radius = 0.0
+barracks_ally_damage_bonus = 0.0
+shield_hp_per_pulse = 35.0
+shield_pulse_duration = 12.0
 

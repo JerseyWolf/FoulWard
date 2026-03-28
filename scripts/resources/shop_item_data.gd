@@ -15,4 +15,14 @@ extends Resource
 @export var material_cost: int = 0
 ## Effect description shown in the shop UI tooltip.
 @export var description: String = ""
+## Category: use `"consumable"` for stack-based battle-start items.
+@export var item_type: String = ""
+## Tags consumed by ShopManager when applying consumable effects (e.g. `"mana_restore"`).
+@export var effect_tags: Array[String] = []
+## For timed effects; `0` means instant / not used.
+@export var duration: float = 0.0
+## Reserved for per-consumable cooldown tracking (data field).
+@export var cooldown: float = 0.0
+## Numeric magnitude for effect dispatch (mana restored, gold bonus, shield HP, etc.).
+@export var value: int = 0
 

@@ -26,6 +26,7 @@ func test_ally_data_defaults_are_valid() -> void:
 		Types.TargetPriority.CLOSEST,
 		Types.TargetPriority.HIGHEST_HP,
 		Types.TargetPriority.FLYING_FIRST,
+		Types.TargetPriority.LOWEST_HP,
 	]
 	assert_bool(valid_pri.has(data.get("preferred_targeting"))).is_true()
 
@@ -51,6 +52,7 @@ func test_ally_data_placeholder_resources_load() -> void:
 				Types.TargetPriority.CLOSEST,
 				Types.TargetPriority.HIGHEST_HP,
 				Types.TargetPriority.FLYING_FIRST,
+				Types.TargetPriority.LOWEST_HP,
 			]
 			assert_bool(valid_pri2.has(pri)).is_true()
 		file_name = dir.get_next()

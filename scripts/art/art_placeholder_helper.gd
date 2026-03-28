@@ -20,6 +20,10 @@ static var _faction_material_cache: Dictionary = {}
 static var _enemy_material_cache: Dictionary = {}
 static var _building_material_cache: Dictionary = {}
 static var _unknown_mesh_cache: Mesh = null
+static var _building_icon_cache: Dictionary = {}
+static var _enemy_icon_cache: Dictionary = {}
+static var _ally_icon_cache: Dictionary = {}
+static var _fallback_icon_texture: Texture2D = null
 
 # ---------------------------------------------------------------------------
 # ART ROOT CONSTANTS
@@ -144,25 +148,50 @@ static func get_building_material(building_type: Types.BuildingType) -> Material
 	return mat
 
 # ---------------------------------------------------------------------------
-# PUBLIC API — ICONS (POST-MVP stubs)
+# PUBLIC API — ICONS (PNG under res://art/icons/** or generated/icons)
 # ---------------------------------------------------------------------------
 
-static func get_enemy_icon(_enemy_type: Types.EnemyType) -> Texture2D:
-	# POST-MVP: implement when icon pipeline is ready.
-	push_warning("ArtPlaceholderHelper: get_enemy_icon is POST-MVP and not yet implemented.")
-	return null
+static func get_enemy_icon(enemy_type: Types.EnemyType) -> Texture2D:
+	if _enemy_icon_cache.has(enemy_type):
+		return _enemy_icon_cache[enemy_type] as Texture2D
+	var token: String = _get_enemy_token(enemy_type)
+	var tex: Texture2D = _load_icon_texture(
+		ART_GEN_ICONS + "enemy_%s.png" % token,
+		ART_ROOT_ICONS_ENEMIES + "%s.png" % token
+	)
+	if tex == null:
+		tex = _get_fallback_icon_texture()
+	_enemy_icon_cache[enemy_type] = tex
+	return tex
 
 
-static func get_building_icon(_building_type: Types.BuildingType) -> Texture2D:
-	# POST-MVP: implement when icon pipeline is ready.
-	push_warning("ArtPlaceholderHelper: get_building_icon is POST-MVP and not yet implemented.")
-	return null
+static func get_building_icon(building_type: Types.BuildingType) -> Texture2D:
+	if _building_icon_cache.has(building_type):
+		return _building_icon_cache[building_type] as Texture2D
+	var token: String = _get_building_token(building_type)
+	var tex: Texture2D = _load_icon_texture(
+		ART_GEN_ICONS + "building_%s.png" % token,
+		ART_ROOT_ICONS_BUILDINGS + "%s.png" % token
+	)
+	if tex == null:
+		tex = _get_fallback_icon_texture()
+	_building_icon_cache[building_type] = tex
+	return tex
 
 
-static func get_ally_icon(_ally_id: StringName) -> Texture2D:
-	# POST-MVP: implement when icon pipeline is ready.
-	push_warning("ArtPlaceholderHelper: get_ally_icon is POST-MVP and not yet implemented.")
-	return null
+static func get_ally_icon(ally_id: String) -> Texture2D:
+	var id_key: StringName = StringName(ally_id)
+	if _ally_icon_cache.has(id_key):
+		return _ally_icon_cache[id_key] as Texture2D
+	var token: String = _get_ally_token(id_key)
+	var tex: Texture2D = _load_icon_texture(
+		ART_GEN_ICONS + "ally_%s.png" % token,
+		ART_ROOT_ICONS_ALLIES + "%s.png" % token
+	)
+	if tex == null:
+		tex = _get_fallback_icon_texture()
+	_ally_icon_cache[id_key] = tex
+	return tex
 
 # ---------------------------------------------------------------------------
 # CACHE MANAGEMENT
@@ -176,6 +205,30 @@ static func clear_cache() -> void:
 	_enemy_material_cache.clear()
 	_building_material_cache.clear()
 	_unknown_mesh_cache = null
+	_building_icon_cache.clear()
+	_enemy_icon_cache.clear()
+	_ally_icon_cache.clear()
+
+
+static func _get_fallback_icon_texture() -> Texture2D:
+	if _fallback_icon_texture != null:
+		return _fallback_icon_texture
+	var img: Image = Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(Color.MAGENTA)
+	_fallback_icon_texture = ImageTexture.create_from_image(img)
+	return _fallback_icon_texture
+
+
+static func _load_icon_texture(generated_path: String, placeholder_path: String) -> Texture2D:
+	if ResourceLoader.exists(generated_path):
+		var t: Texture2D = ResourceLoader.load(generated_path) as Texture2D
+		if t != null:
+			return t
+	if ResourceLoader.exists(placeholder_path):
+		var t2: Texture2D = ResourceLoader.load(placeholder_path) as Texture2D
+		if t2 != null:
+			return t2
+	return null
 
 # ---------------------------------------------------------------------------
 # PRIVATE — TOKEN MAPPINGS

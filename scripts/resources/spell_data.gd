@@ -22,3 +22,12 @@ extends Resource
 ## True if this spell can affect flying enemies. Shockwave is ground-AoE so false.
 @export var hits_flying: bool = false
 
+## Slow field: movement speed multiplier applied (e.g. 0.5 = half speed).
+@export var slow_speed_multiplier: float = 0.5
+## Slow field: duration in seconds.
+@export var slow_duration_seconds: float = 4.0
+## Beam: lateral half-width in world units (enemies within this distance of the beam segment are hit).
+@export var beam_lateral_half_width: float = 3.0
+## Shield: duration in seconds (HP pool from `damage` is removed when duration expires).
+@export var shield_duration_seconds: float = 8.0
+

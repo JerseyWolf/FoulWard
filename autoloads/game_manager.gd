@@ -66,6 +66,11 @@ func _ready() -> void:
 	reload_territory_map_from_active_campaign()
 	SignalBus.boss_killed.connect(_on_boss_killed)
 	_sync_held_territories_from_map()
+	if SaveManager.has_method("save_current_state"):
+		if not SignalBus.mission_won.is_connected(SaveManager.save_current_state):
+			SignalBus.mission_won.connect(SaveManager.save_current_state)
+		if not SignalBus.mission_failed.is_connected(SaveManager.save_current_state):
+			SignalBus.mission_failed.connect(SaveManager.save_current_state)
 
 
 func _connect_mission_won_transition_to_hub() -> void:
@@ -76,6 +81,9 @@ func _connect_mission_won_transition_to_hub() -> void:
 
 ## Runs after CampaignManager._on_mission_won (autoload order: CampaignManager before GameManager). Also used when tests emit mission_won without waves.
 func _on_mission_won_transition_to_hub(mission_number: int) -> void:
+	if CampaignManager.is_endless_mode:
+		_transition_to(Types.GameState.BETWEEN_MISSIONS)
+		return
 	var campaign_len: int = CampaignManager.get_campaign_length()
 	var completed_day_index: int = mission_number
 	var is_final_day: bool = campaign_len > 0 and completed_day_index == campaign_len
@@ -101,6 +109,8 @@ func start_new_game() -> void:
 	print("[GameManager] start_new_game: mission=1  gold=%d mat=%d" % [
 		EconomyManager.get_gold(), EconomyManager.get_building_material()
 	])
+	if CampaignManager.is_endless_mode:
+		game_state = Types.GameState.ENDLESS
 	_cleanup_allies()
 	_reset_final_boss_campaign_state()
 	current_mission = 1
@@ -139,6 +149,7 @@ func start_next_mission() -> void:
 func start_wave_countdown() -> void:
 	assert(game_state == Types.GameState.MISSION_BRIEFING, "start_wave_countdown called from invalid state")
 	_transition_to(Types.GameState.COMBAT)
+	SignalBus.mission_started.emit(current_mission)
 	_spawn_allies_for_current_mission()
 	_apply_shop_mission_start_consumables()
 	# Single source of truth for countdown duration: WaveManager emits wave_countdown_started.
@@ -239,6 +250,8 @@ var campaign_config: CampaignConfig:
 
 
 func get_day_config_for_index(day_index: int) -> DayConfig:
+	if CampaignManager.is_endless_mode:
+		return _create_synthetic_endless_day_config(day_index)
 	var cfg: CampaignConfig = CampaignManager.campaign_config
 	if cfg == null:
 		return null
@@ -250,6 +263,20 @@ func get_day_config_for_index(day_index: int) -> DayConfig:
 	if _synthetic_boss_attack_day != null and _synthetic_boss_attack_day.day_index == day_index:
 		return _synthetic_boss_attack_day
 	return null
+
+
+func _create_synthetic_endless_day_config(day_index: int) -> DayConfig:
+	var d: DayConfig = DayConfig.new()
+	d.day_index = day_index
+	d.mission_index = mini(day_index, TOTAL_MISSIONS)
+	d.display_name = "Endless"
+	d.faction_id = "DEFAULT_MIXED"
+	d.base_wave_count = WAVES_PER_MISSION
+	d.enemy_hp_multiplier = WaveManager.get_effective_enemy_hp_multiplier_for_day(day_index)
+	d.enemy_damage_multiplier = d.enemy_hp_multiplier
+	d.gold_reward_multiplier = 1.0
+	d.spawn_count_multiplier = WaveManager.get_effective_spawn_count_multiplier_for_day(day_index)
+	return d
 
 
 func get_synthetic_boss_day_config() -> DayConfig:
@@ -377,6 +404,77 @@ func get_current_territory_gold_modifiers() -> Dictionary:
 	return result
 
 
+## Sum of bonus_flat_gold_per_kill from all territories that pass is_active_for_bonuses().
+func get_aggregate_flat_gold_per_kill() -> int:
+	var s: int = 0
+	if territory_map == null:
+		return 0
+	for t: TerritoryData in territory_map.get_all_territories():
+		if t == null or not t.is_active_for_bonuses():
+			continue
+		s += t.bonus_flat_gold_per_kill
+	return s
+
+
+## Product of bonus_research_cost_multiplier across active territories (empty map = 1.0).
+func get_aggregate_research_cost_multiplier() -> float:
+	var p: float = 1.0
+	if territory_map == null:
+		return p
+	for t: TerritoryData in territory_map.get_all_territories():
+		if t == null or not t.is_active_for_bonuses():
+			continue
+		if t.bonus_research_cost_multiplier > 0.0:
+			p *= t.bonus_research_cost_multiplier
+	return p
+
+
+func get_aggregate_enchanting_cost_multiplier() -> float:
+	var p: float = 1.0
+	if territory_map == null:
+		return p
+	for t: TerritoryData in territory_map.get_all_territories():
+		if t == null or not t.is_active_for_bonuses():
+			continue
+		if t.bonus_enchanting_cost_multiplier > 0.0:
+			p *= t.bonus_enchanting_cost_multiplier
+	return p
+
+
+func get_aggregate_weapon_upgrade_cost_multiplier() -> float:
+	var p: float = 1.0
+	if territory_map == null:
+		return p
+	for t: TerritoryData in territory_map.get_all_territories():
+		if t == null or not t.is_active_for_bonuses():
+			continue
+		if t.bonus_weapon_upgrade_cost_multiplier > 0.0:
+			p *= t.bonus_weapon_upgrade_cost_multiplier
+	return p
+
+
+## Extra research material granted at end of a successful mission wave clear (not per-kill).
+func get_aggregate_bonus_research_per_day() -> int:
+	var s: int = 0
+	if territory_map == null:
+		return 0
+	for t: TerritoryData in territory_map.get_all_territories():
+		if t == null or not t.is_active_for_bonuses():
+			continue
+		s += t.bonus_research_per_day
+	return s
+
+
+## When DayConfig.faction_id is empty, use territory default_faction_id.
+func get_effective_faction_id_for_territory(territory_id: String) -> String:
+	if territory_id.strip_edges() == "" or territory_map == null:
+		return ""
+	var t: TerritoryData = territory_map.get_territory_by_id(territory_id)
+	if t == null:
+		return ""
+	return t.default_faction_id.strip_edges()
+
+
 func start_mission_for_day(day_index: int, day_config: DayConfig) -> void:
 	var mission_from_config: int = day_index
 	if day_config != null:
@@ -486,14 +584,17 @@ func _begin_mission_wave_sequence() -> void:
 	wave_manager.call_deferred("start_wave_sequence")
 
 func _transition_to(new_state: Types.GameState) -> void:
-	if game_state == new_state:
+	var resolved: Types.GameState = new_state
+	if new_state == Types.GameState.BETWEEN_MISSIONS and CampaignManager.is_endless_mode:
+		resolved = Types.GameState.ENDLESS
+	if game_state == resolved:
 		return
 	var old_name: String = Types.GameState.keys()[game_state]
-	var new_name: String = Types.GameState.keys()[new_state]
+	var new_name: String = Types.GameState.keys()[resolved]
 	print("[GameManager] state: %s → %s" % [old_name, new_name])
 	var old: Types.GameState = game_state
-	game_state = new_state
-	SignalBus.game_state_changed.emit(old, new_state)
+	game_state = resolved
+	SignalBus.game_state_changed.emit(old, resolved)
 
 func _on_all_waves_cleared() -> void:
 	_cleanup_allies()
@@ -511,7 +612,8 @@ func _on_all_waves_cleared() -> void:
 
 	EconomyManager.add_gold(total_gold)
 	EconomyManager.add_building_material(3)
-	EconomyManager.add_research_material(2)
+	var extra_rm: int = get_aggregate_bonus_research_per_day()
+	EconomyManager.add_research_material(2 + extra_rm)
 	# Snapshot before mission_won: CampaignManager may increment current_day on mission_won.
 	var completed_day_index: int = CampaignManager.get_current_day()
 
@@ -527,12 +629,12 @@ func _on_all_waves_cleared() -> void:
 		SignalBus.campaign_boss_attempted.emit(completed_day_index, true)
 
 	# Florence meta-state updates (run meta-progression).
-	if florence_data != null:
+	if florence_data != null and not CampaignManager.is_endless_mode:
 		florence_data.total_missions_played += 1
 		advance_day(Types.DayAdvanceReason.MISSION_COMPLETED)
 		_apply_pending_day_advance_if_any()
 
-	SignalBus.mission_won.emit(current_mission)
+	SignalBus.mission_won.emit(CampaignManager.get_current_day())
 
 func _on_tower_destroyed() -> void:
 	_cleanup_allies()
@@ -541,7 +643,7 @@ func _on_tower_destroyed() -> void:
 	var completed_day_index: int = CampaignManager.get_current_day()
 
 	# Florence meta-state updates (counts mission attempts).
-	if florence_data != null:
+	if florence_data != null and not CampaignManager.is_endless_mode:
 		florence_data.total_missions_played += 1
 		florence_data.mission_failures += 1
 		advance_day(Types.DayAdvanceReason.MISSION_COMPLETED)
@@ -558,7 +660,8 @@ func _on_tower_destroyed() -> void:
 	else:
 		apply_day_result_to_territory(day_cfg, false)
 	_transition_to(Types.GameState.MISSION_FAILED)
-	SignalBus.mission_failed.emit(current_mission)
+	# Snapshot from entry — advance_day above may have incremented CampaignManager.current_day.
+	SignalBus.mission_failed.emit(completed_day_index)
 
 
 func prepare_next_campaign_day_if_needed() -> void:
@@ -670,4 +773,99 @@ func _mark_territory_secured(territory_id: String) -> void:
 	if t == null:
 		return
 	t.is_secured = true
+	t.has_boss_threat = false
 	SignalBus.territory_state_changed.emit(territory_id)
+
+
+func get_save_data() -> Dictionary:
+	var spell: SpellManager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
+	var mana: int = 0
+	if spell != null:
+		mana = spell.get_current_mana()
+	var florence_dict: Dictionary = {}
+	if florence_data != null:
+		florence_dict = {
+			"total_days_played": florence_data.total_days_played,
+			"run_count": florence_data.run_count,
+			"total_missions_played": florence_data.total_missions_played,
+			"boss_attempts": florence_data.boss_attempts,
+			"boss_victories": florence_data.boss_victories,
+			"mission_failures": florence_data.mission_failures,
+			"has_unlocked_research": florence_data.has_unlocked_research,
+			"has_unlocked_enchantments": florence_data.has_unlocked_enchantments,
+			"has_recruited_any_mercenary": florence_data.has_recruited_any_mercenary,
+			"has_seen_any_mini_boss": florence_data.has_seen_any_mini_boss,
+			"has_defeated_any_mini_boss": florence_data.has_defeated_any_mini_boss,
+			"has_reached_day_25": florence_data.has_reached_day_25,
+			"has_reached_day_50": florence_data.has_reached_day_50,
+			"has_seen_first_boss": florence_data.has_seen_first_boss,
+		}
+	return {
+		"game_state": int(game_state),
+		"final_boss_defeated": final_boss_defeated,
+		"current_gold": EconomyManager.get_gold(),
+		"current_building_material": EconomyManager.get_building_material(),
+		"current_research_material": EconomyManager.get_research_material(),
+		"current_mana": mana,
+		"current_mission": current_mission,
+		"current_wave": current_wave,
+		"current_day": CampaignManager.get_current_day(),
+		"florence_data": florence_dict,
+		"final_boss_id": final_boss_id,
+		"final_boss_day_index": final_boss_day_index,
+		"final_boss_active": final_boss_active,
+		"current_boss_threat_territory_id": current_boss_threat_territory_id,
+	}
+
+
+func restore_from_save(data: Dictionary) -> void:
+	var gs: int = int(data.get("game_state", int(Types.GameState.MAIN_MENU)))
+	game_state = gs as Types.GameState
+	final_boss_defeated = bool(data.get("final_boss_defeated", false))
+	current_mission = int(data.get("current_mission", 1))
+	current_wave = int(data.get("current_wave", 0))
+	current_day = int(data.get("current_day", 1))
+	final_boss_id = str(data.get("final_boss_id", ""))
+	final_boss_day_index = int(data.get("final_boss_day_index", 50))
+	final_boss_active = bool(data.get("final_boss_active", false))
+	current_boss_threat_territory_id = str(data.get("current_boss_threat_territory_id", ""))
+	EconomyManager.apply_save_snapshot(
+		int(data.get("current_gold", EconomyManager.get_gold())),
+		int(data.get("current_building_material", EconomyManager.get_building_material())),
+		int(data.get("current_research_material", EconomyManager.get_research_material()))
+	)
+	var spell: SpellManager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
+	if spell != null:
+		spell.set_mana_for_save_restore(int(data.get("current_mana", 0)))
+	if florence_data == null:
+		florence_data = FlorenceDataType.new()
+	var fd: Variant = data.get("florence_data", {})
+	if fd is Dictionary:
+		var fdd: Dictionary = fd as Dictionary
+		florence_data.total_days_played = int(fdd.get("total_days_played", florence_data.total_days_played))
+		florence_data.run_count = int(fdd.get("run_count", florence_data.run_count))
+		florence_data.total_missions_played = int(fdd.get("total_missions_played", florence_data.total_missions_played))
+		florence_data.boss_attempts = int(fdd.get("boss_attempts", florence_data.boss_attempts))
+		florence_data.boss_victories = int(fdd.get("boss_victories", florence_data.boss_victories))
+		florence_data.mission_failures = int(fdd.get("mission_failures", florence_data.mission_failures))
+		florence_data.has_unlocked_research = bool(fdd.get("has_unlocked_research", florence_data.has_unlocked_research))
+		florence_data.has_unlocked_enchantments = bool(fdd.get("has_unlocked_enchantments", florence_data.has_unlocked_enchantments))
+		florence_data.has_recruited_any_mercenary = bool(fdd.get("has_recruited_any_mercenary", florence_data.has_recruited_any_mercenary))
+		florence_data.has_seen_any_mini_boss = bool(fdd.get("has_seen_any_mini_boss", florence_data.has_seen_any_mini_boss))
+		florence_data.has_defeated_any_mini_boss = bool(fdd.get("has_defeated_any_mini_boss", florence_data.has_defeated_any_mini_boss))
+		florence_data.has_reached_day_25 = bool(fdd.get("has_reached_day_25", florence_data.has_reached_day_25))
+		florence_data.has_reached_day_50 = bool(fdd.get("has_reached_day_50", florence_data.has_reached_day_50))
+		florence_data.has_seen_first_boss = bool(fdd.get("has_seen_first_boss", florence_data.has_seen_first_boss))
+		florence_data.update_day_threshold_flags(current_day)
+	SignalBus.florence_state_changed.emit()
+
+
+func apply_save_held_territory_ids(ids: Array[String]) -> void:
+	held_territory_ids = ids.duplicate()
+	if territory_map == null:
+		return
+	for t: TerritoryData in territory_map.get_all_territories():
+		if t == null:
+			continue
+		t.is_controlled_by_player = held_territory_ids.has(t.territory_id)
+	SignalBus.world_map_updated.emit()

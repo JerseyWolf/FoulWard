@@ -7,6 +7,7 @@ extends GdUnitTestSuite
 
 func before_test() -> void:
 	Engine.time_scale = 1.0
+	CampaignManager.is_endless_mode = false
 	GameManager.current_mission = 1
 	GameManager.current_wave = 0
 	GameManager.game_state = Types.GameState.MAIN_MENU
@@ -194,6 +195,7 @@ func test_tower_destroyed_signal_emits_mission_failed() -> void:
 func test_tower_destroyed_signal_emits_mission_failed_with_correct_mission_number() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
 	GameManager.current_mission = 3
+	CampaignManager.current_day = 3
 	var monitor := monitor_signals(SignalBus, false)
 	SignalBus.tower_destroyed.emit()
 	await assert_signal(monitor).is_emitted("mission_failed", [3])
@@ -220,6 +222,7 @@ func test_all_waves_cleared_emits_mission_won() -> void:
 func test_all_waves_cleared_emits_mission_won_with_correct_mission_number() -> void:
 	GameManager.game_state = Types.GameState.COMBAT
 	GameManager.current_mission = 2
+	CampaignManager.current_day = 2
 	var monitor := monitor_signals(SignalBus, false)
 	SignalBus.all_waves_cleared.emit()
 	await assert_signal(monitor).is_emitted("mission_won", [2])

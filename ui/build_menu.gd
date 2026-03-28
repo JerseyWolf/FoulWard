@@ -7,6 +7,8 @@
 class_name BuildMenu
 extends Control
 
+const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
+
 var _selected_slot: int = -1
 var _is_sell_mode: bool = false
 
@@ -85,6 +87,8 @@ func _refresh() -> void:
 		var is_unlocked: bool = _hex_grid.is_building_available(bt)
 		var can_afford: bool = EconomyManager.can_afford(bd.gold_cost, bd.material_cost)
 
+		btn.icon = ArtPlaceholderHelper.get_building_icon(bt)
+		btn.expand_icon = true
 		btn.text = "%s\n%dg %dm" % [bd.display_name, bd.gold_cost, bd.material_cost]
 		btn.disabled = not is_unlocked or not can_afford
 		btn.custom_minimum_size = Vector2(180, 48)

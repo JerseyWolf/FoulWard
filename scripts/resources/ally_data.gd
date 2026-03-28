@@ -31,7 +31,7 @@ class_name AllyData
 ## 0 = permanent death on HP depletion; >0 = downed/recover loop (POST-MVP in AllyBase).
 @export var recovery_time: float = 0.0 # TUNING
 
-# Uses existing TargetPriority enum; MVP only implements CLOSEST behavior.
+# CLOSEST = nearest; LOWEST_HP = lowest current HP (tie: nearer); see AllyBase.find_target().
 @export var preferred_targeting: Types.TargetPriority = Types.TargetPriority.CLOSEST
 
 # True for named characters (Arnulf, defected mini-bosses); false for generic mercs.
@@ -50,3 +50,11 @@ class_name AllyData
 @export var starting_level: int = 1 # POST-MVP
 @export var level_scaling_factor: float = 1.0 # POST-MVP
 @export var uses_downed_recovering: bool = false # POST-MVP (for Arnulf-like behavior)
+
+## Base melee/ranged hit damage at level 1 (see AllyBase.get_effective_damage()).
+@export var base_damage: int = 10
+## Base max HP at level 1 (see AllyBase.get_effective_max_hp()). If 0, AllyBase falls back to `max_hp`.
+@export var base_hp: int = 0
+## Base projectile damage at level 1 for ranged allies; if 0, AllyBase uses `base_damage` for scaling.
+@export var ally_base_damage: int = 0
+@export var is_ranged: bool = false

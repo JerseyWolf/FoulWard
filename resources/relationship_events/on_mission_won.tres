@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RelationshipEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/relationship_event_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+signal_name = "mission_won"
+character_deltas = {
+"FLORENCE": 2.0,
+"MERCHANT": 2.0,
+"SPELL_RESEARCHER": 2.0,
+"ENCHANTER": 2.0,
+"MERCENARY_COMMANDER": 2.0,
+"COMPANION_MELEE": 2.0,
+"EXAMPLE_CHARACTER": 2.0,
+"arnulf": 2.0,
+"WEAPONS_ENGINEER": 2.0,
+"defected_orc_captain": 2.0
+}

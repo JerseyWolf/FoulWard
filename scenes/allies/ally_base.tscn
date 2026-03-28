@@ -26,6 +26,7 @@ collision_layer = 4
 collision_mask = 32
 script = ExtResource("1_ally")
 
+; TODO(ART): BoxMesh placeholder — swap for generated ally GLB (Skeleton3D + AnimationPlayer).
 [node name="AllyMesh" type="MeshInstance3D" parent="."]
 mesh = SubResource("1_mesh")
 material_override = SubResource("mat_ally")

@@ -60,3 +60,14 @@ extends Resource
 ## TUNING: true = instant hit plus DoT, false = DoT only.
 @export var dot_in_addition_to_hit: bool = true
 
+## Archer Barracks / Shield Generator: seconds between special pulses.
+@export var special_pulse_interval: float = 10.0
+## Radius for barracks ally buff (world units).
+@export var barracks_buff_radius: float = 22.0
+## Flat damage added to the next ally strike while in radius (applied on pulse).
+@export var barracks_ally_damage_bonus: float = 8.0
+## Shield pulse: temporary absorb HP granted to the central tower.
+@export var shield_hp_per_pulse: float = 28.0
+## Duration for shield HP pool from generator (seconds).
+@export var shield_pulse_duration: float = 8.0
+

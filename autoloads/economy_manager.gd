@@ -27,7 +27,10 @@ func _ready() -> void:
 # ── Signal receivers ───────────────────────────────────────────────────────────
 
 func _on_enemy_killed(_enemy_type: Types.EnemyType, _position: Vector3, gold_reward: int) -> void:
-	add_gold(gold_reward)
+	var bonus: int = GameManager.get_aggregate_flat_gold_per_kill()
+	var total: int = gold_reward + bonus
+	if total > 0:
+		add_gold(total)
 
 # ── Gold ───────────────────────────────────────────────────────────────────────
 
@@ -99,6 +102,16 @@ func get_research_material() -> int:
 	return research_material
 
 # ── Reset ──────────────────────────────────────────────────────────────────────
+
+## Apply gold / building / research from a save snapshot (SaveManager).
+func apply_save_snapshot(g: int, building_mat: int, research_mat: int) -> void:
+	gold = maxi(0, g)
+	building_material = maxi(0, building_mat)
+	research_material = maxi(0, research_mat)
+	SignalBus.resource_changed.emit(Types.ResourceType.GOLD, gold)
+	SignalBus.resource_changed.emit(Types.ResourceType.BUILDING_MATERIAL, building_material)
+	SignalBus.resource_changed.emit(Types.ResourceType.RESEARCH_MATERIAL, research_material)
+
 
 ## Resets all three resources to starting values. Emits resource_changed for each.
 ## Call this at new-game start or during test setup.

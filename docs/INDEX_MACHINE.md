@@ -5,14 +5,14 @@
 | name | path | script_class | emits_signals(csv) |
 |---|---|---|---|
 | SignalBus | `res://autoloads/signal_bus.gd` | `-` | `-` |
-| CampaignManager | `res://autoloads/campaign_manager.gd` | `-` | `campaign_started,day_started,day_won,day_failed,campaign_completed` |
 | DamageCalculator | `res://autoloads/damage_calculator.gd` | `-` | `-` |
 | EconomyManager | `res://autoloads/economy_manager.gd` | `-` | `resource_changed` |
+| CampaignManager | `res://autoloads/campaign_manager.gd` | `-` | `campaign_started,day_started,day_won,day_failed,campaign_completed` |
 | GameManager | `res://autoloads/game_manager.gd` | `-` | `mission_started,build_mode_entered,game_state_changed,build_mode_exited,mission_won,mission_failed` |
 | DialogueManager | `res://autoloads/dialogue_manager.gd` | `-` | `dialogue_line_started,dialogue_line_finished` |
-| EnchantmentManager | `res://autoloads/enchantment_manager.gd` | `-` | `enchantment_applied,enchantment_removed` |
 | AutoTestDriver | `res://autoloads/auto_test_driver.gd` | `-` | `-` |
-| GDAIMCPRuntime | `-` | `-` | `-` |
+| GDAIMCPRuntime | (uid autoload; see `project.godot`) | `-` | `-` |
+| EnchantmentManager | `res://autoloads/enchantment_manager.gd` | `-` | `enchantment_applied,enchantment_removed` |
 | MCPScreenshot | `res://addons/godot_mcp/mcp_screenshot_service.gd` | `-` | `-` |
 | MCPInputService | `res://addons/godot_mcp/mcp_input_service.gd` | `-` | `-` |
 | MCPGameInspector | `res://addons/godot_mcp/mcp_game_inspector_service.gd` | `-` | `-` |

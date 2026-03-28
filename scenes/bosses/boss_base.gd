@@ -41,6 +41,8 @@ func _apply_boss_stats() -> void:
 
 
 func _configure_visuals() -> void:
+	# TODO(ART): Apply res://art/generated/bosses/<boss_id>.glb (scaled Rigify placeholder); add
+	# AnimationPlayer for phase transitions / unique ability telegraph when production assets land.
 	if boss_data == null:
 		return
 	var mesh_node: MeshInstance3D = get_node_or_null("BossMesh") as MeshInstance3D

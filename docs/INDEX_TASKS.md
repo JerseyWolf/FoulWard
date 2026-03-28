@@ -37,6 +37,10 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - a SignalBus signal is added/removed/renamed,
   - autoload registration changes.
 
+## Task 6: `docs/` layout
+- Prefer **`docs/README.md`** for human-oriented categorization (indexes vs architecture vs ops).
+- Move obsolete one-off snapshots and superseded session logs to **`docs/obsolete/`** and add a one-line note to **`docs/obsolete/README.md`** when adding files there.
+
 ## Task Update Log (2026-03-24)
 - Added `docs/PROMPT_1_IMPLEMENTATION.md` with concrete implementation notes.
 - Updated indexes for new BuildMenu sell-mode API and BuildMode input routing changes:

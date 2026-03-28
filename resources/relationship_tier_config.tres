@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="RelationshipTierConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/relationship_tier_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tiers = Array[Dictionary]([{
+&"name": "Hostile",
+&"min_affinity": -100.0
+}, {
+&"name": "Cold",
+&"min_affinity": -50.0
+}, {
+&"name": "Neutral",
+&"min_affinity": 0.0
+}, {
+&"name": "Friendly",
+&"min_affinity": 31.0
+}, {
+&"name": "Allied",
+&"min_affinity": 71.0
+}])

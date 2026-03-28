@@ -39,9 +39,10 @@ const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholde
 @onready var _health_component: HealthComponent = $HealthComponent
 
 # ASSUMPTION: ProjectileContainer at /root/Main/ProjectileContainer per ARCHITECTURE.md §2.
-@onready var _projectile_container: Node3D = get_node(
+# Null in isolated test scenes (no Main) — firing methods no-op spawn when absent.
+@onready var _projectile_container: Node3D = get_node_or_null(
 	"/root/Main/ProjectileContainer"
-)
+) as Node3D
 
 # Reload timers — count DOWN to 0 (weapon ready when <= 0)
 var _crossbow_reload_remaining: float = 0.0
@@ -51,12 +52,17 @@ var _rapid_missile_reload_remaining: float = 0.0
 var _burst_remaining: int = 0
 var _burst_timer: float = 0.0
 var _burst_target: Vector3 = Vector3.ZERO
+
+## Temporary spell shield (SpellManager tower_shield). Absorbs damage before HP.
+var _spell_shield_hp: float = 0.0
+var _spell_shield_duration_remaining: float = 0.0
 # ASSUMPTION: Tower-owned RNG is used instead of global randf() so tests can seed it.
 var _shot_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 # ─────────────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	add_to_group("tower")
 	if crossbow_data == null or rapid_missile_data == null:
 		push_error(
 			"Tower: assign crossbow_data and rapid_missile_data exports (e.g. crossbow.tres, rapid_missile.tres)."
@@ -71,6 +77,8 @@ func _ready() -> void:
 	_weapon_upgrade_manager = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
 	_shot_rng.randomize()
 
+	# TODO(ART): Replace tower MeshInstance3D with res://art/generated/misc/tower_core.glb or
+	# production tower mesh; tower is static (no AnimationPlayer).
 	# Art pipeline placeholder assignment.
 	var tower_mesh_node: MeshInstance3D = get_node_or_null("TowerMesh") as MeshInstance3D
 	if tower_mesh_node != null:
@@ -88,6 +96,11 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if crossbow_data == null or rapid_missile_data == null:
 		return
+	if _spell_shield_duration_remaining > 0.0:
+		_spell_shield_duration_remaining -= delta
+		if _spell_shield_duration_remaining <= 0.0:
+			_spell_shield_hp = 0.0
+			_spell_shield_duration_remaining = 0.0
 	if _crossbow_reload_remaining > 0.0:
 		_crossbow_reload_remaining -= delta
 	if _rapid_missile_reload_remaining > 0.0:
@@ -121,7 +134,14 @@ func fire_crossbow(target_position: Vector3) -> void:
 	var weapon_slot: Types.WeaponSlot = Types.WeaponSlot.CROSSBOW
 	var effective_data: WeaponData = _build_effective_weapon_data(weapon_slot)
 	var composed: Dictionary = _compose_projectile_stats(weapon_slot, effective_data)
-	_spawn_weapon_projectile(weapon_slot, composed, global_position, final_target)
+	var n_proj: int = 1
+	var spread_deg: float = 0.0
+	if _weapon_upgrade_manager != null:
+		n_proj = _weapon_upgrade_manager.get_effective_projectile_count(weapon_slot)
+		spread_deg = _weapon_upgrade_manager.get_effective_spread_angle_degrees(weapon_slot)
+	var aim_points: Array[Vector3] = fan_aim_points(global_position, final_target, n_proj, spread_deg)
+	for p: Vector3 in aim_points:
+		_spawn_weapon_projectile(weapon_slot, composed, global_position, p)
 	_crossbow_reload_remaining = _get_effective_weapon_reload_time(Types.WeaponSlot.CROSSBOW)
 
 
@@ -143,8 +163,31 @@ func fire_rapid_missile(target_position: Vector3) -> void:
 
 ## Applies raw integer damage to the HealthComponent.
 func take_damage(amount: int) -> void:
-	print("[Tower] take_damage: %d  hp=%d→%d" % [amount, _health_component.current_hp, _health_component.current_hp - amount])
-	_health_component.take_damage(float(amount))
+	var remaining: float = float(amount)
+	if _spell_shield_hp > 0.0:
+		var absorb: float = minf(_spell_shield_hp, remaining)
+		_spell_shield_hp -= absorb
+		remaining -= absorb
+	if remaining <= 0.0:
+		return
+	print("[Tower] take_damage: %d  hp=%d→%d" % [amount, _health_component.current_hp, _health_component.current_hp - int(remaining)])
+	_health_component.take_damage(remaining)
+
+
+## Adds or refreshes a spell shield (HP pool and duration). Larger pool replaces smaller.
+func add_spell_shield(amount: float, duration_seconds: float) -> void:
+	if amount <= 0.0 or duration_seconds <= 0.0:
+		return
+	_spell_shield_hp = maxf(_spell_shield_hp, amount)
+	_spell_shield_duration_remaining = maxf(_spell_shield_duration_remaining, duration_seconds)
+
+
+func get_spell_shield_hp() -> float:
+	return _spell_shield_hp
+
+
+func get_spell_shield_duration_remaining() -> float:
+	return _spell_shield_duration_remaining
 
 
 ## Restores tower HP to maximum. Called by ShopManager (Tower Repair Kit).
@@ -236,6 +279,33 @@ func _compose_projectile_stats(weapon_slot: Types.WeaponSlot, weapon_data: Weapo
 	}
 
 
+## Public for deterministic tests (SimBot / GdUnit).
+func fan_aim_points(origin: Vector3, aim: Vector3, count: int, spread_deg: float) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	if count < 2 or spread_deg <= 0.001:
+		out.append(aim)
+		return out
+	var base_dir: Vector3 = aim - origin
+	var dist: float = base_dir.length()
+	if dist < 0.0001:
+		base_dir = Vector3(0.0, 0.0, 1.0)
+		dist = 1.0
+	else:
+		base_dir = base_dir / dist
+	var axis: Vector3 = base_dir.cross(Vector3.UP)
+	if axis.length_squared() < 0.000001:
+		axis = Vector3.RIGHT
+	else:
+		axis = axis.normalized()
+	var half: float = spread_deg * 0.5
+	for i: int in range(count):
+		var t: float = float(i) / float(count - 1)
+		var ang_deg: float = lerp(-half, half, t)
+		var dir: Vector3 = base_dir.rotated(axis, deg_to_rad(ang_deg)).normalized()
+		out.append(origin + dir * dist)
+	return out
+
+
 func _spawn_weapon_projectile(
 	weapon_slot: Types.WeaponSlot,
 	composed: Dictionary,
@@ -252,6 +322,11 @@ func _spawn_weapon_projectile(
 	var damage_type_value: int = composed.get("damage_type", Types.DamageType.PHYSICAL) as int
 	var damage_type: Types.DamageType = damage_type_value as Types.DamageType
 	var weapon_data: WeaponData = crossbow_data if weapon_slot == Types.WeaponSlot.CROSSBOW else rapid_missile_data
+	var pierce: int = 0
+	var splash: float = 0.0
+	if _weapon_upgrade_manager != null:
+		pierce = _weapon_upgrade_manager.get_effective_pierce_count(weapon_slot)
+		splash = _weapon_upgrade_manager.get_effective_splash_radius(weapon_slot)
 
 	_projectile_container.add_child(projectile)
 	projectile.initialize_from_weapon(
@@ -259,7 +334,9 @@ func _spawn_weapon_projectile(
 		origin,
 		target_position,
 		damage,
-		damage_type
+		damage_type,
+		pierce,
+		splash
 	)
 	projectile.add_to_group("projectiles")
 	SignalBus.projectile_fired.emit(weapon_slot, origin, target_position)

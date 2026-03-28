@@ -48,6 +48,19 @@ var _run_done: bool = false
 var _decision_frame: int = 0
 var _last_spell_eval_frame: int = -1
 
+# Interactive SimBot (activate path): AUDIT 6 §6.1 — per-wave / per-run handler state.
+var _handler_waves_cleared: int = 0
+var _current_run_waves_cleared: int = 0
+var _enemies_killed_this_wave: int = 0
+var _enemies_killed_wave_counter: int = 0
+var _tower_hp_at_wave_end: int = 0
+var _in_combat: bool = false
+var _current_run_enemies_killed: int = 0
+var _current_run_spell_casts: int = 0
+var _current_run_building_material_spent: int = 0
+var _handler_run_outcome: String = ""
+var _handler_prev_building_material: int = 0
+
 const _SPELL_ID_SHOCKWAVE: String = "shockwave"
 const _CSV_LOG_DIR: String = "user://simbot/logs"
 const _CSV_DEFAULT_FILENAME: String = "simbot_balance_log.csv"
@@ -78,6 +91,9 @@ func activate(strategy: Types.StrategyProfile) -> void:
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
 	SignalBus.mission_started.connect(_on_mission_started)
 	SignalBus.mercenary_recruited.connect(_on_mercenary_recruited)
+	SignalBus.enemy_killed.connect(_on_handler_enemy_killed)
+	SignalBus.spell_cast.connect(_on_handler_spell_cast)
+	SignalBus.resource_changed.connect(_on_handler_resource_changed)
 
 	GameManager.start_new_game()
 
@@ -142,6 +158,12 @@ func deactivate() -> void:
 		SignalBus.mission_started.disconnect(_on_mission_started)
 	if SignalBus.mercenary_recruited.is_connected(_on_mercenary_recruited):
 		SignalBus.mercenary_recruited.disconnect(_on_mercenary_recruited)
+	if SignalBus.enemy_killed.is_connected(_on_handler_enemy_killed):
+		SignalBus.enemy_killed.disconnect(_on_handler_enemy_killed)
+	if SignalBus.spell_cast.is_connected(_on_handler_spell_cast):
+		SignalBus.spell_cast.disconnect(_on_handler_spell_cast)
+	if SignalBus.resource_changed.is_connected(_on_handler_resource_changed):
+		SignalBus.resource_changed.disconnect(_on_handler_resource_changed)
 
 
 func bot_enter_build_mode() -> void:
@@ -153,6 +175,8 @@ func bot_exit_build_mode() -> void:
 
 
 func bot_place_building(slot: int, building_type: Types.BuildingType) -> bool:
+	if not _in_combat:
+		return false
 	if _hex_grid == null:
 		push_error("SimBot.bot_place_building: HexGrid reference is null.")
 		return false
@@ -160,6 +184,8 @@ func bot_place_building(slot: int, building_type: Types.BuildingType) -> bool:
 
 
 func bot_cast_spell(spell_id: String) -> bool:
+	if not _in_combat:
+		return false
 	if _spell_manager == null:
 		push_error("SimBot.bot_cast_spell: SpellManager reference is null.")
 		return false
@@ -167,6 +193,8 @@ func bot_cast_spell(spell_id: String) -> bool:
 
 
 func bot_fire_crossbow(target: Vector3) -> void:
+	if not _in_combat:
+		return
 	if _tower == null:
 		push_error("SimBot.bot_fire_crossbow: Tower reference is null.")
 		return
@@ -174,14 +202,65 @@ func bot_fire_crossbow(target: Vector3) -> void:
 
 
 func bot_advance_wave() -> void:
+	if not _in_combat:
+		return
 	if _wave_manager == null:
 		push_error("SimBot.bot_advance_wave: WaveManager reference is null.")
 		return
 	_wave_manager.force_spawn_wave(GameManager.get_current_wave() + 1)
 
 
-func _on_wave_cleared(_wave_number: int) -> void:
-	pass
+func compute_difficulty_fit(profile: StrategyProfile) -> float:
+	if profile == null:
+		return 0.0
+	var log: Dictionary = get_log()
+	var entries: Array = log.get("entries", []) as Array
+	if entries.is_empty():
+		return 0.0
+	var wins: int = 0
+	for e: Variant in entries:
+		var d: Dictionary = e as Dictionary
+		if str(d.get("result", "")) == "WIN":
+			wins += 1
+	var total: int = entries.size()
+	if total <= 0:
+		return 0.0
+	var actual_win_rate: float = float(wins) / float(total)
+	var raw: float = 1.0 - absf(actual_win_rate - profile.difficulty_target) / 1.0
+	return clampf(raw, 0.0, 1.0)
+
+
+func _end_run(outcome: String) -> void:
+	_handler_run_outcome = outcome
+	if outcome == "LOSS":
+		deactivate()
+	elif outcome == "WIN":
+		pass
+
+
+func _is_mission_bot_active_state(state: Types.GameState) -> bool:
+	## Mission-phase states where bot actions are allowed (includes briefing/build/waves).
+	return (
+			state == Types.GameState.MISSION_BRIEFING
+			or state == Types.GameState.COMBAT
+			or state == Types.GameState.WAVE_COUNTDOWN
+			or state == Types.GameState.BUILD_MODE
+	)
+
+
+func _on_wave_cleared(wave_number: int) -> void:
+	_enemies_killed_this_wave = _enemies_killed_wave_counter
+	_enemies_killed_wave_counter = 0
+	_current_run_waves_cleared += 1
+	if wave_number > _handler_waves_cleared:
+		_handler_waves_cleared = wave_number
+	var tw: Tower = _tower
+	if tw == null:
+		tw = get_node_or_null("/root/Main/Tower") as Tower
+	if tw != null:
+		_tower_hp_at_wave_end = tw.get_current_hp()
+	if _profile != null and is_equal_approx(compute_difficulty_fit(_profile), 1.0):
+		_end_run("WIN")
 
 
 func _on_mission_won(_mission_number: int) -> void:
@@ -193,18 +272,63 @@ func _on_mission_failed(_mission_number: int) -> void:
 
 
 func _on_all_waves_cleared() -> void:
-	pass
+	var tw2: Tower = _tower
+	if tw2 == null:
+		tw2 = get_node_or_null("/root/Main/Tower") as Tower
+	if tw2 != null:
+		_tower_hp_at_wave_end = tw2.get_current_hp()
+	_end_run("WIN")
 
 
 func _on_game_state_changed(
 		_old_state: Types.GameState,
 		_new_state: Types.GameState
 ) -> void:
-	pass
+	if _new_state == Types.GameState.GAME_OVER:
+		_end_run("LOSS")
+	_in_combat = _is_mission_bot_active_state(_new_state)
 
 
 func _on_mission_started(_mission_number: int) -> void:
-	pass
+	_current_run_waves_cleared = 0
+	_current_run_enemies_killed = 0
+	_current_run_spell_casts = 0
+	_current_run_building_material_spent = 0
+	_enemies_killed_wave_counter = 0
+	_enemies_killed_this_wave = 0
+	_handler_waves_cleared = 0
+	_handler_run_outcome = ""
+	_in_combat = true
+	_handler_prev_building_material = EconomyManager.get_building_material()
+
+
+func _on_handler_enemy_killed(
+		_enemy_type: Types.EnemyType,
+		_position: Vector3,
+		_gold_reward: int
+) -> void:
+	if not _is_active:
+		return
+	_enemies_killed_wave_counter += 1
+	_current_run_enemies_killed += 1
+
+
+func _on_handler_spell_cast(_spell_id: String) -> void:
+	if not _is_active:
+		return
+	_current_run_spell_casts += 1
+
+
+func _on_handler_resource_changed(resource_type: Types.ResourceType, new_amount: int) -> void:
+	if not _is_active:
+		return
+	if resource_type != Types.ResourceType.BUILDING_MATERIAL:
+		return
+	var prev: int = _handler_prev_building_material
+	_handler_prev_building_material = new_amount
+	var delta: int = new_amount - prev
+	if delta < 0:
+		_current_run_building_material_spent += -delta
 
 
 func _on_mercenary_recruited(ally_id: String) -> void:

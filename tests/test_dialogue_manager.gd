@@ -244,3 +244,32 @@ func test_request_entry_for_character_with_tags_keeps_priority_selection() -> vo
 		["hub", "shop"]
 	)
 	assert_str(picked.entry_id).is_equal("TEST_TAGS_HIGH")
+
+
+func test_research_unlocked_condition_unknown_node_evaluates_false() -> void:
+	var entry := DialogueEntry.new()
+	entry.entry_id = "AUDIT5_RESEARCH"
+	entry.character_id = "EXAMPLE_CHARACTER"
+	entry.priority = 100
+	entry.text = "X"
+	var cond := DialogueCondition.new()
+	cond.key = "research_unlocked_nonexistent_node_id_abc123"
+	cond.comparison = "=="
+	cond.value = true
+	entry.conditions = [cond]
+	_register_entries([entry])
+	var picked2: DialogueEntry = DialogueManager.request_entry_for_character("EXAMPLE_CHARACTER")
+	assert_object(picked2).is_null()
+
+
+func test_invalid_chain_next_id_does_not_crash() -> void:
+	var first := DialogueEntry.new()
+	first.entry_id = "AUDIT5_CHAIN_A"
+	first.character_id = "EXAMPLE_CHARACTER"
+	first.priority = 50
+	first.text = "A"
+	first.chain_next_id = "does_not_exist_999"
+	first.conditions = []
+	_register_entries([first])
+	DialogueManager.mark_entry_played("AUDIT5_CHAIN_A")
+	assert_bool(true).is_true()

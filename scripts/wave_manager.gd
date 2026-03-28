@@ -22,6 +22,10 @@
 class_name WaveManager
 extends Node
 
+## Endless mode: per-day scaling (no cap past campaign_length; same formula for all days ≥ 1).
+const ENDLESS_HP_MULT_PER_DAY: float = 0.02
+const ENDLESS_SPAWN_MULT_PER_DAY: float = 0.01
+
 ## Preloads: autoloads and early parses may run before global `class_name` registration.
 const FactionDataType = preload("res://scripts/resources/faction_data.gd")
 const FactionRosterEntryType = preload("res://scripts/resources/faction_roster_entry.gd")
@@ -73,6 +77,7 @@ var configured_max_waves: int = 0
 var enemy_hp_multiplier: float = 1.0
 var enemy_damage_multiplier: float = 1.0
 var gold_reward_multiplier: float = 1.0
+var spawn_count_multiplier: float = 1.0
 
 # Faction-driven waves (Prompt 9) --------------------------------------------
 
@@ -102,6 +107,18 @@ var active_boss_id: String = ""
 # ---------------------------------------------------------------------------
 # READY
 # ---------------------------------------------------------------------------
+
+## Effective HP multiplier for a given calendar day (endless scaling; unbounded).
+static func get_effective_enemy_hp_multiplier_for_day(day_index: int) -> float:
+	var d: int = maxi(day_index, 1)
+	return 1.0 + float(d - 1) * ENDLESS_HP_MULT_PER_DAY
+
+
+## Effective spawn-count multiplier for a given calendar day (endless scaling; unbounded).
+static func get_effective_spawn_count_multiplier_for_day(day_index: int) -> float:
+	var d: int = maxi(day_index, 1)
+	return 1.0 + float(d - 1) * ENDLESS_SPAWN_MULT_PER_DAY
+
 
 func _ready() -> void:
 	print("[WaveManager] _ready: enemy_data_registry size=%d" % enemy_data_registry.size())
@@ -200,6 +217,7 @@ func reset_for_new_mission() -> void:
 	enemy_hp_multiplier = 1.0
 	enemy_damage_multiplier = 1.0
 	gold_reward_multiplier = 1.0
+	spawn_count_multiplier = 1.0
 	_mini_boss_day_eligible = false
 	current_day_config = null
 	current_faction_data = null
@@ -219,6 +237,7 @@ func configure_for_day(day_config: DayConfig) -> void:
 	enemy_hp_multiplier = day_config.enemy_hp_multiplier
 	enemy_damage_multiplier = day_config.enemy_damage_multiplier
 	gold_reward_multiplier = day_config.gold_reward_multiplier
+	spawn_count_multiplier = day_config.spawn_count_multiplier
 	_mini_boss_day_eligible = day_config.is_mini_boss_day or day_config.is_mini_boss
 	_apply_faction_from_day_config(day_config)
 	current_day_config = day_config
@@ -331,7 +350,8 @@ func _apply_faction_from_day_config(day_config: DayConfig) -> void:
 
 	var fid: String = day_config.faction_id.strip_edges()
 	if fid.is_empty():
-		fid = "DEFAULT_MIXED"
+		var from_map: String = GameManager.get_effective_faction_id_for_territory(day_config.territory_id)
+		fid = from_map if not from_map.is_empty() else "DEFAULT_MIXED"
 
 	if faction_registry.has(fid):
 		_current_faction = faction_registry[fid] as FactionDataType
@@ -528,7 +548,7 @@ func _spawn_wave(wave_number: int) -> void:
 
 ## Computes total enemies for this wave based on MVP scaling (N * 6).
 func _compute_total_enemies_for_wave(wave_index: int, faction: FactionDataType) -> int:
-	var base_total: float = float(wave_index * 6)
+	var base_total: float = float(wave_index * 6) * spawn_count_multiplier
 
 	if faction != null and faction.difficulty_offset != 0.0:
 		base_total *= maxf(0.1, 1.0 + faction.difficulty_offset) # TUNING

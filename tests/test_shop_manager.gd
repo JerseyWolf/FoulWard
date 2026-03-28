@@ -15,6 +15,9 @@ func _make_item(item_id: String, gold: int, material: int = 0) -> ShopItemData:
 	item.gold_cost = gold
 	item.material_cost = material
 	item.description = "Test item %s" % item_id
+	if item_id == "mana_draught":
+		item.item_type = "consumable"
+		item.effect_tags = ["mana_restore"]
 	return item
 
 
@@ -92,21 +95,21 @@ func test_can_purchase_returns_false_for_unknown_id() -> void:
 # Effect tests
 # ---------------------------------------------------------------------------
 
-func test_purchase_mana_draught_sets_pending_flag() -> void:
-	assert_bool(_shop_manager._mana_draught_pending).is_false()
+func test_purchase_mana_draught_adds_stack() -> void:
+	assert_int(_shop_manager.get_stack_count("mana_draught")).is_equal(0)
 	_shop_manager.purchase_item("mana_draught")
-	assert_bool(_shop_manager._mana_draught_pending).is_true()
+	assert_int(_shop_manager.get_stack_count("mana_draught")).is_equal(1)
 
 
-func test_consume_mana_draught_pending_clears_flag() -> void:
+func test_mission_started_consumes_mana_draught_stack() -> void:
 	_shop_manager.purchase_item("mana_draught")
-	var was_pending: bool = _shop_manager.consume_mana_draught_pending()
-	assert_bool(was_pending).is_true()
-	assert_bool(_shop_manager._mana_draught_pending).is_false()
+	assert_int(_shop_manager.get_stack_count("mana_draught")).is_equal(1)
+	SignalBus.mission_started.emit(1)
+	assert_int(_shop_manager.get_stack_count("mana_draught")).is_equal(0)
 
 
-func test_consume_mana_draught_returns_false_when_not_pending() -> void:
-	var result: bool = _shop_manager.consume_mana_draught_pending()
+func test_consume_empty_stack_returns_false() -> void:
+	var result: bool = _shop_manager.consume("mana_draught")
 	assert_bool(result).is_false()
 
 

@@ -476,3 +476,13 @@ func test_regular_day_spawns_no_bosses() -> void:
 	for child: Node in _enemy_container.get_children():
 		assert_bool(child is BossBase).is_false()
 
+
+func test_configure_for_day_unknown_faction_falls_back_safely() -> void:
+	var day: DayConfig = DayConfig.new()
+	day.day_index = 1
+	day.base_wave_count = 5
+	day.faction_id = "NO_SUCH_FACTION_AUDIT5"
+	_wave_manager.configure_for_day(day)
+	assert_object(_wave_manager.current_faction_data).is_not_null()
+	assert_str(_wave_manager.current_faction_data.faction_id).is_equal("DEFAULT_MIXED")
+

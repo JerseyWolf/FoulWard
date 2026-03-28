@@ -148,5 +148,5 @@ func test_hub_florence_panel_updates_on_florence_state_changed_signal() -> void:
 	await get_tree().process_frame
 
 	var label: Label = screen.get_node("FlorenceDebugLabel") as Label
-	assert_contains(label.text, "Failures 5")
+	assert_str(label.text).contains("Failures 5")
 

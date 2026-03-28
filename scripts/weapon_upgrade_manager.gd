@@ -61,10 +61,15 @@ func upgrade_weapon(weapon_slot: Types.WeaponSlot) -> bool:
 	if level_data == null:
 		push_error("WeaponUpgradeManager.upgrade_weapon: level_data is null for slot %d level %d" % [weapon_slot, current_level + 1])
 		return false
-	if not EconomyManager.can_afford(level_data.gold_cost, level_data.material_cost):
+	var eff_gold: int = int(
+		ceilf(float(level_data.gold_cost) * GameManager.get_aggregate_weapon_upgrade_cost_multiplier())
+	)
+	if eff_gold < 0:
+		eff_gold = 0
+	if not EconomyManager.can_afford(eff_gold, level_data.material_cost):
 		return false
-	if level_data.gold_cost > 0:
-		EconomyManager.spend_gold(level_data.gold_cost)
+	if eff_gold > 0:
+		EconomyManager.spend_gold(eff_gold)
 	if level_data.material_cost > 0:
 		EconomyManager.spend_building_material(level_data.material_cost)
 	_set_current_level(weapon_slot, current_level + 1)
@@ -126,6 +131,27 @@ func get_effective_burst_count(weapon_slot: Types.WeaponSlot) -> int:
 	if base == null:
 		return 0
 	return base.burst_count + int(_get_cumulative_bonus(weapon_slot, "burst_count_bonus"))
+
+
+## Extra enemies a projectile may hit after the first (piercing).
+func get_effective_pierce_count(weapon_slot: Types.WeaponSlot) -> int:
+	return int(_get_cumulative_bonus(weapon_slot, "pierce_count_bonus"))
+
+
+## Parallel projectiles per attack (minimum 1). Base is 1 + cumulative projectile_count_bonus.
+func get_effective_projectile_count(weapon_slot: Types.WeaponSlot) -> int:
+	var base: int = 1 + int(_get_cumulative_bonus(weapon_slot, "projectile_count_bonus"))
+	return maxi(1, base)
+
+
+## Total fan spread in degrees (split across projectile_count when count exceeds 1).
+func get_effective_spread_angle_degrees(weapon_slot: Types.WeaponSlot) -> float:
+	return maxf(0.0, _get_cumulative_bonus(weapon_slot, "spread_angle_degrees_bonus"))
+
+
+## Splash radius from weapon levels (0 = off).
+func get_effective_splash_radius(weapon_slot: Types.WeaponSlot) -> float:
+	return maxf(0.0, _get_cumulative_bonus(weapon_slot, "splash_radius_bonus"))
 
 
 ## Returns the WeaponLevelData for the next upgrade level, or null if already at max level.

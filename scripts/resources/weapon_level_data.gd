@@ -34,6 +34,15 @@ extends Resource
 ## Incremental additive bonus to burst count at this level (0 = no change).
 @export var burst_count_bonus: int = 0
 
+## Extra enemies this projectile can pass through after the first hit (0 = no pierce).
+@export var pierce_count_bonus: int = 0
+## Extra parallel projectiles per manual shot (crossbow / rapid burst spawn pattern).
+@export var projectile_count_bonus: int = 0
+## Fan spread in degrees (total arc); split evenly across extra projectiles.
+@export var spread_angle_degrees_bonus: float = 0.0
+## Splash radius for secondary AoE damage on primary hit (0 = disabled).
+@export var splash_radius_bonus: float = 0.0
+
 ## Gold cost to purchase THIS level upgrade. Paid when upgrading FROM (level-1) TO level.
 @export var gold_cost: int = 0
 

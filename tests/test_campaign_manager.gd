@@ -2,6 +2,7 @@ class_name TestCampaignManager
 extends GdUnitTestSuite
 
 func before_test() -> void:
+	CampaignManager.is_endless_mode = false
 	GameManager.start_new_game()
 
 func test_start_new_game_initializes_day_one_for_short_campaign() -> void:
