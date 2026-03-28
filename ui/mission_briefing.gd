@@ -1,3 +1,4 @@
+## MissionBriefing — Shows mission number and BEGIN button to start the wave countdown; zero game logic.
 extends Control
 
 @onready var mission_label: Label = $MissionLabel

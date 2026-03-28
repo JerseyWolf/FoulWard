@@ -1,3 +1,4 @@
+## ShopManager — Owns the shop catalog and handles item purchases; consumables apply on mission start.
 # scripts/shop_manager.gd
 # ShopManager – owns the shop catalog and handles item purchases.
 # Effects: tower_repair / building_repair immediate; consumables stack (cap 20) and apply on mission_started.
@@ -42,6 +43,7 @@ func _exit_tree() -> void:
 # Public API — consumable stacks
 # ---------------------------------------------------------------------------
 
+## Adds the given amount of the item_id consumable to the stack (capped at 20).
 func add_consumable(item_id: String, amount: int = 1) -> void:
 	if amount <= 0:
 		return
@@ -49,6 +51,7 @@ func add_consumable(item_id: String, amount: int = 1) -> void:
 	_consumable_stacks[item_id] = mini(cur + amount, CONSUMABLE_STACK_CAP)
 
 
+## Decrements one unit of the item_id consumable; returns false if stack is empty.
 func consume(item_id: String) -> bool:
 	var cur: int = int(_consumable_stacks.get(item_id, 0))
 	if cur <= 0:
@@ -61,14 +64,17 @@ func consume(item_id: String) -> bool:
 	return true
 
 
+## Returns the current stack count for the given item_id consumable.
 func get_stack_count(item_id: String) -> int:
 	return int(_consumable_stacks.get(item_id, 0))
 
 
+## Returns a Dictionary snapshot of current state for serialization.
 func get_save_data() -> Dictionary:
 	return {"consumable_stacks": _consumable_stacks.duplicate(true)}
 
 
+## Restores state from a previously saved Dictionary snapshot.
 func restore_from_save(data: Dictionary) -> void:
 	_consumable_stacks.clear()
 	var raw: Variant = data.get("consumable_stacks", {})
@@ -149,6 +155,7 @@ func can_purchase(item_id: String) -> bool:
 			return true
 
 
+## Consumes the pending arrow-tower voucher flag; returns true if it was set.
 func consume_arrow_tower_pending() -> bool:
 	var was_pending: bool = _arrow_tower_shop_pending
 	_arrow_tower_shop_pending = false

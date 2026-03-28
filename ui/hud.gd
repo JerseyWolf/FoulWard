@@ -1,3 +1,4 @@
+## HUD — Combat overlay displaying resources, wave counter, HP bar, and spells; pure display, zero game logic.
 # ui/hud.gd
 # HUD — pure display. Never modifies game state.
 # Uses _process (never _physics_process) to stay responsive at

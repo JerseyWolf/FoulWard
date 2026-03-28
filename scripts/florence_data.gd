@@ -55,6 +55,7 @@ extends Resource
 const TUNING_DAY_25: int = 25
 const TUNING_DAY_50: int = 50
 
+## Resets all per-run counters and flags to their initial values.
 func reset_for_new_run() -> void:
 	# FlorenceData represents run meta-state, so we reset run-scoped counters/flags.
 	total_days_played = 0
@@ -74,6 +75,7 @@ func reset_for_new_run() -> void:
 	# Note: run_count intentionally persists across runs (GameManager increments on GAME_WON).
 
 
+## Updates day-threshold boolean flags (early/mid/late game) based on current_day.
 func update_day_threshold_flags(current_day: int) -> void:
 	# TUNING: Flags reflect whether the meta campaign timeline has reached milestones.
 	has_reached_day_25 = current_day >= TUNING_DAY_25

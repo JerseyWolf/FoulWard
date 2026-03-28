@@ -1,3 +1,4 @@
+## InputManager — Translates raw input into public API calls on game managers; zero game logic.
 # scripts/input_manager.gd
 # InputManager — translates raw input into public API calls. Zero game logic.
 #

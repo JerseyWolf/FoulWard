@@ -39,7 +39,9 @@ extends Resource
 
 ## TUNING: per-day multipliers.
 @export var enemy_hp_multiplier: float = 1.0
+## Multiplier applied to all enemy damage values for this day.
 @export var enemy_damage_multiplier: float = 1.0
+## Multiplier applied to all gold rewards earned this day.
 @export var gold_reward_multiplier: float = 1.0
 ## Scales total wave spawn count (WaveManager: applied to N×6 base). Default 1.0 = unchanged.
 @export var spawn_count_multiplier: float = 1.0

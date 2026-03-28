@@ -1,3 +1,4 @@
+## ResearchManager — Owns the research tree state and gates locked buildings; spending flows through EconomyManager.
 # scripts/research_manager.gd
 # ResearchManager – owns the research tree state (which nodes are unlocked).
 # Loaded from base_structures_tree.tres via the @export array.
@@ -16,6 +17,7 @@ extends Node
 
 # Dev toggle: in dev/test builds, make all towers immediately reachable by
 # unlocking every research node when starting a new game.
+## Dev flag: unlocks all research nodes at startup; must be false for release builds.
 @export var dev_unlock_all_research: bool = false
 
 ## Dev toggle: unlock only anti-air research so Anti-Air Bolt is buildable
@@ -108,10 +110,12 @@ func reset_to_defaults() -> void:
 		_unlocked_nodes.append("unlock_anti_air")
 
 
+## Returns a Dictionary snapshot of current state for serialization.
 func get_save_data() -> Dictionary:
 	return {"unlocked_node_ids": _unlocked_nodes.duplicate()}
 
 
+## Restores state from a previously saved Dictionary snapshot.
 func restore_from_save(data: Dictionary) -> void:
 	_unlocked_nodes.clear()
 	var arr: Variant = data.get("unlocked_node_ids", [])

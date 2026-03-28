@@ -1,3 +1,4 @@
+## WaveManager — Drives the per-mission wave loop: countdown, faction-weighted spawning, boss waves, and wave-cleared detection.
 # wave_manager.gd
 # WaveManager drives the per-mission wave loop for FOUL WARD.
 # Responsibilities: countdown timer, enemy spawning, wave-cleared detection.
@@ -227,6 +228,7 @@ func reset_for_new_mission() -> void:
 	resolve_current_faction()
 
 
+## Applies DayConfig multipliers and wave cap to WaveManager for the upcoming mission.
 func configure_for_day(day_config: DayConfig) -> void:
 	if day_config == null:
 		return

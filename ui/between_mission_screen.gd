@@ -1,3 +1,4 @@
+## BetweenMissionScreen — Post-mission panel with Shop, Research, Buildings, Weapons, Mercenaries tabs and Next Mission button; zero game logic.
 # ui/between_mission_screen.gd
 # BetweenMissionScreen — Shop, Research, Buildings tabs + Next Mission button.
 # Zero game logic. All decisions delegated to ShopManager, ResearchManager,

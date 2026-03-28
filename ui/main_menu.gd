@@ -1,3 +1,4 @@
+## MainMenu — Title screen with Start, Settings, and Quit buttons; zero game logic.
 # ui/main_menu.gd
 # MainMenu — start screen. Zero game logic.
 

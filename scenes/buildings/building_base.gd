@@ -1,3 +1,4 @@
+## BuildingBase — Base class for all 8 building types; handles targeting, combat, projectile firing, and DoT effects.
 # scenes/buildings/building_base.gd
 # BuildingBase – base class for all 8 building types.
 # Initialized with a BuildingData resource. Handles targeting, combat, and projectile firing.

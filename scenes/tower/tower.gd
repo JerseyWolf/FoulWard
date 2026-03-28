@@ -1,3 +1,4 @@
+## Tower — Central destructible structure owning Florence's two weapons; handles reload, burst-fire, enchantment composition, and assist/miss.
 # scenes/tower/tower.gd
 # Tower — central destructible structure. Owns Florence's two weapons.
 # Handles delta-based reload timers and burst-fire for Rapid Missile.
@@ -17,8 +18,11 @@
 class_name Tower
 extends StaticBody3D
 
+## Tower's starting hit point total at the beginning of each mission.
 @export var starting_hp: int = 500
+## WeaponData resource for Florence's primary crossbow weapon.
 @export var crossbow_data: WeaponData
+## WeaponData resource for Florence's secondary rapid missile weapon.
 @export var rapid_missile_data: WeaponData
 
 ## When true the tower auto-targets the nearest enemy (any type, ground or flying)

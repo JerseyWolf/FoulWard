@@ -7,6 +7,7 @@ class_name TestStrategyProfileConfig
 
 ## This test file creates a sample StrategyProfileConfig for testing purposes.
 
+## Creates a sample StrategyProfileConfig for use in tests.
 func create_sample_config() -> StrategyProfileConfig:
 	var config: StrategyProfileConfig = StrategyProfileConfig.new()
 	

@@ -1,3 +1,4 @@
+## EndScreen — Shown on MISSION_WON, GAME_WON, MISSION_FAILED; pure display, zero game logic.
 # ui/end_screen.gd
 # EndScreen — shown on MISSION_WON, GAME_WON, MISSION_FAILED.
 # Zero game logic.

@@ -35,6 +35,7 @@ func _slot_path(slot_index: int) -> String:
 	return "%s/%s" % [_attempt_dir_path(), _slot_file_name(slot_index)]
 
 
+## Initializes a new save attempt directory and resets the slot ring.
 func start_new_attempt() -> void:
 	var raw: String = Time.get_datetime_string_from_system()
 	current_attempt_id = _sanitize_attempt_id(raw)
@@ -56,6 +57,7 @@ func _clear_attempt_slots(attempt_dir: String) -> void:
 			dir.remove(fn)
 
 
+## Collects state from all managers and writes a new save slot JSON file.
 func save_current_state() -> void:
 	if current_attempt_id.is_empty():
 		push_warning("SaveManager.save_current_state: current_attempt_id is empty; call start_new_attempt() first.")
@@ -126,6 +128,7 @@ func _get_shop_manager() -> ShopManager:
 	return get_node_or_null("/root/Main/Managers/ShopManager") as ShopManager
 
 
+## Restores all manager state from the save slot at the given index.
 func load_slot(slot_index: int) -> bool:
 	if slot_index < 0 or slot_index >= MAX_SLOTS:
 		return false
@@ -213,6 +216,7 @@ func _discard_newer_slots(attempt_dir: String, loaded_slot_index: int) -> void:
 			dir.remove(fn)
 
 
+## Returns the list of slot indices that have saved data in the current attempt.
 func get_available_slots() -> Array[int]:
 	var result: Array[int] = []
 	if current_attempt_id.is_empty():
@@ -227,6 +231,7 @@ func get_available_slots() -> Array[int]:
 	return result
 
 
+## Returns true if at least one save slot exists in the current attempt directory.
 func has_resumable_attempt() -> bool:
 	_ensure_saves_root()
 	var root: DirAccess = DirAccess.open(SAVES_ROOT)

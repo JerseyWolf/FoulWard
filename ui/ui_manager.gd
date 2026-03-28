@@ -1,3 +1,4 @@
+## UIManager — Lightweight state router that shows/hides UI panels on game_state_changed and wires hub dialogue.
 # ui/ui_manager.gd
 # UIManager — lightweight panel router. Hub dialogue is delegated to DialoguePanel + DialogueManager.
 #
