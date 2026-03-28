@@ -36,6 +36,7 @@ func invalidate_cache() -> void:
 	_cache_built = false
 
 
+## Returns the TerritoryData with the matching territory_id, or null if not found.
 func get_territory_by_id(id: String) -> TerritoryData:
 	_ensure_cache_built()
 	if not _id_to_territory.has(id):
@@ -43,15 +44,18 @@ func get_territory_by_id(id: String) -> TerritoryData:
 	return _id_to_territory[id] as TerritoryData
 
 
+## Returns true if a territory with the given id exists in the map.
 func has_territory(id: String) -> bool:
 	_ensure_cache_built()
 	return _id_to_territory.has(id)
 
 
+## Returns all TerritoryData entries in this map.
 func get_all_territories() -> Array[TerritoryData]:
 	return territories.duplicate()
 
 
+## Returns the array index of the territory with the given id, or -1 if not found.
 func get_index_by_id(id: String) -> int:
 	_ensure_cache_built()
 	if not _id_to_index.has(id):

@@ -105,6 +105,7 @@ func _on_mission_won_transition_to_hub(mission_number: int) -> void:
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 
+## Resets all game state and starts a fresh campaign from day one.
 func start_new_game() -> void:
 	print("[GameManager] start_new_game: mission=1  gold=%d mat=%d" % [
 		EconomyManager.get_gold(), EconomyManager.get_building_material()
@@ -141,11 +142,13 @@ func start_new_game() -> void:
 	reload_territory_map_from_active_campaign()
 	_sync_held_territories_from_map()
 
+## Delegates to CampaignManager to begin the next day in the campaign.
 func start_next_mission() -> void:
 	# DEVIATION: next day is now owned by CampaignManager.
 	# BetweenMissionScreen routes directly through CampaignManager, this remains for compatibility.
 	CampaignManager.start_next_day()
 
+## Begins the countdown timer before the first wave spawns.
 func start_wave_countdown() -> void:
 	assert(game_state == Types.GameState.MISSION_BRIEFING, "start_wave_countdown called from invalid state")
 	_transition_to(Types.GameState.COMBAT)
@@ -155,6 +158,7 @@ func start_wave_countdown() -> void:
 	# Single source of truth for countdown duration: WaveManager emits wave_countdown_started.
 	_begin_mission_wave_sequence()
 
+## Transitions the game state to BUILD_MODE, pausing enemy movement.
 func enter_build_mode() -> void:
 	print("[GameManager] enter_build_mode: from=%s" % Types.GameState.keys()[game_state])
 	assert(
@@ -167,6 +171,7 @@ func enter_build_mode() -> void:
 	SignalBus.build_mode_entered.emit()
 	SignalBus.game_state_changed.emit(old, Types.GameState.BUILD_MODE)
 
+## Transitions the game state back to COMBAT from BUILD_MODE.
 func exit_build_mode() -> void:
 	print("[GameManager] exit_build_mode")
 	Engine.time_scale = 1.0
@@ -175,18 +180,23 @@ func exit_build_mode() -> void:
 	SignalBus.build_mode_exited.emit()
 	SignalBus.game_state_changed.emit(old, Types.GameState.COMBAT)
 
+## Returns the current GameState enum value.
 func get_game_state() -> Types.GameState:
 	return game_state
 
+## Returns the current mission number (1-indexed).
 func get_current_mission() -> int:
 	return current_mission
 
+## Returns the current wave index within the active mission.
 func get_current_wave() -> int:
 	return current_wave
 
+## Returns the FlorenceData resource tracking protagonist meta-state.
 func get_florence_data() -> FlorenceDataType:
 	return florence_data
 
+## Increments Florence's day counter with the given advance reason.
 func advance_day(reason: Types.DayAdvanceReason) -> void:
 	# SOURCE: Day/week advancement priority pattern using Types as central registry.
 	var reason_priority: int = Types.get_day_advance_priority(reason)
@@ -249,6 +259,7 @@ var campaign_config: CampaignConfig:
 		CampaignManager.set_active_campaign_config_for_test(value)
 
 
+## Returns the DayConfig for the given day index from the active campaign.
 func get_day_config_for_index(day_index: int) -> DayConfig:
 	if CampaignManager.is_endless_mode:
 		return _create_synthetic_endless_day_config(day_index)
@@ -279,6 +290,7 @@ func _create_synthetic_endless_day_config(day_index: int) -> DayConfig:
 	return d
 
 
+## Returns a synthetic DayConfig for a boss-attack day.
 func get_synthetic_boss_day_config() -> DayConfig:
 	return _synthetic_boss_attack_day
 
@@ -293,10 +305,12 @@ func advance_to_next_day() -> void:
 		_assign_boss_attack_to_day(day)
 
 
+## Returns the DayConfig for the currently active day.
 func get_current_day_config() -> DayConfig:
 	return CampaignManager.get_current_day_config()
 
 
+## Returns the territory_id for the current day's mission.
 func get_current_day_territory_id() -> String:
 	var day_config: DayConfig = get_current_day_config()
 	if day_config == null:
@@ -304,12 +318,14 @@ func get_current_day_territory_id() -> String:
 	return day_config.territory_id
 
 
+## Returns the TerritoryData resource for the given territory_id.
 func get_territory_data(territory_id: String) -> TerritoryData:
 	if territory_map == null:
 		return null
 	return territory_map.get_territory_by_id(territory_id)
 
 
+## Returns the TerritoryData for the territory of the current day.
 func get_current_day_territory() -> TerritoryData:
 	var id: String = get_current_day_territory_id()
 	if id == "":
@@ -317,6 +333,7 @@ func get_current_day_territory() -> TerritoryData:
 	return get_territory_data(id)
 
 
+## Returns all TerritoryData entries in this map.
 func get_all_territories() -> Array[TerritoryData]:
 	if territory_map == null:
 		return []
@@ -350,6 +367,7 @@ func reload_territory_map_from_active_campaign() -> void:
 	_sync_held_territories_from_map()
 
 
+## Updates territory ownership and threat flags based on the day win/loss result.
 func apply_day_result_to_territory(day_config: DayConfig, was_won: bool) -> void:
 	if territory_map == null or day_config == null:
 		return
@@ -429,6 +447,7 @@ func get_aggregate_research_cost_multiplier() -> float:
 	return p
 
 
+## Returns the aggregated enchanting cost multiplier from all held territories.
 func get_aggregate_enchanting_cost_multiplier() -> float:
 	var p: float = 1.0
 	if territory_map == null:
@@ -441,6 +460,7 @@ func get_aggregate_enchanting_cost_multiplier() -> float:
 	return p
 
 
+## Returns the aggregated weapon upgrade cost multiplier from all held territories.
 func get_aggregate_weapon_upgrade_cost_multiplier() -> float:
 	var p: float = 1.0
 	if territory_map == null:
@@ -475,6 +495,7 @@ func get_effective_faction_id_for_territory(territory_id: String) -> String:
 	return t.default_faction_id.strip_edges()
 
 
+## Initializes the mission for the given day index and DayConfig, then begins combat.
 func start_mission_for_day(day_index: int, day_config: DayConfig) -> void:
 	var mission_from_config: int = day_index
 	if day_config != null:
@@ -664,6 +685,7 @@ func _on_tower_destroyed() -> void:
 	SignalBus.mission_failed.emit(completed_day_index)
 
 
+## Pre-loads the next day's DayConfig into WaveManager if not already prepared.
 func prepare_next_campaign_day_if_needed() -> void:
 	if not final_boss_active or final_boss_defeated:
 		return
@@ -777,6 +799,7 @@ func _mark_territory_secured(territory_id: String) -> void:
 	SignalBus.territory_state_changed.emit(territory_id)
 
 
+## Returns a Dictionary snapshot of current state for serialization.
 func get_save_data() -> Dictionary:
 	var spell: SpellManager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
 	var mana: int = 0
@@ -818,6 +841,7 @@ func get_save_data() -> Dictionary:
 	}
 
 
+## Restores state from a previously saved Dictionary snapshot.
 func restore_from_save(data: Dictionary) -> void:
 	var gs: int = int(data.get("game_state", int(Types.GameState.MAIN_MENU)))
 	game_state = gs as Types.GameState
@@ -860,6 +884,7 @@ func restore_from_save(data: Dictionary) -> void:
 	SignalBus.florence_state_changed.emit()
 
 
+## Restores the set of held territory IDs from a saved snapshot.
 func apply_save_held_territory_ids(ids: Array[String]) -> void:
 	held_territory_ids = ids.duplicate()
 	if territory_map == null:

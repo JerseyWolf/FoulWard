@@ -1,3 +1,4 @@
+## AutoTestDriver — Headless smoke-test driver that activates only when the --autotest flag is present.
 # autoloads/auto_test_driver.gd
 # Headless integration-test driver for Foul Ward.
 #

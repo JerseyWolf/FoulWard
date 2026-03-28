@@ -1,3 +1,4 @@
+## Arnulf — AI-controlled melee companion with IDLE/PATROL/CHASE/ATTACK/DOWNED/RECOVERING state machine.
 # arnulf.gd
 # Arnulf is the fully AI-controlled melee companion in FOUL WARD.
 # He patrols near the tower, chases the closest enemy to TOWER_CENTER,

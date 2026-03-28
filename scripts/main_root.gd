@@ -1,3 +1,4 @@
+## MainRoot — Applies root window content scale at startup to fix stretch issues in Godot 4.4+.
 # scripts/main_root.gd
 # Root scene: enforce window stretch after the scene tree is ready (some editor /
 # plugin init order can leave content scale feeling wrong until the Window is

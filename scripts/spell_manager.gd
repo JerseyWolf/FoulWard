@@ -1,3 +1,4 @@
+## SpellManager — Owns Sybil's mana pool and spell cooldowns; manages the multi-spell registry and shockwave AoE.
 # spell_manager.gd
 # SpellManager owns Sybil's mana pool and spell cooldowns for FOUL WARD.
 # MVP: one spell — Shockwave (ground AoE, MAGICAL damage).
@@ -20,7 +21,9 @@ extends Node
 # EXPORTS
 # ---------------------------------------------------------------------------
 
+## Maximum mana capacity for Sybil's spell pool.
 @export var max_mana: int = 100
+## Mana regenerated per second during combat.
 @export var mana_regen_rate: float = 5.0
 
 ## Array of SpellData resources. One entry per spell.
@@ -114,9 +117,11 @@ func cast_spell(spell_id: String) -> bool:
 	return true
 
 
+## Returns the current mana as a floored integer.
 func get_current_mana() -> int:
 	return _current_mana
 
+## Returns the maximum mana capacity.
 func get_max_mana() -> int:
 	return max_mana
 
@@ -288,10 +293,12 @@ func cast_selected_spell() -> bool:
 	return cast_spell(sid)
 
 
+## Returns the index of the currently selected spell in the registry.
 func get_selected_spell_index() -> int:
 	return _selected_spell_index
 
 
+## Sets the selected spell index, clamped to the valid registry range.
 func set_selected_spell_index(index: int) -> void:
 	if spell_registry.is_empty():
 		return
@@ -299,6 +306,7 @@ func set_selected_spell_index(index: int) -> void:
 	_selected_spell_index = posmod(index, n)
 
 
+## Cycles the selected spell index by delta, wrapping around the registry.
 func cycle_selected_spell(delta: int) -> void:
 	set_selected_spell_index(_selected_spell_index + delta)
 

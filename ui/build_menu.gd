@@ -1,3 +1,4 @@
+## BuildMenu — Radial building placement panel shown during BUILD_MODE; delegates all decisions to HexGrid and EconomyManager.
 # ui/build_menu.gd
 # BuildMenu — shown during BUILD_MODE when a hex slot is selected.
 # Zero game logic. All decisions delegated to HexGrid and EconomyManager.

@@ -1,3 +1,4 @@
+## SimBot — Headless simulation bot for automated playtesting; runs single/batch strategy profiles and logs CSV balance data.
 # scripts/sim_bot.gd — SimBot implementation (`res://scripts/simbot.gd` extends this file for Audit 4).
 # PRE_GENERATION_VERIFICATION: Mentally ran the required checklist for this file
 # (signal wiring, no UI dependencies, data-driven build/spell via StrategyProfile).
@@ -71,6 +72,7 @@ func _ready() -> void:
 		_csv_columns = _build_csv_columns()
 
 
+## Activates the SimBot with the given strategy profile, connecting to game signals.
 func activate(strategy: Types.StrategyProfile) -> void:
 	if _is_active:
 		return
@@ -98,6 +100,7 @@ func activate(strategy: Types.StrategyProfile) -> void:
 	GameManager.start_new_game()
 
 
+## Returns the accumulated per-run log Dictionary from the last batch or single run.
 func get_log() -> Dictionary:
 	return {
 		"entries": _last_batch_entries.duplicate(true),
@@ -108,6 +111,7 @@ func get_log() -> Dictionary:
 	}
 
 
+## Bot logic: purchases mercenary offers based on the active strategy profile.
 func decide_mercenaries() -> void:
 	var preview: Array = CampaignManager.preview_mercenary_offers_for_day(
 			CampaignManager.current_day,
@@ -140,6 +144,7 @@ func decide_mercenaries() -> void:
 	CampaignManager.set_active_allies_from_list(act)
 
 
+## Deactivates the SimBot, disconnecting all game signals.
 func deactivate() -> void:
 	if not _is_active:
 		return
@@ -166,14 +171,17 @@ func deactivate() -> void:
 		SignalBus.resource_changed.disconnect(_on_handler_resource_changed)
 
 
+## Bot helper: enters build mode via GameManager.enter_build_mode().
 func bot_enter_build_mode() -> void:
 	GameManager.enter_build_mode()
 
 
+## Bot helper: exits build mode via GameManager.exit_build_mode().
 func bot_exit_build_mode() -> void:
 	GameManager.exit_build_mode()
 
 
+## Bot helper: places a building of the given type in the given slot.
 func bot_place_building(slot: int, building_type: Types.BuildingType) -> bool:
 	if not _in_combat:
 		return false
@@ -183,6 +191,7 @@ func bot_place_building(slot: int, building_type: Types.BuildingType) -> bool:
 	return _hex_grid.place_building(slot, building_type)
 
 
+## Bot helper: casts the spell with the given spell_id via SpellManager.
 func bot_cast_spell(spell_id: String) -> bool:
 	if not _in_combat:
 		return false
@@ -192,6 +201,7 @@ func bot_cast_spell(spell_id: String) -> bool:
 	return _spell_manager.cast_spell(spell_id)
 
 
+## Bot helper: fires the crossbow at the given target position.
 func bot_fire_crossbow(target: Vector3) -> void:
 	if not _in_combat:
 		return
@@ -201,6 +211,7 @@ func bot_fire_crossbow(target: Vector3) -> void:
 	_tower.fire_crossbow(target)
 
 
+## Bot helper: starts the wave countdown via GameManager.start_wave_countdown().
 func bot_advance_wave() -> void:
 	if not _in_combat:
 		return
@@ -210,6 +221,7 @@ func bot_advance_wave() -> void:
 	_wave_manager.force_spawn_wave(GameManager.get_current_wave() + 1)
 
 
+## Returns a score (0–1) estimating how well a StrategyProfile fits the current difficulty.
 func compute_difficulty_fit(profile: StrategyProfile) -> float:
 	if profile == null:
 		return 0.0

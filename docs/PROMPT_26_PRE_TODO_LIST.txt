@@ -1,0 +1,84 @@
+autoloads/dialogue_manager.gd:412:	# POST-MVP: implement a purchase history cache on ShopManager.
+autoloads/enchantment_manager.gd:12:# POST-MVP affinity tracking: weapon_slot -> affinity level / xp.
+autoloads/enchantment_manager.gd:136:	# POST-MVP: Currently inert except for tracking numbers.
+autoloads/enchantment_manager.gd:32:		_affinity_level[weapon_slot] = 0  # POST-MVP
+autoloads/enchantment_manager.gd:33:		_affinity_xp[weapon_slot] = 0.0  # POST-MVP
+autoloads/game_manager.gd:11:##   POST-MVP: multi-front choices, boss advance after final day, factions, and research/enchant/upgrade
+autoloads/signal_bus.gd:10:## POST-MVP: enemy_reached_tower is not emitted in MVP. EnemyBase calls Tower.take_damage() directly.
+autoloads/signal_bus.gd:35:# POST-MVP: detailed ally state tracking.
+autoloads/signal_bus.gd:78:## POST-MVP: building_destroyed is not emitted in MVP. Buildings cannot take damage in MVP.
+scenes/allies/ally_base.gd:187:	# TODO(ART): Apply ArtPlaceholderHelper.get_ally_mesh(ally_id) here when generic allies use
+scenes/allies/ally_base.gd:3:## Mission death and campaign roster recovery are separate layers (CampaignManager — POST-MVP).
+scenes/arnulf/arnulf.gd:118:	# TODO(ART): Replace ArnulfMesh with res://art/generated/allies/arnulf.glb instance; add
+scenes/arnulf/arnulf.gd:378:	# POST-MVP: increment drives Frenzy mode. MVP: count only.
+scenes/arnulf/arnulf.gd:418:	# POST-MVP: emit SignalBus.ally_killed(ALLY_ID_ARNULF) if a permanent-death path is added.
+scenes/arnulf/arnulf.gd:79:# POST-MVP: _kill_counter drives Frenzy mode when it reaches a threshold.
+scenes/bosses/boss_base.gd:44:	# TODO(ART): Apply res://art/generated/bosses/<boss_id>.glb (scaled Rigify placeholder); add
+scenes/bosses/boss_base.gd:71:	# POST-MVP: per-phase stat scaling and SignalBus.boss_phase_changed.
+scenes/buildings/building_base.gd:127:	# TODO(ART): Optional GLB sub-scene per building_type under res://art/generated/buildings/.
+scenes/buildings/building_base.gd:5:# Special types (Archer Barracks, Shield Generator) have fire_rate = 0 and are POST-MVP stubs.
+scenes/buildings/building_base.gd:97:	# POST-MVP hook for destroyable buildings.
+scenes/enemies/enemy_base.gd:84:	# TODO(ART): Swap MeshInstance3D for res://art/generated/enemies/<enemy_id>.glb (PackedScene)
+scenes/tower/tower.gd:84:	# TODO(ART): Replace tower MeshInstance3D with res://art/generated/misc/tower_core.glb or
+scripts/art/art_placeholder_helper.gd:317:	# POST-MVP: generated assets in res://art/generated/ take priority.
+scripts/art/art_placeholder_helper.gd:41:# POST-MVP: Generated asset roots — checked before placeholders
+scripts/art/art_placeholder_helper.gd:8:## DEVIATION: Icon pipeline is POST-MVP stubbed (helper returns null).
+scripts/florence_data.gd:40:## POST-MVP: Enchantments unlock hook.
+scripts/florence_data.gd:42:## POST-MVP: Mercenary recruitment hook.
+scripts/florence_data.gd:44:## POST-MVP: Mini-boss seen hook.
+scripts/florence_data.gd:46:## POST-MVP: Mini-boss defeated hook.
+scripts/florence_data.gd:52:## POST-MVP: First boss seen hook.
+scripts/resources/ally_data.gd:23:## When true, ally AI may prefer flying targets (POST-MVP targeting).
+scripts/resources/ally_data.gd:38:## Idle/patrol radius for tower-centric allies (POST-MVP full use in AllyBase).
+scripts/resources/ally_data.gd:40:## 0 = permanent death on HP depletion; >0 = downed/recover loop (POST-MVP in AllyBase).
+scripts/resources/ally_data.gd:60:# POST-MVP: campaign progression hooks (levels, scaling, gear).
+scripts/resources/ally_data.gd:61:## Starting level for progression (POST-MVP).
+scripts/resources/ally_data.gd:62:@export var starting_level: int = 1 # POST-MVP
+scripts/resources/ally_data.gd:63:## Per-level stat scaling coefficient (POST-MVP).
+scripts/resources/ally_data.gd:64:@export var level_scaling_factor: float = 1.0 # POST-MVP
+scripts/resources/ally_data.gd:65:## Enables the DOWNED/RECOVERING cycle rather than permanent death (POST-MVP).
+scripts/resources/ally_data.gd:66:@export var uses_downed_recovering: bool = false # POST-MVP (for Arnulf-like behavior)
+scripts/resources/boss_data.gd:25:## POST-MVP: link mini-boss to a territory reward.
+scripts/resources/boss_data.gd:27:## POST-MVP UI hook for threat icons.
+scripts/resources/boss_data.gd:8:## POST-MVP: directory scan or mod bundle.
+scripts/resources/character_data.gd:14:@export var description: String = "TODO: description"
+scripts/resources/character_data.gd:20:@export var portrait_id: String = "TODO_PORTRAIT"
+scripts/resources/character_data.gd:22:## POST-MVP: Optional icon sprite identifier for richer hub visuals.
+scripts/resources/character_data.gd:28:## POST-MVP: For a future 3D hub room, this can reference a named marker node.
+scripts/resources/day_config.gd:23:## POST-MVP: world map / territory UI.
+scripts/resources/day_config.gd:4:## POST-MVP: extend with territory/world-map fields.
+scripts/resources/dialogue/dialogue_entry.gd:11:@export_multiline var text: String = "TODO: placeholder dialogue line." # PLACEHOLDER
+scripts/resources/enchantment_data.gd:30:@export var secondary_damage_type: Types.DamageType = Types.DamageType.PHYSICAL  # POST-MVP
+scripts/resources/enchantment_data.gd:36:# Generic extensibility hooks for POST-MVP behaviors.
+scripts/resources/faction_data.gd:11:## POST-MVP: replace with directory scan or campaign bundle.
+scripts/resources/faction_data.gd:43:## POST-MVP: Used by future boss spawning logic.
+scripts/resources/mercenary_offer_data.gd:22:## Territory IDs that must be held for this offer to appear (POST-MVP).
+scripts/resources/mercenary_offer_data.gd:23:@export var required_territory_ids: Array[String] = [] # POST-MVP
+scripts/resources/mercenary_offer_data.gd:24:## Faction IDs that must have been encountered for this offer (POST-MVP).
+scripts/resources/mercenary_offer_data.gd:25:@export var required_faction_ids: Array[String] = [] # POST-MVP
+scripts/resources/mercenary_offer_data.gd:26:## Research node IDs that must be unlocked for this offer to appear (POST-MVP).
+scripts/resources/mercenary_offer_data.gd:27:@export var required_research_ids: Array[String] = [] # POST-MVP
+scripts/resources/mini_boss_data.gd:26:## POST-MVP: 0 = offer injected immediately; >0 = delayed offer (not implemented).
+scripts/resources/strategyprofile.gd:6:## POST-MVP: Extended for NEAT/ML tuning and endless-mode targets.
+scripts/resources/strategyprofile.gd:70:## POST-MVP: used by optimization tools to compare desired vs actual difficulty.
+scripts/resources/territory_data.gd:19:## POST-MVP: Used when DayConfig does not set a faction explicitly.
+scripts/resources/territory_data.gd:55:## Whether the territory is under attack (POST-MVP UI).
+scripts/resources/territory_data.gd:64:## POST-MVP: per-kill flat bonus from holding this territory.
+scripts/resources/territory_data.gd:67:## POST-MVP: extra research material per day while held.
+scripts/resources/territory_data.gd:70:## POST-MVP: multiplier on research costs (1.0 = no change).
+scripts/resources/territory_data.gd:73:## POST-MVP: multiplier on enchanting gold costs.
+scripts/resources/territory_data.gd:76:## POST-MVP: multiplier on weapon upgrade gold costs.
+scripts/shop_manager.gd:120:	# POST-MVP: Enchantments unlock hook into FlorenceData.
+scripts/types.gd:110:# POST-MVP: Extend with FLORENCE, CAMPAIGN_SPECIFIC, etc. narrative requires.
+scripts/wave_manager.gd:290:	# POST-MVP: integrate richer CampaignManager / territory default_faction_id here.
+scripts/wave_manager.gd:299:## POST-MVP: Only reports data; other systems will decide how/when to spawn bosses.
+scripts/weapon_upgrade_manager.gd:179:## POST-MVP: Save/load weapon levels to disk for persistent campaign progress.
+scripts/weapon_upgrade_manager.gd:183:	# POST-MVP: Campaign save/load for weapon levels
+tests/test_character_hub.gd:146:	data.description = "TODO: description"
+tests/test_character_hub.gd:165:	a.description = "TODO: description"
+tests/test_character_hub.gd:176:	b.description = "TODO: description"
+tests/test_character_hub.gd:208:	shop_data.description = "TODO: description"
+tests/test_character_hub.gd:462:	shop_data.description = "TODO: description"
+tests/test_dialogue_manager.gd:195:		assert_str(entry.text).contains("TODO")
+ui/between_mission_screen.gd:110:	# POST-MVP: Add Florence, Merchant, etc. as additional calls.
+ui/hub.gd:35:	# TODO(ART): Hub characters use ColorRect placeholders in character_base_2d — swap to 512×512

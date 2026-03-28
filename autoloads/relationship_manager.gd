@@ -29,10 +29,12 @@ func _ready() -> void:
 	_connect_relationship_events()
 
 
+## Returns the raw affinity float (−100..100) for the given character_id.
 func get_affinity(character_id: String) -> float:
 	return float(_affinities.get(character_id, 0.0))
 
 
+## Returns the tier name string for the given character_id based on current affinity.
 func get_tier(character_id: String) -> String:
 	if _tier_config == null:
 		return ""
@@ -47,6 +49,7 @@ func get_tier(character_id: String) -> String:
 	return best_name
 
 
+## Returns the numeric rank index of the given tier name (higher = warmer relationship).
 func get_tier_rank_index(tier_name: String) -> int:
 	if _tier_config == null:
 		return -1
@@ -57,15 +60,18 @@ func get_tier_rank_index(tier_name: String) -> int:
 	return -1
 
 
+## Adds a delta to the affinity for the given character_id, clamping to −100..100.
 func add_affinity(character_id: String, delta: float) -> void:
 	var base: float = float(_affinities.get(character_id, 0.0))
 	_affinities[character_id] = clampf(base + delta, AFFINITY_MIN, AFFINITY_MAX)
 
 
+## Returns a Dictionary snapshot of current state for serialization.
 func get_save_data() -> Dictionary:
 	return {"affinities": _affinities.duplicate()}
 
 
+## Restores state from a previously saved Dictionary snapshot.
 func restore_from_save(data: Dictionary) -> void:
 	if not data.has("affinities"):
 		return
@@ -78,6 +84,7 @@ func restore_from_save(data: Dictionary) -> void:
 		_affinities[str(k)] = clampf(float(d[k]), AFFINITY_MIN, AFFINITY_MAX)
 
 
+## Reloads all CharacterRelationshipData and RelationshipEventData from disk.
 func reload_from_resources() -> void:
 	_disconnect_relationship_events()
 	_affinities.clear()

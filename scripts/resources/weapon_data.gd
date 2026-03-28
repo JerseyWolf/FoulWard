@@ -23,8 +23,12 @@ extends Resource
 @export var can_target_flying: bool = false
 # ASSUMPTION: These fields are designer-tunable; setting them to 0.0 disables assist/miss
 # and restores MVP-accurate behavior. Balance changes should be done via .tres resources, not code.
+## Half-angle of the aim-assist cone that snaps the shot toward the nearest enemy.
 @export var assist_angle_degrees: float = 0.0
+## Maximum distance at which the aim-assist cone looks for targets.
 @export var assist_max_distance: float = 0.0
+## Probability (0–1) that a manual shot is perturbed to miss intentionally.
 @export var base_miss_chance: float = 0.0
+## Maximum random angular offset applied when a miss is triggered.
 @export var max_miss_angle_degrees: float = 0.0
 

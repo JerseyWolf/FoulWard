@@ -43,10 +43,12 @@ func on_campaign_day_started() -> void:
 	_sync_from_game_manager()
 
 
+## Test helper: returns how many times on_campaign_day_started was called.
 func get_campaign_day_started_calls_for_test() -> int:
 	return _campaign_day_started_calls_for_test
 
 
+## Test helper: resets the campaign_day_started call counter to zero.
 func reset_campaign_day_started_calls_for_test() -> void:
 	_campaign_day_started_calls_for_test = 0
 
@@ -123,6 +125,7 @@ func _connect_signals() -> void:
 	SignalBus.spell_cast.connect(_on_spell_cast)
 
 
+## Returns the highest-priority eligible DialogueEntry for the given character and tags.
 func request_entry_for_character(character_id: String, tags: Array[String] = []) -> DialogueEntry:
 	if not entries_by_character.has(character_id):
 		return null
@@ -174,6 +177,7 @@ func request_entry_for_character(character_id: String, tags: Array[String] = [])
 	return chosen
 
 
+## Returns the DialogueEntry with the given entry_id, or null if not found.
 func get_entry_by_id(entry_id: String) -> DialogueEntry:
 	if entries_by_id.has(entry_id):
 		return entries_by_id[entry_id] as DialogueEntry
@@ -191,6 +195,7 @@ func _emit_started(entry: DialogueEntry) -> void:
 	dialogue_line_started.emit(entry.entry_id, entry.character_id)
 
 
+## Marks a once_only DialogueEntry as played so it will not be returned again.
 func mark_entry_played(entry_id: String) -> void:
 	if not entries_by_id.has(entry_id):
 		return
@@ -208,6 +213,7 @@ func mark_entry_played(entry_id: String) -> void:
 		active_chains_by_character.erase(entry.character_id)
 
 
+## Called when a dialogue line finishes; handles chain_next_id and emits dialogue_line_finished.
 func notify_dialogue_finished(entry_id: String, character_id: String) -> void:
 	dialogue_line_finished.emit(entry_id, character_id)
 	active_chains_by_character.erase(character_id)

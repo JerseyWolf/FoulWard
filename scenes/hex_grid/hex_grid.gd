@@ -1,3 +1,4 @@
+## HexGrid — Manages 24 hex-shaped building slots; handles placement, selling, upgrading, and between-mission persistence.
 # scenes/hex_grid/hex_grid.gd
 # HexGrid – manages 24 hex-shaped building slots in three concentric rings.
 # Handles placement, selling, upgrading, and between-mission persistence.

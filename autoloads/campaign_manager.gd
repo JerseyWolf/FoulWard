@@ -32,6 +32,7 @@ var _ally_registry: Dictionary = {}
 ## Loaded from `res://resources/miniboss_data/*.tres` (boss_id -> Resource).
 var _mini_boss_registry: Dictionary = {}
 
+## MercenaryCatalog resource supplying the pool of recruitable mercenary offers.
 @export var mercenary_catalog: Resource = null
 
 var owned_allies: Array[String] = []
@@ -44,6 +45,7 @@ var _defeated_defectable_bosses: Array[String] = []
 var current_ally_roster: Array = []
 var current_ally_roster_ids: Array[String] = []
 
+## The currently active CampaignConfig resource driving day/faction progression.
 @export var active_campaign_config: CampaignConfig
 
 
@@ -100,6 +102,7 @@ func _load_mini_boss_registry() -> void:
 	dir.list_dir_end()
 
 
+## Loads the default short campaign and initializes the day/faction/roster state.
 func start_new_campaign() -> void:
 	_has_active_campaign_run = true
 	if not is_endless_mode:
@@ -124,6 +127,7 @@ func start_new_campaign() -> void:
 	_start_current_day_internal()
 
 
+## Initializes the campaign for endless mode with synthetic day scaling.
 func start_endless_run() -> void:
 	is_endless_mode = true
 	campaign_completed = false
@@ -149,23 +153,28 @@ func _bootstrap_starter_allies() -> void:
 	SignalBus.ally_roster_changed.emit()
 
 
+## Returns true if the ally with the given ally_id is in the owned roster.
 func is_ally_owned(ally_id: String) -> bool:
 	return owned_allies.has(ally_id)
 
 
+## Returns the Array of ally_ids currently owned (recruited) by the player.
 func get_owned_allies() -> Array[String]:
 	return owned_allies.duplicate()
 
 
+## Returns the Array of ally_ids selected to participate in the next mission.
 func get_active_allies() -> Array[String]:
 	return active_allies_for_next_day.duplicate()
 
 
+## Returns the AllyData resource for the given ally_id, or null if not owned.
 func get_ally_data(ally_id: String) -> Resource:
 	var r: Variant = _ally_registry.get(ally_id, null)
 	return r as Resource
 
 
+## Adds the given ally_id to owned roster and emits ally_roster_changed.
 func add_ally_to_roster(ally_id: String) -> void:
 	if ally_id.is_empty():
 		return
@@ -175,6 +184,7 @@ func add_ally_to_roster(ally_id: String) -> void:
 	SignalBus.ally_roster_changed.emit()
 
 
+## Removes the given ally_id from owned and active rosters and emits ally_roster_changed.
 func remove_ally_from_roster(ally_id: String) -> void:
 	var i: int = owned_allies.find(ally_id)
 	if i >= 0:
@@ -186,6 +196,7 @@ func remove_ally_from_roster(ally_id: String) -> void:
 	SignalBus.ally_roster_changed.emit()
 
 
+## Toggles whether the given ally_id is in the active-for-next-mission set.
 func toggle_ally_active(ally_id: String) -> bool:
 	if not is_ally_owned(ally_id):
 		return false
@@ -203,6 +214,7 @@ func toggle_ally_active(ally_id: String) -> bool:
 	return true
 
 
+## Replaces the active ally list with the provided Array of ally_ids.
 func set_active_allies_from_list(ally_ids: Array[String]) -> void:
 	active_allies_for_next_day.clear()
 	for aid: String in ally_ids:
@@ -216,6 +228,7 @@ func set_active_allies_from_list(ally_ids: Array[String]) -> void:
 	SignalBus.ally_roster_changed.emit()
 
 
+## Returns the ally_ids that should spawn at the start of the next mission.
 func get_allies_for_mission_start() -> Array[String]:
 	if active_allies_for_next_day.is_empty() and not owned_allies.is_empty():
 		_apply_default_active_selection()
@@ -223,6 +236,7 @@ func get_allies_for_mission_start() -> Array[String]:
 	return active_allies_for_next_day.duplicate()
 
 
+## Generates mercenary offers for the given day from the mercenary catalog.
 func generate_offers_for_day(day: int) -> void:
 	var defection_offers: Array = []
 	for o: Variant in current_mercenary_offers:
@@ -245,6 +259,7 @@ func generate_offers_for_day(day: int) -> void:
 			SignalBus.mercenary_offer_generated.emit(str(o4.get("ally_id")))
 
 
+## Returns what offers would be available given a hypothetical owned ally list.
 func preview_mercenary_offers_for_day(day: int, hypothetical_owned: Array[String]) -> Array:
 	if mercenary_catalog == null or not mercenary_catalog.has_method("get_daily_offers"):
 		return []
@@ -252,10 +267,12 @@ func preview_mercenary_offers_for_day(day: int, hypothetical_owned: Array[String
 	return arr as Array if arr is Array else []
 
 
+## Returns the current Array of mercenary offers generated for this day.
 func get_current_offers() -> Array:
 	return current_mercenary_offers.duplicate()
 
 
+## Attempts to purchase the offer at the given index; spends resources and adds the ally.
 func purchase_mercenary_offer(index: int) -> bool:
 	if index < 0 or index >= current_mercenary_offers.size():
 		return false
@@ -286,6 +303,7 @@ func purchase_mercenary_offer(index: int) -> bool:
 	return true
 
 
+## Handles a mini-boss defeat: may add defection ally offer to the catalog.
 func notify_mini_boss_defeated(boss_id: String) -> void:
 	if boss_id.is_empty() or _defeated_defectable_bosses.has(boss_id):
 		return
@@ -297,6 +315,7 @@ func notify_mini_boss_defeated(boss_id: String) -> void:
 		_inject_defection_offer(mb as Resource)
 
 
+## Registers a BossData resource in the mini-boss registry for potential defection.
 func register_mini_boss(boss_data: Resource) -> void:
 	if boss_data == null:
 		return
@@ -320,6 +339,7 @@ func _inject_defection_offer(boss_data: Resource) -> void:
 
 
 # SOURCE: Simple deterministic soldier/officer scoring (XCOM-style talks); weighted role + cost + diversity.
+## Selects the best subset of owned allies up to the given max count.
 func auto_select_best_allies(
 		strategy_profile: Types.StrategyProfile,
 		available_offers: Array,
@@ -496,23 +516,28 @@ func _sync_current_ally_roster_for_spawn() -> void:
 		current_ally_roster_ids.append(aid)
 
 
+## Returns true if the ally with the given ally_id is currently owned.
 func has_ally(ally_id: String) -> bool:
 	return is_ally_owned(ally_id)
 
 
+## Advances the campaign to the next day and triggers mission initialization.
 func start_next_day() -> void:
 	GameManager.prepare_next_campaign_day_if_needed()
 	_start_current_day_internal()
 
 
+## Returns the current day index (0-based) within the active campaign.
 func get_current_day() -> int:
 	return current_day
 
 
+## Returns the total number of days in the active campaign.
 func get_campaign_length() -> int:
 	return campaign_length
 
 
+## Returns the DayConfig for the currently active day.
 func get_current_day_config() -> DayConfig:
 	return current_day_config
 
@@ -530,6 +555,7 @@ func _load_faction_registry() -> void:
 		faction_registry[data.faction_id] = data
 
 
+## Validates that all DayConfig entries reference known faction and boss IDs.
 func validate_day_configs(day_configs: Array[DayConfig]) -> void:
 	for dc: DayConfig in day_configs:
 		assert(dc != null, "CampaignManager.validate_day_configs: null DayConfig in array.")
@@ -612,11 +638,13 @@ func _on_mission_failed(mission_number: int) -> void:
 	SignalBus.day_failed.emit(current_day)
 
 
+## Test helper: replaces the active CampaignConfig without triggering signals.
 func set_active_campaign_config_for_test(config: CampaignConfig) -> void:
 	active_campaign_config = config
 	_set_campaign_config(config)
 
 
+## Test helper: clears all owned and active allies from the roster.
 func remove_all_allies() -> void:
 	owned_allies.clear()
 	active_allies_for_next_day.clear()
@@ -624,6 +652,7 @@ func remove_all_allies() -> void:
 	SignalBus.ally_roster_changed.emit()
 
 
+## Test helper: reloads starter allies from ally_data resources.
 func reinitialize_ally_roster_for_test() -> void:
 	_load_ally_registry()
 	owned_allies.clear()
@@ -636,6 +665,7 @@ func reinitialize_ally_roster_for_test() -> void:
 	SignalBus.ally_roster_changed.emit()
 
 
+## Returns a Dictionary snapshot of current state for serialization.
 func get_save_data() -> Dictionary:
 	var cfg_path: String = ""
 	if active_campaign_config != null:
@@ -652,6 +682,7 @@ func get_save_data() -> Dictionary:
 	}
 
 
+## Restores state from a previously saved Dictionary snapshot.
 func restore_from_save(data: Dictionary) -> void:
 	current_day = int(data.get("current_day", 1))
 	campaign_completed = bool(data.get("campaign_completed", false))

@@ -83,12 +83,14 @@ func is_active_for_bonuses() -> bool:
 	return is_controlled_by_player and not is_permanently_lost
 
 
+## Returns the effective flat gold bonus per kill after any territory modifiers.
 func get_effective_end_of_day_gold_flat() -> int:
 	if not is_active_for_bonuses():
 		return 0
 	return bonus_flat_gold_end_of_day
 
 
+## Returns the effective percent gold bonus per day after any territory modifiers.
 func get_effective_end_of_day_gold_percent() -> float:
 	if not is_active_for_bonuses():
 		return 0.0

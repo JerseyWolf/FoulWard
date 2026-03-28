@@ -6,10 +6,13 @@ extends Resource
 class_name MercenaryCatalog
 
 # DEVIATION: untyped `Array` so autoloads parse before `MercenaryOfferData` global class is registered.
+## Pool of MercenaryOfferData resources available for random daily sampling.
 @export var offers: Array = []
+## Maximum number of offers shown to the player per day.
 @export var max_offers_per_day: int = 3 # TUNING
 
 
+## Returns all offers eligible for the given day excluding already-owned allies.
 func filter_offers_for_day(day: int, owned_ally_ids: Array[String]) -> Array:
 	var result: Array = []
 	for offer: Variant in offers:
@@ -29,6 +32,7 @@ func filter_offers_for_day(day: int, owned_ally_ids: Array[String]) -> Array:
 	return result
 
 
+## Returns a randomly sampled subset of eligible offers for the given day.
 func get_daily_offers(day: int, owned_ally_ids: Array[String]) -> Array:
 	var filtered: Array = filter_offers_for_day(day, owned_ally_ids)
 	if filtered.size() <= max_offers_per_day:

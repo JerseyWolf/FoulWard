@@ -1,0 +1,65 @@
+FOUL WARD — INDEX_SHORT.md vs Disk Diff
+==================================================
+
+Total files in index (*.gd): 80
+Total MISSING (indexed but absent on disk): 0
+Total UNINDEXED (on disk but not in index): 55
+
+--- MISSING FILES ---
+
+--- UNINDEXED FILES ---
+  UNINDEXED: scenes/hub/character_base_2d.gd
+  UNINDEXED: scripts/florence_data.gd
+  UNINDEXED: scripts/resources/strategyprofileconfig.gd
+  UNINDEXED: scripts/resources/test_strategyprofileconfig.gd
+  UNINDEXED: scripts/simbot_logger.gd
+  UNINDEXED: scripts/weapon_upgrade_manager.gd
+  UNINDEXED: tests/test_ally_base.gd
+  UNINDEXED: tests/test_ally_combat.gd
+  UNINDEXED: tests/test_ally_data.gd
+  UNINDEXED: tests/test_ally_signals.gd
+  UNINDEXED: tests/test_ally_spawning.gd
+  UNINDEXED: tests/test_arnulf_state_machine.gd
+  UNINDEXED: tests/test_art_placeholders.gd
+  UNINDEXED: tests/test_boss_base.gd
+  UNINDEXED: tests/test_boss_data.gd
+  UNINDEXED: tests/test_boss_day_flow.gd
+  UNINDEXED: tests/test_boss_waves.gd
+  UNINDEXED: tests/test_building_specials.gd
+  UNINDEXED: tests/test_campaign_ally_roster.gd
+  UNINDEXED: tests/test_campaign_autoload_and_day_flow.gd
+  UNINDEXED: tests/test_campaign_territory_mapping.gd
+  UNINDEXED: tests/test_campaign_territory_updates.gd
+  UNINDEXED: tests/test_character_hub.gd
+  UNINDEXED: tests/test_consumables.gd
+  UNINDEXED: tests/test_damage_calculator.gd
+  UNINDEXED: tests/test_dialogue_manager.gd
+  UNINDEXED: tests/test_economy_manager.gd
+  UNINDEXED: tests/test_endless_mode.gd
+  UNINDEXED: tests/test_final_boss_day.gd
+  UNINDEXED: tests/test_florence.gd
+  UNINDEXED: tests/test_health_component.gd
+  UNINDEXED: tests/test_hex_grid.gd
+  UNINDEXED: tests/test_mercenary_offers.gd
+  UNINDEXED: tests/test_mercenary_purchase.gd
+  UNINDEXED: tests/test_mini_boss_defection.gd
+  UNINDEXED: tests/test_relationship_manager.gd
+  UNINDEXED: tests/test_research_manager.gd
+  UNINDEXED: tests/test_save_manager.gd
+  UNINDEXED: tests/test_settings_manager.gd
+  UNINDEXED: tests/test_shop_manager.gd
+  UNINDEXED: tests/test_simbot_basic_run.gd
+  UNINDEXED: tests/test_simbot_determinism.gd
+  UNINDEXED: tests/test_simbot_handlers.gd
+  UNINDEXED: tests/test_simbot_logging.gd
+  UNINDEXED: tests/test_simbot_mercenaries.gd
+  UNINDEXED: tests/test_simbot_profiles.gd
+  UNINDEXED: tests/test_simbot_safety.gd
+  UNINDEXED: tests/test_simulation_api.gd
+  UNINDEXED: tests/test_spell_manager.gd
+  UNINDEXED: tests/test_territory_data.gd
+  UNINDEXED: tests/test_territory_economy_bonuses.gd
+  UNINDEXED: tests/test_weapon_structural.gd
+  UNINDEXED: tests/test_weapon_upgrade_manager.gd
+  UNINDEXED: tests/test_world_map_ui.gd
+  UNINDEXED: ui/dialogue_ui.gd

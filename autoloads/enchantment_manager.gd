@@ -33,11 +33,13 @@ func _reset_to_defaults_internal() -> void:
 		_affinity_xp[weapon_slot] = 0.0  # POST-MVP
 
 
+## Resets all state to default values, clearing any runtime data.
 func reset_to_defaults() -> void:
 	# Called from GameManager.start_new_game to clear campaign-state.
 	_reset_to_defaults_internal()
 
 
+## Returns the enchantment ID in the given weapon slot and slot type, or empty string if none.
 func get_equipped_enchantment_id(weapon_slot: Types.WeaponSlot, slot_type: String) -> String:
 	if not _equipped_enchantments.has(weapon_slot):
 		return ""
@@ -47,6 +49,7 @@ func get_equipped_enchantment_id(weapon_slot: Types.WeaponSlot, slot_type: Strin
 	return slots[slot_type] as String
 
 
+## Returns the EnchantmentData resource in the given weapon/slot pair, or null if none.
 func get_equipped_enchantment(weapon_slot: Types.WeaponSlot, slot_type: String) -> EnchantmentData:
 	var enchantment_id: String = get_equipped_enchantment_id(weapon_slot, slot_type)
 	if enchantment_id == "":
@@ -62,12 +65,14 @@ func get_equipped_enchantment(weapon_slot: Types.WeaponSlot, slot_type: String) 
 	return resource as EnchantmentData
 
 
+## Returns a Dictionary of slot_type → EnchantmentData for all equipped enchantments on a weapon.
 func get_all_equipped_enchantments_for_weapon(weapon_slot: Types.WeaponSlot) -> Dictionary:
 	if not _equipped_enchantments.has(weapon_slot):
 		return {}
 	return (_equipped_enchantments[weapon_slot] as Dictionary).duplicate(true)
 
 
+## Attempts to equip an enchantment; spends gold via EconomyManager and emits enchantment_applied.
 func try_apply_enchantment(weapon_slot: Types.WeaponSlot, slot_type: String, enchantment_id: String, gold_cost: int) -> bool:
 	var eff_gold: int = gold_cost
 	if gold_cost > 0:
@@ -96,6 +101,7 @@ func try_apply_enchantment(weapon_slot: Types.WeaponSlot, slot_type: String, enc
 	return true
 
 
+## Removes the enchantment from the given weapon/slot pair and emits enchantment_removed.
 func remove_enchantment(weapon_slot: Types.WeaponSlot, slot_type: String) -> void:
 	if not _equipped_enchantments.has(weapon_slot):
 		return
@@ -111,18 +117,21 @@ func remove_enchantment(weapon_slot: Types.WeaponSlot, slot_type: String) -> voi
 	SignalBus.enchantment_removed.emit(weapon_slot, slot_type)
 
 
+## Returns the current affinity level (inert XP tier) for the given weapon slot.
 func get_affinity_level(weapon_slot: Types.WeaponSlot) -> int:
 	if not _affinity_level.has(weapon_slot):
 		return 0
 	return _affinity_level[weapon_slot] as int
 
 
+## Returns the raw accumulated affinity XP for the given weapon slot.
 func get_affinity_xp(weapon_slot: Types.WeaponSlot) -> float:
 	if not _affinity_xp.has(weapon_slot):
 		return 0.0
 	return _affinity_xp[weapon_slot] as float
 
 
+## Adds affinity XP to the given weapon slot (inert; no gameplay effect yet).
 func gain_affinity_xp(weapon_slot: Types.WeaponSlot, amount: float) -> void:
 	# POST-MVP: Currently inert except for tracking numbers.
 	if amount <= 0.0:
@@ -132,6 +141,7 @@ func gain_affinity_xp(weapon_slot: Types.WeaponSlot, amount: float) -> void:
 	_affinity_xp[weapon_slot] = (_affinity_xp[weapon_slot] as float) + amount
 
 
+## Returns a Dictionary snapshot of current state for serialization.
 func get_save_data() -> Dictionary:
 	var flat: Dictionary = {}
 	for weapon_slot_value: int in Types.WeaponSlot.values():
@@ -146,6 +156,7 @@ func get_save_data() -> Dictionary:
 	return {"enchantments_by_slot": flat}
 
 
+## Restores state from a previously saved Dictionary snapshot.
 func restore_from_save(data: Dictionary) -> void:
 	_reset_to_defaults_internal()
 	var raw: Variant = data.get("enchantments_by_slot", {})

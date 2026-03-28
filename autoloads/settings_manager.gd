@@ -50,6 +50,7 @@ func _is_skipped_builtin_action(action: String) -> bool:
 	return action.begins_with("ui_")
 
 
+## Persists current settings to user://settings.cfg.
 func save_settings() -> void:
 	var cfg: ConfigFile = ConfigFile.new()
 	cfg.set_value("audio", "master_volume", master_volume)
@@ -63,6 +64,7 @@ func save_settings() -> void:
 	cfg.save(SETTINGS_PATH)
 
 
+## Loads settings from user://settings.cfg, applying defaults for missing keys.
 func load_settings() -> void:
 	var cfg: ConfigFile = ConfigFile.new()
 	if cfg.load(SETTINGS_PATH) != OK:
@@ -108,6 +110,7 @@ func _apply_keybinds_to_input_map() -> void:
 			InputMap.action_add_event(action, ev as InputEvent)
 
 
+## Sets the linear volume for the named AudioServer bus and saves settings.
 func set_volume(bus_name: String, value: float) -> void:
 	var v: float = clampf(value, 0.0, 1.0)
 	match bus_name:
@@ -124,11 +127,13 @@ func set_volume(bus_name: String, value: float) -> void:
 	save_settings()
 
 
+## Sets the graphics quality preset string and saves settings.
 func set_graphics_quality(quality: String) -> void:
 	graphics_quality = quality
 	save_settings()
 
 
+## Replaces the first binding of the named input action and saves settings.
 func remap_action(action_name: String, new_event: InputEvent) -> void:
 	InputMap.action_erase_events(action_name)
 	InputMap.action_add_event(action_name, new_event)
