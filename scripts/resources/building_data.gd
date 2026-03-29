@@ -23,7 +23,7 @@ extends Resource
 @export var upgraded_damage: float = 35.0
 ## Shots per second.
 @export var fire_rate: float = 1.0
-## Attack range in world units.
+## Attack range in world units (external specs use the word "range"; the GDScript keyword `range` cannot be a member name).
 @export var attack_range: float = 15.0
 ## Attack range after upgrade.
 @export var upgraded_range: float = 18.0
@@ -117,8 +117,8 @@ extends Resource
 # ---------------------------------------------------------------------------
 
 @export_flags("ground", "air", "boss", "structure", "summoned") var target_flags: int = 0
-## Optional projectile scene override (`res://` to PackedScene).
-@export var projectile_scene: String = ""
+## Optional projectile scene override (null = use BuildingBase default projectile).
+@export var projectile_scene: PackedScene = null
 ## Splash radius in world units (0 = single-target impact only).
 @export var splash_radius: float = 0.0
 ## DoT DPS; ticks may still use `dot_tick_interval` / `dot_duration` from legacy fields.
@@ -132,7 +132,7 @@ extends Resource
 @export var summon_leader_data: AllyData = null
 @export var summon_follower_data: AllyData = null
 @export var summon_follower_count: int = 0
-@export var summon_type: Types.SummonSpawnType = Types.SummonSpawnType.NONE
+@export var summon_type: Types.SummonLifetimeType = Types.SummonLifetimeType.NONE
 @export var respawn_cooldown: float = 0.0
 @export var summon_is_ground: bool = true
 @export var summon_is_blocker: bool = false
@@ -146,7 +146,7 @@ extends Resource
 @export var aura_radius: float = 0.0
 @export_flags("allies", "buildings", "summons", "tower") var aura_targets: int = 0
 @export var aura_stat: Types.AuraStat = Types.AuraStat.DAMAGE
-@export var aura_modifier_type: Types.AuraModifierKind = Types.AuraModifierKind.ADD_FLAT
+@export var aura_modifier_type: Types.AuraModifierOp = Types.AuraModifierOp.ADD
 @export var aura_modifier_value: float = 0.0
 ## When true, `aura_damage_type_filter` restricts which incoming damage types receive the aura.
 @export var aura_limit_damage_type: bool = false
@@ -187,6 +187,11 @@ extends Resource
 ## Campaign day index at which this blueprint appears (0 = no gate).
 @export var campaign_unlock_day: int = 0
 @export var tags: PackedStringArray = PackedStringArray()
+
+
+## Attack range in world units (alias for authoring tools / external specs that refer to “range”).
+func get_range() -> float:
+	return attack_range
 
 
 ## Effective gold cost for placement (respects legacy `gold_cost` when override unset).

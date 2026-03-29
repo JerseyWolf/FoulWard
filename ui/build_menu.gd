@@ -92,7 +92,9 @@ func _refresh() -> void:
 		var is_unlocked: bool = _hex_grid.is_building_available(bt)
 		var gc: int = EconomyManager.get_gold_cost(bd)
 		var mc: int = EconomyManager.get_material_cost(bd)
-		var can_afford: bool = EconomyManager.can_afford(gc, mc)
+		var can_afford: bool = EconomyManager.can_afford_building(
+				bd, EconomyManager.get_gold(), EconomyManager.get_building_material()
+		)
 
 		btn.icon = ArtPlaceholderHelper.get_building_icon(bt)
 		btn.expand_icon = true

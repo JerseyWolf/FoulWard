@@ -5,6 +5,8 @@ class_name SpawnEntryData
 extends Resource
 
 @export var enemy_data: EnemyData = null
+## When `enemy_data` is resolved at load time from a catalog, set this id for validation / tooling.
+@export var enemy_id: String = ""
 @export var count: int = 1
 @export var start_time_sec: float = 0.0
 @export var interval_sec: float = 0.5
@@ -19,8 +21,8 @@ extends Resource
 
 func collect_validation_warnings() -> PackedStringArray:
 	var out: PackedStringArray = PackedStringArray()
-	if enemy_data == null:
-		out.append("enemy_data is null")
+	if enemy_data == null and enemy_id.strip_edges().is_empty():
+		out.append("enemy_data is null and enemy_id is empty")
 	if count < 1:
 		out.append("count < 1")
 	if interval_sec < 0.0:

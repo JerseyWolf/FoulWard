@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run_gdunit_unit.sh — Runs only pure unit tests (36 files, ~65s wall-clock).
+# run_gdunit_unit.sh — Runs only pure unit tests (37 files, ~65s wall-clock).
 # Engine startup overhead dominates; individual tests run in milliseconds.
 # Use for focused coverage checks. For fast iteration, use run_gdunit_quick.sh.
 # GdUnit4 accepts multiple -a flags in one process (same pattern as run_gdunit_quick.sh).
@@ -58,6 +58,7 @@ UNIT_SUITES=(
 	"res://tests/unit/test_building_kit.gd"
 	"res://tests/unit/test_terrain.gd"
 	"res://tests/unit/test_mission_spawn_routing.gd"
+	"res://tests/unit/test_td_resource_helpers.gd"
 	"res://tests/unit/test_economy_mission_integration.gd"
 )
 

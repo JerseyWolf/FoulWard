@@ -259,4 +259,3 @@ func _get_display_name(character_id: String) -> String:
 			return "Example"
 		_:
 			return character_id
-

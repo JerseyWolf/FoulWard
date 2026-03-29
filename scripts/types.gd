@@ -117,6 +117,15 @@ enum AllyRole {
 	SPELL_SUPPORT,
 }
 
+## Combat role for [AllyData] tower-defense data (Prompt 42). Distinct from [enum AllyRole] (mercenary / SimBot legacy).
+enum AllyCombatRole {
+	MELEE,
+	RANGED,
+	HEALER,
+	BOMBER,
+	AURA,
+}
+
 enum StrategyProfile {
 	BALANCED,
 	ALLY_HEAVY_PHYSICAL,
@@ -167,6 +176,10 @@ enum BuildingSizeClass {
 	SINGLE_SLOT,
 	DOUBLE_WIDE,
 	TRIPLE_CLUSTER,
+	## Ring footprint tiers (Prompt 42); orthogonal to SINGLE_SLOT / DOUBLE_WIDE slot geometry.
+	SMALL,
+	MEDIUM,
+	LARGE,
 }
 
 ## Rough unit footprint for allies / summons (balance + pathing hints).
@@ -186,19 +199,24 @@ enum AllyAiMode {
 	FOLLOW_LEADER,
 }
 
-## How a summoner or ally lifecycle ties to waves / the ground mesh.
-enum SummonSpawnType {
+## Summoned unit lifetime category (buildings + allies; Prompt 42).
+enum SummonLifetimeType {
 	NONE,
-	GROUND_FOLLOWER,
-	AIR_FOLLOWER,
-	GROUND_BLOCKER,
-	AIR_BLOCKER,
+	MORTAL,
+	RECURRING,
+	IMMORTAL,
 }
 
-## Aura stacking / modification style for support towers and allies.
+## Aura stacking / modification style for support towers and allies (legacy / extended tuning).
 enum AuraModifierKind {
 	ADD_FLAT,
 	ADD_PERCENT,
+	MULTIPLY,
+}
+
+## Simplified aura math mode for data resources (Prompt 42): additive vs multiplicative.
+enum AuraModifierOp {
+	ADD,
 	MULTIPLY,
 }
 
@@ -228,6 +246,8 @@ enum EnemyBodyType {
 	BOSS,
 	STRUCTURE,
 	LARGE_GROUND,
+	SIEGE,
+	ETHEREAL,
 }
 
 ## Content pipeline status for mission JSON / exports.

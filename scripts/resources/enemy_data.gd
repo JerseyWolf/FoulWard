@@ -43,6 +43,8 @@ extends Resource
 @export var description: String = ""
 ## Optional icon path.
 @export var icon: String = ""
+## Optional PackedScene root for this enemy (empty = spawner default / enum scene).
+@export var scene_path: String = ""
 
 ## Flat mitigation layered with `armor_type` matrix (designer-tunable).
 @export var armor_flat: float = 0.0
@@ -86,6 +88,14 @@ func get_effective_bounty_gold() -> int:
 	return gold_reward if bounty_gold < 0 else bounty_gold
 
 
+## Stable identity for catalog and mission tooling (prefers `id`, then enum name).
+func get_identity() -> String:
+	var s: String = id.strip_edges()
+	if not s.is_empty():
+		return s
+	return str(enemy_type)
+
+
 ## Leak damage to Florence when > 0; otherwise callers may use legacy `damage`.
 func get_effective_contact_damage_to_florence() -> int:
 	return damage if contact_damage_to_florence <= 0 else contact_damage_to_florence
@@ -94,9 +104,18 @@ func get_effective_contact_damage_to_florence() -> int:
 ## Bits describing this unit for tower `target_flags` matching (OR semantics vs building mask).
 func get_target_flag_bits() -> int:
 	var bits: int = 0
-	if body_type == Types.EnemyBodyType.GROUND or body_type == Types.EnemyBodyType.LARGE_GROUND:
+	if (
+			body_type == Types.EnemyBodyType.GROUND
+			or body_type == Types.EnemyBodyType.LARGE_GROUND
+			or body_type == Types.EnemyBodyType.SIEGE
+	):
 		bits |= TARGET_FLAG_GROUND
-	if is_flying or body_type == Types.EnemyBodyType.FLYING or body_type == Types.EnemyBodyType.HOVER:
+	if (
+			is_flying
+			or body_type == Types.EnemyBodyType.FLYING
+			or body_type == Types.EnemyBodyType.HOVER
+			or body_type == Types.EnemyBodyType.ETHEREAL
+	):
 		bits |= TARGET_FLAG_AIR
 	if body_type == Types.EnemyBodyType.BOSS:
 		bits |= TARGET_FLAG_BOSS

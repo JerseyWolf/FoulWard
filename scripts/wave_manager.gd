@@ -114,7 +114,7 @@ var _mission_data: Resource = null
 ## Base seed mixed into per-wave seeds for deterministic lane/path picks.
 var mission_spawn_seed: int = 0
 var _using_spawn_queue: bool = false
-var _active_spawn_queue: Array = []
+var _active_spawn_queue: Array[Dictionary] = []
 var _queue_spawn_index: int = 0
 var _wave_spawn_elapsed: float = 0.0
 
@@ -246,7 +246,7 @@ func reset_for_new_mission() -> void:
 	_mission_data = null
 	mission_spawn_seed = 0
 	_using_spawn_queue = false
-	_active_spawn_queue.clear()
+	_active_spawn_queue = []
 	_queue_spawn_index = 0
 	_wave_spawn_elapsed = 0.0
 	clear_all_enemies()
@@ -357,27 +357,31 @@ func clear_all_enemies() -> void:
 
 
 ## Builds ordered spawn rows for a wave (deterministic `seed` for lane/path RNG).
-func build_spawn_queue(wave: Resource, seed: int = 0) -> Array:
-	var routing: Resource = null
-	if _mission_data != null:
-		routing = _mission_data.get("routing")
-	return _MissionSpawnRouting.build_spawn_queue(wave, routing, enemy_data_registry, seed)
+func build_spawn_queue(wave: WaveData, routing: MissionRoutingData = null, seed: int = 0) -> Array[Dictionary]:
+	var r: MissionRoutingData = routing
+	if r == null and _mission_data != null:
+		r = _mission_data.get("routing") as MissionRoutingData
+	return _MissionSpawnRouting.build_spawn_queue(wave, r, seed)
 
 
-## Resolves a path id for one spawn entry using routing rules and RNG.
-func resolve_path_for_spawn(entry: Variant, rng: RandomNumberGenerator) -> String:
+## Resolves a `RoutePathData` for one spawn entry using routing rules and RNG.
+func resolve_path_for_spawn(entry: SpawnEntryData, rng: RandomNumberGenerator) -> RoutePathData:
+	if entry == null:
+		return null
 	var ed: EnemyData = entry.enemy_data as EnemyData
-	var routing: Resource = null
+	if ed == null:
+		return null
+	var r: MissionRoutingData = null
 	if _mission_data != null:
-		routing = _mission_data.get("routing")
-	return _MissionSpawnRouting.resolve_path_for_spawn(entry, routing, rng, ed)
+		r = _mission_data.get("routing") as MissionRoutingData
+	return _MissionSpawnRouting.resolve_path_for_spawn(entry, r, rng, ed)
 
 
-func validate_routing(routing: Resource) -> bool:
+func validate_routing(routing: MissionRoutingData) -> Array[String]:
 	return _MissionSpawnRouting.validate_routing(routing)
 
 
-func validate_wave(wave: Resource) -> bool:
+func validate_wave(wave: WaveData) -> Array[String]:
 	return _MissionSpawnRouting.validate_wave(wave)
 
 
@@ -385,12 +389,12 @@ func validate_mission(data: Resource) -> bool:
 	return _MissionSpawnRouting.validate_mission(data)
 
 
-func _path_accepts_enemy(path_data: Resource, enemy_data: EnemyData) -> bool:
+func _path_accepts_enemy(path_data: RoutePathData, enemy_data: EnemyData) -> bool:
 	return _MissionSpawnRouting._path_accepts_enemy(path_data, enemy_data)
 
 
-## Spawns one enemy with day multipliers and optional RoutePathData placement hints.
-func spawn_enemy_on_path(enemy_data: EnemyData, path_data: Resource) -> EnemyBase:
+## Spawns one enemy with day multipliers and optional `RoutePathData` placement (Curve3D start / spawn markers).
+func spawn_enemy_on_path(enemy_data: EnemyData, path_data: RoutePathData) -> Node:
 	if enemy_data == null:
 		return null
 	if _enemy_container == null or _spawn_points == null:
@@ -568,14 +572,10 @@ func _spawn_wave(wave_number: int) -> void:
 		total_spawned += _spawn_boss_wave()
 
 	if _mission_data != null and _mission_data.call("has_wave_entries", wave_number):
-		var wdata: Resource = _mission_data.call("get_wave", wave_number)
+		var wdata: WaveData = _mission_data.call("get_wave", wave_number) as WaveData
 		var wave_seed: int = mission_spawn_seed + wave_number * 1315423911
-		_active_spawn_queue = _MissionSpawnRouting.build_spawn_queue(
-				wdata,
-				_mission_data.get("routing"),
-				enemy_data_registry,
-				wave_seed
-		)
+		var mission_routing: MissionRoutingData = _mission_data.get("routing") as MissionRoutingData
+		_active_spawn_queue = _MissionSpawnRouting.build_spawn_queue(wdata, mission_routing, wave_seed)
 		if _active_spawn_queue.is_empty():
 			push_warning(
 					"WaveManager: mission wave %d produced no spawn rows; using faction roster."
@@ -660,32 +660,34 @@ func _spawn_wave(wave_number: int) -> void:
 func _process_spawn_queue(delta: float) -> void:
 	_wave_spawn_elapsed += delta
 	while _queue_spawn_index < _active_spawn_queue.size():
-		var row_v: Variant = _active_spawn_queue[_queue_spawn_index]
-		if float(row_v.spawn_time_sec) > _wave_spawn_elapsed:
+		var row: Dictionary = _active_spawn_queue[_queue_spawn_index]
+		if float(row.get("spawn_time_sec", 0.0)) > _wave_spawn_elapsed:
 			break
-		_spawn_enemy_from_queue_row(row_v)
+		_spawn_enemy_from_queue_row(row)
 		_queue_spawn_index += 1
 	if _queue_spawn_index >= _active_spawn_queue.size():
 		_using_spawn_queue = false
 
 
-func _spawn_enemy_from_queue_row(row_v: Variant) -> void:
-	var row_ed: EnemyData = row_v.enemy_data as EnemyData
+func _spawn_enemy_from_queue_row(row: Dictionary) -> void:
+	var row_ed: EnemyData = row.get("enemy_data") as EnemyData
 	if row_ed == null:
 		return
-	var lane_id: String = str(row_v.lane_id)
-	var path_id: String = str(row_v.path_id)
-	var path_data: Resource = null
+	var lane_id: String = str(row.get("lane_id", ""))
+	var path_id: String = str(row.get("path_id", ""))
+	var path_data: RoutePathData = null
 	if _mission_data != null and _mission_data.get("routing") != null and not path_id.is_empty():
-		var routing_obj: Resource = _mission_data.get("routing") as Resource
-		path_data = routing_obj.call("get_path_by_id", path_id)
-	var enemy: EnemyBase = spawn_enemy_on_path(row_ed, path_data)
-	if enemy != null:
-		enemy.assigned_lane_id = lane_id
-		enemy.assigned_path_id = path_id
+		var routing_obj: MissionRoutingData = _mission_data.get("routing") as MissionRoutingData
+		if routing_obj != null:
+			path_data = routing_obj.get_path_by_id(path_id)
+	var enemy: Node = spawn_enemy_on_path(row_ed, path_data)
+	if enemy is EnemyBase:
+		var eb: EnemyBase = enemy as EnemyBase
+		eb.assigned_lane_id = lane_id
+		eb.assigned_path_id = path_id
 
 
-func _place_enemy_for_path(enemy: EnemyBase, path_data: Resource, tuned: EnemyData) -> void:
+func _place_enemy_for_path(enemy: EnemyBase, path_data: RoutePathData, tuned: EnemyData) -> void:
 	var spawn_point_nodes: Array[Node] = _spawn_points.get_children()
 	if spawn_point_nodes.is_empty():
 		return

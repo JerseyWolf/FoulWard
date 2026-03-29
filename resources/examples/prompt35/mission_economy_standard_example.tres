@@ -14,5 +14,5 @@ wave_clear_bonus_material = 5
 leak_penalty_gold = 15
 leak_penalty_material = 0
 sell_refund_global_multiplier = 1.0
-duplicate_cost_k_override = 0.0
+duplicate_cost_k_override = -1.0
 tags = PackedStringArray("example", "standard")
