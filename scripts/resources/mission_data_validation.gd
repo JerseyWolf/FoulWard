@@ -146,7 +146,8 @@ static func validate_wave(wave: WaveData) -> PackedStringArray:
 			ei += 1
 			continue
 		if e.enemy_data == null:
-			out.append("%s: enemy_data is null" % eprefix)
+			if e.enemy_id.strip_edges().is_empty():
+				out.append("%s: enemy_data is null and enemy_id is empty" % eprefix)
 		else:
 			var ed: EnemyData = e.enemy_data
 			if ed.max_hp <= 0:

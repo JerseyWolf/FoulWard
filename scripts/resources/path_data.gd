@@ -1,5 +1,9 @@
 ## path_data.gd
 ## Spatial path binding for a lane (Curve3D asset + routing rules).
+##
+## Design/spec documents refer to this as **PathData**. The registered `class_name` is
+## `RoutePathData` because Godot already defines a built-in `PathData` type; use
+## `RoutePathData` everywhere in GDScript to avoid parser/shadowing issues.
 
 ## Named `RoutePathData` to avoid clashing with Godot's built-in `PathData` type name.
 class_name RoutePathData
@@ -9,11 +13,20 @@ extends Resource
 @export var display_name: String = ""
 @export var lane_id: String = ""
 
-## `res://` path to a Curve3D resource (or PackedScene holding one — loader interprets).
-@export var curve3d_path: String = ""
+## Path to a Curve3D resource or scene sub-path (often `res://.../*.tres`; loader interprets).
+@export var curve3d_path: NodePath = NodePath("")
 
-# Bitmask: flag index matches `Types.EnemyBodyType` ordinal (0..5).
-@export_flags("ground", "flying", "hover", "boss", "structure", "large_ground") var body_types_allowed: int = 0
+# Bitmask: flag index matches `Types.EnemyBodyType` ordinal (0..7).
+@export_flags(
+		"ground",
+		"flying",
+		"hover",
+		"boss",
+		"structure",
+		"large_ground",
+		"siege",
+		"ethereal"
+) var body_types_allowed: int = 0
 
 ## Cached path length for AI lookahead / wave timing (0 = compute at runtime).
 @export var total_length_hint: float = 0.0

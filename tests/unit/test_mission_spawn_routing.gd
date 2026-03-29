@@ -20,11 +20,10 @@ func test_build_spawn_queue_respects_explicit_path_id() -> void:
 	se.path_id = "north"
 	wave.spawn_entries = [se]
 
-	var registry: Array[EnemyData] = [_orc_grunt_data()]
-	var rows: Array = MissionSpawnRouting.build_spawn_queue(wave, routing, registry, 42)
+	var rows: Array[Dictionary] = MissionSpawnRouting.build_spawn_queue(wave, routing, 42)
 	assert_int(rows.size()).is_equal(1)
-	var r0: Variant = rows[0]
-	assert_str(r0.path_id).is_equal("north")
+	var r0: Dictionary = rows[0]
+	assert_str(str(r0.get("path_id", ""))).is_equal("north")
 
 
 func test_lane_pick_is_deterministic_with_seed() -> void:
@@ -53,12 +52,11 @@ func test_lane_pick_is_deterministic_with_seed() -> void:
 	se.lane_id = "L1"
 	wave.spawn_entries = [se]
 
-	var registry: Array[EnemyData] = [_orc_grunt_data()]
-	var a: Array = MissionSpawnRouting.build_spawn_queue(wave, routing, registry, 999)
-	var b: Array = MissionSpawnRouting.build_spawn_queue(wave, routing, registry, 999)
+	var a: Array[Dictionary] = MissionSpawnRouting.build_spawn_queue(wave, routing, 999)
+	var b: Array[Dictionary] = MissionSpawnRouting.build_spawn_queue(wave, routing, 999)
 	assert_int(a.size()).is_equal(3)
 	for i: int in range(3):
-		assert_str(a[i].path_id).is_equal(b[i].path_id)
+		assert_str(str(a[i].get("path_id", ""))).is_equal(str(b[i].get("path_id", "")))
 
 
 func test_path_rejects_wrong_body_type() -> void:
@@ -83,9 +81,38 @@ func test_path_rejects_wrong_body_type() -> void:
 	se.lane_id = "L1"
 	wave.spawn_entries = [se]
 
-	var registry: Array[EnemyData] = [_orc_grunt_data()]
-	var rows: Array = MissionSpawnRouting.build_spawn_queue(wave, routing, registry, 1)
-	assert_str(rows[0].path_id).is_equal("")
+	var rows: Array[Dictionary] = MissionSpawnRouting.build_spawn_queue(wave, routing, 1)
+	assert_str(str(rows[0].get("path_id", ""))).is_equal("")
+
+
+func test_spawn_offset_variance_is_deterministic() -> void:
+	var routing: MissionRoutingData = MissionRoutingData.new()
+	var path_g: RoutePathData = RoutePathData.new()
+	path_g.id = "p0"
+	path_g.lane_id = "L0"
+	path_g.body_types_allowed = 0
+	routing.paths = [path_g]
+	var lane: LaneData = LaneData.new()
+	lane.id = "L0"
+	lane.allowed_path_ids = PackedStringArray(["p0"])
+	routing.lanes = [lane]
+
+	var wave: WaveData = WaveData.new()
+	wave.wave_number = 1
+	var se: SpawnEntryData = SpawnEntryData.new()
+	se.enemy_data = _orc_grunt_data()
+	se.count = 2
+	se.start_time_sec = 1.0
+	se.interval_sec = 1.0
+	se.lane_id = "L0"
+	se.spawn_offset_variance_sec = 0.25
+	wave.spawn_entries = [se]
+
+	var a: Array[Dictionary] = MissionSpawnRouting.build_spawn_queue(wave, routing, 777)
+	var b: Array[Dictionary] = MissionSpawnRouting.build_spawn_queue(wave, routing, 777)
+	assert_int(a.size()).is_equal(2)
+	assert_float(float(a[0].get("spawn_time_sec", 0.0))).is_equal(float(b[0].get("spawn_time_sec", 0.0)))
+	assert_float(float(a[1].get("spawn_time_sec", 0.0))).is_equal(float(b[1].get("spawn_time_sec", 0.0)))
 
 
 func test_validate_mission() -> void:

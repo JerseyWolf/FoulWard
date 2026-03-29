@@ -489,19 +489,23 @@ func _score_offer(
 func _role_alignment_score(role: int, strategy: Types.StrategyProfile) -> float:
 	match strategy:
 		Types.StrategyProfile.ALLY_HEAVY_PHYSICAL:
-			if role == int(Types.AllyRole.MELEE_FRONTLINE):
+			if role == int(Types.AllyCombatRole.MELEE):
 				return 2.0
-			if role == int(Types.AllyRole.RANGED_SUPPORT):
+			if role == int(Types.AllyCombatRole.RANGED):
 				return 1.5
 			return 0.0
 		Types.StrategyProfile.ANTI_AIR_FOCUS:
-			if role == int(Types.AllyRole.ANTI_AIR):
+			if role == int(Types.AllyCombatRole.RANGED):
 				return 2.0
-			if role == int(Types.AllyRole.RANGED_SUPPORT):
+			if role == int(Types.AllyCombatRole.HEALER):
 				return 0.5
 			return 0.0
 		Types.StrategyProfile.SPELL_FOCUS:
-			if role == int(Types.AllyRole.SPELL_SUPPORT):
+			if (
+					role == int(Types.AllyCombatRole.HEALER)
+					or role == int(Types.AllyCombatRole.BOMBER)
+					or role == int(Types.AllyCombatRole.AURA)
+			):
 				return 2.0
 			return 0.0
 		Types.StrategyProfile.BUILDING_FOCUS:

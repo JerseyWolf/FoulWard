@@ -208,6 +208,8 @@ func _try_place_building(
 	else:
 		building.record_initial_purchase(0, 0)
 	building.set_slot_index_for_stats(slot_index)
+	building.ring_index = _ring_index_for_slot(slot_index)
+	building.placed_instance_id = building.get_instance_id()
 	building.add_to_group("buildings")
 	_activate_building_obstacle(building)
 
@@ -281,8 +283,8 @@ func upgrade_building(slot_index: int) -> bool:
 
 	var building: BuildingBase = slot["building"] as BuildingBase
 
-	if building.is_upgraded:
-		push_warning("HexGrid.upgrade_building: building on slot %d already upgraded" % slot_index)
+	if not building.can_upgrade():
+		push_warning("HexGrid.upgrade_building: building on slot %d cannot upgrade" % slot_index)
 		return false
 
 	var building_data: BuildingData = building.get_building_data()
@@ -301,9 +303,14 @@ func upgrade_building(slot_index: int) -> bool:
 		return false
 
 	building.record_upgrade_cost(ug.x, ug.y)
-	building.upgrade()
+	var next_chain: BuildingData = building_data.upgrade_next
+	if next_chain != null:
+		building.apply_upgrade(next_chain)
+	else:
+		building.upgrade()
 
-	SignalBus.building_upgraded.emit(slot_index, building_data.building_type)
+	var upgraded_type: Types.BuildingType = building.get_building_data().building_type
+	SignalBus.building_upgraded.emit(slot_index, upgraded_type)
 	return true
 
 
@@ -516,6 +523,15 @@ func _apply_build_slot_highlights() -> void:
 
 func _is_valid_index(slot_index: int) -> bool:
 	return slot_index >= 0 and slot_index < TOTAL_SLOTS
+
+
+## Ring index 0 = inner (6 slots), 1 = middle (12), 2 = outer (6).
+func _ring_index_for_slot(slot_index: int) -> int:
+	if slot_index < RING1_COUNT:
+		return 0
+	if slot_index < RING1_COUNT + RING2_COUNT:
+		return 1
+	return 2
 
 # ---------------------------------------------------------------------------
 # Signal handlers

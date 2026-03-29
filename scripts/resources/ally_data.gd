@@ -6,8 +6,12 @@
 extends Resource
 class_name AllyData
 
+## Optional stable id for catalogs / missions; when empty, tooling uses [member ally_id].
+@export var id: String = ""
 ## Unique string identifier for this ally, matching mercenary catalog entries.
 @export var ally_id: String = ""
+## Optional display/catalog identity override; when empty, get_identity() uses ally_id.
+@export var identity: String = ""
 ## Human-readable name shown in UI and debug labels.
 @export var display_name: String = ""
 ## Human-readable description of the enchantment's effect shown in UI.
@@ -16,8 +20,8 @@ class_name AllyData
 ## Combat class (MELEE/RANGED/SUPPORT) used by AllyBase for AI behaviour.
 @export var ally_class: Types.AllyClass = Types.AllyClass.MELEE
 
-## Combat role tag for SimBot scoring and future AI preferences.
-@export var role: Types.AllyRole = Types.AllyRole.MELEE_FRONTLINE
+## Combat role for TD data and roster scoring (see [enum Types.AllyCombatRole]).
+@export var role: Types.AllyCombatRole = Types.AllyCombatRole.MELEE
 ## Damage type this ally's attacks deal, used by the damage matrix.
 @export var damage_type: Types.DamageType = Types.DamageType.PHYSICAL
 ## When true, ally AI may prefer flying targets (POST-MVP targeting).
@@ -31,6 +35,8 @@ class_name AllyData
 @export var basic_attack_damage: float = 10.0
 ## Primary attack damage; if zero, `basic_attack_damage` is used at runtime.
 @export var attack_damage: float = 0.0 # TUNING
+## Data-driven hit/shot damage (Prompt 42); when >0, preferred over legacy attack fields for new pipelines.
+@export var damage: float = 0.0
 ## Range in world units at which this entity can initiate an attack.
 @export var attack_range: float = 2.0
 ## Seconds between consecutive attacks.
@@ -94,6 +100,8 @@ class_name AllyData
 @export var dot_duration: float = 0.0
 @export var dot_damage_per_second: float = 0.0
 
+@export_flags("ground", "air", "boss", "structure", "summoned") var target_flags: int = 0
+
 ## Blocker / body footprint for navigation and tower interactions.
 @export var is_blocker: bool = false
 @export var collision_radius: float = 1.0
@@ -110,7 +118,7 @@ class_name AllyData
 @export var aura_radius: float = 0.0
 @export_flags("allies", "self", "tower") var aura_targets: int = 0
 @export var aura_stat: Types.AuraStat = Types.AuraStat.DAMAGE
-@export var aura_modifier_type: Types.AuraModifierKind = Types.AuraModifierKind.ADD_FLAT
+@export var aura_modifier_type: Types.AuraModifierOp = Types.AuraModifierOp.ADD
 @export var aura_modifier_value: float = 0.0
 @export var aura_limit_damage_type: bool = false
 @export var aura_damage_type_filter: Types.DamageType = Types.DamageType.PHYSICAL
@@ -122,11 +130,29 @@ class_name AllyData
 @export var cleanse_on_heal: bool = false
 @export var shield_on_heal: float = 0.0
 
-@export var summon_type: Types.SummonSpawnType = Types.SummonSpawnType.NONE
+@export var summon_type: Types.SummonLifetimeType = Types.SummonLifetimeType.NONE
 @export var respawn_cooldown: float = 0.0
 @export var despawn_at_wave_end: bool = false
+## Lifetime cap for summons / temporary allies (0 = no automatic expiry).
+@export var max_lifetime_sec: float = 0.0
 
 @export var tags: PackedStringArray = PackedStringArray()
+
+
+## Stable identity string for saves, UI, and wave tooling (prefers `id`, then `identity`, then `ally_id`).
+func get_identity() -> String:
+	var sid: String = id.strip_edges()
+	if not sid.is_empty():
+		return sid
+	var s: String = identity.strip_edges()
+	if not s.is_empty():
+		return s
+	return ally_id.strip_edges()
+
+
+## Weapon range in world units (spec alias for [member attack_range]).
+func get_range() -> float:
+	return attack_range
 
 
 ## Effective fire rate (Hz); uses `attack_cooldown` when `fire_rate` is unset.

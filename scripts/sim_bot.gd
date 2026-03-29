@@ -798,7 +798,7 @@ func _choose_upgrade_action_if_desired(build_count: int) -> Dictionary:
 		var building: BuildingBase = slot_data.get("building") as BuildingBase
 		if building == null:
 			continue
-		if building.is_upgraded:
+		if not building.can_upgrade():
 			continue
 
 		var bdata: BuildingData = building.get_building_data()

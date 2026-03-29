@@ -4,8 +4,9 @@
 
 extends Node
 
-## When mission `duplicate_cost_k_override` is <= 0, use this per-duplicate multiplier (TD-style scaling).
-const DEFAULT_DUPLICATE_COST_K: float = 1.15
+## When mission `duplicate_cost_k_override` is negative (typically [code]-1.0[/code] for "no override"), use this linear duplicate coefficient:
+## multiplier = 1.0 + k * n (n = copies already purchased this mission for that building id).
+const DEFAULT_DUPLICATE_COST_K: float = 0.08
 
 const DEFAULT_GOLD: int = 1000
 const DEFAULT_BUILDING_MATERIAL: int = 50
@@ -27,8 +28,9 @@ var research_material: int = DEFAULT_RESEARCH_MATERIAL
 ## Mission-scoped economy (optional). Cleared in `reset_to_defaults`.
 var _mission_economy: MissionEconomyData = null
 var _sell_refund_global_multiplier: float = 1.0
-## Count of paid placements per building type (for duplicate cost curve). Not decremented on sell.
-var _duplicate_placements_by_type: Dictionary = {} # int (Types.BuildingType) -> int
+## Count of paid placements per stable building id (see `_duplicate_key`). Not decremented on sell.
+## Reset on `reset_to_defaults` and when a new mission economy is applied.
+var _duplicate_placements_by_id: Dictionary = {} # String -> int
 var _passive_gold_accum: float = 0.0
 var _passive_material_accum: float = 0.0
 
@@ -153,16 +155,42 @@ func get_research_material() -> int:
 
 # ── Mission economy & building transactions ────────────────────────────────────
 
-## Effective gold to place [param building_data] (duplicate scaling when enabled).
+func _duplicate_key(building_data: BuildingData) -> String:
+	if building_data == null:
+		return ""
+	var id_str: String = building_data.id.strip_edges()
+	if not id_str.is_empty():
+		return id_str
+	return "building_type:%d" % int(building_data.building_type)
+
+
+## Number of paid placements this mission for [param building_id] (same key as duplicate scaling).
+func get_duplicate_count(building_id: String) -> int:
+	var key: String = building_id.strip_edges()
+	if key.is_empty():
+		return 0
+	return int(_duplicate_placements_by_id.get(key, 0))
+
+
+## Multiplier applied to base placement costs when `apply_duplicate_scaling` is true (next purchase).
+## Returns 1.0 when duplicate scaling is off or [param building_data] is null.
+func get_cost_multiplier(building_data: BuildingData) -> float:
+	if building_data == null or not building_data.apply_duplicate_scaling:
+		return 1.0
+	var n: int = get_duplicate_count(_duplicate_key(building_data))
+	var k: float = _get_duplicate_cost_k()
+	return 1.0 + k * float(n)
+
+
+## Effective gold to place [param building_data] (duplicate linear scaling when enabled).
 func get_gold_cost(building_data: BuildingData) -> int:
 	if building_data == null:
 		return 0
 	var base: int = building_data.get_effective_cost_gold()
 	if not building_data.apply_duplicate_scaling:
 		return base
-	var n: int = int(_duplicate_placements_by_type.get(building_data.building_type, 0))
-	var k: float = _get_duplicate_cost_k()
-	return int(round(float(base) * pow(k, float(n))))
+	var mult: float = get_cost_multiplier(building_data)
+	return int(round(float(base) * mult))
 
 
 ## Effective material to place [param building_data].
@@ -172,25 +200,33 @@ func get_material_cost(building_data: BuildingData) -> int:
 	var base: int = building_data.get_effective_cost_material()
 	if not building_data.apply_duplicate_scaling:
 		return base
-	var n: int = int(_duplicate_placements_by_type.get(building_data.building_type, 0))
-	var k: float = _get_duplicate_cost_k()
-	return int(round(float(base) * pow(k, float(n))))
+	var mult: float = get_cost_multiplier(building_data)
+	return int(round(float(base) * mult))
 
 
 func _get_duplicate_cost_k() -> float:
 	if _mission_economy is MissionEconomyData:
 		var me: MissionEconomyData = _mission_economy as MissionEconomyData
-		if me.duplicate_cost_k_override > 0.0:
+		if me.duplicate_cost_k_override >= 0.0:
 			return me.duplicate_cost_k_override
 	return DEFAULT_DUPLICATE_COST_K
 
 
-## Call after a successful **paid** placement (not shop-free vouchers).
+## Call after a successful **paid** placement (not shop-free vouchers). Counts toward duplicate scaling only for new placements.
 func register_purchase(building_data: BuildingData) -> void:
 	if building_data == null:
 		return
-	var t: Types.BuildingType = building_data.building_type
-	_duplicate_placements_by_type[t] = int(_duplicate_placements_by_type.get(t, 0)) + 1
+	var key: String = _duplicate_key(building_data)
+	if key.is_empty():
+		return
+	_duplicate_placements_by_id[key] = int(_duplicate_placements_by_id.get(key, 0)) + 1
+
+
+## True if [param wallet_gold] / [param wallet_material] cover `get_*_cost` for this placement (duplicate scaling included).
+func can_afford_building(building_data: BuildingData, wallet_gold: int, wallet_material: int) -> bool:
+	if building_data == null:
+		return false
+	return wallet_gold >= get_gold_cost(building_data) and wallet_material >= get_material_cost(building_data)
 
 
 ## Sell refund: `invested * sell_refund_fraction * sell_refund_global_multiplier` (rounded per resource).
@@ -205,7 +241,9 @@ func get_refund(building_data: BuildingData, invested_gold: int, invested_materi
 
 
 ## Applies mission economy overrides and optional starting stock. Enables `_process` passive income when rates &gt; 0.
+## Clears per-mission duplicate placement counts whenever mission economy is (re)applied.
 func apply_mission_economy(econ: MissionEconomyData = null) -> void:
+	_duplicate_placements_by_id.clear()
 	_mission_economy = econ
 	_passive_gold_accum = 0.0
 	_passive_material_accum = 0.0
@@ -271,7 +309,7 @@ func apply_save_snapshot(g: int, building_mat: int, research_mat: int) -> void:
 func reset_to_defaults() -> void:
 	_mission_economy = null
 	_sell_refund_global_multiplier = 1.0
-	_duplicate_placements_by_type.clear()
+	_duplicate_placements_by_id.clear()
 	_passive_gold_accum = 0.0
 	_passive_material_accum = 0.0
 	set_process(false)

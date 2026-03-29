@@ -44,7 +44,13 @@ var _is_upgraded: bool = false
 var _attack_timer: float = 0.0
 var _current_target: EnemyBase = null
 var _special_timer: float = 0.0
-## Set by HexGrid on placement for CombatStatsTracker attribution.
+## Hex slot index (CombatStatsTracker / saves).
+var slot_id: int = -1
+## Ring tier 0..2 for analytics (set by HexGrid on placement).
+var ring_index: int = -1
+## Stable id for this placed instance (`get_instance_id()` after added to tree).
+var placed_instance_id: int = 0
+## Set by HexGrid on placement for CombatStatsTracker attribution (alias of [member slot_id]).
 var _slot_index_for_stats: int = -1
 
 # ---------------------------------------------------------------------------
@@ -70,6 +76,7 @@ var is_upgraded: bool:
 
 
 func set_slot_index_for_stats(slot_index: int) -> void:
+	slot_id = slot_index
 	_slot_index_for_stats = slot_index
 
 # ---------------------------------------------------------------------------
@@ -132,6 +139,15 @@ func initialize(data: BuildingData) -> void:
 	_current_target = null
 	_special_timer = data.special_pulse_interval * 0.25
 
+	_apply_visuals_from_building_data(data)
+
+	print("[Building] initialized: %s  dmg=%.0f range=%.1f fire_rate=%.2f  air=%s gnd=%s" % [
+		data.display_name, data.damage, data.attack_range, data.fire_rate,
+		data.targets_air, data.targets_ground
+	])
+
+
+func _apply_visuals_from_building_data(data: BuildingData) -> void:
 	# MVP visual: colored cube + label (use get_node — @onready is not set before _ready()).
 	var mesh_inst: MeshInstance3D = get_node_or_null("BuildingMesh") as MeshInstance3D
 	if mesh_inst != null:
@@ -139,9 +155,6 @@ func initialize(data: BuildingData) -> void:
 		mat.albedo_color = data.color
 		mesh_inst.material_override = mat
 
-	# TODO(ART): Optional GLB sub-scene per building_type under res://art/generated/buildings/.
-	# Art pipeline placeholder assignment (runtime override).
-	# NOTE: keep existing MVP color material generation for now; we override it via helper.
 	if mesh_inst != null:
 		var _art_mesh: Mesh = ArtPlaceholderHelper.get_building_mesh(data.building_type)
 		if _art_mesh != null:
@@ -150,7 +163,6 @@ func initialize(data: BuildingData) -> void:
 		if _art_mat != null:
 			mesh_inst.material_override = _art_mat
 
-	# Modular kit: non-default base/top enums assemble `res://art/generated/kit/*.glb` (BuildingData defaults = legacy mesh only).
 	if _should_use_building_kit_visual(data):
 		var existing_kit: Node = get_node_or_null("BuildingKitAssembly")
 		if is_instance_valid(existing_kit):
@@ -164,7 +176,6 @@ func initialize(data: BuildingData) -> void:
 		kit_visual.name = "BuildingKitAssembly"
 		kit_visual.position = Vector3.ZERO
 		add_child(kit_visual)
-		# TODO(ART-KIT): Replace GLB fallback boxes with final Hyper3D Rodin kit pieces per FUTURE_3D_MODELS_PLAN.md §4.
 		if mesh_inst != null:
 			mesh_inst.visible = false
 
@@ -172,15 +183,34 @@ func initialize(data: BuildingData) -> void:
 	if label_inst != null:
 		label_inst.text = data.display_name
 
-	print("[Building] initialized: %s  dmg=%.0f range=%.1f fire_rate=%.2f  air=%s gnd=%s" % [
-		data.display_name, data.damage, data.attack_range, data.fire_rate,
-		data.targets_air, data.targets_ground
-	])
 
-
-## Transitions the building from Basic to Upgraded tier.
+## Transitions the building from Basic to Upgraded tier (legacy two-tier rows without [member BuildingData.upgrade_next]).
 func upgrade() -> void:
 	_is_upgraded = true
+
+
+## Data-driven upgrade chain: true when a next tier exists or legacy upgrade is available.
+func can_upgrade() -> bool:
+	if _building_data == null:
+		return false
+	if _building_data.upgrade_next != null:
+		return true
+	return not _is_upgraded and _legacy_upgrade_costs_exist()
+
+
+func _legacy_upgrade_costs_exist() -> bool:
+	return _building_data.get_effective_upgrade_cost_gold() > 0 \
+			or _building_data.get_effective_upgrade_cost_material() > 0
+
+
+## Switches stats to [param next_data] without respawning the node (upgrade chain). Adds no cost — caller charges and calls [method record_upgrade_cost].
+func apply_upgrade(next_data: BuildingData) -> void:
+	if next_data == null:
+		push_warning("BuildingBase.apply_upgrade: next_data is null")
+		return
+	_building_data = next_data
+	_is_upgraded = next_data.upgrade_level > 0
+	_apply_visuals_from_building_data(next_data)
 
 
 ## Records actual placement spend (call once after EconomyManager charges).
@@ -227,6 +257,11 @@ func get_building_data() -> BuildingData:
 func get_effective_damage() -> float:
 	if _building_data == null:
 		return 0.0
+	# Upgrade chain: each tier row uses [member BuildingData.damage] as its shot damage.
+	if _building_data.upgrade_next != null or _building_data.upgrade_level > 0:
+		if _has_research_damage_boost():
+			return _building_data.upgraded_damage
+		return _building_data.damage
 	if _is_upgraded:
 		return _building_data.upgraded_damage
 	if _has_research_damage_boost():
@@ -238,6 +273,10 @@ func get_effective_damage() -> float:
 func get_effective_range() -> float:
 	if _building_data == null:
 		return 0.0
+	if _building_data.upgrade_next != null or _building_data.upgrade_level > 0:
+		if _has_research_range_boost():
+			return _building_data.upgraded_range
+		return _building_data.attack_range
 	if _is_upgraded:
 		return _building_data.upgraded_range
 	if _has_research_range_boost():
@@ -350,17 +389,86 @@ func _find_target() -> EnemyBase:
 	return best_target
 
 
+## Returns the preloaded default [member ProjectileScene] only if it can be instantiated (empty/corrupt scenes fail here).
+func _get_validated_default_projectile_packed_scene() -> PackedScene:
+	if ProjectileScene == null:
+		push_error("BuildingBase: default ProjectileScene preload is null (projectile_base.tscn missing or unloadable).")
+		return null
+	if not ProjectileScene.can_instantiate():
+		push_error(
+				"BuildingBase: default ProjectileScene cannot be instantiated — check res://scenes/projectiles/projectile_base.tscn"
+		)
+		return null
+	return ProjectileScene
+
+
+## Resolves projectile scene: optional [member BuildingData.projectile_scene] override, else default [member ProjectileScene].
+func _resolve_projectile_packed_scene() -> PackedScene:
+	if _building_data == null:
+		push_warning("BuildingBase._resolve_projectile_packed_scene: no building data")
+		return null
+	var override_ps: PackedScene = _building_data.projectile_scene
+	if override_ps != null:
+		if override_ps.can_instantiate():
+			return override_ps
+		push_warning(
+				"BuildingBase: projectile_scene PackedScene cannot instantiate (building '%s'). Using default projectile."
+				% _building_data.display_name
+		)
+		return _get_validated_default_projectile_packed_scene()
+	return _get_validated_default_projectile_packed_scene()
+
+
 ## Instantiates and launches a projectile toward the current target.
 func _fire_at_target() -> void:
 	if not is_instance_valid(_current_target):
 		return
-
-	var proj: ProjectileBase = ProjectileScene.instantiate() as ProjectileBase
+	if _building_data == null:
+		return
 	if _projectile_container == null:
+		push_warning("BuildingBase._fire_at_target: ProjectileContainer missing — skipping shot.")
+		return
+
+	var packed: PackedScene = _resolve_projectile_packed_scene()
+	if packed == null:
+		push_error(
+				"BuildingBase._fire_at_target: no valid PackedScene for '%s' (check projectile_scene path and projectile_base.tscn)."
+				% _building_data.display_name
+		)
+		return
+	if not packed.can_instantiate():
+		push_error(
+				"BuildingBase._fire_at_target: resolved PackedScene not instantiable (building '%s')."
+				% _building_data.display_name
+		)
+		return
+
+	var inst: Node = packed.instantiate()
+	if inst == null:
+		push_error(
+				"BuildingBase._fire_at_target: instantiate() returned null (building '%s')."
+				% _building_data.display_name
+		)
+		return
+
+	var proj: ProjectileBase = inst as ProjectileBase
+	if proj == null:
+		push_error(
+				"BuildingBase._fire_at_target: projectile root is not ProjectileBase (building '%s')."
+				% _building_data.display_name
+		)
+		inst.queue_free()
+		return
+
+	if not proj.has_method("initialize_from_building"):
+		push_error(
+				"BuildingBase._fire_at_target: projectile missing initialize_from_building() (building '%s')."
+				% _building_data.display_name
+		)
+		proj.queue_free()
 		return
 
 	# Speed proxy: fire_rate * 15.0 gives reasonable projectile speed spread.
-	# Slow-firing Ballista (0.4/s) → speed 6; fast Poison Vat (1.5/s) → speed 22.5.
 	var proj_speed: float = _building_data.fire_rate * 15.0
 
 	var dist: float = global_position.distance_to(_current_target.global_position)
@@ -387,7 +495,7 @@ func _fire_at_target() -> void:
 		_building_data.dot_source_id,
 		_building_data.dot_in_addition_to_hit,
 		get_instance_id(),
-		_slot_index_for_stats
+		slot_id
 	)
 	proj.add_to_group("projectiles")
 

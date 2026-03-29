@@ -1,4 +1,5 @@
-## Runtime row produced by MissionSpawnRouting.build_spawn_queue.
+## Legacy row shape for `spawn_time_sec`, `enemy_data`, `lane_id`, `path_id`.
+## `MissionSpawnRouting.build_spawn_queue` now returns `Array[Dictionary]` with the same keys.
 
 class_name SpawnQueueRow
 extends RefCounted

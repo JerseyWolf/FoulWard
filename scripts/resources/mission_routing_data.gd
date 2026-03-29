@@ -38,6 +38,7 @@ func collect_validation_warnings() -> PackedStringArray:
 		out.append("lanes is empty")
 	if paths.is_empty():
 		out.append("paths is empty")
+	var lane_id_set: Dictionary = {}
 	var i: int = 0
 	while i < lanes.size():
 		var l: LaneData = lanes[i]
@@ -45,6 +46,9 @@ func collect_validation_warnings() -> PackedStringArray:
 			out.append("lanes[%d] is null" % i)
 		else:
 			out.append_array(l.collect_validation_warnings())
+			var lid: String = l.id.strip_edges()
+			if not lid.is_empty():
+				lane_id_set[lid] = true
 		i += 1
 	var j: int = 0
 	while j < paths.size():
@@ -53,5 +57,8 @@ func collect_validation_warnings() -> PackedStringArray:
 			out.append("paths[%d] is null" % j)
 		else:
 			out.append_array(p.collect_validation_warnings())
+			var plid: String = p.lane_id.strip_edges()
+			if not plid.is_empty() and not lane_id_set.has(plid):
+				out.append("paths[%d]: lane_id '%s' not found in lanes" % [j, plid])
 		j += 1
 	return out
