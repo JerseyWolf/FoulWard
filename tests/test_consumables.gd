@@ -20,11 +20,13 @@ func _make_mana_item() -> ShopItemData:
 
 func _attach_spell_under_main(spell: SpellManager) -> Node:
 	var root: Window = get_tree().root
-	var main: Node = root.get_node_or_null("Main")
-	if main == null:
-		main = Node3D.new()
-		main.name = "Main"
-		root.add_child(main)
+	var stale: Node = root.get_node_or_null("Main")
+	if stale != null:
+		root.remove_child(stale)
+		stale.free()
+	var main: Node = Node3D.new()
+	main.name = "Main"
+	root.add_child(main)
 	var mgr: Node = main.get_node_or_null("Managers")
 	if mgr == null:
 		mgr = Node.new()

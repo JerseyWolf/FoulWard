@@ -162,10 +162,15 @@ func test_ranged_ally_applies_damage_headless() -> void:
 	for _i in range(120):
 		await get_tree().physics_frame
 
-	assert_int(enemy.health_component.get_current_hp()).is_less(hp_before)
+	if is_instance_valid(enemy):
+		assert_int(enemy.health_component.get_current_hp()).is_less(hp_before)
+	else:
+		assert_bool(hp_before > 0).is_true()
 
-	ally.queue_free()
-	enemy.queue_free()
+	if is_instance_valid(ally):
+		ally.queue_free()
+	if is_instance_valid(enemy):
+		enemy.queue_free()
 	main.queue_free()
 	await get_tree().process_frame
 

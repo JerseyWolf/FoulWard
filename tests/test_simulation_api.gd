@@ -40,11 +40,11 @@ func before_test() -> void:
 
 	_spawn_points = Node3D.new()
 	_spawn_points.name = "SpawnPoints"
+	add_child(_spawn_points)
 	for i: int in range(10):
 		var marker: Marker3D = Marker3D.new()
-		marker.global_position = Vector3(float(i) * 4.0, 0.0, 0.0)
 		_spawn_points.add_child(marker)
-	add_child(_spawn_points)
+		marker.position = Vector3(float(i) * 4.0, 0.0, 0.0)
 
 	_building_container = Node3D.new()
 	_building_container.name = "BuildingContainer"

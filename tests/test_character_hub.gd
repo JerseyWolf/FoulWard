@@ -251,6 +251,11 @@ func test_interacting_with_shop_role_character_triggers_shop_panel_activation() 
 	assert_str(ui_stub.last_entry_id).is_equal("TEST_SHOP_ENTRY_01")
 
 	hub.queue_free()
+	if is_instance_valid(bms_stub):
+		bms_stub.free()
+	if is_instance_valid(ui_stub):
+		ui_stub.free()
+	await get_tree().process_frame
 
 
 func test_dialogue_panel_displays_text_from_dialogue_entry() -> void:
@@ -517,4 +522,9 @@ func test_focus_character_triggers_same_behavior_as_click() -> void:
 	assert_str(ui_stub.last_entry_id).is_equal(click_entry_id)
 
 	hub.queue_free()
+	if is_instance_valid(bms_stub):
+		bms_stub.free()
+	if is_instance_valid(ui_stub):
+		ui_stub.free()
+	await get_tree().process_frame
 

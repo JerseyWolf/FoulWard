@@ -1,5 +1,5 @@
 # FOUL WARD — Improvement Backlog
-Generated: 2026-03-28 | Auditor: Opus 4.6 (Prompt 26) | Baseline: 525 cases, 0 failures, 17 orphans
+Generated: 2026-03-28 | Auditor: Opus 4.6 (Prompt 26) | Prompt 28 refresh: 535 cases, 0 failures, 2 orphans (full), 1 orphan (quick)
 
 ## Summary
 - Total issues: 78 | Critical: 3 | High: 18 | Medium: 32 | Low: 25
@@ -18,8 +18,8 @@ until parallel runner is implemented).
 
 | Runner | Suites | Cases | Failures | Orphans | Wall-clock |
 |--------|--------|-------|----------|---------|------------|
-| `run_gdunit.sh` (full) | 58 | 525 | 0 | 17 | 4m 22s |
-| `run_gdunit_quick.sh` (quick) | 37 | 336 | 0 | 1 | 1m 44s |
+| `run_gdunit.sh` (full) | 59 | 535 | 0 | 2 | ~4m 23s |
+| `run_gdunit_quick.sh` (quick) | 39 | 347 | 0 | 1 | ~1m 49s |
 
 ### Three-Tier Test Structure Proposal
 
@@ -61,6 +61,8 @@ until parallel runner is implemented).
 | test_simbot_safety.gd | Unit | Reference scan |
 | test_dialogue_manager.gd | Unit | Condition eval |
 | test_relationship_manager.gd | Unit | Affinity state |
+| test_relationship_manager_tiers.gd | Unit | Tier boundaries + signal deltas |
+| test_save_manager_slots.gd | Unit | Slot ring + attempt isolation + RM JSON |
 | test_florence.gd | Unit | Meta state |
 | test_weapon_structural.gd | Unit | Data validation |
 | test_building_specials.gd | Unit | Data validation |
@@ -227,7 +229,7 @@ No files listed in INDEX_SHORT.md are missing from disk.
 | Source | TODO | Status |
 |--------|------|--------|
 | P1 | Sell UX wiring | COMPLETED (P1 + subsequent) |
-| P10 | Full test suite not run | COMPLETED (P26-PRE: 525 pass) |
+| P10 | Full test suite not run | COMPLETED (Prompt 28: 535 pass, `./tools/run_gdunit.sh`) |
 | P13 | Placeholder dialogue text | OPEN — all DialogueEntry .tres still have `"TODO: placeholder dialogue line."` |
 | P15 | Florence meta-state integration | PARTIALLY OPEN — flags exist but most dialogue conditions using them are stubs |
 | P16 | Full test suite not run during session | COMPLETED (P26-PRE) |
@@ -251,12 +253,8 @@ No files listed in INDEX_SHORT.md are missing from disk.
 
 | File | Function | Classification | Spec |
 |------|----------|---------------|------|
-| `dialogue_manager.gd` | `_on_resource_changed` | READY | Track resource changes for dialogue conditions like "gold_amount > 500". Impl: update internal `_current_gold` from EconomyManager and re-evaluate pending conditions. |
-| `dialogue_manager.gd` | `_on_research_unlocked` | READY | Set internal flag for `research_unlocked_<id>` condition key. Impl: add `node_id` to `_unlocked_research_ids` set. |
-| `dialogue_manager.gd` | `_on_shop_item_purchased` | READY | Track purchases for dialogue conditions. Impl: increment `_purchase_count` counter. |
-| `dialogue_manager.gd` | `_on_arnulf_state_changed` | READY | Track Arnulf state for dialogue conditions like "arnulf_is_downed". Impl: store `_arnulf_current_state`. |
-| `dialogue_manager.gd` | `_on_spell_cast` | READY | Track spell casts for conditions. Impl: increment `_spell_cast_count` and set `_last_spell_cast_id`. |
-| `wave_manager.gd` | `_on_game_state_changed` | READY | React to state changes (e.g., pause wave countdown in BUILD_MODE). Impl: pause/resume countdown timer based on state. |
+| `dialogue_manager.gd` | `_on_resource_changed` … `_on_spell_cast` | **DONE (Prompt 28)** | Internal tracking + getters; covered by `tests/test_dialogue_manager.gd`. |
+| `wave_manager.gd` | `_on_game_state_changed` | **DONE (Prompt 28)** | Pauses inter-wave countdown in `BUILD_MODE`; `tests/test_wave_manager.gd`. |
 
 ### Orphaned Enum Values
 
@@ -270,7 +268,7 @@ No files listed in INDEX_SHORT.md are missing from disk.
 |--------|---------|--------|
 | `SettingsManager.set_graphics_quality()` | Stores string in config, not wired to Godot rendering APIs | READY — add `RenderingServer` calls for shadow quality, MSAA, etc. based on quality string |
 | `SimBot._on_wave_cleared()` difficulty exit | `compute_difficulty_fit()` returns 0.0 when batch log is empty; `is_equal_approx(..., 1.0)` is never true | BLOCKED — effectively unreachable in interactive SimBot flow; only meaningful after prior batch data |
-| `SaveManager` save/load pipeline | Works via `_build_save_payload()` / `_apply_save_payload()` calling per-autoload `get_save_data()` / `restore_from_save()` | READY — missing `RelationshipManager` in save/load calls; add `RelationshipManager.get_save_data()` and `restore_from_save()` to the pipeline |
+| `SaveManager` save/load pipeline | Works via `_build_save_payload()` / `_apply_save_payload()` calling per-autoload `get_save_data()` / `restore_from_save()` | **RelationshipManager wired** (Prompt 22+); rolling slots + attempt dirs — `tests/test_save_manager_slots.gd` |
 | Art icon PNGs | `res://art/icons/` directories exist but contain no actual PNG files | BLOCKED — requires `tools/generate_placeholder_icons.gd` to be run via Project menu or script |
 
 ---
@@ -283,6 +281,7 @@ No files listed in INDEX_SHORT.md are missing from disk.
 | 7e | `tools/run_gdunit_visible.sh` | Verified exists and is correct (created by Sonnet pre-pass) |
 | 7f | `docs/AGENTS.md` | Created authoritative standing orders document |
 | Log | `docs/PROMPT_26_IMPLEMENTATION.md` | Session log with all audit findings |
+| Prompt 28 | `docs/PROMPT_28_IMPLEMENTATION.md` | Tier/slots tests, DialogueManager/WaveManager stubs, test harness fixes; INDEX + metrics refresh |
 
 ---
 
@@ -322,7 +321,7 @@ See Section 1 "Coverage Gap Specifications" table above.
 | Shield Generator special (A6) | BuildingBase | Stub | `fire_rate = 0`, `damage = 0` — no actual shield behavior |
 | Territory aggregate bonuses (A6) | GameManager | Implemented | `get_current_territory_gold_modifiers()` aggregates flat + percent bonuses |
 | DOWNED/RECOVERING allies (A5) | AllyBase | Implemented | `uses_downed_recovering` flag controls behavior; no .tres currently enables it |
-| Save/Load (A6) | SaveManager | Implemented | Rolling autosave with slot management; missing RelationshipManager in pipeline |
+| Save/Load (A6) | SaveManager | Implemented | Rolling autosave with slot management; `RelationshipManager` in payload (Prompt 22+) |
 | Relationship system (A5→P22) | RelationshipManager | Implemented | Affinity + tiers; dialogue conditions work |
 | Settings persistence (A6→P24) | SettingsManager | Implemented | Audio works; graphics quality stores string only |
 

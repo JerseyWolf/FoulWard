@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# run_gdunit_unit.sh — Runs only pure unit tests (no await, no scene
-# instantiation, no timers). Target: < 10 seconds.
-# Use this for fast feedback during development.
-# All 33 files are Unit-classified per Prompt 26 audit.
+# run_gdunit_unit.sh — Runs only pure unit tests (35 files, ~65s wall-clock).
+# Engine startup overhead dominates; individual tests run in milliseconds.
+# Use for focused coverage checks. For fast iteration, use run_gdunit_quick.sh.
+# GdUnit4 accepts multiple -a flags in one process (same pattern as run_gdunit_quick.sh).
 
 set -euo pipefail
 
@@ -53,6 +53,8 @@ UNIT_SUITES=(
 	"res://tests/test_building_specials.gd"
 	"res://tests/test_settings_manager.gd"
 	"res://tests/test_save_manager.gd"
+	"res://tests/test_relationship_manager_tiers.gd"
+	"res://tests/test_save_manager_slots.gd"
 )
 
 gdunit_args=()

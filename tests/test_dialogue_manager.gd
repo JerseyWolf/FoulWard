@@ -22,6 +22,14 @@ func _reset_dialogue_manager_runtime_state() -> void:
 	DialogueManager.mission_failed_count = 0
 	DialogueManager.current_mission_number = 1
 	DialogueManager.current_gamestate = Types.GameState.MAIN_MENU
+	DialogueManager._current_gold = EconomyManager.get_gold()
+	DialogueManager._unlocked_research_ids.clear()
+	DialogueManager._purchase_count = 0
+	DialogueManager._last_purchased_item_id = ""
+	DialogueManager._shop_purchased_item_ids.clear()
+	DialogueManager._arnulf_current_state = Types.ArnulfState.IDLE
+	DialogueManager._spell_cast_count = 0
+	DialogueManager._last_spell_cast_id = ""
 
 
 func _register_entries(entries: Array[DialogueEntry]) -> void:
@@ -273,3 +281,32 @@ func test_invalid_chain_next_id_does_not_crash() -> void:
 	_register_entries([first])
 	DialogueManager.mark_entry_played("AUDIT5_CHAIN_A")
 	assert_bool(true).is_true()
+
+
+func test_on_resource_changed_updates_tracked_gold() -> void:
+	EconomyManager.reset_to_defaults()
+	EconomyManager.add_gold(50)
+	SignalBus.resource_changed.emit(Types.ResourceType.GOLD, EconomyManager.get_gold())
+	assert_int(DialogueManager.get_tracked_gold()).is_equal(EconomyManager.get_gold())
+
+
+func test_on_research_unlocked_tracks_node_id() -> void:
+	DialogueManager._on_research_unlocked("unlock_ballista")
+	assert_bool(DialogueManager.get_unlocked_research_ids_snapshot().has("unlock_ballista")).is_true()
+
+
+func test_on_shop_item_purchased_tracks_count_and_id() -> void:
+	SignalBus.shop_item_purchased.emit("mana_draught")
+	assert_int(DialogueManager.get_total_shop_purchases_tracked()).is_equal(1)
+	assert_str(DialogueManager.get_last_shop_item_purchased_id()).is_equal("mana_draught")
+
+
+func test_on_arnulf_state_changed_tracks_state() -> void:
+	DialogueManager._on_arnulf_state_changed(Types.ArnulfState.DOWNED)
+	assert_int(int(DialogueManager.get_arnulf_state_tracked())).is_equal(int(Types.ArnulfState.DOWNED))
+
+
+func test_on_spell_cast_tracks_count_and_id() -> void:
+	SignalBus.spell_cast.emit("shockwave")
+	assert_int(DialogueManager.get_spell_cast_count_tracked()).is_equal(1)
+	assert_str(DialogueManager.get_last_spell_cast_id_tracked()).is_equal("shockwave")
