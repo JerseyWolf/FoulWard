@@ -259,8 +259,8 @@ TerrainContainer (Node3D in `main.tscn`) is cleared and repopulated each battle 
 
 | Type       | Scene file                | Status    | Notes                     |
 |------------|---------------------------|-----------|---------------------------|
-| GRASSLAND  | terrain_grassland.tscn    | Done   | Flat, no zones            |
-| SWAMP      | terrain_swamp.tscn        | Done   | 0.55× speed zone          |
+| GRASSLAND  | terrain_grassland.tscn    | Done   | Flat 100×100 m ground + nav (covers spawn ring); no zones |
+| SWAMP      | terrain_swamp.tscn        | Done   | Same arena; 0.55× speed zone          |
 | FOREST     | terrain_forest.tscn       | TODO(TERRAIN) | Dense tree props, 0.75× zone |
 | RUINS      | terrain_ruins.tscn        | TODO(TERRAIN) | Destructible pillars       |
 | TUNDRA     | terrain_tundra.tscn       | TODO(TERRAIN) | 0.7× speed (snow), ice patches |

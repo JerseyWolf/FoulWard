@@ -21,9 +21,10 @@ const PROGRESS_EPSILON: float = 0.05
 const DIRECT_STEER_MIN_DIST_SQ: float = 0.01
 
 # Assign placeholder art resources via convention-based pipeline.
-const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
-
 var _enemy_data: EnemyData = null
+## Set by WaveManager when using mission lane/path routing (data-driven waves).
+var assigned_lane_id: String = ""
+var assigned_path_id: String = ""
 ## When set, this enemy pathfinds to Arnulf and attacks him (only after `begin_arnulf_retaliation`).
 var _arnulf_retaliation_target: Node3D = null
 ## Visual-only: GLB AnimationPlayer for idle/walk (see RiggedVisualWiring).
@@ -38,6 +39,7 @@ const MAX_POISON_STACKS: int = 5 # TUNING: max poison stacks per enemy.
 
 var _terrain_multipliers: Array[float] = []
 var _active_terrain_speed_multiplier: float = 1.0
+var _reported_tower_reach: bool = false
 
 # PUBLIC — required by BuildingBase._find_target() and Arnulf._find_closest_enemy_to_tower().
 @onready var health_component: HealthComponent = $HealthComponent
@@ -66,6 +68,8 @@ func initialize(enemy_data: EnemyData) -> void:
 		push_error("EnemyBase.initialize called with null EnemyData")
 		return
 	_enemy_data = enemy_data
+	assigned_lane_id = ""
+	assigned_path_id = ""
 	_arnulf_retaliation_target = null
 	_attack_timer = 0.0
 	_is_attacking = false
@@ -499,6 +503,9 @@ func _update_attack_tower(delta: float) -> void:
 
 func _deal_damage_to_tower() -> void:
 	if is_instance_valid(_tower):
+		if not _reported_tower_reach and _enemy_data != null:
+			_reported_tower_reach = true
+			SignalBus.enemy_reached_tower.emit(_enemy_data.enemy_type, _enemy_data.damage)
 		_tower.take_damage(_enemy_data.damage)
 
 
@@ -542,4 +549,3 @@ func _on_health_depleted() -> void:
 
 	remove_from_group("enemies")
 	queue_free()
-

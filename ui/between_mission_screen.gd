@@ -9,8 +9,6 @@
 class_name BetweenMissionScreen
 extends Control
 
-const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
-
 @onready var _next_mission_btn: Button = $NextMissionButton
 @onready var _day_progress_label: Label = $DayProgressLabel
 @onready var _day_name_label: Label = $DayNameLabel

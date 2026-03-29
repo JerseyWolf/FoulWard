@@ -27,18 +27,25 @@ const BASE_HALF_EXTENT_Z: float = 1.25
 const BASE_HEIGHT: float = 3.0
 const OBSTACLE_RADIUS: float = 2.0
 
-# Assign placeholder art resources via convention-based pipeline.
-const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
+# Assign placeholder art resources via convention-based pipeline (global class_name ArtPlaceholderHelper).
 
 # ---------------------------------------------------------------------------
 # Private state
 # ---------------------------------------------------------------------------
 
 var _building_data: BuildingData = null
+## Gold/material actually charged for initial placement (audit / UI).
+var paid_gold: int = 0
+var paid_material: int = 0
+## Placement + upgrade spends (sell refund basis before `sell_refund_fraction`).
+var total_invested_gold: int = 0
+var total_invested_material: int = 0
 var _is_upgraded: bool = false
 var _attack_timer: float = 0.0
 var _current_target: EnemyBase = null
 var _special_timer: float = 0.0
+## Set by HexGrid on placement for CombatStatsTracker attribution.
+var _slot_index_for_stats: int = -1
 
 # ---------------------------------------------------------------------------
 # Children
@@ -60,6 +67,10 @@ var _special_timer: float = 0.0
 var is_upgraded: bool:
 	get:
 		return _is_upgraded
+
+
+func set_slot_index_for_stats(slot_index: int) -> void:
+	_slot_index_for_stats = slot_index
 
 # ---------------------------------------------------------------------------
 # Lifecycle
@@ -112,6 +123,10 @@ func _physics_process(delta: float) -> void:
 ## Configures visuals and stats from the provided BuildingData resource.
 func initialize(data: BuildingData) -> void:
 	_building_data = data
+	paid_gold = 0
+	paid_material = 0
+	total_invested_gold = 0
+	total_invested_material = 0
 	_is_upgraded = false
 	_attack_timer = 0.0
 	_current_target = null
@@ -166,6 +181,41 @@ func initialize(data: BuildingData) -> void:
 ## Transitions the building from Basic to Upgraded tier.
 func upgrade() -> void:
 	_is_upgraded = true
+
+
+## Records actual placement spend (call once after EconomyManager charges).
+func record_initial_purchase(placement_gold: int, placement_material: int) -> void:
+	paid_gold = placement_gold
+	paid_material = placement_material
+	total_invested_gold = placement_gold
+	total_invested_material = placement_material
+
+
+## Adds upgrade tier spend to invested totals (call after successful payment).
+func record_upgrade_cost(upgrade_gold: int, upgrade_material: int) -> void:
+	total_invested_gold += upgrade_gold
+	total_invested_material += upgrade_material
+
+
+## Refund preview using `BuildingData.sell_refund_fraction` only (no mission global multiplier).
+func get_sell_refund() -> Vector2i:
+	if _building_data == null:
+		return Vector2i.ZERO
+	var f: float = _building_data.sell_refund_fraction
+	return Vector2i(
+			int(round(float(total_invested_gold) * f)),
+			int(round(float(total_invested_material) * f))
+	)
+
+
+## Effective upgrade costs from data (respects `upgrade_cost_*` overrides).
+func get_upgrade_cost() -> Vector2i:
+	if _building_data == null:
+		return Vector2i.ZERO
+	return Vector2i(
+			_building_data.get_effective_upgrade_cost_gold(),
+			_building_data.get_effective_upgrade_cost_material()
+	)
 
 
 ## Returns the BuildingData resource this building was initialized with.
@@ -335,7 +385,9 @@ func _fire_at_target() -> void:
 		_building_data.dot_duration,
 		_building_data.dot_effect_type,
 		_building_data.dot_source_id,
-		_building_data.dot_in_addition_to_hit
+		_building_data.dot_in_addition_to_hit,
+		get_instance_id(),
+		_slot_index_for_stats
 	)
 	proj.add_to_group("projectiles")
 
@@ -373,4 +425,3 @@ func _tick_shield_generator(delta: float) -> void:
 	if tower == null:
 		return
 	tower.add_spell_shield(_building_data.shield_hp_per_pulse, _building_data.shield_pulse_duration)
-

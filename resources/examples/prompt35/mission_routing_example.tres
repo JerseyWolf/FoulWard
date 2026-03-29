@@ -1,0 +1,89 @@
+[gd_resource type="Resource" script_class="MissionRoutingData" load_steps=10 format=3 uid="uid://mrexample_3l4p"]
+
+[ext_resource type="Script" path="res://scripts/resources/mission_routing_data.gd" id="1_mr"]
+[ext_resource type="Script" path="res://scripts/resources/lane_data.gd" id="2_lane"]
+[ext_resource type="Script" path="res://scripts/resources/path_data.gd" id="3_path"]
+
+[sub_resource type="Resource" id="lane_west"]
+script = ExtResource("2_lane")
+id = "lane_west"
+display_name = "West Approach"
+description = "Example lane — west sector."
+florence_entry_tag = "leak_west"
+threat_weight = 1.1
+allowed_path_ids = PackedStringArray("path_01", "path_02")
+tags = PackedStringArray("example", "west")
+
+[sub_resource type="Resource" id="lane_mid"]
+script = ExtResource("2_lane")
+id = "lane_mid"
+display_name = "Central Corridor"
+description = "Shared paths with west and east."
+florence_entry_tag = "leak_mid"
+threat_weight = 1.0
+allowed_path_ids = PackedStringArray("path_02", "path_03")
+tags = PackedStringArray("example", "mid")
+
+[sub_resource type="Resource" id="lane_east"]
+script = ExtResource("2_lane")
+id = "lane_east"
+display_name = "East Approach"
+description = "Example lane — east sector."
+florence_entry_tag = "leak_east"
+threat_weight = 0.9
+allowed_path_ids = PackedStringArray("path_03", "path_04")
+tags = PackedStringArray("example", "east")
+
+[sub_resource type="Resource" id="path_01"]
+script = ExtResource("3_path")
+id = "path_01"
+display_name = "Route West α"
+lane_id = "lane_west"
+curve3d_path = "res://resources/examples/prompt35/sample_path_curve.tres"
+body_types_allowed = 0
+total_length_hint = 32.0
+blocker_sensitive = true
+leak_entry_point_tag = "path_01_leak"
+tags = PackedStringArray("route")
+
+[sub_resource type="Resource" id="path_02"]
+script = ExtResource("3_path")
+id = "path_02"
+display_name = "Shared Bend β"
+lane_id = "lane_mid"
+curve3d_path = "res://resources/examples/prompt35/sample_path_curve.tres"
+body_types_allowed = 0
+total_length_hint = 28.0
+blocker_sensitive = true
+leak_entry_point_tag = "path_02_leak"
+tags = PackedStringArray("route", "shared")
+
+[sub_resource type="Resource" id="path_03"]
+script = ExtResource("3_path")
+id = "path_03"
+display_name = "Shared Bend γ"
+lane_id = "lane_mid"
+curve3d_path = "res://resources/examples/prompt35/sample_path_curve.tres"
+body_types_allowed = 0
+total_length_hint = 28.0
+blocker_sensitive = true
+leak_entry_point_tag = "path_03_leak"
+tags = PackedStringArray("route", "shared")
+
+[sub_resource type="Resource" id="path_04"]
+script = ExtResource("3_path")
+id = "path_04"
+display_name = "Route East δ"
+lane_id = "lane_east"
+curve3d_path = "res://resources/examples/prompt35/sample_path_curve.tres"
+body_types_allowed = 0
+total_length_hint = 30.0
+blocker_sensitive = true
+leak_entry_point_tag = "path_04_leak"
+tags = PackedStringArray("route")
+
+[resource]
+script = ExtResource("1_mr")
+mission_id = "routing_example_3l4p"
+lanes = [SubResource("lane_west"), SubResource("lane_mid"), SubResource("lane_east")]
+paths = [SubResource("path_01"), SubResource("path_02"), SubResource("path_03"), SubResource("path_04")]

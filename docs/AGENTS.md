@@ -32,10 +32,11 @@ Read this file FIRST in every Cursor session, before opening any other file.
   5. RelationshipManager (depends on SignalBus, after CampaignManager)
   6. SettingsManager (depends on SignalBus, after RelationshipManager)
   7. GameManager (depends on SignalBus, EconomyManager, CampaignManager)
-  8. SaveManager (depends on CampaignManager, GameManager, EnchantmentManager)
-  9. DialogueManager (depends on SignalBus, GameManager, ResearchManager)
-  10. AutoTestDriver (depends on GameManager)
-  11. EnchantmentManager (depends on SignalBus)
+  8. CombatStatsTracker (depends on SignalBus, EconomyManager; reads GameManager mission id via signals / optional nodes)
+  9. SaveManager (depends on CampaignManager, GameManager, EnchantmentManager)
+  10. DialogueManager (depends on SignalBus, GameManager, ResearchManager)
+  11. AutoTestDriver (depends on GameManager)
+  12. EnchantmentManager (depends on SignalBus)
 - EVERY new signal must be declared in `autoloads/signal_bus.gd`, named in past tense snake_case
 - EVERY new .tres resource file must be referenced by at least one .gd file or other .tres
 

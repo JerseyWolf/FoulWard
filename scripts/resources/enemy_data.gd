@@ -33,3 +33,107 @@ extends Resource
 ## Per SYSTEMS_part1 §3.8: these override the DAMAGE_MATRIX result.
 @export var damage_immunities: Array[Types.DamageType] = []
 
+# ---------------------------------------------------------------------------
+# Data-driven tower defense foundation (Prompt 34)
+# ---------------------------------------------------------------------------
+
+## Stable string id for JSON / catalog (optional when `enemy_type` suffices).
+@export var id: String = ""
+## Longer description for UI / tooling.
+@export var description: String = ""
+## Optional icon path.
+@export var icon: String = ""
+
+## Flat mitigation layered with `armor_type` matrix (designer-tunable).
+@export var armor_flat: float = 0.0
+@export var magic_resist: float = 0.0
+## Multiplier on status effect application chance/duration (1.0 = normal).
+@export var status_resist_multiplier: float = 1.0
+
+## Locomotion / path eligibility (lanes, blockers). Distinct from `armor_type`.
+@export var body_type: Types.EnemyBodyType = Types.EnemyBodyType.GROUND
+@export var collision_radius: float = 1.0
+@export var is_blockable: bool = true
+@export var ignores_blockers: bool = false
+
+## Damage applied when this unit reaches Florence / the core (parallel to legacy tower leak damage).
+@export var contact_damage_to_florence: int = 0
+@export var attack_damage_vs_blockers: int = 0
+@export var attack_rate_vs_blockers: float = 1.0
+
+@export var can_be_slowed: bool = true
+@export var can_be_stunned: bool = true
+@export var can_be_silenced: bool = true
+@export var can_be_disarmed: bool = true
+@export var can_be_knocked_back: bool = true
+
+## Bounty when >= 0 overrides `gold_reward`; material is new for TD economy.
+@export var bounty_gold: int = -1
+@export var bounty_material: int = 0
+
+@export var threat_value: int = 1
+@export var tags: PackedStringArray = PackedStringArray()
+
+## Bitmask aligned with `BuildingData.target_flags` (@export_flags order: ground, air, boss, structure, summoned).
+const TARGET_FLAG_GROUND: int = 1 << 0
+const TARGET_FLAG_AIR: int = 1 << 1
+const TARGET_FLAG_BOSS: int = 1 << 2
+const TARGET_FLAG_STRUCTURE: int = 1 << 3
+const TARGET_FLAG_SUMMONED: int = 1 << 4
+
+
+func get_effective_bounty_gold() -> int:
+	return gold_reward if bounty_gold < 0 else bounty_gold
+
+
+## Leak damage to Florence when > 0; otherwise callers may use legacy `damage`.
+func get_effective_contact_damage_to_florence() -> int:
+	return damage if contact_damage_to_florence <= 0 else contact_damage_to_florence
+
+
+## Bits describing this unit for tower `target_flags` matching (OR semantics vs building mask).
+func get_target_flag_bits() -> int:
+	var bits: int = 0
+	if body_type == Types.EnemyBodyType.GROUND or body_type == Types.EnemyBodyType.LARGE_GROUND:
+		bits |= TARGET_FLAG_GROUND
+	if is_flying or body_type == Types.EnemyBodyType.FLYING or body_type == Types.EnemyBodyType.HOVER:
+		bits |= TARGET_FLAG_AIR
+	if body_type == Types.EnemyBodyType.BOSS:
+		bits |= TARGET_FLAG_BOSS
+	if body_type == Types.EnemyBodyType.STRUCTURE:
+		bits |= TARGET_FLAG_STRUCTURE
+	if _has_tag("summoned"):
+		bits |= TARGET_FLAG_SUMMONED
+	return bits
+
+
+## Returns true if this unit is eligible when the tower mask is `flags` (0 = unrestricted).
+func matches_target_flags(flags: int) -> bool:
+	if flags == 0:
+		return true
+	var eb: int = get_target_flag_bits()
+	return (eb & flags) != 0
+
+
+func _has_tag(tag: String) -> bool:
+	var want: String = tag.strip_edges()
+	if want.is_empty():
+		return false
+	var i: int = 0
+	while i < tags.size():
+		if str(tags[i]).strip_edges() == want:
+			return true
+		i += 1
+	return false
+
+
+func collect_validation_warnings() -> PackedStringArray:
+	var out: PackedStringArray = PackedStringArray()
+	if max_hp <= 0:
+		out.append("max_hp should be > 0")
+	if move_speed < 0.0:
+		out.append("move_speed is negative")
+	if status_resist_multiplier < 0.0:
+		out.append("status_resist_multiplier is negative")
+	return out
+

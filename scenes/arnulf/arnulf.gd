@@ -78,8 +78,6 @@ const ARNULF_MELEE_SNAP_ATTACK_DISTANCE: float = 1.35
 const ARNULF_COLLISION_LAYER_BITS: int = 4
 
 # Assign placeholder art resources via convention-based pipeline.
-const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
-
 # ---------------------------------------------------------------------------
 # STATE
 # ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ INDEX_FULL.md
 FOUL WARD — INDEX_FULL.md
 
 Full public API reference for every script, resource type, and system.
-Source of truth: REPO_DUMP_AFTER_MVP.md. **Doc layout:** `docs/README.md`. **Consolidated snapshot:** `docs/OPUS_ALL_ACTIONS.md` merges backlog + AGENTS + Prompt 26 log + both indexes. Updated: 2026-03-29 (**Prompt 33:** terrain — `Types.TerrainType`/`TerrainEffect`, `TerrainZone`, `NavMeshManager`, `CampaignManager._load_terrain`, `terrain_grassland`/`terrain_swamp`, `main.tscn` `TerrainContainer`, `EnemyBase` terrain multiplier, `tests/unit/test_terrain.gd`, `FUTURE_3D_MODELS_PLAN.md` §5 — `docs/PROMPT_33_IMPLEMENTATION.md`). (**Prompt 32:** modular building kit — `Types.BuildingBaseMesh`/`BuildingTopMesh`, `BuildingData.base_mesh_id`/`top_mesh_id`/`accent_color`, `ArtPlaceholderHelper.get_building_kit_mesh`, `BuildingBase` `BuildingKitAssembly`, `tests/unit/test_building_kit.gd`, `FUTURE_3D_MODELS_PLAN.md` §4 — `docs/PROMPT_32_IMPLEMENTATION.md`). **Prompt 31:** `RiggedVisualWiring` + rigged GLB mount on `EnemyVisual`/`BossVisual`/`ArnulfVisual`; `AnimationPlayer` idle/walk; `EnemyBase.assign_locomotion_animation_player` for bosses — `docs/PROMPT_31_IMPLEMENTATION.md`). **Prompt 29:** `FUTURE_3D_MODELS_PLAN.md` scene audit appendix + `ArtPlaceholderHelper` API notes; `boss_base.tscn` `# TODO(ART)`; Godot MCP reload/error scan — `docs/PROMPT_29_IMPLEMENTATION.md`). **Prompt 28:** `DialogueManager` runtime condition tracking; `WaveManager` BUILD_MODE countdown pause; `test_relationship_manager_tiers.gd` / `test_save_manager_slots.gd`; input/hex/Arnulf/build-menu deltas; full GdUnit **535** cases — `docs/PROMPT_28_IMPLEMENTATION.md`). **Prompt 26:** Full project audit — 55 unindexed files indexed, `docs/AGENTS.md` standing orders, `IMPROVEMENTS_TO_BE_DONE.md` backlog with 78 issues, test Unit/Integration classification, parallel runner spec — `docs/PROMPT_26_IMPLEMENTATION.md`. **Prompt 24:** `PlaceholderIconGenerator` `tools/generate_placeholder_icons.gd` + editor plugin `addons/fw_placeholder_icons`; `ArtPlaceholderHelper` icon PNGs; `SettingsManager` autoload `user://settings.cfg`; `scenes/ui/settings_screen`; UI wiring `build_menu` / `between_mission_screen` / `world_map` / `main_menu`; `tests/test_settings_manager.gd` — `docs/PROMPT_24_IMPLEMENTATION.md`). **Prompt 22:** `RelationshipManager` autoload, `relationship_tier` dialogue conditions, resources under `res://resources/relationship_*` / `character_relationship/` — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `docs/PROMPT_19_IMPLEMENTATION.md`; `# TODO(ART)` in enemy/ally/arnulf/tower/building/boss/hub scripts. Prompt 18: RAG + MCP — `docs/PROMPT_18_IMPLEMENTATION.md`. Audit 6 delta: `AUDIT_IMPLEMENTATION_AUDIT_6.md` — SpellManager multi-spell; WeaponLevelData structural fields; BuildingBase archer barracks / shield generator; GameManager territory aggregates; tests `test_weapon_structural.gd`, `test_building_specials.gd`. Prompt 20: `docs/obsolete/` + INDEX header/autoload alignment — `docs/PROMPT_20_IMPLEMENTATION.md`.
+Source of truth: REPO_DUMP_AFTER_MVP.md. **Doc layout:** `docs/README.md`. **Consolidated snapshot:** `docs/OPUS_ALL_ACTIONS.md` merges backlog + AGENTS + Prompt 26 log + both indexes. Updated: 2026-03-29 (**Prompt 38:** `EconomyManager` wave_clear payout API + `wave_cleared` hook — `docs/PROMPT_38_IMPLEMENTATION.md`). (**Prompt 37:** `EconomyManager` mission wiring — `apply_mission_economy`, passive tick, duplicate placement cost, `get_refund`; HexGrid `BuildingBase` `paid_*`/`total_invested_*`; `tests/unit/test_economy_mission_integration.gd` — `docs/PROMPT_37_IMPLEMENTATION.md`). (**Prompt 35:** TD data resources — extended `BuildingData`/`AllyData`/`EnemyData`, `SpawnEntryData`, `WaveData`, `MissionWavesData`, `LaneData`, `PathData`, `MissionRoutingData`, `MissionEconomyData`, `MissionDataValidation`, `Types` TD enums — `docs/PROMPT_35_IMPLEMENTATION.md`). (**Prompt 36:** `WaveManager` + `MissionSpawnRouting` mission spawn queue, `RoutePathData`, `EnemyBase` lane/path ids — `docs/PROMPT_36_IMPLEMENTATION.md`). (**Prompt 34:** `CombatStatsTracker` — `user://simbot/runs/` CSVs, `SignalBus.enemy_reached_tower` live — `docs/PROMPT_34_IMPLEMENTATION.md`). (**Prompt 33:** terrain — `Types.TerrainType`/`TerrainEffect`, `TerrainZone`, `NavMeshManager`, `CampaignManager._load_terrain`, `terrain_grassland`/`terrain_swamp`, `main.tscn` `TerrainContainer`, `EnemyBase` terrain multiplier, `tests/unit/test_terrain.gd`, `FUTURE_3D_MODELS_PLAN.md` §5 — `docs/PROMPT_33_IMPLEMENTATION.md`). (**Prompt 32:** modular building kit — `Types.BuildingBaseMesh`/`BuildingTopMesh`, `BuildingData.base_mesh_id`/`top_mesh_id`/`accent_color`, `ArtPlaceholderHelper.get_building_kit_mesh`, `BuildingBase` `BuildingKitAssembly`, `tests/unit/test_building_kit.gd`, `FUTURE_3D_MODELS_PLAN.md` §4 — `docs/PROMPT_32_IMPLEMENTATION.md`). **Prompt 31:** `RiggedVisualWiring` + rigged GLB mount on `EnemyVisual`/`BossVisual`/`ArnulfVisual`; `AnimationPlayer` idle/walk; `EnemyBase.assign_locomotion_animation_player` for bosses — `docs/PROMPT_31_IMPLEMENTATION.md`). **Prompt 29:** `FUTURE_3D_MODELS_PLAN.md` scene audit appendix + `ArtPlaceholderHelper` API notes; `boss_base.tscn` `# TODO(ART)`; Godot MCP reload/error scan — `docs/PROMPT_29_IMPLEMENTATION.md`). **Prompt 28:** `DialogueManager` runtime condition tracking; `WaveManager` BUILD_MODE countdown pause; `test_relationship_manager_tiers.gd` / `test_save_manager_slots.gd`; input/hex/Arnulf/build-menu deltas; full GdUnit **535** cases — `docs/PROMPT_28_IMPLEMENTATION.md`). **Prompt 26:** Full project audit — 55 unindexed files indexed, `docs/AGENTS.md` standing orders, `IMPROVEMENTS_TO_BE_DONE.md` backlog with 78 issues, test Unit/Integration classification, parallel runner spec — `docs/PROMPT_26_IMPLEMENTATION.md`. **Prompt 24:** `PlaceholderIconGenerator` `tools/generate_placeholder_icons.gd` + editor plugin `addons/fw_placeholder_icons`; `ArtPlaceholderHelper` icon PNGs; `SettingsManager` autoload `user://settings.cfg`; `scenes/ui/settings_screen`; UI wiring `build_menu` / `between_mission_screen` / `world_map` / `main_menu`; `tests/test_settings_manager.gd` — `docs/PROMPT_24_IMPLEMENTATION.md`). **Prompt 22:** `RelationshipManager` autoload, `relationship_tier` dialogue conditions, resources under `res://resources/relationship_*` / `character_relationship/` — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `docs/PROMPT_19_IMPLEMENTATION.md`; `# TODO(ART)` in enemy/ally/arnulf/tower/building/boss/hub scripts. Prompt 18: RAG + MCP — `docs/PROMPT_18_IMPLEMENTATION.md`. Audit 6 delta: `AUDIT_IMPLEMENTATION_AUDIT_6.md` — SpellManager multi-spell; WeaponLevelData structural fields; BuildingBase archer barracks / shield generator; GameManager territory aggregates; tests `test_weapon_structural.gd`, `test_building_specials.gd`. Prompt 20: `docs/obsolete/` + INDEX header/autoload alignment — `docs/PROMPT_20_IMPLEMENTATION.md`.
 Use INDEX_SHORT.md for fast orientation, INDEX_FULL.md for exact method signatures, signals, and dependencies.
 CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 
@@ -40,7 +40,7 @@ COMBAT
 
     enemy_killed(enemy_type: Types.EnemyType, position: Vector3, gold_reward: int)
 
-    enemy_reached_tower(enemy_type: Types.EnemyType, damage: int) — POST-MVP stub, not emitted in MVP.
+    enemy_reached_tower(enemy_type: Types.EnemyType, damage: int) — emitted once per enemy on first tower strike (`EnemyBase`); `CombatStatsTracker` leak metric.
 
     tower_damaged(current_hp: int, max_hp: int)
 
@@ -194,7 +194,7 @@ Notes: per-enemy immunities via EnemyData.damage_immunities[] are applied before
 EconomyManager
 
 Path: res://autoloads/economy_manager.gd
-Purpose: Single source of truth for gold, building_material, research_material. Emits resource_changed on every modification.
+Purpose: Single source of truth for gold, building_material, research_material. Emits resource_changed on every modification. Prompt 37–38: mission economy overrides (`MissionEconomyData`), per-type duplicate placement scaling (`register_purchase`), placement/sell/upgrade costs via `get_gold_cost`/`get_material_cost`/`get_refund`, wave_clear bonuses (`get_wave_reward_gold`/`get_wave_reward_material`/`grant_wave_clear_reward`, `SignalBus.wave_cleared` when `_mission_economy` set), passive gold/material per second in `_process`.
 Dependencies: SignalBus.
 
 Public variables (conceptual):
@@ -229,7 +229,27 @@ Public methods (summarized):
 
     get_gold(), get_building_material(), get_research_material() -> int
 
-Consumes: SignalBus.enemy_killed (adds gold_reward).
+    get_gold_cost(building_data: BuildingData) -> int
+
+    get_material_cost(building_data: BuildingData) -> int
+
+    register_purchase(building_data: BuildingData) -> void
+
+    get_refund(building_data: BuildingData, invested_gold: int, invested_material: int) -> Vector2i
+
+    apply_mission_economy(econ: MissionEconomyData = null) -> void
+
+    get_sell_refund_global_multiplier() -> float
+
+    get_wave_reward_gold(wave: int, econ: MissionEconomyData) -> int
+
+    get_wave_reward_material(wave: int, econ: MissionEconomyData) -> int
+
+    grant_wave_clear_reward(wave: int, econ: MissionEconomyData) -> Vector2i
+
+Consumes: SignalBus.enemy_killed (adds gold_reward); SignalBus.wave_cleared (grants wave_clear bonuses when mission economy active).
+
+Tests: `res://tests/test_economy_manager.gd`, `res://tests/unit/test_economy_mission_integration.gd`.
 RelationshipManager
 
 Path: res://autoloads/relationship_manager.gd
@@ -330,6 +350,13 @@ Key methods:
 Prompt 10 public state (selected): `final_boss_id`, `final_boss_defeated`, `final_boss_active`, `current_boss_threat_territory_id`, `held_territory_ids`.
 
 Consumes: all_waves_cleared, tower_destroyed, boss_killed; subscribes to mission_won (hub transition). See `docs/PROBLEM_REPORT.md`.
+CombatStatsTracker
+
+Path: res://autoloads/combat_stats_tracker.gd
+Purpose: Session combat analytics for balancing / SimBot: aggregates per-wave and per-placed-building stats, writes CSV under `user://simbot/runs/{mission_id}_{timestamp}/` on `mission_won` / `mission_failed`.
+Dependencies: SignalBus, EconomyManager, GameManager (mission id via `mission_started`), Tower/HexGrid node paths (`get_node_or_null`), optional `ProjectileBase` → `record_projectile_damage`.
+Key behaviors: subscribes to `mission_started`, `mission_won`, `mission_failed`, `wave_started`, `wave_cleared`, `enemy_killed`, `enemy_reached_tower`, `tower_damaged`, `building_placed`, `building_sold`, `building_upgraded`, `resource_changed`; `verbose_logging_enabled` (default `OS.is_debug_build()`) adds `event_log.csv`.
+Public API: `set_session_seed`, `set_layout_rotation_deg`, `set_verbose_logging`, `record_projectile_damage` (called from `ProjectileBase`), `slot_index_to_ring` (static helper).
 DialogueManager
 
 Path: res://autoloads/dialogue_manager.gd

@@ -601,6 +601,11 @@ func _begin_mission_wave_sequence() -> void:
 	print("[GameManager] _begin_mission_wave_sequence: mission=%d" % current_mission)
 	wave_manager.ensure_boss_registry_loaded()
 	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
+	# TODO(Prompt 35 economy): When mission/day assets expose `MissionEconomyData`, call
+	# `EconomyManager.apply_mission_economy(...)` here (or from mission bootstrap) so passive income,
+	# wave_clear bonuses (via `SignalBus.wave_cleared` → `EconomyManager.grant_wave_clear_reward`), and
+	# sell-refund multipliers apply for that mission. Coordinate with `EconomyManager.reset_to_defaults`
+	# timing so starting_gold / starting_material do not fight hub persistence unintentionally.
 	_update_final_boss_tracking_from_day(day_cfg)
 	wave_manager.reset_for_new_mission()
 	# Apply day config after reset — reset clears per-day tuning (waves, faction, multipliers).

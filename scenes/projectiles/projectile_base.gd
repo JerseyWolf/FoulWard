@@ -50,6 +50,11 @@ var _splash_radius: float = 0.0
 const SPLASH_DAMAGE_FRACTION: float = 0.5
 var _struck_instance_ids: Array[int] = []
 
+## CombatStatsTracker attribution (initialize_from_weapon / initialize_from_building).
+var _stat_source_kind: String = "none"
+var _stat_building_instance_id: int = 0
+var _stat_slot_index: int = -1
+
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	monitoring = true
@@ -64,10 +69,14 @@ func initialize_from_weapon(
 	custom_damage: float = -1.0,
 	custom_damage_type: Types.DamageType = Types.DamageType.PHYSICAL,
 	pierce_extra_hits: int = 0,
-	splash_radius_world: float = 0.0
+	splash_radius_world: float = 0.0,
+	track_tower_damage_for_stats: bool = true
 ) -> void:
 	# Credit (two-path initialization pattern, overshoot buffer):
 	#   FOUL WARD SYSTEMS_part2.md §6.5 initialize_from_weapon.
+	_stat_source_kind = "tower" if track_tower_damage_for_stats else "none"
+	_stat_building_instance_id = 0
+	_stat_slot_index = -1
 	_damage = custom_damage if custom_damage >= 0.0 else weapon_data.damage
 	_damage_type = custom_damage_type
 	_speed = weapon_data.projectile_speed
@@ -103,8 +112,13 @@ func initialize_from_building(
 	dot_duration: float,
 	dot_effect_type: String,
 	dot_source_id: String,
-	dot_in_addition_to_hit: bool
+	dot_in_addition_to_hit: bool,
+	source_building_instance_id: int = 0,
+	source_slot_index: int = -1
 ) -> void:
+	_stat_building_instance_id = source_building_instance_id
+	_stat_slot_index = source_slot_index
+	_stat_source_kind = "building" if source_building_instance_id != 0 else "none"
 	_damage = damage
 	_damage_type = damage_type
 	_speed = speed
@@ -323,7 +337,9 @@ func _apply_splash_damage(center: Vector3, primary: EnemyBase) -> void:
 			ed.armor_type
 		)
 		if fd > 0.0:
+			var hp_before_splash: int = e.health_component.current_hp
 			e.take_damage(splash_damage, _damage_type)
+			_notify_combat_stat(e, hp_before_splash)
 
 
 ## Returns true if at least one point of damage was applied (not fully immunized).
@@ -343,7 +359,9 @@ func _apply_damage_to_enemy(enemy: EnemyBase) -> bool:
 				enemy_data.armor_type
 			)
 			if final_damage > 0.0:
+				var hp_before_dot: int = enemy.health_component.current_hp
 				enemy.take_damage(_damage, _damage_type)
+				_notify_combat_stat(enemy, hp_before_dot)
 		var effect_data: Dictionary = {
 			"effect_type": _dot_effect_type,
 			"damage_type": _damage_type,
@@ -363,7 +381,26 @@ func _apply_damage_to_enemy(enemy: EnemyBase) -> bool:
 		enemy_data.armor_type
 	)
 	if final_damage_no_dot > 0.0:
+		var hp_before: int = enemy.health_component.current_hp
 		enemy.take_damage(_damage, _damage_type)
+		_notify_combat_stat(enemy, hp_before)
 		return true
 	return false
+
+
+func _notify_combat_stat(enemy: EnemyBase, hp_before: int) -> void:
+	if _stat_source_kind == "none":
+		return
+	var hp_after: int = enemy.health_component.current_hp
+	var dmg: float = float(maxi(0, hp_before - hp_after))
+	var killed: bool = hp_before > 0 and hp_after <= 0
+	if dmg <= 0.0:
+		return
+	CombatStatsTracker.record_projectile_damage(
+		_stat_source_kind,
+		_stat_building_instance_id,
+		_stat_slot_index,
+		dmg,
+		killed
+	)
 

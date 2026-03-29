@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=2 format=3 uid="uid://b8example_arrow_tower"]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+id = "arrow_tower_example"
+building_type = 0
+display_name = "Arrow Tower (Example)"
+description = "Example BuildingData for Prompt 35 — mirrors production arrow tower tuning."
+gold_cost = 50
+material_cost = 2
+upgrade_gold_cost = 75
+upgrade_material_cost = 3
+damage = 20.0
+upgraded_damage = 35.0
+fire_rate = 1.0
+attack_range = 15.0
+upgraded_range = 18.0
+damage_type = 0
+targets_air = false
+targets_ground = true
+is_locked = false
+unlock_research_id = ""
+research_damage_boost_id = "arrow_tower_plus_damage"
+research_range_boost_id = ""
+color = Color(0.7, 0.5, 0.2, 1.0)
+tags = PackedStringArray("example", "ranged")

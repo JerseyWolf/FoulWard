@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MissionEconomyData" load_steps=2 format=3 uid="uid://mecon_example"]
+
+[ext_resource type="Script" path="res://scripts/resources/mission_economy_data.gd" id="1_me"]
+
+[resource]
+script = ExtResource("1_me")
+mission_id = "standard_economy_example"
+starting_gold = 400
+starting_material = 20
+passive_gold_per_sec = 0.0
+passive_material_per_sec = 0.0
+wave_clear_bonus_gold = 25
+wave_clear_bonus_material = 5
+leak_penalty_gold = 15
+leak_penalty_material = 0
+sell_refund_global_multiplier = 1.0
+duplicate_cost_k_override = 0.0
+tags = PackedStringArray("example", "standard")

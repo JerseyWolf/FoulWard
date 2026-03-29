@@ -73,3 +73,80 @@ class_name AllyData
 @export var ally_base_damage: int = 0
 ## True if this ally attacks at range rather than closing to melee.
 @export var is_ranged: bool = false
+
+# ---------------------------------------------------------------------------
+# Data-driven tower defense / roster foundation (Prompt 34)
+# ---------------------------------------------------------------------------
+
+## Optional icon (`res://` texture path).
+@export var icon: String = ""
+## Rough footprint / formation weight.
+@export var unit_size: Types.UnitSize = Types.UnitSize.SMALL
+
+## Flat armor and MR (post-MVP combat pipeline; parallel to future armor_type matrix).
+@export var armor_flat: float = 0.0
+@export var magic_resist: float = 0.0
+
+## Shots per second; when <= 0, runtime may derive from `attack_cooldown`.
+@export var fire_rate: float = 0.0
+## Splash radius for ranged/AoE allies (world units).
+@export var splash_radius: float = 0.0
+@export var dot_duration: float = 0.0
+@export var dot_damage_per_second: float = 0.0
+
+## Blocker / body footprint for navigation and tower interactions.
+@export var is_blocker: bool = false
+@export var collision_radius: float = 1.0
+## Max distance from anchor before leash pulls (parallel to `patrol_radius`; prefer explicit leash for TD).
+@export var leash_radius: float = 0.0
+
+@export var ai_mode: Types.AllyAiMode = Types.AllyAiMode.DEFAULT
+## Free-form tag string for preferred targets (e.g. `"flying"`, `"boss"`).
+@export var preferred_target_tag: String = ""
+
+## Optional support package (mirrors BuildingData subset for aura/healer allies).
+@export var is_aura: bool = false
+@export var aura_category: Types.AuraCategory = Types.AuraCategory.OFFENSE
+@export var aura_radius: float = 0.0
+@export_flags("allies", "self", "tower") var aura_targets: int = 0
+@export var aura_stat: Types.AuraStat = Types.AuraStat.DAMAGE
+@export var aura_modifier_type: Types.AuraModifierKind = Types.AuraModifierKind.ADD_FLAT
+@export var aura_modifier_value: float = 0.0
+@export var aura_limit_damage_type: bool = false
+@export var aura_damage_type_filter: Types.DamageType = Types.DamageType.PHYSICAL
+
+@export var is_healer: bool = false
+@export var heal_per_second: float = 0.0
+@export var heal_radius: float = 0.0
+@export_flags("allies", "tower", "self") var heal_targets: int = 0
+@export var cleanse_on_heal: bool = false
+@export var shield_on_heal: float = 0.0
+
+@export var summon_type: Types.SummonSpawnType = Types.SummonSpawnType.NONE
+@export var respawn_cooldown: float = 0.0
+@export var despawn_at_wave_end: bool = false
+
+@export var tags: PackedStringArray = PackedStringArray()
+
+
+## Effective fire rate (Hz); uses `attack_cooldown` when `fire_rate` is unset.
+func get_effective_fire_rate() -> float:
+	if fire_rate > 0.0:
+		return fire_rate
+	if attack_cooldown > 0.0:
+		return 1.0 / attack_cooldown
+	return 0.0
+
+
+func collect_validation_warnings() -> PackedStringArray:
+	var out: PackedStringArray = PackedStringArray()
+	if max_hp < 0:
+		out.append("max_hp is negative")
+	if (ally_class == Types.AllyClass.MELEE or ally_class == Types.AllyClass.RANGED) and get_effective_fire_rate() <= 0.0:
+		out.append("no positive fire_rate or attack_cooldown for combat ally")
+	if is_aura and aura_radius <= 0.0:
+		out.append("is_aura but aura_radius <= 0")
+	if is_healer and heal_per_second > 0.0 and heal_radius <= 0.0:
+		out.append("healer with HPS but heal_radius <= 0")
+	return out
+

@@ -5,7 +5,6 @@
 class_name WorldMap
 extends Control
 
-const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
 const FactionDataType = preload("res://scripts/resources/faction_data.gd")
 
 @onready var territory_buttons_container: VBoxContainer = %TerritoryButtons
