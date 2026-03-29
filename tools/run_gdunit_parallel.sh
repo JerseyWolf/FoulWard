@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run_gdunit_parallel.sh — Runs all 58 test files across 8 parallel headless
+# run_gdunit_parallel.sh — Runs all test files under res://tests/ (including tests/unit/) across 8 parallel headless
 # Godot processes. Target: < 45 seconds wall-clock.
 # Replaces run_gdunit.sh for CI and pre-commit checks once validated.
 # Spec: IMPROVEMENTS_TO_BE_DONE.md Appendix E (Prompt 26 audit).
@@ -21,11 +21,13 @@ if [[ ! -x "$godot_bin" ]]; then
 fi
 
 test_files=()
-for f in "$repo_root"/tests/test_*.gd; do
+shopt -s nullglob
+for f in "$repo_root"/tests/test_*.gd "$repo_root"/tests/unit/test_*.gd; do
 	[[ -f "$f" ]] || continue
-	basename_f="$(basename "$f")"
-	test_files+=("res://tests/$basename_f")
+	rel="${f#"$repo_root"/}"
+	test_files+=("res://$rel")
 done
+shopt -u nullglob
 
 total_files=${#test_files[@]}
 if [[ $total_files -eq 0 ]]; then

@@ -45,6 +45,25 @@ enum BuildingType {
 	SHIELD_GENERATOR,
 }
 
+## Modular building kit: base piece under `res://art/generated/kit/*.glb` (see FUTURE_3D_MODELS_PLAN.md §4).
+enum BuildingBaseMesh {
+	STONE_ROUND,
+	STONE_SQUARE,
+	WOOD_ROUND,
+	RUINS_BASE,
+}
+
+## Modular building kit: top piece under `res://art/generated/kit/*.glb` (see FUTURE_3D_MODELS_PLAN.md §4).
+enum BuildingTopMesh {
+	ROOF_CONE,
+	ROOF_FLAT,
+	GLASS_DOME,
+	FIRE_BOWL,
+	POISON_TANK,
+	BALLISTA_FRAME,
+	EMBRASURE,
+}
+
 enum ArnulfState {
 	IDLE,
 	PATROL,
@@ -104,6 +123,22 @@ enum StrategyProfile {
 	ANTI_AIR_FOCUS,
 	SPELL_FOCUS,
 	BUILDING_FOCUS,
+}
+
+## Battle terrain preset for CampaignManager terrain scene selection (see FUTURE_3D_MODELS_PLAN.md §5).
+enum TerrainType {
+	GRASSLAND,
+	FOREST,
+	SWAMP,
+	RUINS,
+	TUNDRA,
+}
+
+## Modifier kind for TerrainZone; IMPASSABLE is documented for NavigationObstacle3D, not Area3D zones.
+enum TerrainEffect {
+	NONE,
+	SLOW,
+	IMPASSABLE,
 }
 
 # ASSUMPTION: HubRole enum is appended to keep existing enum numeric ordering stable.

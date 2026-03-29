@@ -4,7 +4,7 @@
 
 This document is the **authoritative roadmap** for moving Foul Ward from **Blender-generated Rigify placeholders** and **primitive `.tres` meshes** to **production 3D assets** (and matching **2D hub portraits**). It complements:
 
-- **`ArtPlaceholderHelper`** (`res://scripts/art/art_placeholder_helper.gd`) — runtime resolution of **Mesh** / **Material** from `res://art/meshes/**` with optional override from `res://art/generated/meshes/*.tres` (legacy path). **GLB files** live under `res://art/generated/{enemies,allies,buildings,bosses,misc}/` and are intended to be **swapped in** as imported `PackedScene` roots when gameplay scenes are refactored to use skeletal animation.
+- **`ArtPlaceholderHelper`** (`res://scripts/art/art_placeholder_helper.gd`) — runtime resolution of **Mesh** / **Material** from `res://art/meshes/**` with optional override from `res://art/generated/meshes/*.tres` (legacy path). There is **no** `resolve_mesh()` API; use **`get_enemy_mesh()`**, **`get_building_mesh()`**, **`get_ally_mesh()`**, etc., typically from **`initialize()`** on combat units (not `_ready()`), after `EnemyData` / `BuildingData` is available. **GLB files** live under `res://art/generated/{enemies,allies,buildings,bosses,misc}/` and are intended to be **swapped in** as imported `PackedScene` roots when gameplay scenes are refactored to use skeletal animation.
 - **`res://art/generated/`** — batch output from `tools/generate_placeholder_glbs_blender.py` (Blender 4.x headless). Regenerate after changing faction shapes or animation keyframes.
 
 **When to revisit:** at the start of any **art milestone** (vertical slice, trailer, or outsourcing); after **faction roster** changes; when **adding a new enemy/building/boss** type (update the Blender batch script + this file’s roster tables).
@@ -55,7 +55,7 @@ Use this sequence whenever a placeholder GLB is replaced.
 ### a. Hyper3D / Rodin (text-to-3D)
 
 1. Sign in at [hyper3d.ai](https://hyper3d.ai) (or your Rodin-capable tool).
-2. Use a **faction style brief** (see §5) + **entity description** + **T-pose** + topology hint (`18k quad` for rank-and-file, `50k quad` for named characters / bosses).
+2. Use a **faction style brief** (see §6) + **entity description** + **T-pose** + topology hint (`18k quad` for rank-and-file, `50k quad` for named characters / bosses).
 3. Iterate on the **free preview**; pay to export the mesh package when silhouette reads well at **combat camera distance**.
 
 ### b. Blender — Rigify, bind
@@ -95,11 +95,51 @@ Godot reimports automatically; **ArtPlaceholderHelper** continues to resolve **p
 
 ---
 
-## 4. Entity-by-entity production TODO (roster)
+## §4 — Modular Building Kit
+
+### Kit Pieces Required (12 total)
+| ID (enum name)   | Filename                  | Used by towers            |
+|------------------|---------------------------|---------------------------|
+| STONE_ROUND      | stone_base_round.glb      | Arrow, Magic Obelisk, Ballista |
+| STONE_SQUARE     | stone_base_square.glb     | Fire Brazier, Poison Vat, Shield Gen |
+| WOOD_ROUND       | wood_base_round.glb       | Archer Barracks           |
+| RUINS_BASE       | ruins_base.glb            | Ruins-tier towers         |
+| ROOF_CONE        | roof_cone.glb             | Arrow Tower, Archer Barracks |
+| ROOF_FLAT        | roof_flat.glb             | Shield Generator, Ballista base |
+| GLASS_DOME       | glass_dome.glb            | Magic Obelisk             |
+| FIRE_BOWL        | fire_bowl.glb             | Fire Brazier              |
+| POISON_TANK      | poison_tank.glb           | Poison Vat                |
+| BALLISTA_FRAME   | ballista_frame.glb        | Ballista                  |
+| EMBRASURE        | embrasure.glb             | Arrow Tower, Archer Barracks |
+| ARCH_WINDOW      | arch_window.glb           | All towers (optional detail) |
+
+### Rodin Prompt Template
+Use this prefix for all kit pieces to ensure visual consistency:
+
+  "Medieval dark-fantasy stone architecture kit piece, single mesh,
+  low-poly game asset, 800–1200 tris, PBR textures 512×512,
+  muted desaturated palette, worn stone texture, no color variation
+  on albedo, neutral grey base so faction accent_color ShaderMaterial
+  override reads correctly. T-pose equivalent: upright, centered
+  at origin, fits 1m × 1m × 1m bounding box. [PIECE DESCRIPTION]"
+
+Replace [PIECE DESCRIPTION] per piece, e.g.:
+  - stone_base_round: "Circular stone tower base, 1.2m diameter,
+    rough-cut stone blocks, slight mossy weathering at base ring."
+  - roof_cone: "Pointed conical slate roof cap, 0.8m base diameter,
+    1.2m tall, slate tile texture, slight overhang edge."
+
+### Attribution
+Structural reference: alpapaydin/Godot-4-Tower-Defense-Template (MIT)
+https://github.com/alpapaydin/Godot-4-Tower-Defense-Template
+
+---
+
+## 5. Entity-by-entity production TODO (roster)
 
 **Priority legend:** **HIGH** = primary combat visibility; **MEDIUM** = allies / buildings; **LOW** = hub-only, escorts, or test-only.
 
-Faction briefs are summarized in §5.
+Faction briefs are summarized in §6.
 
 ### Enemies (`res://resources/enemy_data/*.tres`)
 
@@ -122,9 +162,9 @@ Faction briefs are summarized in §5.
 
 Static meshes only (no skeleton). Priority **MEDIUM**.
 
-- [ ] **arrow_tower**, **fire_brazier**, **magic_obelisk**, **poison_vat**, **ballista**, **archer_barracks**, **anti_air_bolt**, **shield_generator** — Rodin prompts: “Grey stone base + **faction accent** trim (see §5), **top-down RTS** readable, modular kit piece, no rig, 18k quad.”
+- [ ] **arrow_tower**, **fire_brazier**, **magic_obelisk**, **poison_vat**, **ballista**, **archer_barracks**, **anti_air_bolt**, **shield_generator** — Rodin prompts: “Grey stone base + **faction accent** trim (see §6), **top-down RTS** readable, modular kit piece, no rig, 18k quad.”
 
-### Bosses (`res://resources/bossdata_*.tres`)
+### Bosses (`res://resources/boss_data/*.tres`)
 
 - [ ] **plague_cult_miniboss** — HIGH — “Large plague cult champion, sickly green accents, **T-pose**, 50k quad”. Anims: idle, walk, phase attack, death.
 - [ ] **orc_warlord** — HIGH — “Massive orc warlord, banners optional, **T-pose**, 50k quad”. Anims: idle, walk, heavy attack, death.
@@ -133,11 +173,11 @@ Static meshes only (no skeleton). Priority **MEDIUM**.
 
 ### Hub characters (`res://resources/character_data/*.tres`)
 
-**2D portraits only** for hub UI — see §6. **Florence** is referenced in dialogue but **no** `character_data` resource yet; add when hub roster expands.
+**2D portraits only** for hub UI — see §7. **Florence** is referenced in dialogue but **no** `character_data` resource yet; add when hub roster expands.
 
 ---
 
-## 5. Consistency strategy
+## 6. Consistency strategy
 
 **Faction style briefs** (embed in every Rodin / art brief):
 
@@ -154,7 +194,7 @@ Static meshes only (no skeleton). Priority **MEDIUM**.
 
 ---
 
-## 6. Hub character portraits (2D)
+## 7. Hub character portraits (2D)
 
 Characters: **Florence** (player voice — UI only today), **Arnulf** hub, **merchant**, **researcher** (Sybil), **enchantress**, **mercenary captain**, **flavor NPC**. **Not** 3D combat models.
 
@@ -164,7 +204,7 @@ Characters: **Florence** (player voice — UI only today), **Arnulf** hub, **mer
 
 ---
 
-## 7. PhysicalBone3D ragdoll plan (Godot-side)
+## 8. PhysicalBone3D ragdoll plan (Godot-side)
 
 After production GLB import, **per humanoid** enemy and ally:
 
@@ -176,7 +216,7 @@ After production GLB import, **per humanoid** enemy and ally:
 
 ---
 
-## 8. Animation state machine wiring plan
+## 9. Animation state machine wiring plan
 
 **Expected clip names** (match exported GLB): `idle`, `walk`, `death`; add `attack_*` when Mixamo/production clips exist.
 
@@ -191,7 +231,7 @@ After production GLB import, **per humanoid** enemy and ally:
 
 ---
 
-## 9. Tools and costs reference
+## 10. Tools and costs reference
 
 | Stage | Tool | Cost pattern |
 |-------|------|----------------|
@@ -204,25 +244,70 @@ After production GLB import, **per humanoid** enemy and ally:
 
 ---
 
-## Appendix A — Scene art audit (2026-03-28)
+## §5 — Terrain System
 
-**Method:** Grep `res://art/` in `*.tscn`; Godot MCP `reload_project` after GLB batch.
+### Architecture
+
+TerrainContainer (Node3D in `main.tscn`) is cleared and repopulated each battle by `CampaignManager._load_terrain()`. Each terrain scene contains:
+
+- GroundMesh + StaticBody3D (walkable ground)
+- NavRegion (NavigationRegion3D, registered with NavMeshManager autoload)
+- TerrainZones (Area3D with `terrain_zone.gd`, optional — SLOW effect only)
+- Props (DestructibleProp / ImmovableProp containers, not yet implemented)
+
+### Terrain Types Status
+
+| Type       | Scene file                | Status    | Notes                     |
+|------------|---------------------------|-----------|---------------------------|
+| GRASSLAND  | terrain_grassland.tscn    | Done   | Flat, no zones            |
+| SWAMP      | terrain_swamp.tscn        | Done   | 0.55× speed zone          |
+| FOREST     | terrain_forest.tscn       | TODO(TERRAIN) | Dense tree props, 0.75× zone |
+| RUINS      | terrain_ruins.tscn        | TODO(TERRAIN) | Destructible pillars       |
+| TUNDRA     | terrain_tundra.tscn       | TODO(TERRAIN) | 0.7× speed (snow), ice patches |
+
+### DestructibleProp (Future)
+
+Uses Jummit/godot-destruction-plugin (MIT):
+https://github.com/Jummit/godot-destruction-plugin
+
+On health_depleted: call destroy(), emit SignalBus.terrain_prop_destroyed, emit SignalBus.nav_mesh_rebake_requested → NavMeshManager queues rebake.
+
+### Speed Zone Design Guide
+
+- SLOW zones: use TerrainZone Area3D with speed_multiplier < 1.0
+- IMPASSABLE zones: use NavigationObstacle3D with affect_navigation_mesh=true, baked into NavRegion before battle. Do NOT use TerrainZone for impassable.
+- Overlapping zones: EnemyBase takes the MINIMUM multiplier automatically.
+
+### Attribution
+
+- Navmesh rebake queue pattern: community contributor, godotengine/godot#81181
+  https://github.com/godotengine/godot/issues/81181 (public domain snippet)
+- Navigation pattern reference: quiver-dev/tower-defense-tutorial (MIT)
+  https://github.com/quiver-dev/tower-defense-tutorial
+- Destructible props (future): Jummit/godot-destruction-plugin (MIT)
+  https://github.com/Jummit/godot-destruction-plugin
+
+---
+
+## Appendix A — Scene art audit (verified 2026-03-29)
+
+**Method:** Full-text grep `res://art/` across all `*.tscn` (seven files with `ext_resource` mesh/material paths); inline-mesh scenes listed separately. **Blender MCP `execute_blender_code` is not in this repo** — placeholders are produced by **`tools/generate_placeholder_glbs_blender.py`** (Blender headless). **Godot MCP Pro** `reload_project` after changes; **`get_editor_errors`** scanned for GLB import failures (none; only existing GDScript warnings such as `SHADOWED_GLOBAL_IDENTIFIER` on `ArtPlaceholderHelper` preload aliases).
 
 | Scene | Art reference | Real file? | ArtPlaceholderHelper / mesh resolution | AnimationPlayer |
 |-------|---------------|------------|----------------------------------------|-----------------|
-| `scenes/enemies/enemy_base.tscn` | `art/meshes/enemies/enemy_orc_grunt.tres` | Yes (primitive `.tres`) | **`EnemyBase.initialize`** calls `get_enemy_mesh()` / `get_enemy_material()` — not a method named `resolve_mesh()` | Not present; GLB clips not wired |
-| `scenes/buildings/building_base.tscn` | `unknown_mesh.tres` | Yes | **`initialize`** uses `get_building_mesh()` | None |
-| `scenes/tower/tower.tscn` | `tower_core.tres` | Yes | **`Tower._ready`** uses `get_tower_mesh()` | None (static) |
-| `scenes/arnulf/arnulf.tscn` | `ally_arnulf.tres` | Yes | **`Arnulf._ready`** uses `get_ally_mesh("arnulf")` | Not present |
-| `scenes/allies/ally_base.tscn` | Inline `BoxMesh` | N/A | **No** helper call yet (TODO added) | None |
-| `scenes/bosses/boss_base.tscn` | Inline `BoxMesh` | N/A | **No** helper; boss GLB not applied | None |
+| `scenes/enemies/enemy_base.tscn` | `art/meshes/enemies/enemy_orc_grunt.tres` + faction material | Yes (primitive `.tres`) | **`EnemyBase.initialize()`** → `get_enemy_mesh()` / `get_enemy_material()` (`_ready` only sets label) | Not present; GLB clips not wired |
+| `scenes/buildings/building_base.tscn` | `unknown_mesh.tres` | Yes | **`BuildingBase.initialize()`** → `get_building_mesh()` / `get_building_material()` | None |
+| `scenes/tower/tower.tscn` | `tower_core.tres` + neutral material | Yes | **`Tower._ready()`** → `get_tower_mesh()` | None (static) |
+| `scenes/arnulf/arnulf.tscn` | `ally_arnulf.tres` + allies material | Yes | **`Arnulf._ready()`** → `get_ally_mesh("arnulf")` | Not present |
+| `scenes/allies/ally_base.tscn` | Inline `BoxMesh` | N/A | **No** `initialize()` mesh hook for generic mercs yet (`# TODO(ART)` in script) | None |
+| `scenes/bosses/boss_base.tscn` | Inline `BoxMesh` | N/A | **`initialize_boss_data()`** → **`EnemyBase.initialize()`** uses placeholder **EnemyData** mesh; **`_configure_visuals()`** tints only — boss GLB swap in `# TODO(ART)` | None |
 | `scenes/hex_grid/hex_grid.tscn` | `hex_slot.tres` | Yes | Not via helper | None |
 | `scenes/projectiles/projectile_base.tscn` | `projectile_crossbow.tres` | Yes | Not via helper | None |
-| `ui/hub.tscn` | Character catalog | N/A | 2D **ColorRect** portraits via `character_base_2d.tscn` | N/A |
+| `ui/hub.tscn` | Character catalog / 2D scenes | N/A | 2D **ColorRect** portraits via `character_base_2d.tscn` | N/A |
 
-**Gaps:** Combat scenes still reference **`.tres` primitives** or **inline meshes**, not **`res://art/generated/.../*.glb`** directly. **Generated GLBs** exist on disk and import with **Skeleton3D** where Rigify applied; **runtime** does not yet instance them. **Hub** has no `TextureRect` portraits yet.
+**Gaps:** No `.tscn` references **`res://art/generated/*.glb`** directly; combat uses **`.tres` Mesh** or **inline** primitives. **Generated GLBs** exist on disk (see `generation_log.json`) with **Skeleton3D** where Rigify applied; **runtime** does not yet instance `PackedScene` from GLB. **Hub** has no `TextureRect` portraits yet.
 
-**Godot MCP:** `reload_project` succeeded (`Filesystem rescanned.`). Editor log may show unrelated script warnings; no GLB-specific import failures observed after batch.
+**Godot MCP (2026-03-29):** `reload_project` → `Filesystem rescanned.` No new art import errors in editor error scan.
 
 ---
 
@@ -233,4 +318,4 @@ cd /path/to/FoulWard
 blender --background --python tools/generate_placeholder_glbs_blender.py
 ```
 
-Requires **numpy** available to Blender’s Python (see §9).
+Requires **numpy** available to Blender’s Python (see §10).

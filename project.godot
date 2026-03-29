@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 SignalBus="*res://autoloads/signal_bus.gd"
+NavMeshManager="*res://scripts/nav_mesh_manager.gd"
 DamageCalculator="*res://autoloads/damage_calculator.gd"
 EconomyManager="*res://autoloads/economy_manager.gd"
 CampaignManager="*res://autoloads/campaign_manager.gd"

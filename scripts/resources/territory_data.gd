@@ -25,19 +25,9 @@ extends Resource
 ## Base color tint for UI elements representing this territory.
 @export var color: Color = Color.WHITE
 
-## Terrain categories for territories (CONVENTIONS: enum type PascalCase, members UPPER_SNAKE_CASE).
-enum TerrainType {
-	PLAINS,
-	FOREST,
-	SWAMP,
-	MOUNTAIN,
-	CITY,
-	OTHER,
-}
-
-## Terrain category for this territory.
-## DEVIATION: Prompt 9 sketched `terrain_type: String`; Prompt 8 + world map use this enum instead.
-@export var terrain_type: int = TerrainType.PLAINS
+## Terrain preset for battlefield terrain scene selection (Types.TerrainType).
+## Former TerritoryData.TerrainType values map 1:1 to Types: PLAINS→GRASSLAND, MOUNTAIN→RUINS, CITY→TUNDRA.
+@export var terrain_type: Types.TerrainType = Types.TerrainType.GRASSLAND
 
 ## Whether the player currently holds this territory.
 @export var is_controlled_by_player: bool = false

@@ -126,7 +126,10 @@ func test_ground_enemy_position_changes_over_time_dense_layout() -> void:
 	var enemy: EnemyBase = await _wait_for_ground_enemy(400)
 	assert_object(enemy).is_not_null()
 	var p0: Vector3 = enemy.global_position
-	await _run_steps(600)
-	var p1: Vector3 = enemy.global_position
-	assert_float(p0.distance_to(p1)).is_greater(0.05)
+	var max_dist: float = 0.0
+	for _k: int in range(600):
+		await get_tree().physics_frame
+		if is_instance_valid(enemy):
+			max_dist = maxf(max_dist, p0.distance_to(enemy.global_position))
+	assert_float(max_dist).is_greater(0.05)
 

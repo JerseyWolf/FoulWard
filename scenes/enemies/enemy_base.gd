@@ -11,16 +11,24 @@
 class_name EnemyBase
 extends CharacterBody3D
 
-const TARGET_POSITION: Vector3 = Vector3.ZERO
+## Preload registers `class_name RiggedVisualWiring` before this file resolves identifiers (fresh .godot).
+const _RiggedVisualWiringScript: GDScript = preload("res://scripts/art/rigged_visual_wiring.gd")
+
 const FLYING_HEIGHT: float = 5.0
 const STUCK_VELOCITY_EPSILON: float = 0.1
 const STUCK_TIME_THRESHOLD: float = 1.5
 const PROGRESS_EPSILON: float = 0.05
+const DIRECT_STEER_MIN_DIST_SQ: float = 0.01
 
 # Assign placeholder art resources via convention-based pipeline.
 const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
 
 var _enemy_data: EnemyData = null
+## When set, this enemy pathfinds to Arnulf and attacks him (only after `begin_arnulf_retaliation`).
+var _arnulf_retaliation_target: Node3D = null
+## Visual-only: GLB AnimationPlayer for idle/walk (see RiggedVisualWiring).
+var _locomotion_animation_player: AnimationPlayer = null
+var _locomotion_clip: StringName = &""
 var _attack_timer: float = 0.0
 var _is_attacking: bool = false
 var _time_since_last_progress: float = 0.0
@@ -28,10 +36,13 @@ var _last_distance_to_tower: float = 0.0
 var active_status_effects: Array[Dictionary] = []
 const MAX_POISON_STACKS: int = 5 # TUNING: max poison stacks per enemy.
 
+var _terrain_multipliers: Array[float] = []
+var _active_terrain_speed_multiplier: float = 1.0
+
 # PUBLIC — required by BuildingBase._find_target() and Arnulf._find_closest_enemy_to_tower().
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
-@onready var _mesh: MeshInstance3D = get_node_or_null("EnemyMesh")
+@onready var _visual_slot: Node3D = get_node_or_null("EnemyVisual")
 @onready var _label: Label3D = get_node_or_null("EnemyLabel")
 
 # ASSUMPTION: These paths match ARCHITECTURE.md section 2.
@@ -40,6 +51,10 @@ const MAX_POISON_STACKS: int = 5 # TUNING: max poison stacks per enemy.
 func _ready() -> void:
 	# Ensure enemies can be found via group for buildings and spells.
 	add_to_group("enemies")
+	if not SignalBus.enemy_entered_terrain_zone.is_connected(_on_entered_terrain_zone):
+		SignalBus.enemy_entered_terrain_zone.connect(_on_entered_terrain_zone)
+	if not SignalBus.enemy_exited_terrain_zone.is_connected(_on_exited_terrain_zone):
+		SignalBus.enemy_exited_terrain_zone.connect(_on_exited_terrain_zone)
 	if _label != null and _enemy_data != null:
 		_label.text = _enemy_data.display_name
 
@@ -51,9 +66,10 @@ func initialize(enemy_data: EnemyData) -> void:
 		push_error("EnemyBase.initialize called with null EnemyData")
 		return
 	_enemy_data = enemy_data
+	_arnulf_retaliation_target = null
 	_attack_timer = 0.0
 	_is_attacking = false
-	_last_distance_to_tower = global_position.distance_to(TARGET_POSITION)
+	_last_distance_to_tower = global_position.distance_to(_get_tower_target_flat())
 	_time_since_last_progress = 0.0
 	print("[Enemy] initialized: %s  hp=%d speed=%.1f flying=%s pos=(%.0f,%.0f,%.0f)" % [
 		enemy_data.display_name, enemy_data.max_hp, enemy_data.move_speed, enemy_data.is_flying,
@@ -73,26 +89,17 @@ func initialize(enemy_data: EnemyData) -> void:
 		navigation_agent.target_desired_distance = _enemy_data.attack_range
 		navigation_agent.avoidance_enabled = true
 		navigation_agent.radius = 0.5
-		navigation_agent.target_position = TARGET_POSITION
+		# max_speed must be non-zero for NavigationAgent3D avoidance / path heuristics (scene default was 0).
+		navigation_agent.max_speed = maxf(
+				_enemy_data.move_speed * _active_terrain_speed_multiplier,
+				0.25
+		)
+		navigation_agent.target_position = _get_nav_target_position()
 
-	# Visuals from EnemyData.color.
-	if _mesh != null:
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = _enemy_data.color
-		_mesh.material_override = mat
 	if _label != null:
 		_label.text = _enemy_data.display_name
 
-	# TODO(ART): Swap MeshInstance3D for res://art/generated/enemies/<enemy_id>.glb (PackedScene)
-	# when AnimationPlayer-driven visuals replace primitive mesh; wire idle/walk/death clips.
-	# Art pipeline placeholder assignment (runtime override).
-	if _mesh != null:
-		var _art_mesh: Mesh = ArtPlaceholderHelper.get_enemy_mesh(enemy_data.enemy_type)
-		if _art_mesh != null:
-			_mesh.mesh = _art_mesh
-		var _art_mat: Material = ArtPlaceholderHelper.get_enemy_material(enemy_data.enemy_type)
-		if _art_mat != null:
-			_mesh.material_override = _art_mat
+	_mount_enemy_visual(enemy_data)
 
 ## Applies damage of a given type to this enemy.
 func take_damage(amount: float, damage_type: Types.DamageType) -> void:
@@ -112,6 +119,46 @@ func take_damage(amount: float, damage_type: Types.DamageType) -> void:
 func get_enemy_data() -> EnemyData:
 	return _enemy_data
 
+
+## Arnulf calls this when he starts attacking this enemy — enemy will path to Arnulf and fight back.
+func begin_arnulf_retaliation(arnulf: Node3D) -> void:
+	if arnulf == null or not is_instance_valid(arnulf):
+		return
+	if _enemy_data != null and _enemy_data.is_flying:
+		return
+	_arnulf_retaliation_target = arnulf
+
+
+func clear_arnulf_retaliation() -> void:
+	_arnulf_retaliation_target = null
+
+
+## Visual-only: BossBase reassigns after mounting boss GLB (shared locomotion driver).
+func assign_locomotion_animation_player(player: AnimationPlayer) -> void:
+	_locomotion_animation_player = player
+	_locomotion_clip = &""
+
+
+func _mount_enemy_visual(enemy_data: EnemyData) -> void:
+	_locomotion_animation_player = null
+	_locomotion_clip = &""
+	if _visual_slot == null:
+		return
+	var glb_path: String = RiggedVisualWiring.enemy_rigged_glb_path(enemy_data.enemy_type)
+	if not glb_path.is_empty() and ResourceLoader.exists(glb_path):
+		_locomotion_animation_player = RiggedVisualWiring.mount_glb_scene(_visual_slot, glb_path)
+	else:
+		RiggedVisualWiring.mount_enemy_placeholder_mesh(_visual_slot, enemy_data)
+
+
+func _sync_locomotion_animation() -> void:
+	if _locomotion_animation_player == null:
+		return
+	var horiz: float = Vector2(velocity.x, velocity.z).length()
+	_locomotion_clip = RiggedVisualWiring.update_locomotion_animation(
+		_locomotion_animation_player, horiz, _locomotion_clip
+	)
+
 # === PHYSICS LOOP ===================================================
 
 func _physics_process(delta: float) -> void:
@@ -122,6 +169,7 @@ func _physics_process(delta: float) -> void:
 		_physics_process_flying(delta)
 	else:
 		_physics_process_ground(delta)
+	_sync_locomotion_animation()
 
 
 ## Applies or updates a damage-over-time (DoT) effect on this enemy.
@@ -284,6 +332,57 @@ func _update_status_effects(delta: float) -> void:
 
 # === MOVEMENT =======================================================
 
+## World XZ the tower is rooted at (fallback origin if Tower node missing — e.g. headless tests).
+func _get_tower_target_flat() -> Vector3:
+	if is_instance_valid(_tower):
+		var p: Vector3 = _tower.global_position
+		return Vector3(p.x, 0.0, p.z)
+	return Vector3.ZERO
+
+
+func _get_nav_target_position() -> Vector3:
+	var flat: Vector3 = _get_tower_target_flat()
+	return Vector3(flat.x, 0.0, flat.z)
+
+
+func _get_active_combat_destination_flat() -> Vector3:
+	if _arnulf_retaliation_target != null and is_instance_valid(_arnulf_retaliation_target):
+		var p: Vector3 = _arnulf_retaliation_target.global_position
+		return Vector3(p.x, 0.0, p.z)
+	return _get_tower_target_flat()
+
+
+func _on_entered_terrain_zone(enemy: Node, multiplier: float) -> void:
+	if enemy != self:
+		return
+	_terrain_multipliers.append(multiplier)
+	_recalculate_terrain_speed()
+
+
+func _on_exited_terrain_zone(enemy: Node, multiplier: float) -> void:
+	if enemy != self:
+		return
+	_terrain_multipliers.erase(multiplier)
+	_recalculate_terrain_speed()
+
+
+func _recalculate_terrain_speed() -> void:
+	# TODO(TERRAIN): If multiple zone types are needed beyond SLOW, extend
+	# _recalculate_terrain_speed to handle Types.TerrainEffect variants.
+	if _terrain_multipliers.is_empty():
+		_active_terrain_speed_multiplier = 1.0
+	else:
+		var min_m: float = _terrain_multipliers[0]
+		for m: float in _terrain_multipliers:
+			min_m = minf(min_m, m)
+		_active_terrain_speed_multiplier = min_m
+	if _enemy_data != null and not _enemy_data.is_flying:
+		navigation_agent.max_speed = maxf(
+				_enemy_data.move_speed * _active_terrain_speed_multiplier,
+				0.25
+		)
+
+
 ## Returns combined slow multiplier from active slow effects (1.0 = no slow).
 func get_move_speed_slow_multiplier() -> float:
 	var worst: float = 1.0
@@ -296,12 +395,18 @@ func get_move_speed_slow_multiplier() -> float:
 
 
 func _physics_process_ground(delta: float) -> void:
-	navigation_agent.target_position = TARGET_POSITION
+	if _arnulf_retaliation_target != null and not is_instance_valid(_arnulf_retaliation_target):
+		_arnulf_retaliation_target = null
+	var dest_flat: Vector3 = _get_active_combat_destination_flat()
+	navigation_agent.target_position = dest_flat
 	if navigation_agent.is_navigation_finished():
-		var distance_to_tower: float = global_position.distance_to(TARGET_POSITION)
-		if distance_to_tower <= _enemy_data.attack_range:
-			_update_attack_tower(delta)
-			_reset_progress_tracking(distance_to_tower)
+		var distance_to_dest: float = global_position.distance_to(dest_flat)
+		if distance_to_dest <= _enemy_data.attack_range:
+			if _arnulf_retaliation_target != null and is_instance_valid(_arnulf_retaliation_target):
+				_update_attack_arnulf(delta)
+			else:
+				_update_attack_tower(delta)
+			_reset_progress_tracking(distance_to_dest)
 			return
 
 	var next_pos: Vector3 = navigation_agent.get_next_path_position()
@@ -310,7 +415,16 @@ func _physics_process_ground(delta: float) -> void:
 		direction = Vector3.ZERO
 	else:
 		direction = direction.normalized()
-	var speed_mult: float = get_move_speed_slow_multiplier()
+	# If the nav map/path is missing or not synced yet, steer directly on XZ so the wave can finish.
+	if direction == Vector3.ZERO:
+		var to_dest: Vector3 = dest_flat - global_position
+		to_dest.y = 0.0
+		if to_dest.length_squared() > DIRECT_STEER_MIN_DIST_SQ:
+			direction = to_dest.normalized()
+	var speed_mult: float = (
+			get_move_speed_slow_multiplier()
+			* _active_terrain_speed_multiplier
+	)
 	if direction != Vector3.ZERO:
 		velocity = direction * _enemy_data.move_speed * speed_mult
 	else:
@@ -319,17 +433,25 @@ func _physics_process_ground(delta: float) -> void:
 	_update_progress_tracking(delta)
 	_maybe_resolve_stuck()
 
-	if global_position.distance_to(TARGET_POSITION) <= _enemy_data.attack_range:
-		_update_attack_tower(delta)
-		_reset_progress_tracking(global_position.distance_to(TARGET_POSITION))
+	var distance_after: float = global_position.distance_to(dest_flat)
+	if distance_after <= _enemy_data.attack_range:
+		if _arnulf_retaliation_target != null and is_instance_valid(_arnulf_retaliation_target):
+			_update_attack_arnulf(delta)
+		else:
+			_update_attack_tower(delta)
+		_reset_progress_tracking(distance_after)
 
 
 func _physics_process_flying(delta: float) -> void:
-	var target_pos: Vector3 = Vector3(TARGET_POSITION.x, FLYING_HEIGHT, TARGET_POSITION.z)
+	var flat: Vector3 = _get_tower_target_flat()
+	var target_pos: Vector3 = Vector3(flat.x, FLYING_HEIGHT, flat.z)
 	var direction: Vector3 = target_pos - global_position
 	if direction.length_squared() > 0.0001:
 		direction = direction.normalized()
-	var speed_mult: float = get_move_speed_slow_multiplier()
+	var speed_mult: float = (
+			get_move_speed_slow_multiplier()
+			* _active_terrain_speed_multiplier
+	)
 	velocity = direction * _enemy_data.move_speed * speed_mult
 	move_and_slide()
 	if global_position.distance_to(target_pos) <= _enemy_data.attack_range:
@@ -337,10 +459,10 @@ func _physics_process_flying(delta: float) -> void:
 
 
 func _update_progress_tracking(delta: float) -> void:
-	var distance_to_tower: float = global_position.distance_to(TARGET_POSITION)
-	if distance_to_tower < _last_distance_to_tower - PROGRESS_EPSILON:
+	var distance_to_dest: float = global_position.distance_to(_get_active_combat_destination_flat())
+	if distance_to_dest < _last_distance_to_tower - PROGRESS_EPSILON:
 		_time_since_last_progress = 0.0
-		_last_distance_to_tower = distance_to_tower
+		_last_distance_to_tower = distance_to_dest
 	else:
 		_time_since_last_progress += delta
 
@@ -353,16 +475,16 @@ func _reset_progress_tracking(current_distance: float) -> void:
 func _maybe_resolve_stuck() -> void:
 	if _time_since_last_progress < STUCK_TIME_THRESHOLD:
 		return
-	var distance_to_tower: float = global_position.distance_to(TARGET_POSITION)
-	if distance_to_tower <= _enemy_data.attack_range:
+	var distance_to_dest: float = global_position.distance_to(_get_active_combat_destination_flat())
+	if distance_to_dest <= _enemy_data.attack_range:
 		return
 	var speed: float = velocity.length()
 	if speed > STUCK_VELOCITY_EPSILON:
 		return
-	navigation_agent.target_position = TARGET_POSITION
+	navigation_agent.target_position = _get_active_combat_destination_flat()
 	navigation_agent.set_velocity(Vector3.ZERO)
 	_time_since_last_progress = 0.0
-	_last_distance_to_tower = distance_to_tower
+	_last_distance_to_tower = distance_to_dest
 
 # === ATTACK LOGIC ===================================================
 
@@ -378,6 +500,33 @@ func _update_attack_tower(delta: float) -> void:
 func _deal_damage_to_tower() -> void:
 	if is_instance_valid(_tower):
 		_tower.take_damage(_enemy_data.damage)
+
+
+func _update_attack_arnulf(delta: float) -> void:
+	_is_attacking = true
+	velocity = Vector3.ZERO
+	if _arnulf_retaliation_target == null or not is_instance_valid(_arnulf_retaliation_target):
+		return
+	_attack_timer += delta
+	if _attack_timer >= _enemy_data.attack_cooldown:
+		_attack_timer = 0.0
+		_deal_damage_to_arnulf()
+
+
+func _deal_damage_to_arnulf() -> void:
+	if _arnulf_retaliation_target == null or not is_instance_valid(_arnulf_retaliation_target):
+		return
+	var arnulf_hc: HealthComponent = _arnulf_retaliation_target.get_node_or_null(
+		"HealthComponent"
+	) as HealthComponent
+	if arnulf_hc == null or not arnulf_hc.is_alive():
+		return
+	var final_damage: float = DamageCalculator.calculate_damage(
+		float(_enemy_data.damage),
+		Types.DamageType.PHYSICAL,
+		Types.ArmorType.UNARMORED
+	)
+	arnulf_hc.take_damage(final_damage)
 
 # === DEATH HANDLING ================================================
 

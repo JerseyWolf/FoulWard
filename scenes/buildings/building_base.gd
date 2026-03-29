@@ -135,6 +135,24 @@ func initialize(data: BuildingData) -> void:
 		if _art_mat != null:
 			mesh_inst.material_override = _art_mat
 
+	# Modular kit: non-default base/top enums assemble `res://art/generated/kit/*.glb` (BuildingData defaults = legacy mesh only).
+	if _should_use_building_kit_visual(data):
+		var existing_kit: Node = get_node_or_null("BuildingKitAssembly")
+		if is_instance_valid(existing_kit):
+			remove_child(existing_kit)
+			existing_kit.free()
+		var kit_visual: Node3D = ArtPlaceholderHelper.get_building_kit_mesh(
+				data.base_mesh_id,
+				data.top_mesh_id,
+				data.accent_color
+		) as Node3D
+		kit_visual.name = "BuildingKitAssembly"
+		kit_visual.position = Vector3.ZERO
+		add_child(kit_visual)
+		# TODO(ART-KIT): Replace GLB fallback boxes with final Hyper3D Rodin kit pieces per FUTURE_3D_MODELS_PLAN.md §4.
+		if mesh_inst != null:
+			mesh_inst.visible = false
+
 	var label_inst: Label3D = get_node_or_null("BuildingLabel") as Label3D
 	if label_inst != null:
 		label_inst.text = data.display_name
@@ -193,6 +211,14 @@ func _has_research_range_boost() -> bool:
 	if rm == null:
 		return false
 	return rm.is_unlocked(_building_data.research_range_boost_id)
+
+
+func _should_use_building_kit_visual(data: BuildingData) -> bool:
+	# Default enum pair keeps the single-mesh placeholder pipeline (existing .tres files unchanged).
+	return not (
+			data.base_mesh_id == Types.BuildingBaseMesh.STONE_ROUND
+			and data.top_mesh_id == Types.BuildingTopMesh.ROOF_CONE
+	)
 
 # ---------------------------------------------------------------------------
 # Private – combat loop

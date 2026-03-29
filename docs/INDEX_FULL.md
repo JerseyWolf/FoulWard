@@ -4,7 +4,7 @@ INDEX_FULL.md
 FOUL WARD — INDEX_FULL.md
 
 Full public API reference for every script, resource type, and system.
-Source of truth: REPO_DUMP_AFTER_MVP.md. **Doc layout:** `docs/README.md`. **Consolidated snapshot:** `docs/OPUS_ALL_ACTIONS.md` merges backlog + AGENTS + Prompt 26 log + both indexes. Updated: 2026-03-29 (**Prompt 28:** `DialogueManager` runtime condition tracking; `WaveManager` BUILD_MODE countdown pause; `test_relationship_manager_tiers.gd` / `test_save_manager_slots.gd`; input/hex/Arnulf/build-menu deltas; full GdUnit **535** cases — `docs/PROMPT_28_IMPLEMENTATION.md`). **Prompt 26:** Full project audit — 55 unindexed files indexed, `docs/AGENTS.md` standing orders, `IMPROVEMENTS_TO_BE_DONE.md` backlog with 78 issues, test Unit/Integration classification, parallel runner spec — `docs/PROMPT_26_IMPLEMENTATION.md`. **Prompt 24:** `PlaceholderIconGenerator` `tools/generate_placeholder_icons.gd` + editor plugin `addons/fw_placeholder_icons`; `ArtPlaceholderHelper` icon PNGs; `SettingsManager` autoload `user://settings.cfg`; `scenes/ui/settings_screen`; UI wiring `build_menu` / `between_mission_screen` / `world_map` / `main_menu`; `tests/test_settings_manager.gd` — `docs/PROMPT_24_IMPLEMENTATION.md`). **Prompt 22:** `RelationshipManager` autoload, `relationship_tier` dialogue conditions, resources under `res://resources/relationship_*` / `character_relationship/` — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `docs/PROMPT_19_IMPLEMENTATION.md`; `# TODO(ART)` in enemy/ally/arnulf/tower/building/boss/hub scripts. Prompt 18: RAG + MCP — `docs/PROMPT_18_IMPLEMENTATION.md`. Audit 6 delta: `AUDIT_IMPLEMENTATION_AUDIT_6.md` — SpellManager multi-spell; WeaponLevelData structural fields; BuildingBase archer barracks / shield generator; GameManager territory aggregates; tests `test_weapon_structural.gd`, `test_building_specials.gd`. Prompt 20: `docs/obsolete/` + INDEX header/autoload alignment — `docs/PROMPT_20_IMPLEMENTATION.md`.
+Source of truth: REPO_DUMP_AFTER_MVP.md. **Doc layout:** `docs/README.md`. **Consolidated snapshot:** `docs/OPUS_ALL_ACTIONS.md` merges backlog + AGENTS + Prompt 26 log + both indexes. Updated: 2026-03-29 (**Prompt 33:** terrain — `Types.TerrainType`/`TerrainEffect`, `TerrainZone`, `NavMeshManager`, `CampaignManager._load_terrain`, `terrain_grassland`/`terrain_swamp`, `main.tscn` `TerrainContainer`, `EnemyBase` terrain multiplier, `tests/unit/test_terrain.gd`, `FUTURE_3D_MODELS_PLAN.md` §5 — `docs/PROMPT_33_IMPLEMENTATION.md`). (**Prompt 32:** modular building kit — `Types.BuildingBaseMesh`/`BuildingTopMesh`, `BuildingData.base_mesh_id`/`top_mesh_id`/`accent_color`, `ArtPlaceholderHelper.get_building_kit_mesh`, `BuildingBase` `BuildingKitAssembly`, `tests/unit/test_building_kit.gd`, `FUTURE_3D_MODELS_PLAN.md` §4 — `docs/PROMPT_32_IMPLEMENTATION.md`). **Prompt 31:** `RiggedVisualWiring` + rigged GLB mount on `EnemyVisual`/`BossVisual`/`ArnulfVisual`; `AnimationPlayer` idle/walk; `EnemyBase.assign_locomotion_animation_player` for bosses — `docs/PROMPT_31_IMPLEMENTATION.md`). **Prompt 29:** `FUTURE_3D_MODELS_PLAN.md` scene audit appendix + `ArtPlaceholderHelper` API notes; `boss_base.tscn` `# TODO(ART)`; Godot MCP reload/error scan — `docs/PROMPT_29_IMPLEMENTATION.md`). **Prompt 28:** `DialogueManager` runtime condition tracking; `WaveManager` BUILD_MODE countdown pause; `test_relationship_manager_tiers.gd` / `test_save_manager_slots.gd`; input/hex/Arnulf/build-menu deltas; full GdUnit **535** cases — `docs/PROMPT_28_IMPLEMENTATION.md`). **Prompt 26:** Full project audit — 55 unindexed files indexed, `docs/AGENTS.md` standing orders, `IMPROVEMENTS_TO_BE_DONE.md` backlog with 78 issues, test Unit/Integration classification, parallel runner spec — `docs/PROMPT_26_IMPLEMENTATION.md`. **Prompt 24:** `PlaceholderIconGenerator` `tools/generate_placeholder_icons.gd` + editor plugin `addons/fw_placeholder_icons`; `ArtPlaceholderHelper` icon PNGs; `SettingsManager` autoload `user://settings.cfg`; `scenes/ui/settings_screen`; UI wiring `build_menu` / `between_mission_screen` / `world_map` / `main_menu`; `tests/test_settings_manager.gd` — `docs/PROMPT_24_IMPLEMENTATION.md`). **Prompt 22:** `RelationshipManager` autoload, `relationship_tier` dialogue conditions, resources under `res://resources/relationship_*` / `character_relationship/` — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `docs/PROMPT_19_IMPLEMENTATION.md`; `# TODO(ART)` in enemy/ally/arnulf/tower/building/boss/hub scripts. Prompt 18: RAG + MCP — `docs/PROMPT_18_IMPLEMENTATION.md`. Audit 6 delta: `AUDIT_IMPLEMENTATION_AUDIT_6.md` — SpellManager multi-spell; WeaponLevelData structural fields; BuildingBase archer barracks / shield generator; GameManager territory aggregates; tests `test_weapon_structural.gd`, `test_building_specials.gd`. Prompt 20: `docs/obsolete/` + INDEX header/autoload alignment — `docs/PROMPT_20_IMPLEMENTATION.md`.
 Use INDEX_SHORT.md for fast orientation, INDEX_FULL.md for exact method signatures, signals, and dependencies.
 CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 
@@ -102,6 +102,16 @@ TERRITORIES / WORLD MAP
 
     world_map_updated()
 
+TERRAIN (battlefield)
+
+    enemy_entered_terrain_zone(enemy: Node, speed_multiplier: float)
+
+    enemy_exited_terrain_zone(enemy: Node, speed_multiplier: float)
+
+    terrain_prop_destroyed(prop: Node, world_position: Vector3)
+
+    nav_mesh_rebake_requested()
+
 BUILDINGS
 
     building_placed(slot_index: int, building_type: Types.BuildingType)
@@ -143,6 +153,19 @@ RESEARCH
 SHOP
 
     shop_item_purchased(item_id: String)
+
+NavMeshManager
+
+Path: res://scripts/nav_mesh_manager.gd
+Purpose: Holds the active `NavigationRegion3D` from the current terrain scene; processes `SignalBus.nav_mesh_rebake_requested` with a queued rebake loop (see godotengine/godot#81181).
+Dependencies: SignalBus (`nav_mesh_rebake_requested` → `request_rebake`).
+Notes: Autoload singleton only (no `class_name`, avoids shadowing in GdUnit).
+
+Public methods:
+
+    register_region(region: NavigationRegion3D) -> void
+
+    request_rebake() -> void
 
 DamageCalculator
 
@@ -342,10 +365,11 @@ ArtPlaceholderHelper
 
 class path: res://scripts/art/art_placeholder_helper.gd
 class_name: ArtPlaceholderHelper
-purpose: Stateless utility. Resolves Mesh, Material, and Texture2D resources from res://art using convention-based path derivation keyed by Types.EnemyType, Types.BuildingType, ally ID strings, and faction ID strings. Caches loaded resources. Prefers res://art/generated/ assets over placeholders. Falls back to unknown_mesh/neutral material on missing resources — never crashes.
+purpose: Stateless utility. Resolves Mesh, Material, and Texture2D resources from res://art using convention-based path derivation keyed by Types.EnemyType, Types.BuildingType, ally ID strings, and faction ID strings. Caches loaded resources. Prefers res://art/generated/ assets over placeholders. Falls back to unknown_mesh/neutral material on missing resources — never crashes. Prompt 32: modular kit GLBs under res://art/generated/kit/ with BoxMesh fallback.
 public methods:
   get_enemy_mesh(enemy_type: Types.EnemyType) -> Mesh
   get_building_mesh(building_type: Types.BuildingType) -> Mesh
+  get_building_kit_mesh(base_id: Types.BuildingBaseMesh, top_id: Types.BuildingTopMesh, accent: Color) -> Node3D
   get_ally_mesh(ally_id: StringName) -> Mesh
   get_tower_mesh() -> Mesh
   get_unknown_mesh() -> Mesh
@@ -360,15 +384,24 @@ exported variables: none
 signals emitted: none
 dependencies: Types, ResourceLoader (built-in)
 
+RiggedVisualWiring
+
+class path: res://scripts/art/rigged_visual_wiring.gd  
+class_name: RiggedVisualWiring  
+purpose: Prompt 31 — map `Types.EnemyType` / `boss_id` / Arnulf to `res://art/generated/**/*.glb`, mount `PackedScene` under a `Node3D` slot, find `AnimationPlayer`, drive `idle`/`walk` from horizontal velocity (`update_locomotion_animation`). Bat swarm and unknown bosses use placeholder `MeshInstance3D` paths.  
+public static methods: `enemy_rigged_glb_path`, `boss_rigged_glb_path`, `clear_visual_slot`, `mount_glb_scene`, `mount_enemy_placeholder_mesh`, `mount_boss_placeholder_mesh`, `find_animation_player`, `update_locomotion_animation`  
+constants: `ANIM_IDLE`, `ANIM_WALK`, `ANIM_DEATH`, `ALLY_ARNULF_GLB`  
+dependencies: ArtPlaceholderHelper, Types, ResourceLoader
+
 Placeholder GLB batch (Prompt 19)
 
 Path: res://tools/generate_placeholder_glbs_blender.py  
 Purpose: Run with `blender --background --python tools/generate_placeholder_glbs_blender.py`. Generates Rigify-based low-poly humanoid/boss GLBs, static buildings/misc, bat swarm with Empty-driven animation; writes `res://art/generated/generation_log.json`. Requires numpy available to Blender’s Python for glTF export.
 
 Path: res://FUTURE_3D_MODELS_PLAN.md  
-Purpose: authoritative transition plan from placeholders to production assets (Hyper3D/Rodin, Mixamo, Blender combine, Godot validation); includes `generation_log` table, scene audit appendix, PhysicalBone3D ragdoll plan, AnimationPlayer wiring, hub portrait TODOs.
+Purpose: authoritative transition plan from placeholders to production assets (Hyper3D/Rodin, Mixamo, Blender combine, Godot validation); includes `generation_log` table, **§4 Modular Building Kit** (Prompt 32 filenames + Rodin template), scene audit appendix (Prompt 29 verification), PhysicalBone3D ragdoll plan, AnimationPlayer wiring, hub portrait TODOs.
 
-`# TODO(ART)` annotations (2026-03-28): `scenes/enemies/enemy_base.gd`, `enemy_base.tscn`, `scenes/allies/ally_base.gd`, `ally_base.tscn`, `scenes/arnulf/arnulf.gd`, `arnulf.tscn`, `scenes/tower/tower.gd`, `tower.tscn`, `scenes/buildings/building_base.gd`, `scenes/bosses/boss_base.gd`, `ui/hub.gd`, `ui/hub.tscn`.
+`# TODO(ART)` annotations (2026-03-29): `scenes/enemies/enemy_base.gd`, `enemy_base.tscn`, `scenes/allies/ally_base.gd`, `ally_base.tscn`, `scenes/arnulf/arnulf.gd`, `arnulf.tscn`, `scenes/tower/tower.gd`, `tower.tscn`, `scenes/buildings/building_base.gd`, `scenes/bosses/boss_base.gd`, `boss_base.tscn`, `ui/hub.gd`, `ui/hub.tscn`.
 
 SCENE SCRIPTS (Tower, Arnulf, HexGrid, BuildingBase, EnemyBase, ProjectileBase)
 
@@ -635,7 +668,7 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
   - All default to `0.0` (MVP behavior preserved until tuned in `.tres` data).
 TYPES ENUMS (res://scripts/types.gd)
 
-GameState, DamageType, ArmorType, BuildingType, ArnulfState, ResourceType, EnemyType, **AllyClass**, **HubRole**, WeaponSlot, TargetPriority (buildings + allies; includes **LOWEST_HP** for ally pick-lowest-HP mode).
+GameState, DamageType, ArmorType, BuildingType, **BuildingBaseMesh**, **BuildingTopMesh** (Prompt 32 modular kit), ArnulfState, ResourceType, EnemyType, **AllyClass**, **HubRole**, WeaponSlot, TargetPriority (buildings + allies; includes **LOWEST_HP** for ally pick-lowest-HP mode). **TerrainType**, **TerrainEffect** (Prompt 33 battlefield terrain).
 GAME FLOW, SIGNAL FLOW, POST-MVP STUB INVENTORY
 
 These sections describe the complete main-menu → mission → between-mission → end-screen loop, the major signal chains (enemy dies, tower dies, wave clears, research unlock, build mode, etc.), and which hooks exist but are not yet used (building_destroyed, DoT, SimBot profiles, etc.).

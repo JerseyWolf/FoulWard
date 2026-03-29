@@ -117,16 +117,16 @@ func _update_details_for_territory(territory: TerritoryData) -> void:
 
 func _terrain_type_to_string(terrain_type: int) -> String:
 	match terrain_type:
-		TerritoryData.TerrainType.PLAINS:
-			return "Plains"
-		TerritoryData.TerrainType.FOREST:
+		Types.TerrainType.GRASSLAND:
+			return "Grassland"
+		Types.TerrainType.FOREST:
 			return "Forest"
-		TerritoryData.TerrainType.SWAMP:
+		Types.TerrainType.SWAMP:
 			return "Swamp"
-		TerritoryData.TerrainType.MOUNTAIN:
-			return "Mountain"
-		TerritoryData.TerrainType.CITY:
-			return "City"
+		Types.TerrainType.RUINS:
+			return "Ruins"
+		Types.TerrainType.TUNDRA:
+			return "Tundra"
 		_:
 			return "Other"
 

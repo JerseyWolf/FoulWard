@@ -179,18 +179,17 @@ func test_recovery_timer_uses_delta() -> void:
 	assert_that(_arnulf.get_current_state()).is_not_equal(Types.ArnulfState.DOWNED)
 
 # ---------------------------------------------------------------------------
-# TEST: Recovering heals to 50% max HP
+# TEST: Recovering restores full HP (reset_to_max after downed)
 # ---------------------------------------------------------------------------
 
-func test_recovering_heals_to_50_percent() -> void:
+func test_recovering_restores_full_hp() -> void:
 	_arnulf.health_component.take_damage(float(_arnulf.max_hp))
 	assert_that(_arnulf.get_current_state()).is_equal(Types.ArnulfState.DOWNED)
 
 	_arnulf._transition_to_state(Types.ArnulfState.RECOVERING)
 	_arnulf._process_recovering()
 
-	var expected_hp: int = _arnulf.max_hp / 2
-	assert_that(_arnulf.get_current_hp()).is_equal(expected_hp)
+	assert_that(_arnulf.get_current_hp()).is_equal(_arnulf.max_hp)
 
 # ---------------------------------------------------------------------------
 # TEST: RECOVERING → IDLE

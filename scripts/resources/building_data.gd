@@ -71,3 +71,10 @@ extends Resource
 ## Duration for shield HP pool from generator (seconds).
 @export var shield_pulse_duration: float = 8.0
 
+## Modular kit: base GLB id (`res://art/generated/kit/<name>.glb`).
+@export var base_mesh_id: Types.BuildingBaseMesh = Types.BuildingBaseMesh.STONE_ROUND
+## Modular kit: top GLB id (`res://art/generated/kit/<name>.glb`).
+@export var top_mesh_id: Types.BuildingTopMesh = Types.BuildingTopMesh.ROOF_CONE
+## Faction accent applied to the top kit mesh surface 0 (see ArtPlaceholderHelper.get_building_kit_mesh).
+@export var accent_color: Color = Color(0.7, 0.3, 0.1)
+

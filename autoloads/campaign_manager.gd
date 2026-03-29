@@ -10,6 +10,8 @@ const DEFAULT_SHORT_CAMPAIGN: CampaignConfig = preload("res://resources/campaign
 const FactionDataType = preload("res://scripts/resources/faction_data.gd")
 const DEFAULT_MERCENARY_CATALOG_PATH: String = "res://resources/mercenary_catalog.tres"
 const _MERCENARY_OFFER_DATA_GD: GDScript = preload("res://scripts/resources/mercenary_offer_data.gd")
+const _TERRAIN_GRASSLAND_SCENE: PackedScene = preload("res://scenes/terrain/terrain_grassland.tscn")
+const _TERRAIN_SWAMP_SCENE: PackedScene = preload("res://scenes/terrain/terrain_swamp.tscn")
 
 var current_day: int = 1
 var campaign_length: int = 0
@@ -151,6 +153,35 @@ func _bootstrap_starter_allies() -> void:
 	_apply_default_active_selection()
 	_sync_current_ally_roster_for_spawn()
 	SignalBus.ally_roster_changed.emit()
+
+
+func _load_terrain(territory: TerritoryData) -> void:
+	# TODO(TERRAIN): FOREST, RUINS, TUNDRA scenes pending — see FUTURE_3D_MODELS_PLAN.md §5.
+	var terrain_map: Dictionary = {
+		Types.TerrainType.GRASSLAND: _TERRAIN_GRASSLAND_SCENE,
+		Types.TerrainType.SWAMP: _TERRAIN_SWAMP_SCENE,
+	}
+	var packed: PackedScene = terrain_map.get(
+			territory.terrain_type,
+			terrain_map[Types.TerrainType.GRASSLAND]
+	) as PackedScene
+	var main: Node = get_tree().root.get_node_or_null("Main")
+	if main == null:
+		push_warning("CampaignManager._load_terrain: /root/Main not in tree; skipping terrain load.")
+		return
+	var container: Node = main.get_node_or_null("TerrainContainer")
+	if container == null:
+		push_warning("CampaignManager._load_terrain: Main/TerrainContainer missing; skipping terrain load.")
+		return
+	for child: Node in container.get_children():
+		child.queue_free()
+	var terrain_instance: Node = packed.instantiate()
+	container.add_child(terrain_instance)
+	var nav_region: NavigationRegion3D = terrain_instance.find_child("NavRegion", true, false) as NavigationRegion3D
+	if nav_region != null:
+		NavMeshManager.register_region(nav_region)
+	# TODO(TERRAIN): Add remaining TerrainType entries to terrain_map as
+	# terrain_forest, terrain_ruins, terrain_tundra scenes are created.
 
 
 ## Returns true if the ally with the given ally_id is in the owned roster.
@@ -598,6 +629,13 @@ func _start_current_day_internal() -> void:
 		DialogueManager.on_campaign_day_started()
 
 	SignalBus.day_started.emit(current_day)
+	var territory: TerritoryData = GameManager.get_current_day_territory()
+	if territory != null:
+		_load_terrain(territory)
+	else:
+		var fallback: TerritoryData = TerritoryData.new()
+		fallback.terrain_type = Types.TerrainType.GRASSLAND
+		_load_terrain(fallback)
 	GameManager.start_mission_for_day(current_day, current_day_config)
 
 

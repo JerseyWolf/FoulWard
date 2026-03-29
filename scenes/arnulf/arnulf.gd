@@ -25,11 +25,13 @@
 class_name Arnulf
 extends CharacterBody3D
 
+const _RiggedVisualWiringScript: GDScript = preload("res://scripts/art/rigged_visual_wiring.gd")
+
 # ---------------------------------------------------------------------------
 # EXPORTS
 # ---------------------------------------------------------------------------
 
-## Maximum hit points. Recovers to 50% of this on resurrection.
+## Maximum hit points. After downed, `HealthComponent.reset_to_max()` restores full HP.
 @export var max_hp: int = 200
 
 ## Movement speed in units per second.
@@ -47,8 +49,8 @@ extends CharacterBody3D
 ## Arnulf will not move farther than this from the tower center while chasing (leash).
 @export var max_distance_from_tower: float = 16.0
 
-## Seconds to recover after incapacitation.
-@export var recovery_time: float = 3.0
+## Seconds at 0 HP (downed) before standing up with full HP. Visual unchanged; body has no collision.
+@export var recovery_time: float = 5.0
 
 # ---------------------------------------------------------------------------
 # CONSTANTS
@@ -66,6 +68,14 @@ const _MIN_NAV_STEP_SQ: float = 0.0004
 
 ## Stable id for generic ally signals (SignalBus.ally_*).
 const ALLY_ID_ARNULF: String = "arnulf"
+
+## Stop moving into the target beyond this XZ distance — stand and attack instead of pushing.
+const ARNULF_MELEE_STOP_DISTANCE: float = 2.2
+## If overlap fails (physics jitter), still enter ATTACK when this close on XZ.
+const ARNULF_MELEE_SNAP_ATTACK_DISTANCE: float = 1.35
+
+## Scene default: layer bit 2 (value 4) for CharacterBody3D.
+const ARNULF_COLLISION_LAYER_BITS: int = 4
 
 # Assign placeholder art resources via convention-based pipeline.
 const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
@@ -91,6 +101,11 @@ var _kill_counter: int = 0
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var detection_area: Area3D = $DetectionArea
 @onready var attack_area: Area3D = $AttackArea
+@onready var _arnulf_collision: CollisionShape3D = get_node_or_null("ArnulfCollision") as CollisionShape3D
+@onready var _visual_slot: Node3D = get_node_or_null("ArnulfVisual")
+
+var _arnulf_anim_player: AnimationPlayer = null
+var _arnulf_locomotion_clip: StringName = &""
 
 # ---------------------------------------------------------------------------
 # READY
@@ -118,17 +133,17 @@ func _ready() -> void:
 	SignalBus.enemy_killed.connect(_on_enemy_killed)
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
 
-	# TODO(ART): Replace ArnulfMesh with res://art/generated/allies/arnulf.glb instance; add
-	# AnimationPlayer clips (idle/walk/attack/death) and drive from ArnulfState transitions.
-	# Art pipeline placeholder assignment.
-	var mesh_node: MeshInstance3D = get_node_or_null("ArnulfMesh") as MeshInstance3D
-	if mesh_node != null:
-		var _mesh: Mesh = ArtPlaceholderHelper.get_ally_mesh("arnulf")
-		if _mesh != null and mesh_node.mesh == null:
-			mesh_node.mesh = _mesh
-		var _mat: Material = ArtPlaceholderHelper.get_faction_material("allies")
-		if _mat != null:
-			mesh_node.material_override = _mat
+	# TODO(ART): Add attack/death clips; drive from ArnulfState when production assets land.
+	if _visual_slot != null:
+		_arnulf_anim_player = RiggedVisualWiring.mount_glb_scene(
+			_visual_slot, RiggedVisualWiring.ALLY_ARNULF_GLB
+		)
+		if _arnulf_anim_player == null:
+			RiggedVisualWiring.clear_visual_slot(_visual_slot)
+			var mi: MeshInstance3D = MeshInstance3D.new()
+			mi.mesh = ArtPlaceholderHelper.get_ally_mesh("arnulf")
+			mi.material_override = ArtPlaceholderHelper.get_faction_material("allies")
+			_visual_slot.add_child(mi)
 
 	_transition_to_state(Types.ArnulfState.IDLE)
 
@@ -156,6 +171,8 @@ func _physics_process(delta: float) -> void:
 		Types.ArnulfState.PATROL:
 			# PATROL is a post-MVP stub — treat as IDLE in MVP.
 			_process_idle(delta)
+
+	_sync_arnulf_locomotion_animation()
 
 # ---------------------------------------------------------------------------
 # STATE HANDLERS
@@ -203,6 +220,16 @@ func _process_chase(_delta: float) -> void:
 			_transition_to_state(Types.ArnulfState.IDLE)
 			return
 
+	var to_target_flat: Vector3 = _chase_target.global_position - global_position
+	to_target_flat.y = 0.0
+	var dist_xz: float = to_target_flat.length()
+	if dist_xz <= ARNULF_MELEE_STOP_DISTANCE:
+		velocity = Vector3.ZERO
+		move_and_slide()
+		if attack_area.overlaps_body(_chase_target) or dist_xz <= ARNULF_MELEE_SNAP_ATTACK_DISTANCE:
+			_transition_to_state(Types.ArnulfState.ATTACK)
+		return
+
 	# Update NavigationAgent3D EVERY frame — the enemy is moving.
 	# Credit: Godot Docs NavigationAgent3D per-frame target_position update pattern.
 	navigation_agent.target_position = _chase_target.global_position
@@ -213,7 +240,7 @@ func _process_chase(_delta: float) -> void:
 	var direction: Vector3 = to_next.normalized()
 	velocity = direction * move_speed
 	move_and_slide()
-	# ATTACK transition is handled by AttackArea.body_entered signal.
+	# ATTACK transition is also handled by AttackArea.body_entered signal.
 
 
 func _process_attack(delta: float) -> void:
@@ -247,9 +274,9 @@ func _process_downed(delta: float) -> void:
 
 
 func _process_recovering() -> void:
-	# Instant transition state: heal to 50% max HP, then return to IDLE.
-	var heal_amount: int = int(round(float(max_hp) * 0.5))
-	health_component.heal(heal_amount)
+	_restore_arnulf_body_after_downed()
+	health_component.reset_to_max()
+	_clear_all_enemy_arnulf_aggro()
 	SignalBus.arnulf_recovered.emit()
 	# DEVIATION: generic ally_recovered for ally framework integration.
 	SignalBus.ally_recovered.emit(ALLY_ID_ARNULF)
@@ -274,10 +301,14 @@ func _transition_to_state(new_state: Types.ArnulfState) -> void:
 			_attack_timer = 0.0
 		Types.ArnulfState.ATTACK:
 			_attack_timer = 0.0  # First hit fires immediately.
+			if is_instance_valid(_chase_target):
+				_chase_target.begin_arnulf_retaliation(self)
 		Types.ArnulfState.DOWNED:
 			_recovery_timer = recovery_time
 			_chase_target = null
 			velocity = Vector3.ZERO
+			_disable_arnulf_body_for_downed()
+			_clear_all_enemy_arnulf_aggro()
 			SignalBus.arnulf_incapacitated.emit()
 			# DEVIATION: generic ally_downed for ally framework integration.
 			SignalBus.ally_downed.emit(ALLY_ID_ARNULF)
@@ -287,6 +318,36 @@ func _transition_to_state(new_state: Types.ArnulfState) -> void:
 			pass  # Post-MVP stub.
 
 	SignalBus.arnulf_state_changed.emit(new_state)
+
+
+func _disable_arnulf_body_for_downed() -> void:
+	if _arnulf_collision != null:
+		_arnulf_collision.disabled = true
+	collision_layer = 0
+
+
+func _restore_arnulf_body_after_downed() -> void:
+	if _arnulf_collision != null:
+		_arnulf_collision.disabled = false
+	collision_layer = ARNULF_COLLISION_LAYER_BITS
+
+
+func _clear_all_enemy_arnulf_aggro() -> void:
+	var st: SceneTree = get_tree()
+	if st == null:
+		return
+	st.call_group("enemies", "clear_arnulf_retaliation")
+
+
+func _sync_arnulf_locomotion_animation() -> void:
+	if _arnulf_anim_player == null:
+		return
+	var horiz: float = 0.0
+	if _current_state != Types.ArnulfState.DOWNED and _current_state != Types.ArnulfState.RECOVERING:
+		horiz = Vector2(velocity.x, velocity.z).length()
+	_arnulf_locomotion_clip = RiggedVisualWiring.update_locomotion_animation(
+		_arnulf_anim_player, horiz, _arnulf_locomotion_clip
+	)
 
 # ---------------------------------------------------------------------------
 # TARGET SELECTION
@@ -418,6 +479,8 @@ func get_max_hp() -> int:
 func reset_for_new_mission() -> void:
 	health_component.max_hp = max_hp
 	health_component.reset_to_max()
+	_restore_arnulf_body_after_downed()
+	_clear_all_enemy_arnulf_aggro()
 	_kill_counter = 0
 	_chase_target = null
 	_attack_timer = 0.0
