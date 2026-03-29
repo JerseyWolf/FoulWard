@@ -61,15 +61,6 @@
 [ext_resource type="Resource" path="res://resources/weapon_level_data/rapid_missile_level_2.tres" id="38_rm2"]
 [ext_resource type="Resource" path="res://resources/weapon_level_data/rapid_missile_level_3.tres" id="39_rm3"]
 
-[sub_resource type="PlaneMesh" id="GroundMesh"]
-size = Vector2(120, 120)
-
-[sub_resource type="StandardMaterial3D" id="GroundMat"]
-albedo_color = Color(0.3, 0.5, 0.2, 1)
-
-[sub_resource type="BoxShape3D" id="GroundShape"]
-size = Vector3(120, 0.1, 120)
-
 [node name="Main" type="Node3D" unique_id=278141263]
 script = ExtResource("32_mainroot")
 
@@ -82,19 +73,8 @@ size = 40.0
 transform = Transform3D(1, 0, 0, 0, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, 0, 0)
 shadow_enabled = true
 
-[node name="Ground" type="StaticBody3D" parent="." unique_id=349446950]
-collision_layer = 32
-collision_mask = 0
-
-[node name="GroundMesh" type="MeshInstance3D" parent="Ground" unique_id=1716342125]
-mesh = SubResource("GroundMesh")
-surface_material_override/0 = SubResource("GroundMat")
-
-[node name="GroundCollision" type="CollisionShape3D" parent="Ground" unique_id=685200946]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
-shape = SubResource("GroundShape")
-
-[node name="NavigationRegion3D" type="NavigationRegion3D" parent="Ground" unique_id=1759993504]
+[node name="TerrainContainer" type="Node3D" parent="."]
+editor_description = "TODO(TERRAIN): Set terrain_scene from CampaignManager.start_next_day() via TerritoryData.terrain_type before battle starts."
 
 [node name="Tower" parent="." unique_id=1725170270 instance=ExtResource("1_tower")]
 crossbow_data = ExtResource("2_vxglm")

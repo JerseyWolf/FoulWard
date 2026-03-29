@@ -41,6 +41,10 @@ const ART_ROOT_ICONS_ALLIES: String = "res://art/icons/allies/"
 # POST-MVP: Generated asset roots — checked before placeholders
 const ART_GEN_MESHES: String = "res://art/generated/meshes/"
 const ART_GEN_ICONS: String = "res://art/generated/icons/"
+## Modular building kit GLBs (`FUTURE_3D_MODELS_PLAN.md` §4).
+const ART_GEN_KIT: String = "res://art/generated/kit/"
+## Vertical offset for the top kit slot (base sits at origin).
+const KIT_TOP_SLOT_Y: float = 1.0
 
 # ---------------------------------------------------------------------------
 # PUBLIC API — MESHES
@@ -99,6 +103,116 @@ static func get_unknown_mesh() -> Mesh:
 		return _unknown_mesh_cache
 	_unknown_mesh_cache = _load_mesh(ART_ROOT_MESHES_MISC + "unknown_mesh.tres", "unknown_mesh")
 	return _unknown_mesh_cache
+
+
+## Assembles two kit MeshInstance3D children (base at y=0, top at `KIT_TOP_SLOT_Y`) under a Node3D root.
+## Loads `res://art/generated/kit/<piece>.glb` per enum; missing files use BoxMesh placeholders.
+static func get_building_kit_mesh(
+		base_id: Types.BuildingBaseMesh,
+		top_id: Types.BuildingTopMesh,
+		accent: Color
+	) -> Node3D:
+	var root: Node3D = Node3D.new()
+	var base_path: String = _get_building_kit_base_glb_path(base_id)
+	var top_path: String = _get_building_kit_top_glb_path(top_id)
+	var base_mi: MeshInstance3D = _make_kit_mesh_instance_from_glb_or_box(base_path)
+	base_mi.position = Vector3.ZERO
+	var top_mi: MeshInstance3D = _make_kit_mesh_instance_from_glb_or_box(top_path)
+	top_mi.position = Vector3(0.0, KIT_TOP_SLOT_Y, 0.0)
+	_apply_accent_to_top_mesh(top_mi, accent)
+	root.add_child(base_mi)
+	root.add_child(top_mi)
+	return root
+
+
+static func _get_building_kit_base_glb_path(base_id: Types.BuildingBaseMesh) -> String:
+	var file_name: String = ""
+	match base_id:
+		Types.BuildingBaseMesh.STONE_ROUND:
+			file_name = "stone_base_round.glb"
+		Types.BuildingBaseMesh.STONE_SQUARE:
+			file_name = "stone_base_square.glb"
+		Types.BuildingBaseMesh.WOOD_ROUND:
+			file_name = "wood_base_round.glb"
+		Types.BuildingBaseMesh.RUINS_BASE:
+			file_name = "ruins_base.glb"
+		_:
+			file_name = "stone_base_round.glb"
+	return ART_GEN_KIT + file_name
+
+
+static func _get_building_kit_top_glb_path(top_id: Types.BuildingTopMesh) -> String:
+	var file_name: String = ""
+	match top_id:
+		Types.BuildingTopMesh.ROOF_CONE:
+			file_name = "roof_cone.glb"
+		Types.BuildingTopMesh.ROOF_FLAT:
+			file_name = "roof_flat.glb"
+		Types.BuildingTopMesh.GLASS_DOME:
+			file_name = "glass_dome.glb"
+		Types.BuildingTopMesh.FIRE_BOWL:
+			file_name = "fire_bowl.glb"
+		Types.BuildingTopMesh.POISON_TANK:
+			file_name = "poison_tank.glb"
+		Types.BuildingTopMesh.BALLISTA_FRAME:
+			file_name = "ballista_frame.glb"
+		Types.BuildingTopMesh.EMBRASURE:
+			file_name = "embrasure.glb"
+		_:
+			file_name = "roof_cone.glb"
+	return ART_GEN_KIT + file_name
+
+
+static func _find_first_mesh_instance3d(node: Node) -> MeshInstance3D:
+	if node == null:
+		return null
+	var stack: Array[Node] = [node]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		if n is MeshInstance3D:
+			return n as MeshInstance3D
+		for c: Node in n.get_children():
+			stack.append(c)
+	return null
+
+
+static func _make_kit_mesh_instance_from_glb_or_box(glb_path: String) -> MeshInstance3D:
+	var mi: MeshInstance3D = MeshInstance3D.new()
+	if ResourceLoader.exists(glb_path):
+		var loaded: Resource = ResourceLoader.load(glb_path)
+		if loaded is PackedScene:
+			var scene_instance: Node = (loaded as PackedScene).instantiate()
+			var src_mi: MeshInstance3D = _find_first_mesh_instance3d(scene_instance)
+			if src_mi != null and src_mi.mesh != null:
+				mi.mesh = src_mi.mesh
+			scene_instance.queue_free()
+	if mi.mesh == null:
+		var box: BoxMesh = BoxMesh.new()
+		mi.mesh = box
+	return mi
+
+
+static func _apply_accent_to_top_mesh(mi: MeshInstance3D, accent: Color) -> void:
+	if mi.mesh == null:
+		return
+	var surface_count: int = mi.mesh.get_surface_count()
+	if surface_count <= 0:
+		return
+	var mat: Material = mi.get_active_material(0)
+	if mat != null:
+		var dup: Material = mat.duplicate() as Material
+		if dup is StandardMaterial3D:
+			(dup as StandardMaterial3D).albedo_color = accent
+			mi.set_surface_override_material(0, dup)
+		else:
+			# Non-standard materials: still override surface 0 with a solid accent for gameplay readability.
+			var sm: StandardMaterial3D = StandardMaterial3D.new()
+			sm.albedo_color = accent
+			mi.set_surface_override_material(0, sm)
+	else:
+		var sm_new: StandardMaterial3D = StandardMaterial3D.new()
+		sm_new.albedo_color = accent
+		mi.set_surface_override_material(0, sm_new)
 
 # ---------------------------------------------------------------------------
 # PUBLIC API — MATERIALS

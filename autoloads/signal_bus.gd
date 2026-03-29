@@ -64,6 +64,16 @@ signal territory_state_changed(territory_id: String)
 @warning_ignore("unused_signal")
 signal world_map_updated()
 
+# === TERRAIN (battlefield zones, navmesh) ===
+@warning_ignore("unused_signal")
+signal enemy_entered_terrain_zone(enemy: Node, speed_multiplier: float)
+@warning_ignore("unused_signal")
+signal enemy_exited_terrain_zone(enemy: Node, speed_multiplier: float)
+@warning_ignore("unused_signal")
+signal terrain_prop_destroyed(prop: Node, world_position: Vector3)
+@warning_ignore("unused_signal")
+signal nav_mesh_rebake_requested()
+
 # === BUILDINGS ===
 @warning_ignore("unused_signal")
 signal building_placed(slot_index: int, building_type: Types.BuildingType)

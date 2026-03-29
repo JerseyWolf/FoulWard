@@ -43,14 +43,21 @@ func _apply_boss_stats() -> void:
 
 
 func _configure_visuals() -> void:
-	# TODO(ART): Apply res://art/generated/bosses/<boss_id>.glb (scaled Rigify placeholder); add
-	# AnimationPlayer for phase transitions / unique ability telegraph when production assets land.
+	# TODO(ART): Production boss — phase / ability clips on same AnimationPlayer as placeholders.
 	if boss_data == null:
 		return
-	var mesh_node: MeshInstance3D = get_node_or_null("BossMesh") as MeshInstance3D
-	if mesh_node != null and mesh_node.material_override is StandardMaterial3D:
-		var mat: StandardMaterial3D = mesh_node.material_override as StandardMaterial3D
-		mat.albedo_color = Color(0.55, 0.15, 0.65)
+	var slot: Node3D = get_node_or_null("BossVisual") as Node3D
+	if slot == null:
+		return
+	slot.scale = Vector3.ONE
+	var glb_path: String = RiggedVisualWiring.boss_rigged_glb_path(boss_data.boss_id)
+	if not glb_path.is_empty() and ResourceLoader.exists(glb_path):
+		var ap: AnimationPlayer = RiggedVisualWiring.mount_glb_scene(slot, glb_path)
+		slot.scale = Vector3(1.5, 1.5, 1.5)
+		assign_locomotion_animation_player(ap)
+	else:
+		RiggedVisualWiring.mount_boss_placeholder_mesh(slot)
+		assign_locomotion_animation_player(null)
 
 	var label: Label3D = get_node_or_null("BossLabel") as Label3D
 	if label != null:

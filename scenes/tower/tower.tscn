@@ -43,5 +43,5 @@ text = "TOWER"
 position = Vector3(0, 2.5, 0)
 pixel_size = 0.01
 billboard = 2
-font_size = 64
+font_size = 72
 

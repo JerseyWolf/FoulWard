@@ -1,0 +1,47 @@
+[gd_scene load_steps=8 format=3 uid="uid://c8terrainswamp01"]
+
+[ext_resource type="Script" path="res://scripts/terrain_navigation_region.gd" id="1_nav"]
+[ext_resource type="Script" path="res://scripts/terrain_zone.gd" id="2_zone"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(20, 20)
+
+[sub_resource type="StandardMaterial3D" id="GroundMat"]
+albedo_color = Color(0.25, 0.35, 0.2, 1)
+
+[sub_resource type="ConcavePolygonShape3D" id="Concave_ground"]
+data = PackedVector3Array(-10, 0, -10, 10, 0, -10, 10, 0, 10, -10, 0, -10, 10, 0, 10, -10, 0, 10)
+
+[sub_resource type="BoxShape3D" id="ZoneBox"]
+size = Vector3(14, 4, 14)
+
+[node name="TerrainContainer" type="Node3D"]
+
+[node name="GroundMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_ground")
+surface_material_override/0 = SubResource("GroundMat")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="GroundMesh"]
+collision_layer = 32
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroundMesh/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("Concave_ground")
+
+[node name="TerrainZoneContainer" type="Node3D" parent="."]
+
+[node name="TerrainZone" type="Area3D" parent="TerrainZoneContainer"]
+collision_layer = 1
+collision_mask = 2
+monitoring = true
+monitorable = false
+script = ExtResource("2_zone")
+speed_multiplier = 0.55
+terrain_effect = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TerrainZoneContainer/TerrainZone"]
+shape = SubResource("ZoneBox")
+
+[node name="NavRegion" type="NavigationRegion3D" parent="."]
+script = ExtResource("1_nav")

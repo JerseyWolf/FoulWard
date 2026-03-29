@@ -85,6 +85,31 @@ func test_enemy_mesh_missing_token_falls_back_to_unknown_mesh() -> void:
 # Group 4 — Scene wiring smoke tests
 # ---------------------------------------------------------------------------
 
+func _find_first_mesh_instance3d(root: Node) -> MeshInstance3D:
+	if root == null:
+		return null
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		if n is MeshInstance3D:
+			return n as MeshInstance3D
+		for c: Node in n.get_children():
+			stack.append(c)
+	return null
+
+
+func _mesh_has_material(mi: MeshInstance3D) -> bool:
+	if mi.material_override != null:
+		return true
+	var mesh: Mesh = mi.mesh
+	if mesh == null:
+		return false
+	for i: int in range(mesh.get_surface_count()):
+		if mi.get_active_material(i) != null:
+			return true
+	return false
+
+
 func _get_enemy_data_for_type(enemy_type: Types.EnemyType) -> EnemyData:
 	match enemy_type:
 		Types.EnemyType.ORC_GRUNT:
@@ -139,9 +164,12 @@ func test_enemy_base_scene_wiring_sets_mesh_and_material_for_each_enemy_type() -
 		enemy.initialize(enemy_data)
 		await get_tree().process_frame
 
-		var enemy_mesh: MeshInstance3D = enemy.get_node("EnemyMesh") as MeshInstance3D
+		var enemy_vis: Node3D = enemy.get_node("EnemyVisual") as Node3D
+		assert_object(enemy_vis).is_not_null()
+		var enemy_mesh: MeshInstance3D = _find_first_mesh_instance3d(enemy_vis)
+		assert_object(enemy_mesh).is_not_null()
 		assert_object(enemy_mesh.mesh).is_not_null()
-		assert_object(enemy_mesh.material_override).is_not_null()
+		assert_bool(_mesh_has_material(enemy_mesh)).is_true()
 
 		enemy.queue_free()
 		await get_tree().process_frame
@@ -187,7 +215,10 @@ func test_arnulf_scene_ready_sets_arnulf_mesh_non_null() -> void:
 	get_tree().root.add_child(arnulf)
 	await get_tree().process_frame
 
-	var arnulf_mesh: MeshInstance3D = arnulf.get_node("ArnulfMesh") as MeshInstance3D
+	var arnulf_vis: Node3D = arnulf.get_node("ArnulfVisual") as Node3D
+	assert_object(arnulf_vis).is_not_null()
+	var arnulf_mesh: MeshInstance3D = _find_first_mesh_instance3d(arnulf_vis)
+	assert_object(arnulf_mesh).is_not_null()
 	assert_object(arnulf_mesh.mesh).is_not_null()
 
 	arnulf.queue_free()

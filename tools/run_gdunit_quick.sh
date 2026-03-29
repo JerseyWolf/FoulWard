@@ -79,6 +79,8 @@ QUICK_SUITES=(
 	"res://tests/test_save_manager.gd"
 	"res://tests/test_relationship_manager_tiers.gd"
 	"res://tests/test_save_manager_slots.gd"
+	"res://tests/unit/test_building_kit.gd"
+	"res://tests/unit/test_terrain.gd"
 )
 
 gdunit_args=()
