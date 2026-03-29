@@ -5,6 +5,7 @@ Read this file FIRST in every Cursor session, before opening any other file.
 
 ## 1. Orientation (do at the start of every session)
 - Read: `docs/INDEX_SHORT.md`, `docs/CONVENTIONS.md`
+- **RAG (`query_project_knowledge`) requires manual start.** Before relying on it, call it once and verify it responds. If it errors, proceed without it and note the limitation in this session's implementation log.
 - If task involves tests: read `tools/run_gdunit.sh` and the relevant test files
 - If task involves resources: check `docs/PROMPT_26_PRE_RESOURCE_SCAN.txt` for known placeholder fields
 - If task involves scene nodes: use Godot MCP `get_scene_tree` to read the scene tree — never assume node paths

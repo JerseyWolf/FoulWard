@@ -4,7 +4,7 @@
 [ext_resource type="Mesh" path="res://art/meshes/misc/hex_slot.tres" id="2_hex_slot_mesh"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_slot"]
-size = Vector3(2.8, 0.1, 2.8)
+size = Vector3(2.8, 2.0, 2.8)
 
 [sub_resource type="StandardMaterial3D" id="SlotMat"]
 albedo_color = Color(0.2, 0.8, 0.2, 0.6)

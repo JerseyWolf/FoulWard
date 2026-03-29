@@ -77,6 +77,8 @@ QUICK_SUITES=(
 	"res://tests/test_building_specials.gd"
 	"res://tests/test_settings_manager.gd"
 	"res://tests/test_save_manager.gd"
+	"res://tests/test_relationship_manager_tiers.gd"
+	"res://tests/test_save_manager_slots.gd"
 )
 
 gdunit_args=()

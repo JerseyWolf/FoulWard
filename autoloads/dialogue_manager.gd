@@ -16,6 +16,22 @@ var mission_failed_count: int = 0
 var current_mission_number: int = 1
 var current_gamestate: Types.GameState = Types.GameState.MAIN_MENU
 
+## Snapshot of gold for dialogue conditions; updated on `resource_changed` (GOLD).
+var _current_gold: int = 0
+
+## node_id → true — supplements ResearchManager for `research_unlocked_<id>` conditions.
+var _unlocked_research_ids: Dictionary = {}
+
+## Total shop purchases tracked for dialogue; last item id stored separately.
+var _purchase_count: int = 0
+var _last_purchased_item_id: String = ""
+var _shop_purchased_item_ids: Dictionary = {}
+
+var _arnulf_current_state: Types.ArnulfState = Types.ArnulfState.IDLE
+
+var _spell_cast_count: int = 0
+var _last_spell_cast_id: String = ""
+
 var _rng := RandomNumberGenerator.new() # TUNING
 
 ## Test-only: incremented when CampaignManager starts a campaign day (non–endless mode).
@@ -29,12 +45,14 @@ func _ready() -> void:
 	_rng.randomize()
 	_load_all_dialogue_entries()
 	_sync_from_game_manager()
+	_current_gold = EconomyManager.get_gold()
 	_connect_signals()
 
 
 func _sync_from_game_manager() -> void:
 	current_mission_number = GameManager.get_current_mission()
 	current_gamestate = GameManager.get_game_state()
+	_current_gold = EconomyManager.get_gold()
 
 
 ## Called from CampaignManager when a new campaign day begins (skipped in endless mode).
@@ -292,6 +310,8 @@ func _resolve_state_value(key: String) -> Variant:
 			if key.begins_with("shop_item_purchased_"):
 				var item_id := key.substr("shop_item_purchased_".length())
 				return _is_shop_item_purchased(item_id)
+			if key == "arnulf_is_downed":
+				return _arnulf_current_state == Types.ArnulfState.DOWNED
 			push_warning("DialogueManager: unknown condition key '%s'" % key)
 			return null
 
@@ -392,6 +412,8 @@ func _arnulf_research_unlocked_any() -> bool:
 
 
 func _is_research_unlocked(node_id: String) -> bool:
+	if _unlocked_research_ids.has(node_id):
+		return true
 	var rm: ResearchManager = _get_research_manager()
 	if rm == null:
 		return false
@@ -408,9 +430,8 @@ func _get_research_manager() -> ResearchManager:
 	return managers.get_node_or_null("ResearchManager") as ResearchManager
 
 
-func _is_shop_item_purchased(_item_id: String) -> bool:
-	# POST-MVP: implement a purchase history cache on ShopManager.
-	return false
+func _is_shop_item_purchased(item_id: String) -> bool:
+	return bool(_shop_purchased_item_ids.get(item_id, false))
 
 
 func _on_game_state_changed(_old_state: Types.GameState, new_state: Types.GameState) -> void:
@@ -429,21 +450,57 @@ func _on_mission_failed(_mission_number: int) -> void:
 	mission_failed_count += 1
 
 
-func _on_resource_changed(_resource_type: Types.ResourceType, _new_amount: int) -> void:
-	pass
+func _on_resource_changed(resource_type: Types.ResourceType, _new_amount: int) -> void:
+	if resource_type == Types.ResourceType.GOLD:
+		_current_gold = EconomyManager.get_gold()
 
 
-func _on_research_unlocked(_node_id: String) -> void:
-	pass
+func _on_research_unlocked(node_id: String) -> void:
+	if node_id.is_empty():
+		return
+	_unlocked_research_ids[node_id] = true
 
 
-func _on_shop_item_purchased(_item_id: String) -> void:
-	pass
+func _on_shop_item_purchased(item_id: String) -> void:
+	_purchase_count += 1
+	_last_purchased_item_id = item_id
+	if not item_id.is_empty():
+		_shop_purchased_item_ids[item_id] = true
 
 
-func _on_arnulf_state_changed(_new_state: Types.ArnulfState) -> void:
-	pass
+func _on_arnulf_state_changed(new_state: Types.ArnulfState) -> void:
+	_arnulf_current_state = new_state
 
 
-func _on_spell_cast(_spell_id: String) -> void:
-	pass
+func _on_spell_cast(spell_id: String) -> void:
+	_spell_cast_count += 1
+	_last_spell_cast_id = spell_id
+
+
+## Gold snapshot updated on GOLD `resource_changed` (mirrors EconomyManager for dialogue).
+func get_tracked_gold() -> int:
+	return _current_gold
+
+
+func get_unlocked_research_ids_snapshot() -> Dictionary:
+	return _unlocked_research_ids.duplicate()
+
+
+func get_total_shop_purchases_tracked() -> int:
+	return _purchase_count
+
+
+func get_last_shop_item_purchased_id() -> String:
+	return _last_purchased_item_id
+
+
+func get_arnulf_state_tracked() -> Types.ArnulfState:
+	return _arnulf_current_state
+
+
+func get_spell_cast_count_tracked() -> int:
+	return _spell_cast_count
+
+
+func get_last_spell_cast_id_tracked() -> String:
+	return _last_spell_cast_id

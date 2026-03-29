@@ -69,6 +69,7 @@ const EnemyScene: PackedScene = preload("res://scenes/enemies/enemy_base.tscn")
 var _current_wave: int = 0
 var _countdown_remaining: float = 0.0
 var _is_counting_down: bool = false
+var _countdown_paused: bool = false
 var _is_wave_active: bool = false
 var _is_sequence_running: bool = false
 
@@ -141,6 +142,8 @@ func _physics_process(delta: float) -> void:
 		return
 	if not _is_counting_down:
 		return
+	if _countdown_paused:
+		return
 	_process_countdown(delta)
 
 
@@ -198,6 +201,11 @@ func is_counting_down() -> bool:
 	return _is_counting_down
 
 
+## True while inter-wave countdown is frozen during BUILD_MODE.
+func is_wave_countdown_paused() -> bool:
+	return _countdown_paused
+
+
 ## Returns the remaining countdown seconds (0.0 if not counting down).
 func get_countdown_remaining() -> float:
 	return _countdown_remaining
@@ -208,6 +216,7 @@ func reset_for_new_mission() -> void:
 	_current_wave = 0
 	_countdown_remaining = 0.0
 	_is_counting_down = false
+	_countdown_paused = false
 	_is_wave_active = false
 	_is_sequence_running = false
 	configured_max_waves = 0
@@ -645,7 +654,14 @@ func _check_wave_cleared() -> void:
 
 
 func _on_game_state_changed(
-		_old_state: Types.GameState,
-		_new_state: Types.GameState
+		old_state: Types.GameState,
+		new_state: Types.GameState
 ) -> void:
-	pass
+	if new_state == Types.GameState.BUILD_MODE:
+		if _is_counting_down:
+			_countdown_paused = true
+		return
+	if old_state == Types.GameState.BUILD_MODE:
+		if _countdown_paused:
+			_countdown_paused = false
+		return

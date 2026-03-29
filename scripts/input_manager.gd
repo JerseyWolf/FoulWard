@@ -173,7 +173,10 @@ func _get_clicked_hex_slot_index() -> int:
 
 	var hit: Dictionary = space.intersect_ray(query)
 	if hit.is_empty():
-		return -1
+		var ground: Vector3 = _get_ground_plane_intersection()
+		if ground == Vector3.ZERO:
+			return -1
+		return _hex_grid.get_nearest_slot_index(ground)
 
 	var collider: Object = hit.get("collider", null)
 	if collider is Area3D:

@@ -41,8 +41,11 @@ extends CharacterBody3D
 ## Seconds between attacks.
 @export var attack_cooldown: float = 1.0
 
-## Max distance from tower center for chase targeting. Must exceed spawn ring (~40) or Arnulf never engages.
+## Max distance from tower for an enemy to be considered for melee chase (enemy position vs tower).
 @export var patrol_radius: float = 55.0
+
+## Arnulf will not move farther than this from the tower center while chasing (leash).
+@export var max_distance_from_tower: float = 16.0
 
 ## Seconds to recover after incapacitation.
 @export var recovery_time: float = 3.0
@@ -187,6 +190,11 @@ func _process_chase(_delta: float) -> void:
 			_transition_to_state(Types.ArnulfState.IDLE)
 			return
 
+	if global_position.distance_to(TOWER_CENTER) > max_distance_from_tower:
+		_chase_target = null
+		_transition_to_state(Types.ArnulfState.IDLE)
+		return
+
 	var target_dist_from_tower: float = \
 		_chase_target.global_position.distance_to(TOWER_CENTER)
 	if target_dist_from_tower > patrol_radius:
@@ -301,6 +309,8 @@ func _find_closest_enemy_to_tower() -> EnemyBase:
 			continue
 		if enemy.get_enemy_data().is_flying:
 			continue
+		if enemy.get_enemy_data().move_speed <= 0.001:
+			continue
 
 		var dist_to_tower: float = enemy.global_position.distance_to(TOWER_CENTER)
 		if dist_to_tower > patrol_radius:
@@ -326,6 +336,8 @@ func _on_detection_area_body_entered(body: Node3D) -> void:
 	if enemy == null:
 		return
 	if enemy.get_enemy_data().is_flying:
+		return
+	if enemy.get_enemy_data().move_speed <= 0.001:
 		return
 
 	if _current_state == Types.ArnulfState.IDLE:

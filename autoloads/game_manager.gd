@@ -67,10 +67,12 @@ func _ready() -> void:
 	SignalBus.boss_killed.connect(_on_boss_killed)
 	_sync_held_territories_from_map()
 	if SaveManager.has_method("save_current_state"):
-		if not SignalBus.mission_won.is_connected(SaveManager.save_current_state):
-			SignalBus.mission_won.connect(SaveManager.save_current_state)
-		if not SignalBus.mission_failed.is_connected(SaveManager.save_current_state):
-			SignalBus.mission_failed.connect(SaveManager.save_current_state)
+		var save_cb: Callable = func(_mission_number: int) -> void:
+			SaveManager.save_current_state()
+		if not SignalBus.mission_won.is_connected(save_cb):
+			SignalBus.mission_won.connect(save_cb)
+		if not SignalBus.mission_failed.is_connected(save_cb):
+			SignalBus.mission_failed.connect(save_cb)
 
 
 func _connect_mission_won_transition_to_hub() -> void:

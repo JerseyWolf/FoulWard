@@ -486,3 +486,25 @@ func test_configure_for_day_unknown_faction_falls_back_safely() -> void:
 	assert_object(_wave_manager.current_faction_data).is_not_null()
 	assert_str(_wave_manager.current_faction_data.faction_id).is_equal("DEFAULT_MIXED")
 
+
+func test_countdown_pauses_in_build_mode() -> void:
+	_wave_manager.start_wave_sequence()
+	assert_bool(_wave_manager.is_counting_down()).is_true()
+	assert_bool(_wave_manager.is_wave_countdown_paused()).is_false()
+	var t0: float = _wave_manager.get_countdown_remaining()
+	SignalBus.game_state_changed.emit(Types.GameState.COMBAT, Types.GameState.BUILD_MODE)
+	assert_bool(_wave_manager.is_wave_countdown_paused()).is_true()
+	_wave_manager._physics_process(0.5)
+	assert_float(_wave_manager.get_countdown_remaining()).is_equal(t0)
+
+
+func test_countdown_resumes_on_combat_state() -> void:
+	_wave_manager.start_wave_sequence()
+	SignalBus.game_state_changed.emit(Types.GameState.COMBAT, Types.GameState.BUILD_MODE)
+	assert_bool(_wave_manager.is_wave_countdown_paused()).is_true()
+	var t0: float = _wave_manager.get_countdown_remaining()
+	SignalBus.game_state_changed.emit(Types.GameState.BUILD_MODE, Types.GameState.COMBAT)
+	assert_bool(_wave_manager.is_wave_countdown_paused()).is_false()
+	_wave_manager._physics_process(1.0)
+	assert_bool(_wave_manager.get_countdown_remaining() < t0).is_true()
+

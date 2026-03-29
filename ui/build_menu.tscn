@@ -46,6 +46,7 @@ autowrap_mode = 3
 horizontal_alignment = 1
 
 [node name="BuildingContainer" type="GridContainer" parent="Panel/VBox"]
+custom_minimum_size = Vector2(520, 240)
 columns = 2
 
 [node name="SellPanel" type="VBoxContainer" parent="Panel/VBox"]
