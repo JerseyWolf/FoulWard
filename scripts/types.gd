@@ -160,6 +160,84 @@ enum DayAdvanceReason {
 	MAJOR_STORY_EVENT,
 }
 
+# --- Tower defense / mission data (Prompt 34) — must appear before any methods. ---
+
+## Footprint category for data-driven building placement (hex rings, multi-slot).
+enum BuildingSizeClass {
+	SINGLE_SLOT,
+	DOUBLE_WIDE,
+	TRIPLE_CLUSTER,
+}
+
+## Rough unit footprint for allies / summons (balance + pathing hints).
+enum UnitSize {
+	SMALL,
+	MEDIUM,
+	LARGE,
+	HUGE,
+}
+
+## High-level ally behaviour mode (runtime AI may map multiple modes to one state machine).
+enum AllyAiMode {
+	DEFAULT,
+	HOLD_POSITION,
+	AGGRESSIVE,
+	ESCORT,
+	FOLLOW_LEADER,
+}
+
+## How a summoner or ally lifecycle ties to waves / the ground mesh.
+enum SummonSpawnType {
+	NONE,
+	GROUND_FOLLOWER,
+	AIR_FOLLOWER,
+	GROUND_BLOCKER,
+	AIR_BLOCKER,
+}
+
+## Aura stacking / modification style for support towers and allies.
+enum AuraModifierKind {
+	ADD_FLAT,
+	ADD_PERCENT,
+	MULTIPLY,
+}
+
+## Broad aura channel for UI filtering and exclusive rules.
+enum AuraCategory {
+	OFFENSE,
+	DEFENSE,
+	UTILITY,
+	CONTROL,
+}
+
+## Stat column modified by an aura (data-driven; gameplay interprets).
+enum AuraStat {
+	DAMAGE,
+	FIRE_RATE,
+	RANGE,
+	ARMOR,
+	MAGIC_RESIST,
+	MOVE_SPEED,
+}
+
+## Enemy locomotion / pathing class (distinct from ArmorType). Append-only: preserve existing ordinals.
+enum EnemyBodyType {
+	GROUND,
+	FLYING,
+	HOVER,
+	BOSS,
+	STRUCTURE,
+	LARGE_GROUND,
+}
+
+## Content pipeline status for mission JSON / exports.
+enum MissionBalanceStatus {
+	UNSET,
+	DRAFT,
+	REVIEW,
+	SHIPPED,
+}
+
 # SOURCE: Day/week advancement priority table pattern from management/roguelite design.
 # TUNING: Adjust priorities as needed.
 static func get_day_advance_priority(reason: DayAdvanceReason) -> int:

@@ -45,3 +45,6 @@ extends Resource
 @export var gold_reward_multiplier: float = 1.0
 ## Scales total wave spawn count (WaveManager: applied to N×6 base). Default 1.0 = unchanged.
 @export var spawn_count_multiplier: float = 1.0
+
+## Optional data-driven waves + routing; when set, WaveManager uses per-wave SpawnEntryData queues.
+@export var mission_data: Resource = null

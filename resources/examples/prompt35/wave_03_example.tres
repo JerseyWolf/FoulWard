@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WaveData" load_steps=4 format=3 uid="uid://w3example"]
+
+[ext_resource type="Script" path="res://scripts/resources/wave_data.gd" id="1_wave"]
+[ext_resource type="Script" path="res://scripts/resources/spawn_entry_data.gd" id="2_spawn"]
+[ext_resource type="Resource" path="res://resources/examples/prompt35/enemy_runner_example.tres" id="3_enemy"]
+
+[sub_resource type="Resource" id="spawn_1"]
+script = ExtResource("2_spawn")
+enemy_data = ExtResource("3_enemy")
+count = 14
+start_time_sec = 0.0
+interval_sec = 0.45
+lane_id = "lane_west"
+path_id = ""
+tags = PackedStringArray("finale")
+
+[resource]
+script = ExtResource("1_wave")
+wave_number = 3
+display_name = "Wave 3 — Surge"
+description = "Dense runner line for testing bounty totals."
+spawn_entries = [SubResource("spawn_1")]
+pre_wave_delay_sec = 6.0
+post_wave_grace_sec = 3.0
+reward_gold_override = 120
+reward_material_override = 8

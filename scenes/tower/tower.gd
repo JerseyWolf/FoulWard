@@ -38,8 +38,6 @@ const ProjectileScene: PackedScene = preload(
 )
 
 # Assign placeholder art resources via convention-based pipeline.
-const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
-
 @onready var _health_component: HealthComponent = $HealthComponent
 
 # ASSUMPTION: ProjectileContainer at /root/Main/ProjectileContainer per ARCHITECTURE.md §2.
@@ -256,7 +254,7 @@ func _spawn_projectile(weapon_data: WeaponData, target_pos: Vector3) -> void:
 		return
 	var proj: ProjectileBase = ProjectileScene.instantiate() as ProjectileBase
 	_projectile_container.add_child(proj)
-	proj.initialize_from_weapon(weapon_data, global_position, target_pos)
+	proj.initialize_from_weapon(weapon_data, global_position, target_pos, -1.0, Types.DamageType.PHYSICAL, 0, 0.0, true)
 	proj.add_to_group("projectiles")
 
 
@@ -340,7 +338,8 @@ func _spawn_weapon_projectile(
 		damage,
 		damage_type,
 		pierce,
-		splash
+		splash,
+		true
 	)
 	projectile.add_to_group("projectiles")
 	SignalBus.projectile_fired.emit(weapon_slot, origin, target_position)

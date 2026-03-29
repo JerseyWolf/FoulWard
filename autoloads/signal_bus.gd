@@ -7,7 +7,7 @@ extends Node
 # === COMBAT ===
 @warning_ignore("unused_signal")
 signal enemy_killed(enemy_type: Types.EnemyType, position: Vector3, gold_reward: int)
-## POST-MVP: enemy_reached_tower is not emitted in MVP. EnemyBase calls Tower.take_damage() directly.
+## Emitted once per enemy the first time it deals damage to the central tower (leak / reach metric).
 @warning_ignore("unused_signal")
 signal enemy_reached_tower(enemy_type: Types.EnemyType, damage: int)
 @warning_ignore("unused_signal")

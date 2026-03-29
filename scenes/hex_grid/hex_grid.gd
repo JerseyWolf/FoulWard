@@ -178,27 +178,36 @@ func _try_place_building(
 		print("[HexGrid] place_building FAILED: building type %d is locked" % building_type)
 		return false
 
+	var gold_price: int = EconomyManager.get_gold_cost(building_data)
+	var mat_price: int = EconomyManager.get_material_cost(building_data)
+
 	if charge_resources:
-		if not EconomyManager.can_afford(building_data.gold_cost, building_data.material_cost):
+		if not EconomyManager.can_afford(gold_price, mat_price):
 			print("[HexGrid] place_building FAILED: cannot afford cost=%dg %dm  have=%dg %dm" % [
-				building_data.gold_cost, building_data.material_cost,
+				gold_price, mat_price,
 				EconomyManager.get_gold(), EconomyManager.get_building_material()
 			])
 			return false
 
-		var gold_spent: bool = EconomyManager.spend_gold(building_data.gold_cost)
+		var gold_spent: bool = EconomyManager.spend_gold(gold_price)
 		if not gold_spent:
 			push_warning("HexGrid: spend_gold failed after can_afford returned true")
 			return false
-		var mat_spent: bool = EconomyManager.spend_building_material(building_data.material_cost)
+		var mat_spent: bool = EconomyManager.spend_building_material(mat_price)
 		if not mat_spent:
 			push_warning("HexGrid: spend_building_material failed after can_afford returned true")
 			return false
+		EconomyManager.register_purchase(building_data)
 
 	var building: BuildingBase = BuildingScene.instantiate() as BuildingBase
 	_building_container.add_child(building)
 	building.global_position = slot["world_pos"]
 	building.initialize(building_data)
+	if charge_resources:
+		building.record_initial_purchase(gold_price, mat_price)
+	else:
+		building.record_initial_purchase(0, 0)
+	building.set_slot_index_for_stats(slot_index)
 	building.add_to_group("buildings")
 	_activate_building_obstacle(building)
 
@@ -237,14 +246,15 @@ func sell_building(slot_index: int) -> bool:
 	var building_data: BuildingData = building.get_building_data()
 	var building_type: Types.BuildingType = building_data.building_type
 
-	# Full refund of base costs.
-	EconomyManager.add_gold(building_data.gold_cost)
-	EconomyManager.add_building_material(building_data.material_cost)
-
-	# Also refund upgrade costs if the building was upgraded.
-	if building.is_upgraded:
-		EconomyManager.add_gold(building_data.upgrade_gold_cost)
-		EconomyManager.add_building_material(building_data.upgrade_material_cost)
+	var refund: Vector2i = EconomyManager.get_refund(
+			building_data,
+			building.total_invested_gold,
+			building.total_invested_material
+	)
+	if refund.x > 0:
+		EconomyManager.add_gold(refund.x)
+	if refund.y > 0:
+		EconomyManager.add_building_material(refund.y)
 
 	building.remove_from_group("buildings")
 	building.queue_free()
@@ -276,19 +286,21 @@ func upgrade_building(slot_index: int) -> bool:
 		return false
 
 	var building_data: BuildingData = building.get_building_data()
+	var ug: Vector2i = building.get_upgrade_cost()
 
-	if not EconomyManager.can_afford(building_data.upgrade_gold_cost, building_data.upgrade_material_cost):
+	if not EconomyManager.can_afford(ug.x, ug.y):
 		return false
 
-	var gold_spent: bool = EconomyManager.spend_gold(building_data.upgrade_gold_cost)
+	var gold_spent: bool = EconomyManager.spend_gold(ug.x)
 	if not gold_spent:
 		push_warning("HexGrid: upgrade spend_gold failed after can_afford returned true")
 		return false
-	var mat_spent: bool = EconomyManager.spend_building_material(building_data.upgrade_material_cost)
+	var mat_spent: bool = EconomyManager.spend_building_material(ug.y)
 	if not mat_spent:
 		push_warning("HexGrid: upgrade spend_building_material failed after can_afford returned true")
 		return false
 
+	building.record_upgrade_cost(ug.x, ug.y)
 	building.upgrade()
 
 	SignalBus.building_upgraded.emit(slot_index, building_data.building_type)

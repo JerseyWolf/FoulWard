@@ -78,3 +78,158 @@ extends Resource
 ## Faction accent applied to the top kit mesh surface 0 (see ArtPlaceholderHelper.get_building_kit_mesh).
 @export var accent_color: Color = Color(0.7, 0.3, 0.1)
 
+# ---------------------------------------------------------------------------
+# Data-driven tower defense foundation (Prompt 34) — identity & presentation
+# ---------------------------------------------------------------------------
+
+## Stable string id for JSON / saves (optional; legacy content may leave empty).
+@export var id: String = ""
+## Longer description for tooltips / codex.
+@export var description: String = ""
+## `res://` path to icon texture (optional).
+@export var icon: String = ""
+## Optional PackedScene path for bespoke building root (empty = default BuildingBase).
+@export var scene_path: String = ""
+
+# ---------------------------------------------------------------------------
+# Layout (future hex / multi-slot placement)
+# ---------------------------------------------------------------------------
+
+@export var size_class: Types.BuildingSizeClass = Types.BuildingSizeClass.SINGLE_SLOT
+## Preferred ring for auto-layout presets (-1 = any ring).
+@export var ring_index: int = -1
+
+# ---------------------------------------------------------------------------
+# Economy — canonical `cost_*` with legacy fallback (`gold_cost` / `material_cost`)
+# ---------------------------------------------------------------------------
+
+## When >= 0, overrides `gold_cost` for new pipelines. -1 = use `gold_cost`.
+@export var cost_gold: int = -1
+## When >= 0, overrides `material_cost`. -1 = use `material_cost`.
+@export var cost_material: int = -1
+## Fraction of placement + upgrade costs refunded on sell (1.0 = full refund; matches legacy behaviour).
+@export var sell_refund_fraction: float = 1.0
+## When true, duplicate placements apply global duplicate scaling from mission economy.
+@export var apply_duplicate_scaling: bool = false
+
+# ---------------------------------------------------------------------------
+# Combat — extended fields (legacy `attack_range` / DoT block remains authoritative for MVP)
+# ---------------------------------------------------------------------------
+
+@export_flags("ground", "air", "boss", "structure", "summoned") var target_flags: int = 0
+## Optional projectile scene override (`res://` to PackedScene).
+@export var projectile_scene: String = ""
+## Splash radius in world units (0 = single-target impact only).
+@export var splash_radius: float = 0.0
+## DoT DPS; ticks may still use `dot_tick_interval` / `dot_duration` from legacy fields.
+@export var dot_damage_per_second: float = 0.0
+
+# ---------------------------------------------------------------------------
+# Summoner / spawner buildings
+# ---------------------------------------------------------------------------
+
+@export var is_summoner: bool = false
+@export var summon_leader_data: AllyData = null
+@export var summon_follower_data: AllyData = null
+@export var summon_follower_count: int = 0
+@export var summon_type: Types.SummonSpawnType = Types.SummonSpawnType.NONE
+@export var respawn_cooldown: float = 0.0
+@export var summon_is_ground: bool = true
+@export var summon_is_blocker: bool = false
+
+# ---------------------------------------------------------------------------
+# Aura / support buildings
+# ---------------------------------------------------------------------------
+
+@export var is_aura: bool = false
+@export var aura_category: Types.AuraCategory = Types.AuraCategory.OFFENSE
+@export var aura_radius: float = 0.0
+@export_flags("allies", "buildings", "summons", "tower") var aura_targets: int = 0
+@export var aura_stat: Types.AuraStat = Types.AuraStat.DAMAGE
+@export var aura_modifier_type: Types.AuraModifierKind = Types.AuraModifierKind.ADD_FLAT
+@export var aura_modifier_value: float = 0.0
+## When true, `aura_damage_type_filter` restricts which incoming damage types receive the aura.
+@export var aura_limit_damage_type: bool = false
+## Only read when `aura_limit_damage_type` is true.
+@export var aura_damage_type_filter: Types.DamageType = Types.DamageType.PHYSICAL
+
+# ---------------------------------------------------------------------------
+# Healer buildings
+# ---------------------------------------------------------------------------
+
+@export var is_healer: bool = false
+@export var heal_per_second: float = 0.0
+@export var heal_radius: float = 0.0
+@export_flags("allies", "tower", "buildings") var heal_targets: int = 0
+@export var cleanse_on_heal: bool = false
+@export var shield_on_heal: float = 0.0
+
+# ---------------------------------------------------------------------------
+# Upgrade chain (data-driven)
+# ---------------------------------------------------------------------------
+
+## When >= 0, overrides `upgrade_gold_cost`. -1 = use `upgrade_gold_cost`.
+@export var upgrade_cost_gold: int = -1
+## When >= 0, overrides `upgrade_material_cost`. -1 = use `upgrade_material_cost`.
+@export var upgrade_cost_material: int = -1
+## Next tier in an upgrade chain (null = terminal).
+@export var upgrade_next: BuildingData = null
+@export var upgrade_level: int = 0
+@export var upgrade_label: String = ""
+
+# ---------------------------------------------------------------------------
+# Meta
+# ---------------------------------------------------------------------------
+
+@export var balance_status: Types.MissionBalanceStatus = Types.MissionBalanceStatus.UNSET
+## Preferred research gate id for new content; falls back to `unlock_research_id` when empty.
+@export var research_unlock_id: String = ""
+## Campaign day index at which this blueprint appears (0 = no gate).
+@export var campaign_unlock_day: int = 0
+@export var tags: PackedStringArray = PackedStringArray()
+
+
+## Effective gold cost for placement (respects legacy `gold_cost` when override unset).
+func get_effective_cost_gold() -> int:
+	return gold_cost if cost_gold < 0 else cost_gold
+
+
+## Effective material cost for placement.
+func get_effective_cost_material() -> int:
+	return material_cost if cost_material < 0 else cost_material
+
+
+## Effective upgrade gold cost.
+func get_effective_upgrade_cost_gold() -> int:
+	return upgrade_gold_cost if upgrade_cost_gold < 0 else upgrade_cost_gold
+
+
+## Effective upgrade material cost.
+func get_effective_upgrade_cost_material() -> int:
+	return upgrade_material_cost if upgrade_cost_material < 0 else upgrade_cost_material
+
+
+## Single research gate: prefers `research_unlock_id`, then legacy `unlock_research_id`.
+func get_research_gate_id() -> String:
+	if not research_unlock_id.is_empty():
+		return research_unlock_id
+	return unlock_research_id
+
+
+## Lightweight checks for authoring; returns human-readable issues (not exhaustive).
+func collect_validation_warnings() -> PackedStringArray:
+	var out: PackedStringArray = PackedStringArray()
+	if get_effective_cost_gold() < 0:
+		out.append("effective cost_gold is negative")
+	if get_effective_cost_material() < 0:
+		out.append("effective cost_material is negative")
+	if sell_refund_fraction < 0.0 or sell_refund_fraction > 1.0:
+		out.append("sell_refund_fraction should be in [0,1]")
+	if is_summoner and summon_follower_count < 1:
+		out.append("is_summoner but summon_follower_count < 1")
+	if is_aura and aura_radius <= 0.0:
+		out.append("is_aura but aura_radius <= 0")
+	if is_healer and heal_per_second > 0.0 and heal_radius <= 0.0:
+		out.append("healer with HPS but heal_radius <= 0")
+	return out
+

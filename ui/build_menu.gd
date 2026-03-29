@@ -8,8 +8,6 @@
 class_name BuildMenu
 extends Control
 
-const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
-
 var _selected_slot: int = -1
 var _is_sell_mode: bool = false
 
@@ -92,11 +90,13 @@ func _refresh() -> void:
 
 		var btn: Button = Button.new()
 		var is_unlocked: bool = _hex_grid.is_building_available(bt)
-		var can_afford: bool = EconomyManager.can_afford(bd.gold_cost, bd.material_cost)
+		var gc: int = EconomyManager.get_gold_cost(bd)
+		var mc: int = EconomyManager.get_material_cost(bd)
+		var can_afford: bool = EconomyManager.can_afford(gc, mc)
 
 		btn.icon = ArtPlaceholderHelper.get_building_icon(bt)
 		btn.expand_icon = true
-		btn.text = "%s\n%dg %dm" % [bd.display_name, bd.gold_cost, bd.material_cost]
+		btn.text = "%s\n%dg %dm" % [bd.display_name, gc, mc]
 		btn.disabled = not is_unlocked or not can_afford
 		btn.custom_minimum_size = Vector2(180, 48)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -139,9 +139,12 @@ func _refresh_sell_panel(slot_data: Dictionary) -> void:
 	_sell_building_name.text = data.display_name
 	_sell_upgrade_status.text = "Status: %s" % ("Upgraded" if is_upgraded else "Basic")
 
-	var refund_gold: int = data.gold_cost + (data.upgrade_gold_cost if is_upgraded else 0)
-	var refund_material: int = data.material_cost + (data.upgrade_material_cost if is_upgraded else 0)
-	_sell_refund.text = "Refund: %d gold, %d material" % [refund_gold, refund_material]
+	var refund: Vector2i = EconomyManager.get_refund(
+			data,
+			building.total_invested_gold,
+			building.total_invested_material
+	)
+	_sell_refund.text = "Refund: %d gold, %d material" % [refund.x, refund.y]
 
 
 func _on_build_mode_entered() -> void:

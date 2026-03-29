@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WaveData" load_steps=5 format=3 uid="uid://w2example"]
+
+[ext_resource type="Script" path="res://scripts/resources/wave_data.gd" id="1_wave"]
+[ext_resource type="Script" path="res://scripts/resources/spawn_entry_data.gd" id="2_spawn"]
+[ext_resource type="Resource" path="res://resources/examples/prompt35/enemy_runner_example.tres" id="3_runner"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_grunt.tres" id="4_grunt"]
+
+[sub_resource type="Resource" id="spawn_a"]
+script = ExtResource("2_spawn")
+enemy_data = ExtResource("3_runner")
+count = 6
+start_time_sec = 0.0
+interval_sec = 0.8
+lane_id = "lane_mid"
+path_id = ""
+tags = PackedStringArray("mixed")
+
+[sub_resource type="Resource" id="spawn_b"]
+script = ExtResource("2_spawn")
+enemy_data = ExtResource("4_grunt")
+count = 4
+start_time_sec = 3.0
+interval_sec = 1.0
+lane_id = "lane_east"
+path_id = ""
+tags = PackedStringArray("grunt")
+
+[resource]
+script = ExtResource("1_wave")
+wave_number = 2
+display_name = "Wave 2 — Mixed"
+description = "Example wave with two spawn lines."
+spawn_entries = [SubResource("spawn_a"), SubResource("spawn_b")]
+pre_wave_delay_sec = 5.0
+post_wave_grace_sec = 2.0

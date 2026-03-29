@@ -15,6 +15,7 @@ armor_type = 3
 gold_reward = 8
 is_ranged = false
 is_flying = true
+body_type = 1
 color = Color(0.3, 0.0, 0.5, 1.0)
 damage_immunities = []
 

@@ -4,8 +4,6 @@
 class_name TestArtPlaceholders
 extends GdUnitTestSuite
 
-const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
-
 func before_test() -> void:
 	ArtPlaceholderHelper.clear_cache()
 

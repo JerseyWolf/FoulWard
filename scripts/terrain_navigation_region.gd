@@ -1,5 +1,7 @@
 ## terrain_navigation_region.gd
 ## Builds a flat NavigationMesh from sibling GroundMesh at runtime (PlaneMesh source).
+## Ground size must cover all WaveManager spawn markers (see `scenes/main.tscn` SpawnPoints, ~±40 m);
+## a small plane strands pathfinding at the mesh edge (enemies appear to stop at the green/gray boundary).
 
 extends NavigationRegion3D
 

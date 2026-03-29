@@ -23,6 +23,8 @@
 class_name WaveManager
 extends Node
 
+const _MissionSpawnRouting: Script = preload("res://scripts/mission_spawn_routing.gd")
+
 ## Endless mode: per-day scaling (no cap past campaign_length; same formula for all days ≥ 1).
 const ENDLESS_HP_MULT_PER_DAY: float = 0.02
 const ENDLESS_SPAWN_MULT_PER_DAY: float = 0.01
@@ -106,6 +108,16 @@ var boss_registry: Dictionary = {} # String -> BossData
 var boss_wave_index: int = -1
 var active_boss_id: String = ""
 
+# Mission routing + data-driven spawn queue (optional DayConfig.mission_data) --------
+
+var _mission_data: Resource = null
+## Base seed mixed into per-wave seeds for deterministic lane/path picks.
+var mission_spawn_seed: int = 0
+var _using_spawn_queue: bool = false
+var _active_spawn_queue: Array = []
+var _queue_spawn_index: int = 0
+var _wave_spawn_elapsed: float = 0.0
+
 # ---------------------------------------------------------------------------
 # READY
 # ---------------------------------------------------------------------------
@@ -140,6 +152,8 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not _is_sequence_running:
 		return
+	if _is_wave_active and _using_spawn_queue:
+		_process_spawn_queue(delta)
 	if not _is_counting_down:
 		return
 	if _countdown_paused:
@@ -229,6 +243,12 @@ func reset_for_new_mission() -> void:
 	current_faction_data = null
 	boss_wave_index = -1
 	active_boss_id = ""
+	_mission_data = null
+	mission_spawn_seed = 0
+	_using_spawn_queue = false
+	_active_spawn_queue.clear()
+	_queue_spawn_index = 0
+	_wave_spawn_elapsed = 0.0
 	clear_all_enemies()
 	resolve_current_faction()
 
@@ -247,6 +267,8 @@ func configure_for_day(day_config: DayConfig) -> void:
 	spawn_count_multiplier = day_config.spawn_count_multiplier
 	_mini_boss_day_eligible = day_config.is_mini_boss_day or day_config.is_mini_boss
 	_apply_faction_from_day_config(day_config)
+	_mission_data = day_config.mission_data
+	mission_spawn_seed = day_config.day_index * 1009
 	current_day_config = day_config
 	if _faction_data_override != null:
 		current_faction_data = _faction_data_override
@@ -332,6 +354,59 @@ func clear_all_enemies() -> void:
 	for node: Node in get_tree().get_nodes_in_group("enemies"):
 		node.remove_from_group("enemies")
 		node.queue_free()
+
+
+## Builds ordered spawn rows for a wave (deterministic `seed` for lane/path RNG).
+func build_spawn_queue(wave: Resource, seed: int = 0) -> Array:
+	var routing: Resource = null
+	if _mission_data != null:
+		routing = _mission_data.get("routing")
+	return _MissionSpawnRouting.build_spawn_queue(wave, routing, enemy_data_registry, seed)
+
+
+## Resolves a path id for one spawn entry using routing rules and RNG.
+func resolve_path_for_spawn(entry: Variant, rng: RandomNumberGenerator) -> String:
+	var ed: EnemyData = entry.enemy_data as EnemyData
+	var routing: Resource = null
+	if _mission_data != null:
+		routing = _mission_data.get("routing")
+	return _MissionSpawnRouting.resolve_path_for_spawn(entry, routing, rng, ed)
+
+
+func validate_routing(routing: Resource) -> bool:
+	return _MissionSpawnRouting.validate_routing(routing)
+
+
+func validate_wave(wave: Resource) -> bool:
+	return _MissionSpawnRouting.validate_wave(wave)
+
+
+func validate_mission(data: Resource) -> bool:
+	return _MissionSpawnRouting.validate_mission(data)
+
+
+func _path_accepts_enemy(path_data: Resource, enemy_data: EnemyData) -> bool:
+	return _MissionSpawnRouting._path_accepts_enemy(path_data, enemy_data)
+
+
+## Spawns one enemy with day multipliers and optional RoutePathData placement hints.
+func spawn_enemy_on_path(enemy_data: EnemyData, path_data: Resource) -> EnemyBase:
+	if enemy_data == null:
+		return null
+	if _enemy_container == null or _spawn_points == null:
+		push_error("WaveManager.spawn_enemy_on_path: enemy_container or spawn_points is null.")
+		return null
+	var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
+	_enemy_container.add_child(enemy)
+	var tuned: EnemyData = enemy_data.duplicate(true) as EnemyData
+	tuned.max_hp = maxi(1, int(round(float(enemy_data.max_hp) * enemy_hp_multiplier)))
+	tuned.damage = maxi(1, int(round(float(enemy_data.damage) * enemy_damage_multiplier)))
+	tuned.gold_reward = maxi(0, int(round(float(enemy_data.gold_reward) * gold_reward_multiplier)))
+	enemy.initialize(tuned)
+	_place_enemy_for_path(enemy, path_data, tuned)
+	if not enemy.is_in_group("enemies"):
+		enemy.add_to_group("enemies")
+	return enemy
 
 # ---------------------------------------------------------------------------
 # PRIVATE — FACTION REGISTRY
@@ -492,6 +567,35 @@ func _spawn_wave(wave_number: int) -> void:
 	if boss_wave_index == wave_number and active_boss_id.strip_edges() != "":
 		total_spawned += _spawn_boss_wave()
 
+	if _mission_data != null and _mission_data.call("has_wave_entries", wave_number):
+		var wdata: Resource = _mission_data.call("get_wave", wave_number)
+		var wave_seed: int = mission_spawn_seed + wave_number * 1315423911
+		_active_spawn_queue = _MissionSpawnRouting.build_spawn_queue(
+				wdata,
+				_mission_data.get("routing"),
+				enemy_data_registry,
+				wave_seed
+		)
+		if _active_spawn_queue.is_empty():
+			push_warning(
+					"WaveManager: mission wave %d produced no spawn rows; using faction roster."
+					% wave_number
+			)
+		else:
+			_using_spawn_queue = true
+			_queue_spawn_index = 0
+			_wave_spawn_elapsed = 0.0
+			total_spawned += _active_spawn_queue.size()
+			print(
+					"[WaveManager] wave %d mission queue: %d spawns (seed base %d)"
+					% [wave_number, _active_spawn_queue.size(), mission_spawn_seed]
+			)
+			SignalBus.wave_started.emit(wave_number, total_spawned)
+			_process_spawn_queue(0.0)
+			if total_spawned == 0:
+				call_deferred("_check_wave_cleared")
+			return
+
 	var roster_entries: Array[FactionRosterEntryType] = _current_faction.get_entries_for_wave(wave_number)
 	if roster_entries.is_empty():
 		push_error(
@@ -551,6 +655,61 @@ func _spawn_wave(wave_number: int) -> void:
 
 	if total_spawned == 0:
 		call_deferred("_check_wave_cleared")
+
+
+func _process_spawn_queue(delta: float) -> void:
+	_wave_spawn_elapsed += delta
+	while _queue_spawn_index < _active_spawn_queue.size():
+		var row_v: Variant = _active_spawn_queue[_queue_spawn_index]
+		if float(row_v.spawn_time_sec) > _wave_spawn_elapsed:
+			break
+		_spawn_enemy_from_queue_row(row_v)
+		_queue_spawn_index += 1
+	if _queue_spawn_index >= _active_spawn_queue.size():
+		_using_spawn_queue = false
+
+
+func _spawn_enemy_from_queue_row(row_v: Variant) -> void:
+	var row_ed: EnemyData = row_v.enemy_data as EnemyData
+	if row_ed == null:
+		return
+	var lane_id: String = str(row_v.lane_id)
+	var path_id: String = str(row_v.path_id)
+	var path_data: Resource = null
+	if _mission_data != null and _mission_data.get("routing") != null and not path_id.is_empty():
+		var routing_obj: Resource = _mission_data.get("routing") as Resource
+		path_data = routing_obj.call("get_path_by_id", path_id)
+	var enemy: EnemyBase = spawn_enemy_on_path(row_ed, path_data)
+	if enemy != null:
+		enemy.assigned_lane_id = lane_id
+		enemy.assigned_path_id = path_id
+
+
+func _place_enemy_for_path(enemy: EnemyBase, path_data: Resource, tuned: EnemyData) -> void:
+	var spawn_point_nodes: Array[Node] = _spawn_points.get_children()
+	if spawn_point_nodes.is_empty():
+		return
+	var use_random: bool = true
+	var pos: Vector3 = Vector3.ZERO
+	if path_data != null:
+		var cpath: String = str(path_data.curve3d_path).strip_edges()
+		if not cpath.is_empty():
+			var cr: Resource = load(cpath) as Resource
+			if cr is Curve3D:
+				var curve: Curve3D = cr as Curve3D
+				if curve.get_point_count() > 0:
+					pos = curve.get_point_position(0)
+					use_random = false
+	if use_random:
+		var spawn_marker: Marker3D = spawn_point_nodes.pick_random() as Marker3D
+		pos = spawn_marker.global_position + Vector3(
+				randf_range(-2.0, 2.0),
+				0.0,
+				randf_range(-2.0, 2.0)
+		)
+	enemy.global_position = pos
+	if tuned.is_flying:
+		enemy.global_position.y = EnemyBase.FLYING_HEIGHT
 
 
 ## Computes total enemies for this wave based on MVP scaling (N * 6).

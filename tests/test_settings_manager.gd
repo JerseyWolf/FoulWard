@@ -4,8 +4,6 @@ class_name TestSettingsManager
 extends GdUnitTestSuite
 
 const SettingsManagerScript: GDScript = preload("res://autoloads/settings_manager.gd")
-const ArtPlaceholderHelper: GDScript = preload("res://scripts/art/art_placeholder_helper.gd")
-
 var _saved_fire_primary_events: Array[InputEvent] = []
 
 

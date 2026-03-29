@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="MissionWavesData" load_steps=5 format=3 uid="uid://mwexample_intro"]
+
+[ext_resource type="Script" path="res://scripts/resources/mission_waves_data.gd" id="1_mw"]
+[ext_resource type="Resource" path="res://resources/examples/prompt35/wave_01_example.tres" id="2_w1"]
+[ext_resource type="Resource" path="res://resources/examples/prompt35/wave_02_example.tres" id="3_w2"]
+[ext_resource type="Resource" path="res://resources/examples/prompt35/wave_03_example.tres" id="4_w3"]
+
+[resource]
+script = ExtResource("1_mw")
+mission_id = "intro_3wave_example"
+display_name = "Three-Wave Intro (Example)"
+waves = [ExtResource("2_w1"), ExtResource("3_w2"), ExtResource("4_w3")]
+starting_gold = 450
+starting_material = 25
+florence_starting_hp = 500
+mission_tags = PackedStringArray("tutorial", "example")
+layout_preset = "hex_default_24"

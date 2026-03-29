@@ -522,6 +522,7 @@ func _activate_for_run(profile_id: String, run_index: int, seed_value: int) -> v
 	_profile = _load_profile(profile_id)
 	_current_run_index = run_index
 	_base_seed = seed_value
+	CombatStatsTracker.set_session_seed(seed_value)
 	# SOURCE: deterministic RNG seeding for simulation testing.
 	# In Godot 4.x, RandomNumberGenerator.seed is an int property (not a callable).
 	_rng.seed = seed_value
@@ -742,7 +743,9 @@ func _choose_build_or_upgrade_action() -> Dictionary:
 
 		if not _hex_grid.is_building_available(btype):
 			continue
-		if not EconomyManager.can_afford(bdata.gold_cost, bdata.material_cost):
+		var pg: int = EconomyManager.get_gold_cost(bdata)
+		var pm: int = EconomyManager.get_material_cost(bdata)
+		if not EconomyManager.can_afford(pg, pm):
 			continue
 
 		if weight > best_weight:
@@ -801,7 +804,8 @@ func _choose_upgrade_action_if_desired(build_count: int) -> Dictionary:
 		var bdata: BuildingData = building.get_building_data()
 		if bdata == null:
 			continue
-		if not EconomyManager.can_afford(bdata.upgrade_gold_cost, bdata.upgrade_material_cost):
+		var ug: Vector2i = building.get_upgrade_cost()
+		if not EconomyManager.can_afford(ug.x, ug.y):
 			continue
 
 		var base_weight: float = _get_build_weight_for_type(bdata.building_type)

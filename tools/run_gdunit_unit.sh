@@ -57,6 +57,8 @@ UNIT_SUITES=(
 	"res://tests/test_save_manager_slots.gd"
 	"res://tests/unit/test_building_kit.gd"
 	"res://tests/unit/test_terrain.gd"
+	"res://tests/unit/test_mission_spawn_routing.gd"
+	"res://tests/unit/test_economy_mission_integration.gd"
 )
 
 gdunit_args=()
