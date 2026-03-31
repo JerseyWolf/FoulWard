@@ -1,101 +1,206 @@
 ## combat_stats_tracker.gd
-## Autoload: wave- and building-level combat CSV for balancing / SimBot under user://simbot/runs/.
-## Integrates with SignalBus and thin hooks from ProjectileBase / mission lifecycle.
+## Autoload: mission/wave/building combat CSV for SimBot balance under user://simbot/runs/{mission_id}_{timestamp}/.
 
 extends Node
 
-## When true, also writes event_log.csv with high-volume rows.
-var verbose_logging_enabled: bool = false
+# ---------------------------------------------------------------------------
+# State (Prompt 48)
+# ---------------------------------------------------------------------------
+
+var _mission_id: String = ""
+## SimBot loadout / profile label for balance CSV columns (e.g. "balanced").
+var _run_label: String = ""
+var _run_timestamp: String = ""
+var _seed: int = 0
+var _layout_rotation_deg: float = 0.0
+var _run_id: String = ""
+var _output_dir: String = ""
+
+var _wave_rows: Array[Dictionary] = []
+var _current_wave: Dictionary = {}
+var _building_rows: Dictionary = {} # placed_instance_id -> Dictionary
+var _event_log: Array[Dictionary] = []
+
+## When true, writes event_log.csv with structured rows.
+var debug_mode: bool = false
 
 var _run_active: bool = false
-var _run_id: String = ""
-var _mission_id: String = ""
-var _run_timestamp: String = ""
-var _session_seed: int = 0
-var _layout_rotation_deg: float = 0.0
-
-var _tower_prev_hp: int = -1
-
 var _wave_in_progress: bool = false
 var _active_wave_number: int = 0
-var _wave_spawned: int = 0
+var _wave_start_usec: int = 0
+var _tower_prev_hp: int = -1
+var _wave_spawned_count: int = 0
 var _wave_kills: int = 0
 var _wave_leaks: int = 0
 var _wave_damage_dealt: float = 0.0
 var _wave_florence_damage_taken: int = 0
-var _wave_florence_healing: int = 0
-var _wave_start_usec: int = 0
 var _wave_florence_hp_start: int = 0
-var _wave_gold_start: int = 0
-var _wave_mat_start: int = 0
-var _wave_gold_earned: int = 0
-var _wave_gold_spent: int = 0
-var _wave_mat_earned: int = 0
-var _wave_mat_spent: int = 0
-
-var _wave_rows: Array[Dictionary] = []
-
-## int (building instance_id) -> Dictionary (see _register_building_row)
-var _buildings: Dictionary = {}
-
-var _event_lines: Array[String] = []
-
+var _wave_spawn_hint: int = 0
 var _prev_gold: int = -1
 var _prev_mat: int = -1
 
-const _RUN_DIR: String = "user://simbot/runs"
+const _RUN_ROOT: String = "user://simbot/runs"
 
+# ---------------------------------------------------------------------------
+# Lifecycle
+# ---------------------------------------------------------------------------
 
 func _ready() -> void:
-	verbose_logging_enabled = OS.is_debug_build()
+	if not OS.is_debug_build():
+		debug_mode = false
 	_connect_signals()
 
 
 func _connect_signals() -> void:
-	if not SignalBus.mission_started.is_connected(_on_mission_started):
-		SignalBus.mission_started.connect(_on_mission_started)
-	if not SignalBus.mission_won.is_connected(_on_mission_won):
-		SignalBus.mission_won.connect(_on_mission_won)
-	if not SignalBus.mission_failed.is_connected(_on_mission_failed):
-		SignalBus.mission_failed.connect(_on_mission_failed)
-	if not SignalBus.wave_started.is_connected(_on_wave_started):
-		SignalBus.wave_started.connect(_on_wave_started)
-	if not SignalBus.wave_cleared.is_connected(_on_wave_cleared):
-		SignalBus.wave_cleared.connect(_on_wave_cleared)
-	if not SignalBus.enemy_killed.is_connected(_on_enemy_killed):
-		SignalBus.enemy_killed.connect(_on_enemy_killed)
+	if not SignalBus.mission_started.is_connected(_on_mission_started_bus):
+		SignalBus.mission_started.connect(_on_mission_started_bus)
+	if not SignalBus.mission_won.is_connected(_on_mission_won_bus):
+		SignalBus.mission_won.connect(_on_mission_won_bus)
+	if not SignalBus.mission_failed.is_connected(_on_mission_failed_bus):
+		SignalBus.mission_failed.connect(_on_mission_failed_bus)
+	if not SignalBus.wave_started.is_connected(_on_wave_started_bus):
+		SignalBus.wave_started.connect(_on_wave_started_bus)
+	if not SignalBus.wave_cleared.is_connected(_on_wave_cleared_bus):
+		SignalBus.wave_cleared.connect(_on_wave_cleared_bus)
+	if not SignalBus.enemy_killed.is_connected(_on_enemy_killed_bus):
+		SignalBus.enemy_killed.connect(_on_enemy_killed_bus)
 	if not SignalBus.enemy_reached_tower.is_connected(_on_enemy_reached_tower):
 		SignalBus.enemy_reached_tower.connect(_on_enemy_reached_tower)
 	if not SignalBus.tower_damaged.is_connected(_on_tower_damaged):
 		SignalBus.tower_damaged.connect(_on_tower_damaged)
-	if not SignalBus.building_placed.is_connected(_on_building_placed):
-		SignalBus.building_placed.connect(_on_building_placed)
-	if not SignalBus.building_sold.is_connected(_on_building_sold):
-		SignalBus.building_sold.connect(_on_building_sold)
+	if not SignalBus.building_placed.is_connected(_on_building_placed_compat):
+		SignalBus.building_placed.connect(_on_building_placed_compat)
 	if not SignalBus.building_upgraded.is_connected(_on_building_upgraded):
 		SignalBus.building_upgraded.connect(_on_building_upgraded)
+	if not SignalBus.building_destroyed.is_connected(_on_building_destroyed_bus):
+		SignalBus.building_destroyed.connect(_on_building_destroyed_bus)
 	if not SignalBus.resource_changed.is_connected(_on_resource_changed):
 		SignalBus.resource_changed.connect(_on_resource_changed)
+	if not SignalBus.building_dealt_damage.is_connected(_on_building_dealt_damage):
+		SignalBus.building_dealt_damage.connect(_on_building_dealt_damage)
+	if not SignalBus.florence_damaged.is_connected(_on_florence_damaged):
+		SignalBus.florence_damaged.connect(_on_florence_damaged)
+	if not SignalBus.enemy_spawned.is_connected(_on_enemy_spawned):
+		SignalBus.enemy_spawned.connect(_on_enemy_spawned)
+	if not SignalBus.ally_died.is_connected(_on_ally_died_bus):
+		SignalBus.ally_died.connect(_on_ally_died_bus)
 
 
-## SimBot / tooling: set deterministic RNG seed for this mission run (logged in CSV).
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+func begin_mission(mission_id: String, seed_val: int, layout_deg: float) -> void:
+	_begin_run_internal(mission_id, "", seed_val, layout_deg)
+
+
+## Balance sweep: identifies a run in CSV output ([member _run_label] + [member _mission_id] + timestamp).
+func begin_run(mission_id: String, run_label: String) -> void:
+	var seed_use: int = _seed
+	if seed_use == 0:
+		seed_use = int(Time.get_ticks_msec() & 0x7FFFFFFF)
+	_begin_run_internal(mission_id, run_label, seed_use, _layout_rotation_deg)
+
+
+func end_run() -> void:
+	flush_to_disk()
+	_run_active = false
+	_run_label = ""
+
+
+func _begin_run_internal(mission_id: String, run_label: String, seed_val: int, layout_deg: float) -> void:
+	_mission_id = mission_id
+	_run_label = run_label
+	_seed = seed_val
+	_layout_rotation_deg = layout_deg
+	_run_timestamp = _file_safe_timestamp()
+	if _run_label.strip_edges().is_empty():
+		_run_id = "%s_%s" % [_mission_id, _run_timestamp]
+	else:
+		_run_id = "%s_%s_%s" % [_mission_id, _run_label, _run_timestamp]
+	_output_dir = "%s/%s" % [_RUN_ROOT, _run_id]
+	_wave_rows.clear()
+	_building_rows.clear()
+	_event_log.clear()
+	_reset_wave_tracking()
+	_run_active = true
+	_tower_prev_hp = -1
+	_prev_gold = -1
+	_prev_mat = -1
+	var tw: Tower = _get_tower()
+	if tw != null:
+		_tower_prev_hp = tw.get_current_hp()
+	_log_event_debug("mission_begin", "", "", 0.0, 0, 0.0)
+
+
+func register_building(
+		instance_id: String,
+		building_id: String,
+		size_class: String,
+		ring_index: int,
+		slot_id: int,
+		cost_gold: int,
+		upgrade_level: int
+) -> void:
+	if instance_id.strip_edges().is_empty():
+		push_warning("CombatStatsTracker.register_building: empty instance_id")
+		return
+	_building_rows[instance_id] = {
+		"run_id": _run_id,
+		"mission_id": _mission_id,
+		"run_label": _run_label,
+		"placed_instance_id": instance_id,
+		"building_id": building_id,
+		"size_class": size_class,
+		"ring_index": ring_index,
+		"slot_id": slot_id,
+		"cost_gold_paid": maxi(0, cost_gold),
+		"upgrade_level": maxi(0, upgrade_level),
+		"total_damage_dealt": 0.0,
+		"total_kills": 0,
+		"ally_deaths": 0,
+		"damage_per_gold": 0.0,
+		"waves_active": 0,
+		"was_destroyed": false,
+		"balance_status": "ok",
+	}
+	_log_event_debug("register_building", instance_id, "", 0.0, _active_wave_number, 0.0)
+
+
+func flush_to_disk() -> void:
+	if _run_id.is_empty():
+		push_warning("CombatStatsTracker.flush_to_disk: no active run_id")
+		return
+	var dir_path: String = _output_dir
+	if dir_path.is_empty():
+		dir_path = "%s/%s" % [_RUN_ROOT, _run_id]
+	var err: Error = DirAccess.make_dir_recursive_absolute(dir_path)
+	if err != OK and err != ERR_ALREADY_EXISTS:
+		push_warning("CombatStatsTracker: could not create run dir: %s" % dir_path)
+		return
+	_write_wave_summary_csv("%s/%s" % [dir_path, "wave_summary.csv"])
+	_write_building_summary_csv("%s/%s" % [dir_path, "building_summary.csv"])
+	if debug_mode:
+		_write_event_log_csv("%s/%s" % [dir_path, "event_log.csv"])
+
+
+## Back-compat: SimBot/tests may call before [method begin_mission].
 func set_session_seed(seed_value: int) -> void:
-	_session_seed = seed_value
+	_seed = seed_value
 
 
-## Optional layout parameter when the mission uses a rotated hex layout (default 0).
 func set_layout_rotation_deg(degrees: float) -> void:
 	_layout_rotation_deg = degrees
 
 
 func set_verbose_logging(enabled: bool) -> void:
-	verbose_logging_enabled = enabled
+	debug_mode = enabled
 
 
-## Projectile hook: records damage attributed to Florence weapons or placed buildings.
+## Projectile / combat hook: attributes damage to a placed building by [param source_placed_instance_id].
 func record_projectile_damage(
 		source_kind: String,
-		source_building_instance_id: int,
+		source_placed_instance_id: String,
 		slot_index: int,
 		damage_applied: float,
 		killed_target: bool
@@ -105,150 +210,222 @@ func record_projectile_damage(
 	if damage_applied <= 0.0:
 		return
 	_wave_damage_dealt += damage_applied
-	if source_kind == "building" and source_building_instance_id != 0:
-		_add_building_damage(source_building_instance_id, damage_applied, killed_target, slot_index)
-	elif source_kind == "tower":
-		pass
-	if verbose_logging_enabled:
-		_event_lines.append(
-			"%s,damage,%s,%d,%d,%.3f,%s"
-			% [
-				_iso_timestamp(),
-				source_kind,
-				source_building_instance_id,
-				slot_index,
+	if source_kind == "building" and not source_placed_instance_id.strip_edges().is_empty():
+		_add_building_damage_string(source_placed_instance_id, damage_applied, killed_target, slot_index)
+	if debug_mode:
+		_log_event_debug(
+				"projectile_damage",
+				source_placed_instance_id,
+				"",
 				damage_applied,
-				str(killed_target).to_lower()
-			]
+				_active_wave_number,
+				0.0
 		)
 
 
-func _on_mission_started(mission_number: int) -> void:
-	_begin_run(str(mission_number))
+## Maps HexGrid slot index (0..23) to ring tier 1..3.
+static func slot_index_to_ring(slot_index: int) -> int:
+	if slot_index < 0:
+		return -1
+	if slot_index < 6:
+		return 1
+	if slot_index < 18:
+		return 2
+	if slot_index < 24:
+		return 3
+	return -1
 
 
-func _begin_run(mission_id_str: String) -> void:
-	_reset_run_state()
-	_mission_id = mission_id_str
-	_run_timestamp = _file_safe_timestamp()
-	_run_id = "%s_%s" % [_mission_id, _run_timestamp]
-	if _session_seed == 0:
-		_session_seed = int(Time.get_ticks_msec() & 0x7FFFFFFF)
-	_run_active = true
-	_prev_gold = -1
-	_prev_mat = -1
-	_tower_prev_hp = -1
-	var tw: Tower = _get_tower()
-	if tw != null:
-		_tower_prev_hp = tw.get_current_hp()
-	if verbose_logging_enabled:
-		_event_lines.append("%s,mission_start,mission_id=%s,seed=%d" % [_iso_timestamp(), _mission_id, _session_seed])
+# ---------------------------------------------------------------------------
+# Signal handlers (Prompt 48)
+# ---------------------------------------------------------------------------
 
-
-func _on_mission_won(_mission_number: int) -> void:
-	_finalize_run("mission_won")
-
-
-func _on_mission_failed(_mission_number: int) -> void:
-	_finalize_run("mission_failed")
-
-
-func _reset_run_state() -> void:
-	_wave_rows.clear()
-	_buildings.clear()
-	_event_lines.clear()
-	_wave_in_progress = false
-	_active_wave_number = 0
-
-
-func _finalize_run(outcome: String) -> void:
-	if not _run_active:
-		return
-	_run_active = false
-	if verbose_logging_enabled:
-		_event_lines.append("%s,mission_end,%s" % [_iso_timestamp(), outcome])
-	_write_all_csv_files()
-
-
-func _on_wave_started(wave_number: int, enemy_count: int) -> void:
+func _on_wave_started(wave_number: int, florence_hp: int) -> void:
 	if not _run_active:
 		return
 	_wave_in_progress = true
 	_active_wave_number = wave_number
-	_wave_spawned = enemy_count
+	_wave_spawned_count = 0
 	_wave_kills = 0
 	_wave_leaks = 0
 	_wave_damage_dealt = 0.0
 	_wave_florence_damage_taken = 0
-	_wave_florence_healing = 0
 	_wave_start_usec = Time.get_ticks_usec()
-	_wave_gold_earned = 0
-	_wave_gold_spent = 0
-	_wave_mat_earned = 0
-	_wave_mat_spent = 0
+	_wave_florence_hp_start = florence_hp
+	_wave_spawn_hint = 0
+	_prev_gold = EconomyManager.get_gold()
+	_prev_mat = EconomyManager.get_building_material()
 	var tw: Tower = _get_tower()
-	_wave_florence_hp_start = tw.get_current_hp() if tw != null else 0
-	_wave_gold_start = EconomyManager.get_gold()
-	_wave_mat_start = EconomyManager.get_building_material()
-	_prev_gold = _wave_gold_start
-	_prev_mat = _wave_mat_start
 	if tw != null:
 		_tower_prev_hp = tw.get_current_hp()
-	if verbose_logging_enabled:
-		_event_lines.append(
-			"%s,wave_start,%d,%d" % [_iso_timestamp(), wave_number, enemy_count]
-		)
+	_current_wave = {
+		"wave_number": wave_number,
+		"florence_hp_start": florence_hp,
+	}
+	_log_event_debug("wave_started", "", "", 0.0, wave_number, 0.0)
 
 
-func _on_wave_cleared(wave_number: int) -> void:
+func _on_wave_ended(wave_number: int, florence_hp: int, leaked: int) -> void:
 	if not _run_active:
 		return
 	var duration_sec: float = float(Time.get_ticks_usec() - _wave_start_usec) / 1000000.0
-	var tw: Tower = _get_tower()
-	var florence_hp_end: int = tw.get_current_hp() if tw != null else 0
+	var spawned: int = _wave_spawned_count
+	if spawned <= 0 and _wave_spawn_hint > 0:
+		spawned = _wave_spawn_hint
 	var leak_rate: float = 0.0
-	if _wave_spawned > 0:
-		leak_rate = float(_wave_leaks) / float(_wave_spawned)
+	if spawned > 0:
+		leak_rate = float(leaked) / float(spawned)
 	var row: Dictionary = {
 		"run_id": _run_id,
 		"mission_id": _mission_id,
-		"seed": _session_seed,
-		"layout_rotation_deg": _layout_rotation_deg,
+		"run_label": _run_label,
 		"wave_number": wave_number,
-		"enemies_spawned": _wave_spawned,
+		"enemies_spawned": spawned,
 		"enemies_killed": _wave_kills,
-		"enemies_leaked": _wave_leaks,
+		"enemies_leaked": leaked,
 		"leak_rate": leak_rate,
 		"florence_hp_start": _wave_florence_hp_start,
-		"florence_hp_end": florence_hp_end,
+		"florence_hp_end": florence_hp,
 		"florence_damage_taken": _wave_florence_damage_taken,
-		"florence_healing_received": _wave_florence_healing,
 		"total_damage_dealt": _wave_damage_dealt,
 		"wave_duration_sec": duration_sec,
-		"gold_start": _wave_gold_start,
-		"gold_end": EconomyManager.get_gold(),
-		"building_material_start": _wave_mat_start,
-		"building_material_end": EconomyManager.get_building_material(),
-		"gold_spent_wave": _wave_gold_spent,
-		"gold_earned_wave": _wave_gold_earned,
-		"material_spent_wave": _wave_mat_spent,
-		"material_earned_wave": _wave_mat_earned,
 	}
 	_wave_rows.append(row)
 	_wave_in_progress = false
 	_increment_building_wave_counters(wave_number)
-	if verbose_logging_enabled:
-		_event_lines.append("%s,wave_cleared,%d" % [_iso_timestamp(), wave_number])
+	_log_event_debug("wave_ended", "", "", float(leaked), wave_number, duration_sec)
 
 
-func _on_enemy_killed(
+func _on_building_dealt_damage(instance_id: String, damage: float, enemy_id: String) -> void:
+	if not _run_active or not _wave_in_progress:
+		return
+	if damage <= 0.0:
+		return
+	# [method record_projectile_damage] already rolls building rows + wave total — avoid double-counting.
+	if debug_mode:
+		_log_event_debug("building_dealt_damage", instance_id, enemy_id, damage, _active_wave_number, 0.0)
+
+
+func _on_building_destroyed(instance_id: String) -> void:
+	if not _run_active:
+		return
+	if _building_rows.has(instance_id):
+		var row: Dictionary = _building_rows[instance_id]
+		row["was_destroyed"] = true
+		_building_rows[instance_id] = row
+	_log_event_debug("building_destroyed", instance_id, "", 0.0, _active_wave_number, 0.0)
+
+
+func _on_enemy_died(instance_id: String, killer_building_instance_id: String) -> void:
+	if not _run_active or not _wave_in_progress:
+		return
+	_wave_kills += 1
+	if debug_mode:
+		_log_event_debug("enemy_died", killer_building_instance_id, instance_id, 0.0, _active_wave_number, 0.0)
+
+
+func _on_florence_damaged(amount: int, source_enemy_id: String) -> void:
+	if not _run_active or not _wave_in_progress:
+		return
+	if amount > 0:
+		_wave_florence_damage_taken += amount
+	if debug_mode:
+		_log_event_debug("florence_damaged", source_enemy_id, "", float(amount), _active_wave_number, 0.0)
+
+
+func _on_enemy_spawned(_enemy_type: Types.EnemyType, _position: Vector2) -> void:
+	if not _run_active or not _wave_in_progress:
+		return
+	_wave_spawned_count += 1
+
+
+func _on_ally_died_bus(_ally_id: String, building_instance_id: String) -> void:
+	if not _run_active:
+		return
+	if building_instance_id.strip_edges().is_empty():
+		return
+	if not _building_rows.has(building_instance_id):
+		return
+	var row: Dictionary = _building_rows[building_instance_id]
+	row["ally_deaths"] = int(row.get("ally_deaths", 0)) + 1
+	_building_rows[building_instance_id] = row
+
+
+func _on_building_placed_compat(slot_index: int, building_type: Types.BuildingType) -> void:
+	if not _run_active:
+		return
+	var hg: HexGrid = _get_hex_grid()
+	if hg == null:
+		return
+	var sd: Dictionary = hg.get_slot_data(slot_index)
+	var building: BuildingBase = sd.get("building", null) as BuildingBase
+	if building == null or not is_instance_valid(building):
+		return
+	var pid: String = building.placed_instance_id
+	if pid.is_empty():
+		return
+	if _building_rows.has(pid):
+		return
+	var bd: BuildingData = building.get_building_data()
+	if bd == null:
+		return
+	var bid: String = bd.building_id.strip_edges()
+	if bid.is_empty():
+		bid = "building_type:%d" % int(bd.building_type)
+	var sc: String = bd.size_class.strip_edges()
+	if sc.is_empty():
+		sc = "MEDIUM"
+	register_building(
+			pid,
+			bid,
+			sc,
+			building.ring_index,
+			building.slot_id,
+			building.paid_gold,
+			0
+	)
+
+
+# ---------------------------------------------------------------------------
+# Internal signal adapters
+# ---------------------------------------------------------------------------
+
+func _on_mission_started_bus(mission_number: int) -> void:
+	if _run_active:
+		return
+	var seed_use: int = _seed
+	if seed_use == 0:
+		seed_use = int(Time.get_ticks_msec() & 0x7FFFFFFF)
+	begin_mission(str(mission_number), seed_use, _layout_rotation_deg)
+
+
+func _on_mission_won_bus(_mission_number: int) -> void:
+	flush_to_disk()
+
+
+func _on_mission_failed_bus(_mission_number: int) -> void:
+	flush_to_disk()
+
+
+func _on_wave_started_bus(wave_number: int, enemy_count: int) -> void:
+	_wave_spawn_hint = enemy_count
+	var tw: Tower = _get_tower()
+	var hp: int = tw.get_current_hp() if tw != null else 0
+	_on_wave_started(wave_number, hp)
+
+
+func _on_wave_cleared_bus(wave_number: int) -> void:
+	var tw: Tower = _get_tower()
+	var hp_end: int = tw.get_current_hp() if tw != null else 0
+	_on_wave_ended(wave_number, hp_end, _wave_leaks)
+
+
+func _on_enemy_killed_bus(
 		_enemy_type: Types.EnemyType,
 		_position: Vector3,
 		_gold_reward: int
 ) -> void:
-	if not _run_active or not _wave_in_progress:
-		return
-	_wave_kills += 1
+	_on_enemy_died("", "")
 
 
 func _on_enemy_reached_tower(_enemy_type: Types.EnemyType, _damage: int) -> void:
@@ -266,9 +443,39 @@ func _on_tower_damaged(current_hp: int, _max_hp: int) -> void:
 	var delta: int = current_hp - _tower_prev_hp
 	if delta < 0:
 		_wave_florence_damage_taken += -delta
-	elif delta > 0:
-		_wave_florence_healing += delta
 	_tower_prev_hp = current_hp
+
+
+func _on_building_destroyed_bus(slot_index: int) -> void:
+	var hg: HexGrid = _get_hex_grid()
+	if hg == null:
+		return
+	var sd: Dictionary = hg.get_slot_data(slot_index)
+	var building: BuildingBase = sd.get("building", null) as BuildingBase
+	if building == null or not is_instance_valid(building):
+		return
+	var pid: String = building.placed_instance_id
+	if pid.is_empty():
+		return
+	_on_building_destroyed(pid)
+
+
+func _on_building_upgraded(slot_index: int, _building_type: Types.BuildingType) -> void:
+	if not _run_active:
+		return
+	var hg: HexGrid = _get_hex_grid()
+	if hg == null:
+		return
+	var sd: Dictionary = hg.get_slot_data(slot_index)
+	var building: BuildingBase = sd.get("building", null) as BuildingBase
+	if building == null:
+		return
+	var pid: String = building.placed_instance_id
+	if pid.is_empty() or not _building_rows.has(pid):
+		return
+	var row: Dictionary = _building_rows[pid]
+	row["upgrade_level"] = int(row.get("upgrade_level", 0)) + 1
+	_building_rows[pid] = row
 
 
 func _on_resource_changed(resource_type: Types.ResourceType, new_amount: int) -> void:
@@ -279,156 +486,79 @@ func _on_resource_changed(resource_type: Types.ResourceType, new_amount: int) ->
 			if _prev_gold < 0:
 				_prev_gold = new_amount
 				return
-			var dg: int = new_amount - _prev_gold
-			if dg > 0:
-				_wave_gold_earned += dg
-			elif dg < 0:
-				_wave_gold_spent += -dg
 			_prev_gold = new_amount
 		Types.ResourceType.BUILDING_MATERIAL:
 			if _prev_mat < 0:
 				_prev_mat = new_amount
 				return
-			var dm: int = new_amount - _prev_mat
-			if dm > 0:
-				_wave_mat_earned += dm
-			elif dm < 0:
-				_wave_mat_spent += -dm
 			_prev_mat = new_amount
 		_:
 			pass
 
 
-func _on_building_placed(slot_index: int, building_type: Types.BuildingType) -> void:
-	if not _run_active:
-		return
-	var hg: HexGrid = _get_hex_grid()
-	if hg == null:
-		return
-	var sd: Dictionary = hg.get_slot_data(slot_index)
-	var building: BuildingBase = sd.get("building", null) as BuildingBase
-	if building == null or not is_instance_valid(building):
-		return
-	var iid: int = building.get_instance_id()
-	var bd: BuildingData = building.get_building_data()
-	if bd == null:
-		return
-	var gold_cost: int = bd.gold_cost
-	_buildings[iid] = {
-		"placed_instance_id": iid,
-		"slot_index": slot_index,
-		"building_type": building_type,
-		"building_id": Types.BuildingType.keys()[int(building_type)],
-		"display_name": bd.display_name,
-		"size_class": "default",
-		"ring_index": slot_index_to_ring(slot_index),
-		"slot_id": "slot_%02d" % slot_index,
-		"cost_gold_paid": gold_cost,
-		"upgrade_level": 0,
-		"total_damage_dealt": 0.0,
-		"total_kills": 0,
-		"waves_active": 0,
-		"aura_uptime_waves": 0,
-		"was_destroyed": false,
-		"summons_deployed": 0,
-		"summon_kills": 0,
-		"balance_status": "unverified",
-		"sold": false,
-		"placement_wave": _active_wave_number,
-	}
-	if verbose_logging_enabled:
-		_event_lines.append(
-			"%s,building_placed,%d,%s"
-			% [_iso_timestamp(), iid, Types.BuildingType.keys()[building_type]]
-		)
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+func _reset_wave_tracking() -> void:
+	_wave_in_progress = false
+	_active_wave_number = 0
+	_current_wave.clear()
 
 
-func _on_building_sold(slot_index: int, building_type: Types.BuildingType) -> void:
-	if not _run_active:
-		return
-	for k: int in _buildings.keys():
-		var row: Dictionary = _buildings[k] as Dictionary
-		if int(row.get("slot_index", -99)) != slot_index:
-			continue
-		var stored_bt: int = int(row.get("building_type", -1))
-		if stored_bt != int(building_type):
-			continue
-		row["sold"] = true
-		row["balance_status"] = "sold"
-		_buildings[k] = row
-		break
-
-
-func _on_building_upgraded(slot_index: int, building_type: Types.BuildingType) -> void:
-	if not _run_active:
-		return
-	var hg: HexGrid = _get_hex_grid()
-	if hg == null:
-		return
-	var sd: Dictionary = hg.get_slot_data(slot_index)
-	var building: BuildingBase = sd.get("building", null) as BuildingBase
-	if building == null:
-		return
-	var iid: int = building.get_instance_id()
-	if not _buildings.has(iid):
-		return
-	var bd: BuildingData = building.get_building_data()
-	if bd == null:
-		return
-	var row: Dictionary = _buildings[iid] as Dictionary
-	row["upgrade_level"] = 1
-	row["cost_gold_paid"] = int(row.get("cost_gold_paid", 0)) + bd.upgrade_gold_cost
-	_buildings[iid] = row
-
-
-func _add_building_damage(
-		instance_id: int,
+func _add_building_damage_string(
+		placed_id: String,
 		damage_applied: float,
 		killed_target: bool,
 		_slot_fallback: int
 ) -> void:
-	if not _buildings.has(instance_id):
+	if not _building_rows.has(placed_id):
 		return
-	var row: Dictionary = _buildings[instance_id] as Dictionary
+	var row: Dictionary = _building_rows[placed_id]
 	row["total_damage_dealt"] = float(row.get("total_damage_dealt", 0.0)) + damage_applied
 	if killed_target:
 		row["total_kills"] = int(row.get("total_kills", 0)) + 1
-	_buildings[instance_id] = row
+	_building_rows[placed_id] = row
 
 
 func _increment_building_wave_counters(wave_number: int) -> void:
-	for k: int in _buildings.keys():
-		var row: Dictionary = _buildings[k] as Dictionary
-		if bool(row.get("sold", false)):
-			continue
-		var pw: int = int(row.get("placement_wave", 9999))
-		if wave_number < pw:
+	for k: String in _building_rows.keys():
+		var row: Dictionary = _building_rows[k]
+		if bool(row.get("was_destroyed", false)):
 			continue
 		row["waves_active"] = int(row.get("waves_active", 0)) + 1
-		var bt: int = int(row.get("building_type", 0))
-		if bt == int(Types.BuildingType.ARCHER_BARRACKS) or bt == int(Types.BuildingType.SHIELD_GENERATOR):
-			row["aura_uptime_waves"] = int(row.get("aura_uptime_waves", 0)) + 1
-		_buildings[k] = row
+		_building_rows[k] = row
 
 
-func _write_all_csv_files() -> void:
-	var dir_path: String = "%s/%s" % [_RUN_DIR, _run_id]
-	var err: Error = DirAccess.make_dir_recursive_absolute(dir_path)
-	if err != OK and err != ERR_ALREADY_EXISTS:
-		push_warning("CombatStatsTracker: could not create run dir: %s" % dir_path)
+func _log_event_debug(
+		event: String,
+		source_instance_id: String,
+		target_instance_id: String,
+		amount: float,
+		wave_number: int,
+		t_sec: float
+) -> void:
+	if not debug_mode:
 		return
-	_write_wave_summary_csv(dir_path + "/wave_summary.csv")
-	_write_building_summary_csv(dir_path + "/building_summary.csv")
-	if verbose_logging_enabled:
-		_write_event_log_csv(dir_path + "/event_log.csv")
+	if t_sec <= 0.0 and _wave_start_usec > 0:
+		t_sec = float(Time.get_ticks_usec() - _wave_start_usec) / 1000000.0
+	_event_log.append(
+			{
+				"event": event,
+				"source_instance_id": source_instance_id,
+				"target_instance_id": target_instance_id,
+				"amount": amount,
+				"wave_number": wave_number,
+				"t_sec": t_sec,
+			}
+	)
 
 
 func _write_wave_summary_csv(path: String) -> void:
 	var header: PackedStringArray = PackedStringArray([
 		"run_id",
 		"mission_id",
-		"seed",
-		"layout_rotation_deg",
+		"run_label",
 		"wave_number",
 		"enemies_spawned",
 		"enemies_killed",
@@ -437,17 +567,8 @@ func _write_wave_summary_csv(path: String) -> void:
 		"florence_hp_start",
 		"florence_hp_end",
 		"florence_damage_taken",
-		"florence_healing_received",
 		"total_damage_dealt",
 		"wave_duration_sec",
-		"gold_start",
-		"gold_end",
-		"building_material_start",
-		"building_material_end",
-		"gold_spent_wave",
-		"gold_earned_wave",
-		"material_spent_wave",
-		"material_earned_wave",
 	])
 	var lines: Array[String] = []
 	lines.append(_join_csv_line(header))
@@ -455,8 +576,7 @@ func _write_wave_summary_csv(path: String) -> void:
 		var vals: PackedStringArray = PackedStringArray([
 			str(row.get("run_id", "")),
 			str(row.get("mission_id", "")),
-			str(row.get("seed", "")),
-			str(row.get("layout_rotation_deg", "")),
+			str(row.get("run_label", "")),
 			str(row.get("wave_number", "")),
 			str(row.get("enemies_spawned", "")),
 			str(row.get("enemies_killed", "")),
@@ -465,17 +585,8 @@ func _write_wave_summary_csv(path: String) -> void:
 			str(row.get("florence_hp_start", "")),
 			str(row.get("florence_hp_end", "")),
 			str(row.get("florence_damage_taken", "")),
-			str(row.get("florence_healing_received", "")),
 			str(row.get("total_damage_dealt", "")),
 			str(row.get("wave_duration_sec", "")),
-			str(row.get("gold_start", "")),
-			str(row.get("gold_end", "")),
-			str(row.get("building_material_start", "")),
-			str(row.get("building_material_end", "")),
-			str(row.get("gold_spent_wave", "")),
-			str(row.get("gold_earned_wave", "")),
-			str(row.get("material_spent_wave", "")),
-			str(row.get("material_earned_wave", "")),
 		])
 		lines.append(_join_csv_line(vals))
 	_write_text_file(path, "\n".join(lines))
@@ -485,9 +596,11 @@ func _write_building_summary_csv(path: String) -> void:
 	var header: PackedStringArray = PackedStringArray([
 		"run_id",
 		"mission_id",
+		"run_label",
+		"display_name",
+		"role_tags",
 		"placed_instance_id",
 		"building_id",
-		"display_name",
 		"size_class",
 		"ring_index",
 		"slot_id",
@@ -495,27 +608,33 @@ func _write_building_summary_csv(path: String) -> void:
 		"upgrade_level",
 		"total_damage_dealt",
 		"total_kills",
+		"ally_deaths",
 		"damage_per_gold",
 		"waves_active",
 		"was_destroyed",
-		"summons_deployed",
-		"summon_kills",
-		"aura_uptime_waves",
 		"balance_status",
 	])
 	var lines: Array[String] = []
 	lines.append(_join_csv_line(header))
-	for k: int in _buildings.keys():
-		var row: Dictionary = _buildings[k] as Dictionary
-		var cost: int = maxi(1, int(row.get("cost_gold_paid", 1)))
+	for k: String in _building_rows.keys():
+		var row: Dictionary = _building_rows[k]
+		var bid: String = str(row.get("building_id", ""))
+		var meta: Dictionary = _lookup_building_meta(bid)
+		var cost: int = maxi(0, int(row.get("cost_gold_paid", 0)))
 		var dmg: float = float(row.get("total_damage_dealt", 0.0))
-		var dpg: float = dmg / float(cost)
+		var dpg: float = 0.0
+		if cost > 0:
+			dpg = dmg / float(cost)
+		row["damage_per_gold"] = dpg
+		_building_rows[k] = row
 		var vals: PackedStringArray = PackedStringArray([
-			_run_id,
-			_mission_id,
-			str(row.get("placed_instance_id", "")),
+			str(row.get("run_id", _run_id)),
+			str(row.get("mission_id", _mission_id)),
+			str(row.get("run_label", _run_label)),
+			str(meta.get("display_name", "")),
+			str(meta.get("role_tags", "")),
+			str(row.get("placed_instance_id", k)),
 			str(row.get("building_id", "")),
-			str(row.get("display_name", "")),
 			str(row.get("size_class", "")),
 			str(row.get("ring_index", "")),
 			str(row.get("slot_id", "")),
@@ -523,23 +642,37 @@ func _write_building_summary_csv(path: String) -> void:
 			str(row.get("upgrade_level", "")),
 			str(dmg),
 			str(row.get("total_kills", "")),
+			str(row.get("ally_deaths", "")),
 			str(dpg),
 			str(row.get("waves_active", "")),
 			str(row.get("was_destroyed", "")).to_lower(),
-			str(row.get("summons_deployed", "")),
-			str(row.get("summon_kills", "")),
-			str(row.get("aura_uptime_waves", "")),
-			str(row.get("balance_status", "")),
+			str(row.get("balance_status", "ok")),
 		])
 		lines.append(_join_csv_line(vals))
 	_write_text_file(path, "\n".join(lines))
 
 
 func _write_event_log_csv(path: String) -> void:
+	var header: PackedStringArray = PackedStringArray([
+		"event",
+		"source_instance_id",
+		"target_instance_id",
+		"amount",
+		"wave_number",
+		"t_sec",
+	])
 	var lines: Array[String] = []
-	lines.append("message")
-	for s: String in _event_lines:
-		lines.append(_csv_escape(s))
+	lines.append(_join_csv_line(header))
+	for ev: Dictionary in _event_log:
+		var vals: PackedStringArray = PackedStringArray([
+			str(ev.get("event", "")),
+			str(ev.get("source_instance_id", "")),
+			str(ev.get("target_instance_id", "")),
+			str(ev.get("amount", "")),
+			str(ev.get("wave_number", "")),
+			str(ev.get("t_sec", "")),
+		])
+		lines.append(_join_csv_line(vals))
 	_write_text_file(path, "\n".join(lines))
 
 
@@ -565,10 +698,6 @@ func _csv_escape(s: String) -> String:
 	return s
 
 
-func _iso_timestamp() -> String:
-	return Time.get_datetime_string_from_system(true, true)
-
-
 func _file_safe_timestamp() -> String:
 	var t: Dictionary = Time.get_datetime_dict_from_system()
 	return "%04d%02d%02d_%02d%02d%02d" % [
@@ -589,14 +718,24 @@ func _get_hex_grid() -> HexGrid:
 	return get_node_or_null("/root/Main/HexGrid") as HexGrid
 
 
-## Maps HexGrid slot index (0..23) to ring 1..3 matching _initialize_slots order.
-static func slot_index_to_ring(slot_index: int) -> int:
-	if slot_index < 0:
-		return -1
-	if slot_index < 6:
-		return 1
-	if slot_index < 18:
-		return 2
-	if slot_index < 24:
-		return 3
-	return -1
+func _lookup_building_meta(building_id: String) -> Dictionary:
+	var out: Dictionary = {"display_name": "", "role_tags": ""}
+	if building_id.strip_edges().is_empty():
+		return out
+	var hg: HexGrid = _get_hex_grid()
+	if hg == null:
+		return out
+	for bd: BuildingData in hg.building_data_registry:
+		if bd != null and bd.building_id == building_id:
+			out["display_name"] = bd.display_name
+			var tags: Array[String] = bd.role_tags
+			var tag_str: String = ""
+			var ti: int = 0
+			for t: String in tags:
+				if ti > 0:
+					tag_str += ", "
+				tag_str += t
+				ti += 1
+			out["role_tags"] = tag_str
+			return out
+	return out

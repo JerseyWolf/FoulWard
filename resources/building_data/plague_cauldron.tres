@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/projectile_base.tscn" id="2_projectile"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_id = "plague_cauldron"
+building_type = 33
+display_name = "Plague Cauldron"
+gold_cost = 280
+material_cost = 7
+upgrade_gold_cost = 168
+upgrade_material_cost = 4
+damage = 30.0
+upgraded_damage = 48.0
+fire_rate = 1.0
+attack_range = 20.0
+upgraded_range = 22.0
+damage_type = 3
+targets_air = false
+targets_ground = true
+is_locked = true
+unlock_research_id = "unlock_plague_cauldron"
+color = Color(0.2, 0.7, 0.1, 1.0)
+dot_enabled = true
+dot_total_damage = 50.0
+dot_tick_interval = 1.0
+dot_duration = 6.0
+dot_effect_type = "poison"
+dot_source_id = "plague_cauldron"
+dot_in_addition_to_hit = false
+footprint_size_class = 0
+size_class = "LARGE"
+role_tags = Array[String](["DPS", "ARTILLERY"])
+balance_status = "UNTESTED"
+projectile_scene = ExtResource("2_projectile")

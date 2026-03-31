@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/wave_pattern_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "default_campaign"
+display_name = "Default Campaign"
+base_point_budget = 35
+budget_per_wave = 9
+max_waves = 30
+wave_primary_tags = Array[String](["RUSH", "INVASION", "INVASION", "RUSH", "HEAVY", "INVASION", "AIRSTRIKE", "INVASION", "HEAVY", "SUPPORT", "MIXED", "INVASION", "HEAVY", "AIRSTRIKE", "MIXED", "INVASION", "HEAVY", "HEAVY", "AIRSTRIKE", "MIXED", "SUPPORT", "HEAVY", "AIRSTRIKE", "MIXED", "HEAVY", "HEAVY", "HEAVY", "AIRSTRIKE", "MIXED", "MIXED"])
+wave_modifiers = Array[Array]([Array[String](["NO_TIER_3", "NO_TIER_4", "NO_TIER_5"]), Array[String](["NO_TIER_3", "NO_TIER_4", "NO_TIER_5"]), Array[String](["NO_TIER_3", "NO_TIER_4", "NO_TIER_5"]), Array[String](["NO_TIER_3", "NO_TIER_4", "NO_TIER_5"]), Array[String](["NO_TIER_3", "NO_TIER_4", "NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String](["NO_TIER_5"]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([]), Array[String]([])])

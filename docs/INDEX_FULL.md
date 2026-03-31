@@ -4,7 +4,7 @@ INDEX_FULL.md
 FOUL WARD — INDEX_FULL.md
 
 Full public API reference for every script, resource type, and system.
-Source of truth: REPO_DUMP_AFTER_MVP.md. **Doc layout:** `docs/README.md`. **Consolidated snapshot:** `docs/OPUS_ALL_ACTIONS.md` merges backlog + AGENTS + Prompt 26 log + both indexes. Updated: 2026-03-29 (**Prompt 43:** `MissionSpawnRouting` dictionary spawn queue + `RoutePathData` resolution + `Array[String]` validators; `WaveManager` integration — `docs/PROMPT_43_IMPLEMENTATION.md`). (**Prompt 42:** TD `Resource` core + `Types` enums (`AllyCombatRole`, `SummonLifetimeType`, `AuraModifierOp`, ring `BuildingSizeClass`, SIEGE/ETHEREAL); `BuildingData`/`AllyData`/`EnemyData`/`RoutePathData`/`MissionEconomyData` field alignment; `BuildingBase` projectile `PackedScene` resolve — `docs/PROMPT_42_IMPLEMENTATION.md`). (**Prompt 41:** `EconomyManager` linear duplicate scaling + mission dup reset + `can_afford_building`; `BuildingBase` upgrade chain + projectile guards + placement ids; `HexGrid` ring/`apply_upgrade` — `docs/PROMPT_41_IMPLEMENTATION.md`). (**Prompt 40:** `MissionSpawnRouting` typed routing + seeded spawn jitter + `validate_wave`; `WaveManager.resolve_path_for_spawn` — `docs/PROMPT_40_IMPLEMENTATION.md`). (**Prompt 39:** TD data resource foundation polish — `BuildingData.get_range`, `AllyData.identity`/`max_lifetime_sec`/`get_identity`, `EnemyData.get_identity`, `SpawnEntryData.enemy_id`, `MissionRoutingData` path→lane validation, docs; `MissionDataValidation` spawn rows; `tests/unit/test_td_resource_helpers.gd` — `docs/PROMPT_39_IMPLEMENTATION.md`). (**Prompt 38:** `EconomyManager` wave_clear payout API + `wave_cleared` hook — `docs/PROMPT_38_IMPLEMENTATION.md`). (**Prompt 37:** `EconomyManager` mission wiring — `apply_mission_economy`, passive tick, duplicate placement cost, `get_refund`; HexGrid `BuildingBase` `paid_*`/`total_invested_*`; `tests/unit/test_economy_mission_integration.gd` — `docs/PROMPT_37_IMPLEMENTATION.md`). (**Prompt 35:** TD data resources — extended `BuildingData`/`AllyData`/`EnemyData`, `SpawnEntryData`, `WaveData`, `MissionWavesData`, `LaneData`, `PathData`, `MissionRoutingData`, `MissionEconomyData`, `MissionDataValidation`, `Types` TD enums — `docs/PROMPT_35_IMPLEMENTATION.md`). (**Prompt 36:** `WaveManager` + `MissionSpawnRouting` mission spawn queue, `RoutePathData`, `EnemyBase` lane/path ids — `docs/PROMPT_36_IMPLEMENTATION.md`). (**Prompt 34:** `CombatStatsTracker` — `user://simbot/runs/` CSVs, `SignalBus.enemy_reached_tower` live — `docs/PROMPT_34_IMPLEMENTATION.md`). (**Prompt 33:** terrain — `Types.TerrainType`/`TerrainEffect`, `TerrainZone`, `NavMeshManager`, `CampaignManager._load_terrain`, `terrain_grassland`/`terrain_swamp`, `main.tscn` `TerrainContainer`, `EnemyBase` terrain multiplier, `tests/unit/test_terrain.gd`, `FUTURE_3D_MODELS_PLAN.md` §5 — `docs/PROMPT_33_IMPLEMENTATION.md`). (**Prompt 32:** modular building kit — `Types.BuildingBaseMesh`/`BuildingTopMesh`, `BuildingData.base_mesh_id`/`top_mesh_id`/`accent_color`, `ArtPlaceholderHelper.get_building_kit_mesh`, `BuildingBase` `BuildingKitAssembly`, `tests/unit/test_building_kit.gd`, `FUTURE_3D_MODELS_PLAN.md` §4 — `docs/PROMPT_32_IMPLEMENTATION.md`). **Prompt 31:** `RiggedVisualWiring` + rigged GLB mount on `EnemyVisual`/`BossVisual`/`ArnulfVisual`; `AnimationPlayer` idle/walk; `EnemyBase.assign_locomotion_animation_player` for bosses — `docs/PROMPT_31_IMPLEMENTATION.md`). **Prompt 29:** `FUTURE_3D_MODELS_PLAN.md` scene audit appendix + `ArtPlaceholderHelper` API notes; `boss_base.tscn` `# TODO(ART)`; Godot MCP reload/error scan — `docs/PROMPT_29_IMPLEMENTATION.md`). **Prompt 28:** `DialogueManager` runtime condition tracking; `WaveManager` BUILD_MODE countdown pause; `test_relationship_manager_tiers.gd` / `test_save_manager_slots.gd`; input/hex/Arnulf/build-menu deltas; full GdUnit **535** cases — `docs/PROMPT_28_IMPLEMENTATION.md`). **Prompt 26:** Full project audit — 55 unindexed files indexed, `docs/AGENTS.md` standing orders, `IMPROVEMENTS_TO_BE_DONE.md` backlog with 78 issues, test Unit/Integration classification, parallel runner spec — `docs/PROMPT_26_IMPLEMENTATION.md`. **Prompt 24:** `PlaceholderIconGenerator` `tools/generate_placeholder_icons.gd` + editor plugin `addons/fw_placeholder_icons`; `ArtPlaceholderHelper` icon PNGs; `SettingsManager` autoload `user://settings.cfg`; `scenes/ui/settings_screen`; UI wiring `build_menu` / `between_mission_screen` / `world_map` / `main_menu`; `tests/test_settings_manager.gd` — `docs/PROMPT_24_IMPLEMENTATION.md`). **Prompt 22:** `RelationshipManager` autoload, `relationship_tier` dialogue conditions, resources under `res://resources/relationship_*` / `character_relationship/` — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `docs/PROMPT_19_IMPLEMENTATION.md`; `# TODO(ART)` in enemy/ally/arnulf/tower/building/boss/hub scripts. Prompt 18: RAG + MCP — `docs/PROMPT_18_IMPLEMENTATION.md`. Audit 6 delta: `AUDIT_IMPLEMENTATION_AUDIT_6.md` — SpellManager multi-spell; WeaponLevelData structural fields; BuildingBase archer barracks / shield generator; GameManager territory aggregates; tests `test_weapon_structural.gd`, `test_building_specials.gd`. Prompt 20: `docs/obsolete/` + INDEX header/autoload alignment — `docs/PROMPT_20_IMPLEMENTATION.md`.
+Source of truth: REPO_DUMP_AFTER_MVP.md. **Doc layout:** `docs/README.md`. **Consolidated snapshot:** `docs/OPUS_ALL_ACTIONS.md` merges backlog + AGENTS + Prompt 26 log + both indexes. Updated: 2026-03-30 (**Prompt 51:** SimBot `run_balance_sweep` + `scripts/simbot/simbot_loadouts.gd`; `CombatStatsTracker` `begin_run`/`end_run` + CSV `run_label`; `tools/simbot_balance_report.py` + `tools/apply_balance_status.gd`; `AutoTestDriver` `--simbot_balance_sweep`; `tests/unit/test_simbot_balance_integration.gd` — `docs/PROMPT_51_IMPLEMENTATION.md`). (**Prompt 10 wave:** `WavePatternData`, `WaveComposer`, `resources/wave_patterns/default_campaign_pattern.tres`, `WaveManager` composed waves + stagger spawn + `clear_all_enemies` queue cancel — `docs/PROMPT_10_IMPLEMENTATION.md` §Wave composition). (**Prompt 11:** HUD build menu + in-mission research — `ui/build_menu*.gd`, `ui/research_panel*`, `ui/research_node_row*`, `ResearchManager`/`SignalBus`/`BuildPhaseManager`/`GameManager`/`HexGrid`/`main.tscn`/`hud.tscn`; `tests/unit/test_research_and_build_menu.gd` — `docs/PROMPT_11_IMPLEMENTATION.md`). (**Prompt 09:** `EnemyData` `special_tags` runtime — `ShieldComponent`, `AuraManager` enemy auras + heal/damage queries, charge/dash/regen/saboteur/anti-air/on_death_spawn, `WaveManager.spawn_enemy_at_position`, `SignalBus` `enemy_spawned`/`enemy_enraged`, `tests/unit/test_enemy_specials.gd` — `docs/PROMPT_09_IMPLEMENTATION.md`). (**Prompt 07:** `AllyManager` summoner squads; `SignalBus` `ally_spawned`/`ally_died`/`ally_squad_wiped`; `BuildingBase` respawn; `HexGrid` soft blockers; `CombatStatsTracker` `ally_deaths`; `tests/unit/test_summoner_runtime.gd` — `docs/PROMPT_07_IMPLEMENTATION.md`). (**Prompt 50:** TD content authoring — `BuildingData`/`EnemyData` schema (`footprint_size_class`, string `size_class`/`balance_status`, `role_tags`, summoner paths, `heal_targets` string, upgrade arrays); `Types` `BuildingType` 8–35 / `EnemyType` 6–29; 36 building + 30 enemy `.tres`; 5 `AllyData` stubs; 18 new research nodes + `main.tscn` full registries; `HexGrid`/`WaveManager` size checks; `ArtPlaceholderHelper` token helpers; `tests/unit/test_content_invariants.gd` — `docs/PROMPT_50_IMPLEMENTATION.md`). (**Prompt 48:** CombatStatsTracker mission API + CSV schemas; stat/aura/status on `BuildingBase`/`EnemyBase`; SignalBus combat signals; projectile + HexGrid + SimBot wiring; `tests/unit/test_combat_stats_tracker.gd` — `docs/PROMPT_48_IMPLEMENTATION.md`). (**Prompt 49:** combat CSV + stat pipeline — `BuildPhaseManager`; `CombatStatsTracker` `register_building`/`flush_to_disk`/String ids; `SignalBus` `building_dealt_damage`/`enemy_spawned`; `EnemyBase.receive_damage` + `TRUE`; `HexGrid` rotation + build guards; `anti_air_bolt.tres` projectile; `tests/unit/test_combat_stats_tracker.gd`, `test_damage_pipeline.gd` — `docs/PROMPT_49_IMPLEMENTATION.md`). (**Prompt 47:** economy + upgrade-chain foundation — `EconomyManager` `_built_counts`/`register_purchase`/`get_refund` Dictionary/`reset_for_mission`/`passive_gold_per_wave`; `BuildingData.building_id`; `DayConfig.mission_economy` — `docs/PROMPT_47_IMPLEMENTATION.md`). (**Prompt 46:** Revert testing-only autotest/faction/wave tweaks; 5 waves + bats in rosters — `docs/PROMPT_46_IMPLEMENTATION.md`). (**Prompt 44:** `EnemyData.matches_tower_air_ground_filter` + `BuildingBase._find_target` — `docs/PROMPT_44_IMPLEMENTATION.md`). (**Prompt 43:** `MissionSpawnRouting` dictionary spawn queue + `RoutePathData` resolution + `Array[String]` validators; `WaveManager` integration — `docs/PROMPT_43_IMPLEMENTATION.md`). (**Prompt 42:** TD `Resource` core + `Types` enums (`AllyCombatRole`, `SummonLifetimeType`, `AuraModifierOp`, ring `BuildingSizeClass`, SIEGE/ETHEREAL); `BuildingData`/`AllyData`/`EnemyData`/`RoutePathData`/`MissionEconomyData` field alignment; `BuildingBase` projectile `PackedScene` resolve — `docs/PROMPT_42_IMPLEMENTATION.md`). (**Prompt 41:** `EconomyManager` linear duplicate scaling + mission dup reset + `can_afford_building`; `BuildingBase` upgrade chain + projectile guards + placement ids; `HexGrid` ring/`apply_upgrade` — `docs/PROMPT_41_IMPLEMENTATION.md`). (**Prompt 40:** `MissionSpawnRouting` typed routing + seeded spawn jitter + `validate_wave`; `WaveManager.resolve_path_for_spawn` — `docs/PROMPT_40_IMPLEMENTATION.md`). (**Prompt 39:** TD data resource foundation polish — `BuildingData.get_range`, `AllyData.identity`/`max_lifetime_sec`/`get_identity`, `EnemyData.get_identity`, `SpawnEntryData.enemy_id`, `MissionRoutingData` path→lane validation, docs; `MissionDataValidation` spawn rows; `tests/unit/test_td_resource_helpers.gd` — `docs/PROMPT_39_IMPLEMENTATION.md`). (**Prompt 38:** `EconomyManager` wave_clear payout API + `wave_cleared` hook — `docs/PROMPT_38_IMPLEMENTATION.md`). (**Prompt 37:** `EconomyManager` mission wiring — `apply_mission_economy`, passive tick, duplicate placement cost, `get_refund`; HexGrid `BuildingBase` `paid_*`/`total_invested_*`; `tests/unit/test_economy_mission_integration.gd` — `docs/PROMPT_37_IMPLEMENTATION.md`). (**Prompt 35:** TD data resources — extended `BuildingData`/`AllyData`/`EnemyData`, `SpawnEntryData`, `WaveData`, `MissionWavesData`, `LaneData`, `PathData`, `MissionRoutingData`, `MissionEconomyData`, `MissionDataValidation`, `Types` TD enums — `docs/PROMPT_35_IMPLEMENTATION.md`). (**Prompt 36:** `WaveManager` + `MissionSpawnRouting` mission spawn queue, `RoutePathData`, `EnemyBase` lane/path ids — `docs/PROMPT_36_IMPLEMENTATION.md`). (**Prompt 34:** `CombatStatsTracker` — `user://simbot/runs/` CSVs, `SignalBus.enemy_reached_tower` live — `docs/PROMPT_34_IMPLEMENTATION.md`). (**Prompt 33:** terrain — `Types.TerrainType`/`TerrainEffect`, `TerrainZone`, `NavMeshManager`, `CampaignManager._load_terrain`, `terrain_grassland`/`terrain_swamp`, `main.tscn` `TerrainContainer`, `EnemyBase` terrain multiplier, `tests/unit/test_terrain.gd`, `FUTURE_3D_MODELS_PLAN.md` §5 — `docs/PROMPT_33_IMPLEMENTATION.md`). (**Prompt 32:** modular building kit — `Types.BuildingBaseMesh`/`BuildingTopMesh`, `BuildingData.base_mesh_id`/`top_mesh_id`/`accent_color`, `ArtPlaceholderHelper.get_building_kit_mesh`, `BuildingBase` `BuildingKitAssembly`, `tests/unit/test_building_kit.gd`, `FUTURE_3D_MODELS_PLAN.md` §4 — `docs/PROMPT_32_IMPLEMENTATION.md`). **Prompt 31:** `RiggedVisualWiring` + rigged GLB mount on `EnemyVisual`/`BossVisual`/`ArnulfVisual`; `AnimationPlayer` idle/walk; `EnemyBase.assign_locomotion_animation_player` for bosses — `docs/PROMPT_31_IMPLEMENTATION.md`). **Prompt 29:** `FUTURE_3D_MODELS_PLAN.md` scene audit appendix + `ArtPlaceholderHelper` API notes; `boss_base.tscn` `# TODO(ART)`; Godot MCP reload/error scan — `docs/PROMPT_29_IMPLEMENTATION.md`). **Prompt 28:** `DialogueManager` runtime condition tracking; `WaveManager` BUILD_MODE countdown pause; `test_relationship_manager_tiers.gd` / `test_save_manager_slots.gd`; input/hex/Arnulf/build-menu deltas; full GdUnit **535** cases — `docs/PROMPT_28_IMPLEMENTATION.md`). **Prompt 26:** Full project audit — 55 unindexed files indexed, `docs/AGENTS.md` standing orders, `IMPROVEMENTS_TO_BE_DONE.md` backlog with 78 issues, test Unit/Integration classification, parallel runner spec — `docs/PROMPT_26_IMPLEMENTATION.md`. **Prompt 24:** `PlaceholderIconGenerator` `tools/generate_placeholder_icons.gd` + editor plugin `addons/fw_placeholder_icons`; `ArtPlaceholderHelper` icon PNGs; `SettingsManager` autoload `user://settings.cfg`; `scenes/ui/settings_screen`; UI wiring `build_menu` / `between_mission_screen` / `world_map` / `main_menu`; `tests/test_settings_manager.gd` — `docs/PROMPT_24_IMPLEMENTATION.md`). **Prompt 22:** `RelationshipManager` autoload, `relationship_tier` dialogue conditions, resources under `res://resources/relationship_*` / `character_relationship/` — `docs/PROMPT_22_IMPLEMENTATION.md`. Prompt 19: Blender batch GLBs `res://art/generated/**`, `generation_log.json`, `FUTURE_3D_MODELS_PLAN.md`, `docs/PROMPT_19_IMPLEMENTATION.md`; `# TODO(ART)` in enemy/ally/arnulf/tower/building/boss/hub scripts. Prompt 18: RAG + MCP — `docs/PROMPT_18_IMPLEMENTATION.md`. Audit 6 delta: `AUDIT_IMPLEMENTATION_AUDIT_6.md` — SpellManager multi-spell; WeaponLevelData structural fields; BuildingBase archer barracks / shield generator; GameManager territory aggregates; tests `test_weapon_structural.gd`, `test_building_specials.gd`. Prompt 20: `docs/obsolete/` + INDEX header/autoload alignment — `docs/PROMPT_20_IMPLEMENTATION.md`.
 Use INDEX_SHORT.md for fast orientation, INDEX_FULL.md for exact method signatures, signals, and dependencies.
 CONVENTIONS SUMMARY (see CONVENTIONS.md for full rules)
 
@@ -54,9 +54,13 @@ COMBAT
 
     arnulf_recovered()
 
-ALLIES (Prompt 11)
+ALLIES (Prompt 11 + Prompt 07)
 
-    ally_spawned(ally_id: String) — emitted when `AllyBase.initialize_ally_data` runs or Arnulf `reset_for_new_mission` (id `arnulf`).
+    ally_spawned(ally_id: String, building_instance_id: String) — emitted when `AllyBase.initialize_ally_data` runs or Arnulf `reset_for_new_mission`; `building_instance_id` empty except for summoner tower spawns (`BuildingBase.placed_instance_id`).
+
+    ally_died(ally_id: String, building_instance_id: String) — summoner ally permanent death (not downed).
+
+    ally_squad_wiped(building_instance_id: String) — last ally for that summoner building removed.
 
     ally_downed(ally_id: String) — emitted when a generic ally enters downed path (POST-MVP) or Arnulf enters DOWNED.
 
@@ -150,6 +154,10 @@ RESEARCH
 
     research_unlocked(node_id: String)
 
+    research_node_unlocked(node_id: String) — Prompt 11: emitted with `research_unlocked` after a successful spend.
+
+    research_points_changed(points: int) — Prompt 11: mirrors research material balance for UI (also driven by `EconomyManager` → `resource_changed`).
+
 SHOP
 
     shop_item_purchased(item_id: String)
@@ -191,10 +199,29 @@ Public methods:
     calculate_dot_tick(dot_total_damage: float, tick_interval: float, duration: float, damage_type: Types.DamageType, armor_type: Types.ArmorType) -> float (returns matrix-adjusted per-tick DoT damage)
 
 Notes: per-enemy immunities via EnemyData.damage_immunities[] are applied before calling DamageCalculator.
+
+AuraManager
+
+Path: res://autoloads/aura_manager.gd
+Purpose: Registers `is_aura` buildings by `placed_instance_id`; `get_damage_pct_bonus` (strongest per `BuildingData.aura_category`, then summed) for tower damage; `get_enemy_speed_modifier` for `enemy_speed_pct` auras. Recomputes affected buildings on register/deregister. Autoload singleton only (no `class_name` — avoids shadowing the autoload node).
+Dependencies: None (reads scene via `get_tree().get_nodes_in_group("buildings")`). Loads after DamageCalculator in `project.godot`.
+
+Public methods:
+
+    register_aura(building: BuildingBase) -> void
+
+    deregister_aura(building_instance_id: String) -> void
+
+    get_damage_pct_bonus(building: BuildingBase) -> float
+
+    get_enemy_speed_modifier(world_pos: Vector3) -> float
+
+    clear_all_emitters_for_tests() -> void
+
 EconomyManager
 
 Path: res://autoloads/economy_manager.gd
-Purpose: Single source of truth for gold, building_material, research_material. Emits resource_changed on every modification. Prompt 37–38 + 41: mission economy overrides (`MissionEconomyData`), linear duplicate placement scaling per `BuildingData.id` (fallback `building_type:%d`), `get_duplicate_count`/`get_cost_multiplier`/`can_afford_building`, `register_purchase`, `apply_mission_economy` clears duplicate counts, placement/sell via `get_gold_cost`/`get_material_cost`/`get_refund`, wave_clear bonuses, passive income in `_process`.
+Purpose: Single source of truth for gold, building_material, research_material. Emits resource_changed on every modification. Prompt 37–38 + 41 + 47: mission economy overrides (`MissionEconomyData`), linear duplicate placement scaling per `BuildingData.building_id` / `id` (fallback `building_type:%d`), `duplicate_cost_k`, `sell_refund_fraction` × `sell_refund_global_multiplier`, `get_duplicate_count`/`get_cost_multiplier`/`can_afford_building`, `register_purchase` (spends + receipt dict), `reset_for_mission`, `apply_mission_economy` clears duplicate counts and applies starting resources, placement/sell via `get_gold_cost`/`get_material_cost`/`get_refund` (Dictionary), `grant_wave_clear_reward` adds `passive_gold_per_wave`, passive income in `_process`.
 Dependencies: SignalBus.
 
 Public variables (conceptual):
@@ -221,7 +248,7 @@ Public methods (summarized):
 
     can_afford(gold_cost: int, material_cost: int) -> bool
 
-    can_afford_building(building_data: BuildingData, wallet_gold: int, wallet_material: int) -> bool
+    can_afford_building(building_data: BuildingData) -> bool
 
     get_duplicate_count(building_id: String) -> int
 
@@ -239,13 +266,13 @@ Public methods (summarized):
 
     get_material_cost(building_data: BuildingData) -> int
 
-    register_purchase(building_data: BuildingData) -> void
+    reset_for_mission() -> void
 
-    get_refund(building_data: BuildingData, invested_gold: int, invested_material: int) -> Vector2i
+    register_purchase(building_data: BuildingData) -> Dictionary
+
+    get_refund(building_data: BuildingData, invested_gold: int, invested_material: int) -> Dictionary
 
     apply_mission_economy(econ: MissionEconomyData = null) -> void
-
-    get_sell_refund_global_multiplier() -> float
 
     get_wave_reward_gold(wave: int, econ: MissionEconomyData) -> int
 
@@ -356,13 +383,29 @@ Key methods:
 Prompt 10 public state (selected): `final_boss_id`, `final_boss_defeated`, `final_boss_active`, `current_boss_threat_territory_id`, `held_territory_ids`.
 
 Consumes: all_waves_cleared, tower_destroyed, boss_killed; subscribes to mission_won (hub transition). See `docs/PROBLEM_REPORT.md`.
+BuildPhaseManager
+
+Path: res://autoloads/build_phase_manager.gd
+Purpose: Guards hex placement/sell/upgrade when `is_build_phase` is false (`push_warning`); stub `confirm_build_phase()` for future HUD “Begin wave” wiring.
+
+Signals (Prompt 11): `build_phase_started` / `combat_phase_started` — emitted by `set_build_phase_active(active: bool)` when the value changes.
+
+Public methods (Prompt 11): `set_build_phase_active(active: bool)` — toggles `is_build_phase` and emits the matching signal (no-op if unchanged).
+
+Wiring: `GameManager` calls `set_build_phase_active(false)` on mission start / `start_wave_countdown` / `exit_build_mode`, and `true` in `enter_build_mode`.
+
+AllyManager
+
+Path: res://autoloads/ally_manager.gd
+Purpose: Spawns and tracks summoner-tower allies (`BuildingData.is_summoner`): loads `AllyData` from `summon_leader_data_path` / `summon_follower_data_path` (or embedded resources), instances `res://scenes/allies/ally_base.tscn`, parents under `Main/AllyContainer` when present. `spawn_squad` / `despawn_squad` keyed by `placed_instance_id`; emits `SignalBus.ally_died` / `ally_squad_wiped`.
+
 CombatStatsTracker
 
 Path: res://autoloads/combat_stats_tracker.gd
-Purpose: Session combat analytics for balancing / SimBot: aggregates per-wave and per-placed-building stats, writes CSV under `user://simbot/runs/{mission_id}_{timestamp}/` on `mission_won` / `mission_failed`.
-Dependencies: SignalBus, EconomyManager, GameManager (mission id via `mission_started`), Tower/HexGrid node paths (`get_node_or_null`), optional `ProjectileBase` → `record_projectile_damage`.
-Key behaviors: subscribes to `mission_started`, `mission_won`, `mission_failed`, `wave_started`, `wave_cleared`, `enemy_killed`, `enemy_reached_tower`, `tower_damaged`, `building_placed`, `building_sold`, `building_upgraded`, `resource_changed`; `verbose_logging_enabled` (default `OS.is_debug_build()`) adds `event_log.csv`.
-Public API: `set_session_seed`, `set_layout_rotation_deg`, `set_verbose_logging`, `record_projectile_damage` (called from `ProjectileBase`), `slot_index_to_ring` (static helper).
+Purpose: Session combat analytics for balancing / SimBot: aggregates per-wave and per-placed-building stats (String `placed_instance_id` keys), writes CSV under `user://simbot/runs/{mission_id}_{timestamp}/` on `mission_won` / `mission_failed` via `flush_to_disk`.
+Dependencies: SignalBus, EconomyManager, Tower/HexGrid node paths (`get_node_or_null`), optional `ProjectileBase` → `record_projectile_damage`.
+Key behaviors: subscribes to `mission_started`, `mission_won`, `mission_failed`, `wave_started`, `wave_cleared`, `enemy_killed`, `enemy_reached_tower`, `tower_damaged`, `building_placed`, `building_upgraded`, `building_destroyed`, `resource_changed`, `enemy_spawned`, `florence_damaged`, `ally_died`; `debug_mode` adds structured `event_log.csv`.
+Public API: `begin_mission`, `register_building`, `flush_to_disk`, `set_session_seed`, `set_layout_rotation_deg`, `set_verbose_logging`, `record_projectile_damage` (called from `ProjectileBase`), `slot_index_to_ring` (static helper).
 DialogueManager
 
 Path: res://autoloads/dialogue_manager.gd
@@ -523,9 +566,11 @@ SCENE SCRIPTS (Tower, Arnulf, HexGrid, BuildingBase, EnemyBase, ProjectileBase)
   - `faction_registry: Dictionary` (String → FactionData), `_load_faction_registry()` in `_ready`.
   - `validate_day_configs(day_configs: Array[DayConfig]) -> void`.
 - **WaveManager** (`res://scripts/wave_manager.gd`):
-  - Faction-driven spawning: weighted roster allocation, total enemies **`wave_number × 6`** (scaled only if `difficulty_offset != 0`).
+  - **Regular waves:** **`WaveComposer`** + **`wave_pattern`** (`Resource`, default `default_campaign_pattern.tres`) — point budget from pattern, picks from **`enemy_data_registry`** via **`wave_tags`** / **`tier`** / **`point_cost`**; **`spawn_count_multiplier`** scales budget; stagger-spawns composed enemies; **`has_pending_composed_spawns()`**.
+  - **FactionData** roster weights are **not** used for normal wave composition (still used for faction identity / mini-boss metadata).
   - `faction_registry`, `set_faction_data_override(faction_data: FactionData) -> void`, `resolve_current_faction() -> void`, `get_mini_boss_info_for_wave(wave_index: int) -> Dictionary`.
   - Mini-boss hook respects `DayConfig.is_mini_boss_day` unless a test **faction override** is set.
+  - **`clear_all_enemies()`** also clears in-progress composed and mission spawn queues.
   - Uses `preload` aliases (`FactionDataType`) where needed for autoload parse order (**DEVIATION** vs bare `class_name` types).
 - **GameManager**: `configure_for_day` on WaveManager is invoked **after** `reset_for_new_mission()` in `_begin_mission_wave_sequence()` so day tuning persists.
 - **Tests**: `res://tests/test_faction_data.gd`; Prompt 9 cases in `res://tests/test_wave_manager.gd`.
@@ -684,7 +729,7 @@ Public methods: `build_placeholder_enemy_data() -> EnemyData`.
 
 **AllyBase** (`res://scenes/allies/ally_base.gd` / `ally_base.tscn`) — Prompt 11 + Audit 6 Group 4
 
-- `initialize_ally_data(p_ally_data: Variant) -> void` — HP reset, shapes from `attack_range`, emits `ally_spawned`.
+- `initialize_ally_data(p_ally_data: Variant) -> void` — HP reset, shapes from `attack_range`, emits `ally_spawned(ally_id, owning_building_instance_id)`.
 - `find_target() -> EnemyBase` — filters by `can_target_flying`; scores by `preferred_targeting` (`Types.TargetPriority`: CLOSEST, LOWEST_HP, HIGHEST_HP, FLYING_FIRST).
 - `_perform_attack_on_target` — `EnemyBase.take_damage` (direct damage; POST-MVP projectiles).
 - Death: if `uses_downed_recovering`, DOWNED for `recovery_time` → RECOVERING (full heal) → IDLE with `ally_downed` / `ally_recovered`; else `ally_killed` + `queue_free()`.

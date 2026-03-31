@@ -98,7 +98,7 @@ display_name = "Day 5"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 6
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.08
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -118,7 +118,7 @@ display_name = "Day 6"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 6
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.1
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -138,7 +138,7 @@ display_name = "Day 7"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 6
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.12
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -158,7 +158,7 @@ display_name = "Day 8"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 6
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.14
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -178,7 +178,7 @@ display_name = "Day 9"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 6
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.16
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -198,7 +198,7 @@ display_name = "Day 10"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 7
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.18
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -218,7 +218,7 @@ display_name = "Day 11"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 7
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.2
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -238,7 +238,7 @@ display_name = "Day 12"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 7
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.22
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -258,7 +258,7 @@ display_name = "Day 13"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 7
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.24
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -278,7 +278,7 @@ display_name = "Day 14"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 7
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.26
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -298,7 +298,7 @@ display_name = "Day 15"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 8
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.28
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -318,7 +318,7 @@ display_name = "Day 16"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 8
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.3
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -338,7 +338,7 @@ display_name = "Day 17"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 8
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.32
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -358,7 +358,7 @@ display_name = "Day 18"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 8
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.34
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -378,7 +378,7 @@ display_name = "Day 19"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 8
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.36
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -398,7 +398,7 @@ display_name = "Day 20"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 9
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.38
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -418,7 +418,7 @@ display_name = "Day 21"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 9
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.4
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -438,7 +438,7 @@ display_name = "Day 22"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 9
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.42
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -458,7 +458,7 @@ display_name = "Day 23"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 9
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.44
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -478,7 +478,7 @@ display_name = "Day 24"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 9
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.46
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -498,7 +498,7 @@ display_name = "Day 25"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.48
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -518,7 +518,7 @@ display_name = "Day 26"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.5
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -538,7 +538,7 @@ display_name = "Day 27"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.52
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -558,7 +558,7 @@ display_name = "Day 28"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.54
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -578,7 +578,7 @@ display_name = "Day 29"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.56
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -598,7 +598,7 @@ display_name = "Day 30"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.58
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -618,7 +618,7 @@ display_name = "Day 31"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.6
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -638,7 +638,7 @@ display_name = "Day 32"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.62
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -658,7 +658,7 @@ display_name = "Day 33"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.64
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -678,7 +678,7 @@ display_name = "Day 34"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.66
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -698,7 +698,7 @@ display_name = "Day 35"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.68
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -718,7 +718,7 @@ display_name = "Day 36"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.7
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -738,7 +738,7 @@ display_name = "Day 37"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.72
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -758,7 +758,7 @@ display_name = "Day 38"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.74
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -778,7 +778,7 @@ display_name = "Day 39"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.76
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -798,7 +798,7 @@ display_name = "Day 40"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.78
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -818,7 +818,7 @@ display_name = "Day 41"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.8
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -838,7 +838,7 @@ display_name = "Day 42"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.82
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -858,7 +858,7 @@ display_name = "Day 43"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.84
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -878,7 +878,7 @@ display_name = "Day 44"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.86
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -898,7 +898,7 @@ display_name = "Day 45"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.88
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -918,7 +918,7 @@ display_name = "Day 46"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.9
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -938,7 +938,7 @@ display_name = "Day 47"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.92
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -958,7 +958,7 @@ display_name = "Day 48"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.94
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -978,7 +978,7 @@ display_name = "Day 49"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.96
 ; # TUNING: HP scaling — PLACEHOLDER
@@ -1001,7 +1001,7 @@ display_name = "Day 50"
 ; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
 ; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING: wave count ramp — PLACEHOLDER
 enemy_hp_multiplier = 1.98
 ; # TUNING: HP scaling — PLACEHOLDER

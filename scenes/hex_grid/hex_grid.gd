@@ -38,18 +38,23 @@ const BuildingScene: PackedScene = preload("res://scenes/buildings/building_base
 # Exports
 # ---------------------------------------------------------------------------
 
-## Must have exactly 8 entries, one per Types.BuildingType enum value.
+## Must have exactly 36 entries, one per Types.BuildingType enum value.
 @export var building_data_registry: Array[BuildingData] = []
 
 ## Which hex is targeted for the next build (driven by BuildMenu). -1 = none.
 var _build_highlight_slot: int = -1
+
+## Visual ring rotation (build phase only); does not change slot indices.
+var rotation_offset_degrees: float = 0.0
+const ROTATION_STEP_DEG: float = 15.0
 
 # ---------------------------------------------------------------------------
 # Private state
 # ---------------------------------------------------------------------------
 
 ## Each Dictionary: { index: int, world_pos: Vector3,
-##                    building: BuildingBase|null, is_occupied: bool }
+##                    building: BuildingBase|null, is_occupied: bool,
+##                    soft_blocker_count: int }
 var _slots: Array[Dictionary] = []
 
 # ASSUMPTION: BuildingContainer at /root/Main/BuildingContainer per ARCHITECTURE.md §2.
@@ -65,6 +70,7 @@ var _research_manager = null
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	add_to_group("hex_grid")
 	_building_container = get_node_or_null("/root/Main/BuildingContainer") as Node3D
 	if _building_container == null:
 		var c: Node3D = Node3D.new()
@@ -79,8 +85,8 @@ func _ready() -> void:
 	_research_manager = get_node_or_null("/root/Main/Managers/ResearchManager")
 	print("[HexGrid] _ready: ResearchManager found=%s" % (str(_research_manager != null)))
 
-	if building_data_registry.size() != 8:
-		push_error("HexGrid: building_data_registry must have exactly 8 entries, got %d" % building_data_registry.size())
+	if building_data_registry.size() != 36:
+		push_error("HexGrid: building_data_registry must have exactly 36 entries, got %d" % building_data_registry.size())
 		return
 
 	_initialize_slots()
@@ -94,6 +100,8 @@ func _ready() -> void:
 ## Places a building of building_type on the given slot (charges gold + material).
 ## Returns true on success, false on any validation failure.
 func place_building(slot_index: int, building_type: Types.BuildingType) -> bool:
+	if not BuildPhaseManager.assert_build_phase("place_building"):
+		return false
 	return _try_place_building(slot_index, building_type, true)
 
 
@@ -178,42 +186,50 @@ func _try_place_building(
 		print("[HexGrid] place_building FAILED: building type %d is locked" % building_type)
 		return false
 
-	var gold_price: int = EconomyManager.get_gold_cost(building_data)
-	var mat_price: int = EconomyManager.get_material_cost(building_data)
-
 	if charge_resources:
-		if not EconomyManager.can_afford(gold_price, mat_price):
-			print("[HexGrid] place_building FAILED: cannot afford cost=%dg %dm  have=%dg %dm" % [
-				gold_price, mat_price,
+		if not EconomyManager.can_afford_building(building_data):
+			print("[HexGrid] place_building FAILED: cannot afford scaled cost  have=%dg %dm" % [
 				EconomyManager.get_gold(), EconomyManager.get_building_material()
 			])
 			return false
 
-		var gold_spent: bool = EconomyManager.spend_gold(gold_price)
-		if not gold_spent:
-			push_warning("HexGrid: spend_gold failed after can_afford returned true")
+		var receipt: Dictionary = EconomyManager.register_purchase(building_data)
+		if receipt.is_empty():
+			push_warning("HexGrid: register_purchase failed after can_afford_building returned true")
 			return false
-		var mat_spent: bool = EconomyManager.spend_building_material(mat_price)
-		if not mat_spent:
-			push_warning("HexGrid: spend_building_material failed after can_afford returned true")
-			return false
-		EconomyManager.register_purchase(building_data)
 
-	var building: BuildingBase = BuildingScene.instantiate() as BuildingBase
-	_building_container.add_child(building)
-	building.global_position = slot["world_pos"]
-	building.initialize(building_data)
-	if charge_resources:
-		building.record_initial_purchase(gold_price, mat_price)
-	else:
-		building.record_initial_purchase(0, 0)
-	building.set_slot_index_for_stats(slot_index)
-	building.ring_index = _ring_index_for_slot(slot_index)
-	building.placed_instance_id = building.get_instance_id()
-	building.add_to_group("buildings")
-	_activate_building_obstacle(building)
+		var building: BuildingBase = BuildingScene.instantiate() as BuildingBase
+		_building_container.add_child(building)
+		building.global_position = slot["world_pos"]
+		building.add_to_group("buildings")
+		building.initialize_with_economy(building_data, slot_index, _ring_index_for_slot(slot_index))
+		building.paid_gold = int(receipt.get("paid_gold", 0))
+		building.paid_material = int(receipt.get("paid_material", 0))
+		building.total_invested_gold = building.paid_gold
+		building.total_invested_material = building.paid_material
+		_activate_building_obstacle(building)
 
-	slot["building"] = building
+		slot["building"] = building
+		slot["is_occupied"] = true
+
+		print("[HexGrid] place_building SUCCESS: slot=%d type=%d at pos=(%.1f,%.1f,%.1f)  remaining gold=%d mat=%d" % [
+			slot_index, building_type,
+			slot["world_pos"].x, slot["world_pos"].y, slot["world_pos"].z,
+			EconomyManager.get_gold(), EconomyManager.get_building_material()
+		])
+		_register_combat_stats_building(building, building_data)
+		SignalBus.building_placed.emit(slot_index, building_type)
+		return true
+
+	var building_free: BuildingBase = BuildingScene.instantiate() as BuildingBase
+	_building_container.add_child(building_free)
+	building_free.global_position = slot["world_pos"]
+	building_free.add_to_group("buildings")
+	building_free.initialize_with_economy(building_data, slot_index, _ring_index_for_slot(slot_index))
+	building_free.record_initial_purchase(0, 0)
+	_activate_building_obstacle(building_free)
+
+	slot["building"] = building_free
 	slot["is_occupied"] = true
 
 	print("[HexGrid] place_building SUCCESS: slot=%d type=%d at pos=(%.1f,%.1f,%.1f)  remaining gold=%d mat=%d" % [
@@ -221,8 +237,53 @@ func _try_place_building(
 		slot["world_pos"].x, slot["world_pos"].y, slot["world_pos"].z,
 		EconomyManager.get_gold(), EconomyManager.get_building_material()
 	])
+	_register_combat_stats_building(building_free, building_data)
 	SignalBus.building_placed.emit(slot_index, building_type)
 	return true
+
+
+func _register_combat_stats_building(building: BuildingBase, building_data: BuildingData) -> void:
+	if building == null or building_data == null:
+		return
+	var bid: String = building_data.building_id.strip_edges()
+	if bid.is_empty():
+		bid = "building_type:%d" % int(building_data.building_type)
+	var sc: String = building_data.size_class.strip_edges()
+	if sc.is_empty():
+		sc = "MEDIUM"
+	CombatStatsTracker.register_building(
+			building.placed_instance_id,
+			bid,
+			sc,
+			building.ring_index,
+			building.slot_id,
+			building.paid_gold,
+			0
+	)
+
+
+func rotate_ring(delta_steps: int) -> void:
+	if not BuildPhaseManager.is_build_phase:
+		push_warning("HexGrid.rotate_ring: attempted outside build phase")
+		return
+	rotation_offset_degrees += float(delta_steps) * ROTATION_STEP_DEG
+	rotation_offset_degrees = fposmod(rotation_offset_degrees, 360.0)
+	_rebuild_slot_positions()
+
+
+func _rebuild_slot_positions() -> void:
+	var new_positions: Array[Vector3] = []
+	new_positions.append_array(_compute_ring_positions(RING1_COUNT, RING1_RADIUS, rotation_offset_degrees))
+	new_positions.append_array(_compute_ring_positions(RING2_COUNT, RING2_RADIUS, rotation_offset_degrees))
+	new_positions.append_array(_compute_ring_positions(RING3_COUNT, RING3_RADIUS, 30.0 + rotation_offset_degrees))
+	if new_positions.size() != TOTAL_SLOTS:
+		push_error("HexGrid._rebuild_slot_positions: position count mismatch")
+		return
+	for i: int in TOTAL_SLOTS:
+		_slots[i]["world_pos"] = new_positions[i]
+		var node: Area3D = get_node_or_null("HexSlot_%02d" % i) as Area3D
+		if node != null:
+			node.global_position = new_positions[i]
 
 
 func _activate_building_obstacle(building: BuildingBase) -> void:
@@ -234,6 +295,8 @@ func _activate_building_obstacle(building: BuildingBase) -> void:
 ## Sells the building on the given slot. Full refund including upgrade costs if upgraded.
 ## Returns true on success, false if slot is empty or invalid.
 func sell_building(slot_index: int) -> bool:
+	if not BuildPhaseManager.assert_build_phase("sell_building"):
+		return false
 	if not _is_valid_index(slot_index):
 		push_warning("HexGrid.sell_building: invalid slot_index %d" % slot_index)
 		return false
@@ -248,15 +311,15 @@ func sell_building(slot_index: int) -> bool:
 	var building_data: BuildingData = building.get_building_data()
 	var building_type: Types.BuildingType = building_data.building_type
 
-	var refund: Vector2i = EconomyManager.get_refund(
-			building_data,
-			building.total_invested_gold,
-			building.total_invested_material
-	)
-	if refund.x > 0:
-		EconomyManager.add_gold(refund.x)
-	if refund.y > 0:
-		EconomyManager.add_building_material(refund.y)
+	var refund: Dictionary = building.get_sell_refund()
+	var rg: int = int(refund.get("gold", 0))
+	var rmat: int = int(refund.get("material", 0))
+	if rg > 0:
+		EconomyManager.add_gold(rg)
+	if rmat > 0:
+		EconomyManager.add_building_material(rmat)
+
+	AllyManager.despawn_squad(building.placed_instance_id)
 
 	building.remove_from_group("buildings")
 	building.queue_free()
@@ -271,6 +334,8 @@ func sell_building(slot_index: int) -> bool:
 ## Upgrades the building on the given slot from Basic to Upgraded tier.
 ## Returns true on success, false on any validation failure.
 func upgrade_building(slot_index: int) -> bool:
+	if not BuildPhaseManager.assert_build_phase("upgrade_building"):
+		return false
 	if not _is_valid_index(slot_index):
 		push_warning("HexGrid.upgrade_building: invalid slot_index %d" % slot_index)
 		return false
@@ -288,25 +353,28 @@ func upgrade_building(slot_index: int) -> bool:
 		return false
 
 	var building_data: BuildingData = building.get_building_data()
-	var ug: Vector2i = building.get_upgrade_cost()
+	var cost: Dictionary = building.get_upgrade_cost()
+	var ug: int = int(cost.get("gold", 0))
+	var um: int = int(cost.get("material", 0))
 
-	if not EconomyManager.can_afford(ug.x, ug.y):
+	if not EconomyManager.can_afford(ug, um):
 		return false
 
-	var gold_spent: bool = EconomyManager.spend_gold(ug.x)
+	var gold_spent: bool = EconomyManager.spend_gold(ug)
 	if not gold_spent:
 		push_warning("HexGrid: upgrade spend_gold failed after can_afford returned true")
 		return false
-	var mat_spent: bool = EconomyManager.spend_building_material(ug.y)
+	var mat_spent: bool = EconomyManager.spend_building_material(um)
 	if not mat_spent:
 		push_warning("HexGrid: upgrade spend_building_material failed after can_afford returned true")
+		EconomyManager.add_gold(ug)
 		return false
 
-	building.record_upgrade_cost(ug.x, ug.y)
 	var next_chain: BuildingData = building_data.upgrade_next
 	if next_chain != null:
 		building.apply_upgrade(next_chain)
 	else:
+		building.record_upgrade_cost(ug, um)
 		building.upgrade()
 
 	var upgraded_type: Types.BuildingType = building.get_building_data().building_type
@@ -407,6 +475,47 @@ func get_nearest_slot_index(world_pos: Vector3) -> int:
 	return -1
 
 
+## Maps a world position to a logical hex key; [member Vector2i.x] is the slot index (0..23), [member Vector2i.y] is unused (0).
+func world_to_hex(world_pos: Vector3) -> Vector2i:
+	var best_i: int = -1
+	var best_d: float = INF
+	for i: int in range(TOTAL_SLOTS):
+		var wp: Vector3 = _slots[i]["world_pos"] as Vector3
+		var d: float = Vector2(wp.x, wp.z).distance_to(Vector2(world_pos.x, world_pos.z))
+		if d < best_d:
+			best_d = d
+			best_i = i
+	if best_i < 0:
+		return Vector2i(-1, -1)
+	return Vector2i(best_i, 0)
+
+
+## Pathfinding hint: allies patrolling a slot count as soft obstacles (enemies may path around later).
+func register_soft_blocker(hex_coord: Vector2i) -> void:
+	var idx: int = hex_coord.x
+	if not _is_valid_index(idx):
+		return
+	var slot: Dictionary = _slots[idx]
+	var n: int = int(slot.get("soft_blocker_count", 0))
+	slot["soft_blocker_count"] = n + 1
+
+
+func unregister_soft_blocker(hex_coord: Vector2i) -> void:
+	var idx: int = hex_coord.x
+	if not _is_valid_index(idx):
+		return
+	var slot: Dictionary = _slots[idx]
+	var n: int = int(slot.get("soft_blocker_count", 0))
+	slot["soft_blocker_count"] = maxi(0, n - 1)
+
+
+func has_soft_blocker(hex_coord: Vector2i) -> bool:
+	var idx: int = hex_coord.x
+	if not _is_valid_index(idx):
+		return false
+	return int(_slots[idx].get("soft_blocker_count", 0)) > 0
+
+
 ## Updates the highlighted ring tile for build mode (each slot has its own material instance).
 func set_build_slot_highlight(slot_index: int) -> void:
 	if not _is_valid_index(slot_index):
@@ -438,6 +547,7 @@ func _initialize_slots() -> void:
 			"world_pos": positions[i],
 			"building": null,
 			"is_occupied": false,
+			"soft_blocker_count": 0,
 		}
 		_slots.append(slot_data)
 

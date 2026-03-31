@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orc_raider"
+enemy_type = 10
+display_name = "Orc Raider"
+max_hp = 120
+move_speed = 4.5
+damage = 18
+attack_cooldown = 1.2
+attack_range = 1.8
+armor_type = 0
+gold_reward = 15
+is_ranged = false
+is_flying = false
+color = Color(0.8, 0.3, 0.1, 1.0)
+damage_immunities = []
+tier = 2
+point_cost = 10
+wave_tags = Array[String](["INVASION", "RUSH"])
+balance_status = "UNTESTED"

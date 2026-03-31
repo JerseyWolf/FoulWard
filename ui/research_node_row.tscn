@@ -1,0 +1,28 @@
+[gd_scene load_steps=2 format=3 uid="uid://research_node_row_p11"]
+
+[ext_resource type="Script" path="res://ui/research_node_row.gd" id="1_script"]
+
+[node name="ResearchNodeRow" type="HBoxContainer"]
+custom_minimum_size = Vector2(520, 0)
+size_flags_horizontal = 3
+script = ExtResource("1_script")
+
+[node name="NameLabel" type="Label" parent="."]
+custom_minimum_size = Vector2(140, 0)
+size_flags_horizontal = 0
+text = "Name"
+
+[node name="CostLabel" type="Label" parent="."]
+custom_minimum_size = Vector2(56, 0)
+size_flags_horizontal = 0
+text = "0"
+
+[node name="DescLabel" type="Label" parent="."]
+size_flags_horizontal = 3
+autowrap_mode = 3
+text = "Description"
+
+[node name="UnlockButton" type="Button" parent="."]
+custom_minimum_size = Vector2(96, 0)
+size_flags_horizontal = 0
+text = "Unlock"

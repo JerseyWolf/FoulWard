@@ -12,24 +12,28 @@ const DAMAGE_MATRIX: Dictionary = {
 		Types.DamageType.FIRE:     1.0,
 		Types.DamageType.MAGICAL:  1.0,
 		Types.DamageType.POISON:   1.0,
+		Types.DamageType.TRUE:     1.0,
 	},
 	Types.ArmorType.HEAVY_ARMOR: {
 		Types.DamageType.PHYSICAL: 0.5,
 		Types.DamageType.FIRE:     1.0,
 		Types.DamageType.MAGICAL:  2.0,
 		Types.DamageType.POISON:   1.0,
+		Types.DamageType.TRUE:     1.0,
 	},
 	Types.ArmorType.UNDEAD: {
 		Types.DamageType.PHYSICAL: 1.0,
 		Types.DamageType.FIRE:     2.0,
 		Types.DamageType.MAGICAL:  1.0,
 		Types.DamageType.POISON:   0.0,
+		Types.DamageType.TRUE:     1.0,
 	},
 	Types.ArmorType.FLYING: {
 		Types.DamageType.PHYSICAL: 1.0,
 		Types.DamageType.FIRE:     1.0,
 		Types.DamageType.MAGICAL:  1.0,
 		Types.DamageType.POISON:   1.0,
+		Types.DamageType.TRUE:     1.0,
 	},
 }
 
@@ -39,7 +43,12 @@ func calculate_damage(
 		base_damage: float,
 		damage_type: Types.DamageType,
 		armor_type: Types.ArmorType) -> float:
-	return base_damage * DAMAGE_MATRIX[armor_type][damage_type]
+	if damage_type == Types.DamageType.TRUE:
+		return base_damage
+	var row: Dictionary = DAMAGE_MATRIX[armor_type]
+	if not row.has(damage_type):
+		return base_damage
+	return base_damage * float(row[damage_type])
 
 ## Returns per-tick damage for a DoT effect.
 ## dot_total_damage is the total intended DoT damage over the full duration

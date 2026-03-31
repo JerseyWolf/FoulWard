@@ -17,4 +17,7 @@ is_ranged = false
 is_flying = false
 color = Color(0.9, 0.4, 0.0, 1.0)
 damage_immunities = [1]
-
+tier = 2
+point_cost = 8
+wave_tags = Array[String](["RUSH", "INVASION"])
+balance_status = "BASELINE"

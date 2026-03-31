@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/projectile_base.tscn" id="2_projectile"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_id = "ember_vent"
+building_type = 9
+display_name = "Ember Vent"
+gold_cost = 45
+material_cost = 1
+upgrade_gold_cost = 27
+upgrade_material_cost = 1
+damage = 8.0
+upgraded_damage = 14.0
+fire_rate = 1.0
+attack_range = 11.0
+upgraded_range = 12.0
+damage_type = 1
+targets_air = false
+targets_ground = true
+is_locked = false
+unlock_research_id = ""
+color = Color(1.0, 0.4, 0.0, 1.0)
+dot_enabled = true
+dot_total_damage = 12.0
+dot_tick_interval = 1.0
+dot_duration = 3.0
+dot_effect_type = "burn"
+dot_source_id = "ember_vent"
+dot_in_addition_to_hit = true
+footprint_size_class = 0
+size_class = "SMALL"
+role_tags = Array[String](["DPS"])
+balance_status = "UNTESTED"
+projectile_scene = ExtResource("2_projectile")

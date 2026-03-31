@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("1_buildingdata")
+building_id = "arrow_tower"
 building_type = 0
 display_name = "Arrow Tower"
 gold_cost = 50
@@ -24,4 +25,8 @@ unlock_research_id = ""
 research_damage_boost_id = "arrow_tower_plus_damage"
 research_range_boost_id = ""
 color = Color(0.7, 0.5, 0.2, 1.0)
+footprint_size_class = 0
+size_class = "SMALL"
+role_tags = Array[String](["DPS"])
+balance_status = "BASELINE"
 projectile_scene = ExtResource("2_projectile")

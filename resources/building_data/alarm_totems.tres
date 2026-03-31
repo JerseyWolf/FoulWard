@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_id = "alarm_totems"
+building_type = 15
+display_name = "Alarm Totems"
+gold_cost = 40
+material_cost = 1
+damage = 0.0
+fire_rate = 0.0
+attack_range = 0.0
+upgraded_range = 0.0
+damage_type = 0
+targets_air = false
+targets_ground = true
+is_locked = false
+unlock_research_id = ""
+color = Color(0.8, 0.7, 0.2, 1.0)
+is_aura = true
+aura_category = "enemy_slow"
+aura_radius = 6.0
+aura_effect_type = "enemy_speed_pct"
+aura_effect_value = -0.20
+footprint_size_class = 0
+size_class = "SMALL"
+role_tags = Array[String](["AURA", "SUPPORT"])
+balance_status = "UNTESTED"

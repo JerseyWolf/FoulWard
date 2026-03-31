@@ -27,7 +27,7 @@ func _build_wave_manager() -> WaveManager:
 	var wm: WaveManager = WaveManager.new()
 	wm.wave_countdown_duration = 10.0
 	wm.max_waves = 10
-	wm.enemy_data_registry = _build_six_enemy_data()
+	wm.enemy_data_registry = _build_full_enemy_data()
 	add_child(wm)
 
 	wm._enemy_container = _enemy_container
@@ -35,17 +35,9 @@ func _build_wave_manager() -> WaveManager:
 	return wm
 
 
-func _build_six_enemy_data() -> Array[EnemyData]:
+func _build_full_enemy_data() -> Array[EnemyData]:
 	var registry: Array[EnemyData] = []
-	var types: Array = [
-		Types.EnemyType.ORC_GRUNT,
-		Types.EnemyType.ORC_BRUTE,
-		Types.EnemyType.GOBLIN_FIREBUG,
-		Types.EnemyType.PLAGUE_ZOMBIE,
-		Types.EnemyType.ORC_ARCHER,
-		Types.EnemyType.BAT_SWARM
-	]
-	for t: Types.EnemyType in types:
+	for t: Types.EnemyType in Types.EnemyType.values():
 		var d: EnemyData = EnemyData.new()
 		d.enemy_type = t
 		d.max_hp = 50
@@ -55,9 +47,23 @@ func _build_six_enemy_data() -> Array[EnemyData]:
 		d.attack_cooldown = 1.0
 		d.armor_type = Types.ArmorType.UNARMORED
 		d.gold_reward = 5
-		d.is_flying = (t == Types.EnemyType.BAT_SWARM)
-		d.is_ranged = (t == Types.EnemyType.ORC_ARCHER)
+		d.is_flying = (
+				t == Types.EnemyType.BAT_SWARM
+				or t == Types.EnemyType.HARPY_SCOUT
+				or t == Types.EnemyType.WYVERN_RIDER
+				or t == Types.EnemyType.ORCISH_SPIRIT
+		)
+		d.is_ranged = (
+				t == Types.EnemyType.ORC_ARCHER
+				or t == Types.EnemyType.ORC_MARKSMAN
+				or t == Types.EnemyType.WYVERN_RIDER
+				or t == Types.EnemyType.ORC_SKYTHROWER
+		)
 		d.damage_immunities = []
+		d.point_cost = 5
+		d.wave_tags = ["RUSH", "INVASION", "HEAVY", "AIRSTRIKE", "SUPPORT", "MIXED", "ARTILLERY"]
+		d.tier = 1
+		d.balance_status = "UNTESTED"
 		registry.append(d)
 	return registry
 
@@ -84,6 +90,13 @@ func after_test() -> void:
 			SignalBus.all_waves_cleared.connect(GameManager._on_all_waves_cleared)
 		_gm_all_waves_handler_paused = false
 	await get_tree().process_frame
+
+
+func _flush_composed_spawns() -> void:
+	var max_iter: int = 10000
+	while _wave_manager.has_pending_composed_spawns() and max_iter > 0:
+		_wave_manager._physics_process(0.5)
+		max_iter -= 1
 
 
 func test_wave_manager_spawns_one_mini_boss_and_escorts_on_mini_boss_day() -> void:
@@ -114,6 +127,7 @@ func test_wave_manager_spawns_one_mini_boss_and_escorts_on_mini_boss_day() -> vo
 	_wave_manager.boss_registry["miniboss_test"] = boss_data
 	_wave_manager.set_day_context(day, faction)
 	_wave_manager.force_spawn_wave(_wave_manager.max_waves)
+	_flush_composed_spawns()
 
 	var boss_count: int = 0
 	var escort_count: int = 0
@@ -154,6 +168,7 @@ func test_mini_boss_wave_only_completes_when_boss_and_escorts_dead() -> void:
 	_wave_manager.set_day_context(day, faction)
 
 	_wave_manager.force_spawn_wave(_wave_manager.max_waves)
+	_flush_composed_spawns()
 
 	for child: Node in _enemy_container.get_children():
 		if child is EnemyBase and not (child is BossBase):

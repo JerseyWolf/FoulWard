@@ -155,24 +155,16 @@ func _make_isolated_wave_manager() -> WaveManager:
 	var wm: WaveManager = WaveManager.new()
 	wm.wave_countdown_duration = 10.0
 	wm.max_waves = 10
-	wm.enemy_data_registry = _build_six_enemy_data()
+	wm.enemy_data_registry = _build_full_enemy_data()
 	add_child(wm)
 	wm._enemy_container = enemy_container
 	wm._spawn_points = spawn_points
 	return wm
 
 
-func _build_six_enemy_data() -> Array[EnemyData]:
+func _build_full_enemy_data() -> Array[EnemyData]:
 	var registry: Array[EnemyData] = []
-	var types: Array = [
-		Types.EnemyType.ORC_GRUNT,
-		Types.EnemyType.ORC_BRUTE,
-		Types.EnemyType.GOBLIN_FIREBUG,
-		Types.EnemyType.PLAGUE_ZOMBIE,
-		Types.EnemyType.ORC_ARCHER,
-		Types.EnemyType.BAT_SWARM
-	]
-	for t: Types.EnemyType in types:
+	for t: Types.EnemyType in Types.EnemyType.values():
 		var d: EnemyData = EnemyData.new()
 		d.enemy_type = t
 		d.max_hp = 50
@@ -182,8 +174,22 @@ func _build_six_enemy_data() -> Array[EnemyData]:
 		d.attack_cooldown = 1.0
 		d.armor_type = Types.ArmorType.UNARMORED
 		d.gold_reward = 5
-		d.is_flying = (t == Types.EnemyType.BAT_SWARM)
-		d.is_ranged = (t == Types.EnemyType.ORC_ARCHER)
+		d.is_flying = (
+				t == Types.EnemyType.BAT_SWARM
+				or t == Types.EnemyType.HARPY_SCOUT
+				or t == Types.EnemyType.WYVERN_RIDER
+				or t == Types.EnemyType.ORCISH_SPIRIT
+		)
+		d.is_ranged = (
+				t == Types.EnemyType.ORC_ARCHER
+				or t == Types.EnemyType.ORC_MARKSMAN
+				or t == Types.EnemyType.WYVERN_RIDER
+				or t == Types.EnemyType.ORC_SKYTHROWER
+		)
 		d.damage_immunities = []
+		d.point_cost = 5
+		d.wave_tags = ["INVASION"]
+		d.tier = 1
+		d.balance_status = "UNTESTED"
 		registry.append(d)
 	return registry

@@ -13,6 +13,7 @@ extends CharacterBody3D
 
 ## Preload registers `class_name RiggedVisualWiring` before this file resolves identifiers (fresh .godot).
 const _RiggedVisualWiringScript: GDScript = preload("res://scripts/art/rigged_visual_wiring.gd")
+const ShieldComponentType = preload("res://scripts/components/shield_component.gd")
 
 const FLYING_HEIGHT: float = 5.0
 const STUCK_VELOCITY_EPSILON: float = 0.1
@@ -22,6 +23,12 @@ const DIRECT_STEER_MIN_DIST_SQ: float = 0.01
 
 # Assign placeholder art resources via convention-based pipeline.
 var _enemy_data: EnemyData = null
+## Stable id for auras / signals (set in [method initialize]).
+var instance_id: String = ""
+## Alias for [member _enemy_data] (read-only for systems that expect [code]enemy.enemy_data[/code]).
+var enemy_data: EnemyData:
+	get:
+		return _enemy_data
 ## Set by WaveManager when using mission lane/path routing (data-driven waves).
 var assigned_lane_id: String = ""
 var assigned_path_id: String = ""
@@ -41,6 +48,33 @@ var _terrain_multipliers: Array[float] = []
 var _active_terrain_speed_multiplier: float = 1.0
 var _reported_tower_reach: bool = false
 
+## Prompt 49: runtime stat layer (auras / buffs). Legacy DoT/slow uses [member active_status_effects].
+var base_stats: Dictionary = {}
+var final_stats: Dictionary = {}
+var incoming_auras: Array[Dictionary] = []
+var resolved_auras: Dictionary = {}
+## Stat-layer modifiers (stack_key / stack_mode); distinct keys from legacy DoT dicts.
+var stat_layer_effects: Array[Dictionary] = []
+
+var _shield_component: ShieldComponentType = null
+
+## Prompt 9 — charge (Berserker / War Boar).
+var _charge_active: bool = false
+var _charge_params: Dictionary = {}
+var _dash_done: bool = false
+var _dash_timer_remaining: float = 0.0
+
+## Prompt 9 — anti-air priority for ranged (Orc Skythrower).
+var _target_priority: String = "ANY" # "ANY" | "FLYING"
+
+## Prompt 9 — passive HP/s (Troll / Plague Herald).
+var _regen_per_sec: float = 0.0
+## Local move speed override when [member final_stats] is applied (does not mutate [member EnemyData] resource).
+var _runtime_move_speed: float = -1.0
+var _aura_check_timer: float = 0.0
+var _last_tower_aura_speed_mod: float = 0.0
+const AURA_CHECK_INTERVAL: float = 0.25
+
 # PUBLIC — required by BuildingBase._find_target() and Arnulf._find_closest_enemy_to_tower().
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
@@ -49,6 +83,13 @@ var _reported_tower_reach: bool = false
 
 # ASSUMPTION: These paths match ARCHITECTURE.md section 2.
 @onready var _tower: Node = get_node_or_null("/root/Main/Tower")
+
+func _exit_tree() -> void:
+	if _enemy_data != null and not instance_id.is_empty():
+		for tag: String in _enemy_data.special_tags:
+			if tag == "aura_buff" or tag == "aura_heal":
+				AuraManager.deregister_enemy_aura(instance_id)
+
 
 func _ready() -> void:
 	# Ensure enemies can be found via group for buildings and spells.
@@ -67,7 +108,15 @@ func initialize(enemy_data: EnemyData) -> void:
 	if enemy_data == null:
 		push_error("EnemyBase.initialize called with null EnemyData")
 		return
+	instance_id = str(get_instance_id())
 	_enemy_data = enemy_data
+	_charge_active = false
+	_charge_params = {}
+	_dash_done = false
+	_dash_timer_remaining = 0.0
+	_heal_accumulator = 0.0
+	_target_priority = "ANY"
+	_regen_per_sec = 0.0
 	assigned_lane_id = ""
 	assigned_path_id = ""
 	_arnulf_retaliation_target = null
@@ -85,17 +134,21 @@ func initialize(enemy_data: EnemyData) -> void:
 	if not health_component.health_depleted.is_connected(_on_health_depleted):
 		health_component.health_depleted.connect(_on_health_depleted)
 
+	_mount_enemy_visual(enemy_data)
+	_rebuild_base_stats()
+	recompute_all_stats()
+
 	# Ground enemies configure NavigationAgent3D; flying ones ignore it.
 	if not _enemy_data.is_flying:
 		# Credit (target_desired_distance + path_desired_distance usage):
 		#   FOUL WARD SYSTEMS_part3.md §8.6 EnemyBase.move_ground pseudocode.
 		navigation_agent.path_desired_distance = 0.5
-		navigation_agent.target_desired_distance = _enemy_data.attack_range
+		navigation_agent.target_desired_distance = _get_effective_attack_range()
 		navigation_agent.avoidance_enabled = true
 		navigation_agent.radius = 0.5
 		# max_speed must be non-zero for NavigationAgent3D avoidance / path heuristics (scene default was 0).
 		navigation_agent.max_speed = maxf(
-				_enemy_data.move_speed * _active_terrain_speed_multiplier,
+				_get_effective_move_speed() * _active_terrain_speed_multiplier,
 				0.25
 		)
 		navigation_agent.target_position = _get_nav_target_position()
@@ -103,25 +156,477 @@ func initialize(enemy_data: EnemyData) -> void:
 	if _label != null:
 		_label.text = _enemy_data.display_name
 
-	_mount_enemy_visual(enemy_data)
+	_init_special_behaviours()
+
+## Data-driven hit resolution (Prompt 49). [method take_damage] routes here.
+func receive_damage(hit: Dictionary) -> Dictionary:
+	var raw: float = float(hit.get("raw_damage", 0.0))
+	var dtype: Types.DamageType = hit.get("damage_type", Types.DamageType.PHYSICAL) as Types.DamageType
+	var is_dot: bool = bool(hit.get("is_dot", false))
+	var result: Dictionary = {
+		"post_mitigation_damage": 0.0,
+		"hp_damage": 0.0,
+		"shield_absorbed": 0.0,
+	}
+	if _enemy_data == null:
+		return result
+	if dtype in _enemy_data.damage_immunities:
+		return result
+	var post_flat: float = raw
+	if dtype == Types.DamageType.TRUE:
+		post_flat = DamageCalculator.calculate_damage(raw, dtype, _enemy_data.armor_type)
+	elif dtype == Types.DamageType.PHYSICAL:
+		var af: float = _enemy_data.armor_flat
+		var mult: float = 1.0
+		if af >= 0.0:
+			mult = 100.0 / (100.0 + af)
+		else:
+			mult = 1.0 - af / 100.0
+		post_flat = raw * mult
+		post_flat = DamageCalculator.calculate_damage(post_flat, dtype, _enemy_data.armor_type)
+	else:
+		post_flat = DamageCalculator.calculate_damage(raw, dtype, _enemy_data.armor_type)
+	var hp_apply: float = post_flat
+	var absorbed: float = 0.0
+	if _shield_component != null and _shield_component.is_active() and post_flat > 0.0:
+		var before_hp: float = post_flat
+		hp_apply = _shield_component.absorb(post_flat)
+		absorbed = before_hp - hp_apply
+	result["post_mitigation_damage"] = post_flat
+	result["shield_absorbed"] = absorbed
+	result["hp_damage"] = hp_apply
+	if hp_apply > 0.0:
+		health_component.take_damage(hp_apply)
+		_check_charge_enrage()
+	return result
+
 
 ## Applies damage of a given type to this enemy.
 func take_damage(amount: float, damage_type: Types.DamageType) -> void:
-	# Credit (immunity-before-matrix pattern):
-	#   FOUL WARD SYSTEMS_part1/2/3: EnemyBase.take_damage spec with damage_immunities.
-	if damage_type in _enemy_data.damage_immunities:
-		return
-
-	var final_damage: float = DamageCalculator.calculate_damage(
-		amount,
-		damage_type,
-		_enemy_data.armor_type
-	)
-	health_component.take_damage(final_damage)
+	receive_damage({"raw_damage": amount, "damage_type": damage_type, "is_dot": false})
 
 ## Returns the EnemyData backing this enemy instance.
 func get_enemy_data() -> EnemyData:
 	return _enemy_data
+
+
+func _rebuild_base_stats() -> void:
+	if _enemy_data == null:
+		return
+	base_stats = {
+		"move_speed": float(_enemy_data.move_speed),
+		"damage": float(_enemy_data.damage),
+		"attack_range": float(_enemy_data.attack_range),
+		"status_resist_multiplier": float(_enemy_data.status_resist_multiplier),
+	}
+
+
+func recompute_all_stats() -> void:
+	final_stats = base_stats.duplicate()
+	_resolve_auras()
+	for e: Dictionary in stat_layer_effects:
+		var st: String = str(e.get("stat", ""))
+		if st.is_empty():
+			continue
+		_apply_modifier(final_stats, st, str(e.get("modifier_type", "MULTIPLY")), float(e.get("modifier_value", 1.0)))
+	var tower_aura_spd: float = AuraManager.get_enemy_speed_modifier(global_position)
+	if final_stats.has("move_speed") and _enemy_data != null:
+		var ms_base: float = float(final_stats["move_speed"])
+		var ms_eff: float = ms_base * (1.0 + tower_aura_spd)
+		if _charge_active and _charge_params.has("speed_bonus"):
+			ms_eff *= (1.0 + float(_charge_params["speed_bonus"]))
+		if _dash_timer_remaining > 0.0 and _charge_params.has("dash_speed"):
+			ms_eff = float(_charge_params["dash_speed"])
+		ms_eff = maxf(ms_eff, _enemy_data.move_speed * 0.2)
+		_runtime_move_speed = ms_eff
+	else:
+		_runtime_move_speed = -1.0
+	_last_tower_aura_speed_mod = tower_aura_spd
+	if _enemy_data != null and not _enemy_data.is_flying:
+		navigation_agent.target_desired_distance = _get_effective_attack_range()
+		navigation_agent.max_speed = maxf(
+				_get_effective_move_speed() * _active_terrain_speed_multiplier,
+				0.25
+		)
+
+
+func _resolve_auras() -> void:
+	resolved_auras.clear()
+	for a: Dictionary in incoming_auras:
+		var cat: String = str(a.get("aura_category", "default"))
+		var cur: Dictionary = resolved_auras.get(cat, {}) as Dictionary
+		if cur.is_empty() or _aura_strength(a) > _aura_strength(cur):
+			resolved_auras[cat] = a
+	for _k: Variant in resolved_auras.keys():
+		var aura: Dictionary = resolved_auras[_k] as Dictionary
+		var st: String = str(aura.get("aura_stat", ""))
+		if st.is_empty():
+			continue
+		_apply_modifier(final_stats, st, str(aura.get("modifier_type", "MULTIPLY")), float(aura.get("modifier_value", 1.0)))
+
+
+func _aura_strength(aura: Dictionary) -> float:
+	var mt: String = str(aura.get("modifier_type", "MULTIPLY"))
+	var mv: float = float(aura.get("modifier_value", 1.0))
+	match mt:
+		"MULTIPLY":
+			return absf(mv - 1.0)
+		"ADD", "OVERRIDE":
+			return absf(mv)
+		_:
+			return absf(mv)
+
+
+func _apply_modifier(stats: Dictionary, stat: String, mod_type: String, value: float) -> void:
+	var cur: float = float(stats.get(stat, 0.0))
+	match mod_type:
+		"MULTIPLY":
+			stats[stat] = cur * value
+		"ADD":
+			stats[stat] = cur + value
+		"OVERRIDE":
+			stats[stat] = value
+		_:
+			stats[stat] = cur * value
+
+
+func add_status_effect(effect: Dictionary) -> void:
+	var dur: float = float(effect.get("duration_remaining", 0.0))
+	dur *= float(base_stats.get("status_resist_multiplier", 1.0))
+	var eff: Dictionary = effect.duplicate()
+	eff["duration_remaining"] = dur
+	var stack_key: String = str(eff.get("stack_key", ""))
+	var mode: String = str(eff.get("stack_mode", "NONE"))
+	var idx: int = _find_stat_effect_index(stack_key)
+	match mode:
+		"NONE":
+			if idx >= 0:
+				return
+			stat_layer_effects.append(eff)
+		"REFRESH":
+			if idx >= 0:
+				var old: Dictionary = stat_layer_effects[idx]
+				old["duration_remaining"] = float(eff.get("duration_remaining", 0.0))
+				stat_layer_effects[idx] = old
+			else:
+				stat_layer_effects.append(eff)
+		"REPLACE_STRONGEST":
+			if idx >= 0:
+				var old2: Dictionary = stat_layer_effects[idx]
+				if float(eff.get("modifier_value", 0.0)) > float(old2.get("modifier_value", 0.0)):
+					stat_layer_effects[idx] = eff
+			else:
+				stat_layer_effects.append(eff)
+		"STACK_DURATION":
+			if idx >= 0:
+				var old3: Dictionary = stat_layer_effects[idx]
+				old3["duration_remaining"] = float(old3.get("duration_remaining", 0.0)) + float(eff.get("duration_remaining", 0.0))
+				stat_layer_effects[idx] = old3
+			else:
+				stat_layer_effects.append(eff)
+		_:
+			stat_layer_effects.append(eff)
+	recompute_all_stats()
+
+
+func _find_stat_effect_index(stack_key: String) -> int:
+	if stack_key.is_empty():
+		return -1
+	for j: int in range(stat_layer_effects.size()):
+		var e2: Dictionary = stat_layer_effects[j]
+		if str(e2.get("stack_key", "")) == stack_key:
+			return j
+	return -1
+
+
+func _tick_stat_layer_effects(delta: float) -> void:
+	if stat_layer_effects.is_empty():
+		return
+	var i: int = 0
+	var changed: bool = false
+	while i < stat_layer_effects.size():
+		var e: Dictionary = stat_layer_effects[i]
+		var rem: float = float(e.get("duration_remaining", 0.0)) - delta
+		e["duration_remaining"] = rem
+		if rem <= 0.0:
+			stat_layer_effects.remove_at(i)
+			changed = true
+		else:
+			stat_layer_effects[i] = e
+			i += 1
+	if changed:
+		recompute_all_stats()
+
+
+func _get_effective_move_speed() -> float:
+	if _runtime_move_speed >= 0.0:
+		return _runtime_move_speed
+	if _enemy_data == null:
+		return 0.0
+	return _enemy_data.move_speed
+
+
+func _get_effective_attack_range() -> float:
+	if _enemy_data == null:
+		return 0.0
+	if not final_stats.is_empty() and final_stats.has("attack_range"):
+		return float(final_stats["attack_range"])
+	return _enemy_data.attack_range
+
+
+func _get_effective_damage_int() -> int:
+	if _enemy_data == null:
+		return 0
+	var base_d: float = 0.0
+	if not final_stats.is_empty() and final_stats.has("damage"):
+		base_d = float(final_stats["damage"])
+	else:
+		base_d = float(_enemy_data.damage)
+	var bonus: float = AuraManager.get_enemy_damage_bonus(
+			Vector2(global_position.x, global_position.z)
+	)
+	return int(round(base_d * (1.0 + bonus)))
+
+
+func _recompute_move_speed() -> void:
+	recompute_all_stats()
+
+
+func _init_special_behaviours() -> void:
+	if _enemy_data == null:
+		return
+	for tag: String in _enemy_data.special_tags:
+		match tag:
+			"charge":
+				_init_charge()
+			"shield":
+				_init_shield()
+			"aura_buff":
+				_init_enemy_aura("aura_buff")
+			"aura_heal":
+				_init_enemy_aura("aura_heal")
+			"on_death_spawn":
+				pass
+			"ranged_long":
+				pass
+			"disable_building":
+				pass
+			"anti_air":
+				_init_anti_air()
+			"regen":
+				_init_regen()
+			_:
+				push_warning("Unknown special_tag: %s on %s" % [tag, _enemy_data.display_name])
+
+
+func _init_charge() -> void:
+	_charge_params = _enemy_data.special_values.get("charge", {}) as Dictionary
+
+
+func _init_shield() -> void:
+	var params: Dictionary = _enemy_data.special_values.get("shield", {}) as Dictionary
+	var sc: ShieldComponentType = ShieldComponentType.new() as ShieldComponentType
+	sc.initialise(params)
+	_shield_component = sc
+	add_child(sc)
+
+
+func _init_enemy_aura(tag: String) -> void:
+	AuraManager.register_enemy_aura(self, tag)
+
+
+func _init_anti_air() -> void:
+	_target_priority = "FLYING"
+
+
+func _init_regen() -> void:
+	var params: Dictionary = _enemy_data.special_values.get("regen", {}) as Dictionary
+	_regen_per_sec = float(params.get("hp_per_sec", 0.0))
+
+
+func _check_charge_enrage() -> void:
+	if _enemy_data == null:
+		return
+	if not health_component.is_alive():
+		return
+	if _charge_params.is_empty():
+		return
+	if _charge_active:
+		return
+	var threshold: float = float(_charge_params.get("enrage_hp_pct", 0.5))
+	var max_hp_f: float = float(health_component.max_hp)
+	if max_hp_f <= 0.0:
+		return
+	var ratio: float = float(health_component.current_hp) / max_hp_f
+	if ratio <= threshold:
+		_charge_active = true
+		SignalBus.enemy_enraged.emit(instance_id)
+		_trigger_dash()
+		_recompute_move_speed()
+
+
+func _trigger_dash() -> void:
+	if not _charge_params.has("dash_speed"):
+		return
+	if _dash_done:
+		return
+	_dash_done = true
+	_dash_timer_remaining = 1.0
+	_recompute_move_speed()
+
+
+func _handle_on_death_spawn() -> void:
+	if _enemy_data == null:
+		return
+	if not "on_death_spawn" in _enemy_data.special_tags:
+		return
+	var params: Dictionary = _enemy_data.special_values.get("on_death_spawn", {}) as Dictionary
+	var spawn_type_name: String = str(params.get("spawn_type", ""))
+	var spawn_count: int = int(params.get("spawn_count", 0))
+	if spawn_type_name.is_empty() or spawn_count <= 0:
+		return
+	var enum_keys: Array = Types.EnemyType.keys()
+	if enum_keys.find(spawn_type_name) < 0:
+		push_warning("on_death_spawn: unknown type %s" % spawn_type_name)
+		return
+	var spawn_type: int = int(Types.EnemyType[spawn_type_name])
+	var wm: WaveManager = get_node_or_null("/root/Main/Managers/WaveManager") as WaveManager
+	if wm == null:
+		push_warning("on_death_spawn: WaveManager not found")
+		return
+	var spawn_data: EnemyData = wm.get_enemy_data_by_type(spawn_type)
+	if spawn_data == null:
+		push_warning("on_death_spawn: no EnemyData for %s" % spawn_type_name)
+		return
+	for i: int in range(spawn_count):
+		var off: Vector3 = Vector3(randf_range(-1.5, 1.5), 0.0, randf_range(-1.5, 1.5))
+		wm.spawn_enemy_at_position(spawn_data, global_position + off)
+
+
+func _try_disable_target_building(target: BuildingBase) -> void:
+	if _enemy_data == null:
+		return
+	if not "disable_building" in _enemy_data.special_tags:
+		return
+	var params: Dictionary = _enemy_data.special_values.get("disable_building", {}) as Dictionary
+	var duration: float = float(params.get("disable_duration", 4.0))
+	target.set_disabled(true, duration)
+
+
+func _find_closest_building_in_melee_range() -> BuildingBase:
+	var rng: float = _get_effective_attack_range()
+	var best: BuildingBase = null
+	var best_d: float = INF
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	for n: Node in tree.get_nodes_in_group("buildings"):
+		var b: BuildingBase = n as BuildingBase
+		if b == null or not is_instance_valid(b):
+			continue
+		var d: float = global_position.distance_to(b.global_position)
+		if d <= rng and d < best_d:
+			best_d = d
+			best = b
+	return best
+
+
+func _try_saboteur_building_attack(delta: float) -> bool:
+	if _enemy_data == null:
+		return false
+	if not "disable_building" in _enemy_data.special_tags:
+		return false
+	var b: BuildingBase = _find_closest_building_in_melee_range()
+	if b == null:
+		return false
+	_is_attacking = true
+	velocity = Vector3.ZERO
+	_attack_timer += delta
+	if _attack_timer >= _enemy_data.attack_cooldown:
+		_attack_timer = 0.0
+		_try_disable_target_building(b)
+	return true
+
+
+func _is_ally_considered_flying(ally: AllyBase) -> bool:
+	return ally.global_position.y >= 2.5
+
+
+func _find_closest_flying_ally_in_range() -> AllyBase:
+	var rng: float = _get_effective_attack_range()
+	var best: AllyBase = null
+	var best_d: float = INF
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	for n: Node in tree.get_nodes_in_group("allies"):
+		var a: AllyBase = n as AllyBase
+		if a == null or not is_instance_valid(a):
+			continue
+		if a.health_component == null or not a.health_component.is_alive():
+			continue
+		if not _is_ally_considered_flying(a):
+			continue
+		var d: float = global_position.distance_to(a.global_position)
+		if d <= rng and d < best_d:
+			best_d = d
+			best = a
+	return best
+
+
+func _tick_dash_timer(delta: float) -> void:
+	if _dash_timer_remaining <= 0.0:
+		return
+	_dash_timer_remaining -= delta
+	if _dash_timer_remaining <= 0.0:
+		_dash_timer_remaining = 0.0
+		_apply_dash_arrival_damage()
+		_recompute_move_speed()
+
+
+var _heal_accumulator: float = 0.0
+
+
+func _tick_regen_and_aura_heal(delta: float) -> void:
+	if _enemy_data == null:
+		return
+	if not health_component.is_alive():
+		return
+	var pos_xz: Vector2 = Vector2(global_position.x, global_position.z)
+	var heal: float = AuraManager.get_enemy_heal_per_sec(pos_xz) * delta
+	if _regen_per_sec > 0.0:
+		heal += _regen_per_sec * delta
+	if heal <= 0.0:
+		return
+	_heal_accumulator += heal
+	while _heal_accumulator >= 1.0:
+		health_component.heal(1)
+		_heal_accumulator -= 1.0
+
+
+func _apply_dash_arrival_damage() -> void:
+	if not _charge_params.has("dash_damage"):
+		return
+	var dmg: float = float(_charge_params["dash_damage"])
+	var r: float = 3.0
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	for n: Node in tree.get_nodes_in_group("buildings"):
+		var b: BuildingBase = n as BuildingBase
+		if b == null or not is_instance_valid(b):
+			continue
+		if global_position.distance_to(b.global_position) <= r:
+			if b.health_component != null:
+				b.health_component.take_damage(dmg)
+	for n2: Node in tree.get_nodes_in_group("allies"):
+		var a: AllyBase = n2 as AllyBase
+		if a == null or not is_instance_valid(a):
+			continue
+		if a.health_component == null or not a.health_component.is_alive():
+			continue
+		if global_position.distance_to(a.global_position) <= r:
+			a.health_component.take_damage(dmg)
 
 
 ## Arnulf calls this when he starts attacking this enemy — enemy will path to Arnulf and fight back.
@@ -168,6 +673,15 @@ func _sync_locomotion_animation() -> void:
 func _physics_process(delta: float) -> void:
 	if _enemy_data == null:
 		return
+	_tick_dash_timer(delta)
+	_tick_regen_and_aura_heal(delta)
+	_aura_check_timer += delta
+	if _aura_check_timer >= AURA_CHECK_INTERVAL:
+		_aura_check_timer = 0.0
+		var new_mod: float = AuraManager.get_enemy_speed_modifier(global_position)
+		if not is_equal_approx(new_mod, _last_tower_aura_speed_mod):
+			recompute_all_stats()
+	_tick_stat_layer_effects(delta)
 	_update_status_effects(delta)
 	if _enemy_data.is_flying:
 		_physics_process_flying(delta)
@@ -288,6 +802,9 @@ func _update_status_effects(delta: float) -> void:
 	var i: int = 0
 	while i < active_status_effects.size():
 		var effect: Dictionary = active_status_effects[i]
+		if str(effect.get("stack_key", "")) != "":
+			i += 1
+			continue
 		if effect.get("effect_type", "") == "slow":
 			var slow_rem: float = float(effect.get("remaining_time", 0.0)) - delta
 			effect["remaining_time"] = slow_rem
@@ -325,7 +842,11 @@ func _update_status_effects(delta: float) -> void:
 					var tick_count: float = duration / tick_interval
 					if tick_count > 0.0:
 						var per_tick_base: float = dot_total_damage / tick_count
-						take_damage(per_tick_base, damage_type)
+						receive_damage({
+							"raw_damage": per_tick_base,
+							"damage_type": damage_type,
+							"is_dot": true,
+						})
 
 		if remaining_time <= 0.0:
 			active_status_effects.remove_at(i)
@@ -382,7 +903,7 @@ func _recalculate_terrain_speed() -> void:
 		_active_terrain_speed_multiplier = min_m
 	if _enemy_data != null and not _enemy_data.is_flying:
 		navigation_agent.max_speed = maxf(
-				_enemy_data.move_speed * _active_terrain_speed_multiplier,
+				_get_effective_move_speed() * _active_terrain_speed_multiplier,
 				0.25
 		)
 
@@ -401,11 +922,14 @@ func get_move_speed_slow_multiplier() -> float:
 func _physics_process_ground(delta: float) -> void:
 	if _arnulf_retaliation_target != null and not is_instance_valid(_arnulf_retaliation_target):
 		_arnulf_retaliation_target = null
+	if _try_saboteur_building_attack(delta):
+		_sync_locomotion_animation()
+		return
 	var dest_flat: Vector3 = _get_active_combat_destination_flat()
 	navigation_agent.target_position = dest_flat
 	if navigation_agent.is_navigation_finished():
 		var distance_to_dest: float = global_position.distance_to(dest_flat)
-		if distance_to_dest <= _enemy_data.attack_range:
+		if distance_to_dest <= _get_effective_attack_range():
 			if _arnulf_retaliation_target != null and is_instance_valid(_arnulf_retaliation_target):
 				_update_attack_arnulf(delta)
 			else:
@@ -430,7 +954,7 @@ func _physics_process_ground(delta: float) -> void:
 			* _active_terrain_speed_multiplier
 	)
 	if direction != Vector3.ZERO:
-		velocity = direction * _enemy_data.move_speed * speed_mult
+		velocity = direction * _get_effective_move_speed() * speed_mult
 	else:
 		velocity = Vector3.ZERO
 	move_and_slide()
@@ -438,7 +962,7 @@ func _physics_process_ground(delta: float) -> void:
 	_maybe_resolve_stuck()
 
 	var distance_after: float = global_position.distance_to(dest_flat)
-	if distance_after <= _enemy_data.attack_range:
+	if distance_after <= _get_effective_attack_range():
 		if _arnulf_retaliation_target != null and is_instance_valid(_arnulf_retaliation_target):
 			_update_attack_arnulf(delta)
 		else:
@@ -456,9 +980,9 @@ func _physics_process_flying(delta: float) -> void:
 			get_move_speed_slow_multiplier()
 			* _active_terrain_speed_multiplier
 	)
-	velocity = direction * _enemy_data.move_speed * speed_mult
+	velocity = direction * _get_effective_move_speed() * speed_mult
 	move_and_slide()
-	if global_position.distance_to(target_pos) <= _enemy_data.attack_range:
+	if global_position.distance_to(target_pos) <= _get_effective_attack_range():
 		_update_attack_tower(delta)
 
 
@@ -480,7 +1004,7 @@ func _maybe_resolve_stuck() -> void:
 	if _time_since_last_progress < STUCK_TIME_THRESHOLD:
 		return
 	var distance_to_dest: float = global_position.distance_to(_get_active_combat_destination_flat())
-	if distance_to_dest <= _enemy_data.attack_range:
+	if distance_to_dest <= _get_effective_attack_range():
 		return
 	var speed: float = velocity.length()
 	if speed > STUCK_VELOCITY_EPSILON:
@@ -502,11 +1026,17 @@ func _update_attack_tower(delta: float) -> void:
 
 
 func _deal_damage_to_tower() -> void:
+	if _enemy_data != null and _enemy_data.is_ranged and _target_priority == "FLYING":
+		var ally: AllyBase = _find_closest_flying_ally_in_range()
+		if ally != null and is_instance_valid(ally):
+			if ally.health_component != null and ally.health_component.is_alive():
+				ally.health_component.take_damage(float(_get_effective_damage_int()))
+				return
 	if is_instance_valid(_tower):
 		if not _reported_tower_reach and _enemy_data != null:
 			_reported_tower_reach = true
-			SignalBus.enemy_reached_tower.emit(_enemy_data.enemy_type, _enemy_data.damage)
-		_tower.take_damage(_enemy_data.damage)
+			SignalBus.enemy_reached_tower.emit(_enemy_data.enemy_type, _get_effective_damage_int())
+		_tower.take_damage(_get_effective_damage_int())
 
 
 func _update_attack_arnulf(delta: float) -> void:
@@ -529,7 +1059,7 @@ func _deal_damage_to_arnulf() -> void:
 	if arnulf_hc == null or not arnulf_hc.is_alive():
 		return
 	var final_damage: float = DamageCalculator.calculate_damage(
-		float(_enemy_data.damage),
+		float(_get_effective_damage_int()),
 		Types.DamageType.PHYSICAL,
 		Types.ArmorType.UNARMORED
 	)
@@ -546,6 +1076,8 @@ func _on_health_depleted() -> void:
 	)
 	# EconomyManager already listens to enemy_killed in Phase 1, so we do NOT call
 	# EconomyManager.add_gold() directly here to avoid double-award.
+
+	_handle_on_death_spawn()
 
 	remove_from_group("enemies")
 	queue_free()

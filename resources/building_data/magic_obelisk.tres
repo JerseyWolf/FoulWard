@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_buildingdata")
+building_id = "magic_obelisk"
 building_type = 2
 display_name = "Magic Obelisk"
 gold_cost = 80
@@ -21,4 +22,8 @@ targets_ground = true
 is_locked = false
 unlock_research_id = ""
 color = Color(0.5, 0.0, 0.8, 1.0)
+footprint_size_class = 0
+size_class = "MEDIUM"
+role_tags = Array[String](["DPS"])
+balance_status = "BASELINE"
 

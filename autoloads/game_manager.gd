@@ -15,7 +15,7 @@ extends Node
 
 const TOTAL_MISSIONS: int = 5
 # Temporary dev/testing cap so we can reach "mission won" quickly.
-const WAVES_PER_MISSION: int = 3
+const WAVES_PER_MISSION: int = 5
 
 const FlorenceDataType = preload("res://scripts/florence_data.gd")
 
@@ -156,6 +156,7 @@ func start_wave_countdown() -> void:
 		push_warning("start_wave_countdown called from invalid state: %s" % Types.GameState.keys()[game_state])
 		return
 	_transition_to(Types.GameState.COMBAT)
+	BuildPhaseManager.set_build_phase_active(false)
 	SignalBus.mission_started.emit(current_mission)
 	_spawn_allies_for_current_mission()
 	_apply_shop_mission_start_consumables()
@@ -171,6 +172,7 @@ func enter_build_mode() -> void:
 	Engine.time_scale = 0.1
 	var old: Types.GameState = game_state
 	game_state = Types.GameState.BUILD_MODE
+	BuildPhaseManager.set_build_phase_active(true)
 	SignalBus.build_mode_entered.emit()
 	SignalBus.game_state_changed.emit(old, Types.GameState.BUILD_MODE)
 
@@ -180,6 +182,7 @@ func exit_build_mode() -> void:
 	Engine.time_scale = 1.0
 	var old: Types.GameState = game_state
 	game_state = Types.GameState.COMBAT
+	BuildPhaseManager.set_build_phase_active(false)
 	SignalBus.build_mode_exited.emit()
 	SignalBus.game_state_changed.emit(old, Types.GameState.COMBAT)
 
@@ -507,6 +510,7 @@ func start_mission_for_day(day_index: int, day_config: DayConfig) -> void:
 	current_wave = 0
 
 	_transition_to(Types.GameState.COMBAT)
+	BuildPhaseManager.set_build_phase_active(false)
 	SignalBus.mission_started.emit(current_mission)
 	_spawn_allies_for_current_mission()
 	_apply_shop_mission_start_consumables()
@@ -601,11 +605,10 @@ func _begin_mission_wave_sequence() -> void:
 	print("[GameManager] _begin_mission_wave_sequence: mission=%d" % current_mission)
 	wave_manager.ensure_boss_registry_loaded()
 	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
-	# TODO(Prompt 35 economy): When mission/day assets expose `MissionEconomyData`, call
-	# `EconomyManager.apply_mission_economy(...)` here (or from mission bootstrap) so passive income,
-	# wave_clear bonuses (via `SignalBus.wave_cleared` → `EconomyManager.grant_wave_clear_reward`), and
-	# sell-refund multipliers apply for that mission. Coordinate with `EconomyManager.reset_to_defaults`
-	# timing so starting_gold / starting_material do not fight hub persistence unintentionally.
+	if day_cfg != null and day_cfg.mission_economy != null:
+		EconomyManager.apply_mission_economy(day_cfg.mission_economy)
+	else:
+		EconomyManager.reset_for_mission()
 	_update_final_boss_tracking_from_day(day_cfg)
 	wave_manager.reset_for_new_mission()
 	# Apply day config after reset — reset clears per-day tuning (waves, faction, multipliers).
@@ -740,7 +743,7 @@ func _ensure_synthetic_boss_attack_day_config() -> DayConfig:
 	syn.display_name = "Boss strike"
 	syn.description = "PLACEHOLDER: The campaign boss strikes again."
 	syn.faction_id = "PLAGUE_CULT"
-	syn.base_wave_count = 10
+	syn.base_wave_count = 5
 	syn.enemy_hp_multiplier = 1.0
 	syn.enemy_damage_multiplier = 1.0
 	syn.gold_reward_multiplier = 1.0

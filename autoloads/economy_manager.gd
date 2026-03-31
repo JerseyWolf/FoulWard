@@ -21,16 +21,25 @@ const PLAYTEST_STARTING_RESOURCES_MULTIPLIER: int = 5
 # For playtesting we want enough to unlock the whole tree without worrying about cost.
 const PLAYTEST_STARTING_RESEARCH_MATERIAL: int = 50
 
+const DEFAULT_SELL_REFUND_FRACTION: float = 0.6
+
 var gold: int = DEFAULT_GOLD
 var building_material: int = DEFAULT_BUILDING_MATERIAL
 var research_material: int = DEFAULT_RESEARCH_MATERIAL
 
 ## Mission-scoped economy (optional). Cleared in `reset_to_defaults`.
 var _mission_economy: MissionEconomyData = null
-var _sell_refund_global_multiplier: float = 1.0
-## Count of paid placements per stable building id (see `_duplicate_key`). Not decremented on sell.
-## Reset on `reset_to_defaults` and when a new mission economy is applied.
-var _duplicate_placements_by_id: Dictionary = {} # String -> int
+
+# --- Duplicate-cost scaling (Prompt 3) ---
+var duplicate_cost_k: float = DEFAULT_DUPLICATE_COST_K
+## building_id (or duplicate key string) -> count of paid placements this mission (not decremented on sell).
+var _built_counts: Dictionary = {}
+
+## Base fraction of invested gold/material returned on sell (before global multiplier).
+var sell_refund_fraction: float = DEFAULT_SELL_REFUND_FRACTION
+## Applied by MissionEconomyData; multiplies `sell_refund_fraction` for refunds.
+var sell_refund_global_multiplier: float = 1.0
+
 var _passive_gold_accum: float = 0.0
 var _passive_material_accum: float = 0.0
 
@@ -158,10 +167,18 @@ func get_research_material() -> int:
 func _duplicate_key(building_data: BuildingData) -> String:
 	if building_data == null:
 		return ""
+	var bid: String = building_data.building_id.strip_edges()
+	if not bid.is_empty():
+		return bid
 	var id_str: String = building_data.id.strip_edges()
 	if not id_str.is_empty():
 		return id_str
 	return "building_type:%d" % int(building_data.building_type)
+
+
+## Clears duplicate placement counts (call at mission start or when re-applying mission economy).
+func reset_for_mission() -> void:
+	_built_counts.clear()
 
 
 ## Number of paid placements this mission for [param building_id] (same key as duplicate scaling).
@@ -169,7 +186,7 @@ func get_duplicate_count(building_id: String) -> int:
 	var key: String = building_id.strip_edges()
 	if key.is_empty():
 		return 0
-	return int(_duplicate_placements_by_id.get(key, 0))
+	return int(_built_counts.get(key, 0))
 
 
 ## Multiplier applied to base placement costs when `apply_duplicate_scaling` is true (next purchase).
@@ -190,7 +207,7 @@ func get_gold_cost(building_data: BuildingData) -> int:
 	if not building_data.apply_duplicate_scaling:
 		return base
 	var mult: float = get_cost_multiplier(building_data)
-	return int(round(float(base) * mult))
+	return ceili(float(base) * mult)
 
 
 ## Effective material to place [param building_data].
@@ -201,7 +218,7 @@ func get_material_cost(building_data: BuildingData) -> int:
 	if not building_data.apply_duplicate_scaling:
 		return base
 	var mult: float = get_cost_multiplier(building_data)
-	return int(round(float(base) * mult))
+	return ceili(float(base) * mult)
 
 
 func _get_duplicate_cost_k() -> float:
@@ -209,61 +226,69 @@ func _get_duplicate_cost_k() -> float:
 		var me: MissionEconomyData = _mission_economy as MissionEconomyData
 		if me.duplicate_cost_k_override >= 0.0:
 			return me.duplicate_cost_k_override
-	return DEFAULT_DUPLICATE_COST_K
+	return duplicate_cost_k
 
 
-## Call after a successful **paid** placement (not shop-free vouchers). Counts toward duplicate scaling only for new placements.
-func register_purchase(building_data: BuildingData) -> void:
-	if building_data == null:
-		return
-	var key: String = _duplicate_key(building_data)
-	if key.is_empty():
-		return
-	_duplicate_placements_by_id[key] = int(_duplicate_placements_by_id.get(key, 0)) + 1
-
-
-## True if [param wallet_gold] / [param wallet_material] cover `get_*_cost` for this placement (duplicate scaling included).
-func can_afford_building(building_data: BuildingData, wallet_gold: int, wallet_material: int) -> bool:
+## True if current wallet covers scaled placement cost for [param building_data].
+func can_afford_building(building_data: BuildingData) -> bool:
 	if building_data == null:
 		return false
-	return wallet_gold >= get_gold_cost(building_data) and wallet_material >= get_material_cost(building_data)
+	return gold >= get_gold_cost(building_data) and building_material >= get_material_cost(building_data)
 
 
-## Sell refund: `invested * sell_refund_fraction * sell_refund_global_multiplier` (rounded per resource).
-func get_refund(building_data: BuildingData, invested_gold: int, invested_material: int) -> Vector2i:
+## Charges scaled placement costs, increments duplicate counts, and returns a receipt. Empty dict on failure.
+func register_purchase(building_data: BuildingData) -> Dictionary:
 	if building_data == null:
-		return Vector2i.ZERO
-	var f: float = building_data.sell_refund_fraction * _sell_refund_global_multiplier
-	return Vector2i(
-			int(round(float(invested_gold) * f)),
-			int(round(float(invested_material) * f))
-	)
+		return {}
+	var paid_gold: int = get_gold_cost(building_data)
+	var paid_material: int = get_material_cost(building_data)
+	if not spend_gold(paid_gold):
+		return {}
+	if not spend_building_material(paid_material):
+		add_gold(paid_gold)
+		return {}
+	var key: String = _duplicate_key(building_data)
+	var dup_after: int = 0
+	if not key.is_empty():
+		_built_counts[key] = int(_built_counts.get(key, 0)) + 1
+		dup_after = int(_built_counts[key])
+	return {
+		"paid_gold": paid_gold,
+		"paid_material": paid_material,
+		"duplicate_count_after": dup_after,
+	}
+
+
+## Sell refund: `ceil(invested * sell_refund_fraction * sell_refund_global_multiplier)` per resource.
+func get_refund(_building_data: BuildingData, paid_gold: int, paid_material: int) -> Dictionary:
+	var frac: float = sell_refund_fraction * sell_refund_global_multiplier
+	return {
+		"gold": ceili(float(paid_gold) * frac),
+		"material": ceili(float(paid_material) * frac),
+	}
 
 
 ## Applies mission economy overrides and optional starting stock. Enables `_process` passive income when rates &gt; 0.
 ## Clears per-mission duplicate placement counts whenever mission economy is (re)applied.
 func apply_mission_economy(econ: MissionEconomyData = null) -> void:
-	_duplicate_placements_by_id.clear()
+	reset_for_mission()
 	_mission_economy = econ
 	_passive_gold_accum = 0.0
 	_passive_material_accum = 0.0
 	if econ == null:
-		_sell_refund_global_multiplier = 1.0
+		sell_refund_global_multiplier = 1.0
 		set_process(false)
 		return
-	_sell_refund_global_multiplier = maxf(0.0, econ.sell_refund_global_multiplier)
-	if econ.starting_gold > 0:
-		gold = econ.starting_gold
-	if econ.starting_material > 0:
-		building_material = econ.starting_material
-	if econ.starting_gold > 0 or econ.starting_material > 0:
-		SignalBus.resource_changed.emit(Types.ResourceType.GOLD, gold)
-		SignalBus.resource_changed.emit(Types.ResourceType.BUILDING_MATERIAL, building_material)
+	sell_refund_global_multiplier = maxf(0.0, econ.sell_refund_global_multiplier)
+	if econ.sell_refund_fraction >= 0.0:
+		sell_refund_fraction = econ.sell_refund_fraction
+	if econ.duplicate_cost_k_override >= 0.0:
+		duplicate_cost_k = econ.duplicate_cost_k_override
+	gold = econ.starting_gold
+	building_material = econ.starting_material
+	SignalBus.resource_changed.emit(Types.ResourceType.GOLD, gold)
+	SignalBus.resource_changed.emit(Types.ResourceType.BUILDING_MATERIAL, building_material)
 	set_process(econ.passive_gold_per_sec > 0.0 or econ.passive_material_per_sec > 0.0)
-
-
-func get_sell_refund_global_multiplier() -> float:
-	return _sell_refund_global_multiplier
 
 
 ## Gold granted for clearing [param wave] (1-based). [param econ] may be null (returns 0).
@@ -285,6 +310,8 @@ func get_wave_reward_material(wave: int, econ: MissionEconomyData) -> int:
 func grant_wave_clear_reward(wave: int, econ: MissionEconomyData) -> Vector2i:
 	var gg: int = get_wave_reward_gold(wave, econ)
 	var gm: int = get_wave_reward_material(wave, econ)
+	if econ != null and wave >= 1:
+		gg += maxi(0, econ.passive_gold_per_wave)
 	if gg > 0:
 		add_gold(gg)
 	if gm > 0:
@@ -308,8 +335,10 @@ func apply_save_snapshot(g: int, building_mat: int, research_mat: int) -> void:
 ## Call this at new-game start or during test setup.
 func reset_to_defaults() -> void:
 	_mission_economy = null
-	_sell_refund_global_multiplier = 1.0
-	_duplicate_placements_by_id.clear()
+	sell_refund_global_multiplier = 1.0
+	sell_refund_fraction = DEFAULT_SELL_REFUND_FRACTION
+	duplicate_cost_k = DEFAULT_DUPLICATE_COST_K
+	reset_for_mission()
 	_passive_gold_accum = 0.0
 	_passive_material_accum = 0.0
 	set_process(false)
@@ -348,4 +377,3 @@ func _is_headless_run() -> bool:
 		if arg == "--headless":
 			return true
 	return false
-

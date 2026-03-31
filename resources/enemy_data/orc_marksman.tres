@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orc_marksman"
+enemy_type = 11
+display_name = "Orc Marksman"
+max_hp = 100
+move_speed = 3.0
+damage = 20
+attack_cooldown = 2.0
+attack_range = 18.0
+armor_type = 0
+gold_reward = 16
+is_ranged = true
+is_flying = false
+color = Color(0.7, 0.5, 0.2, 1.0)
+damage_immunities = []
+tier = 2
+point_cost = 11
+wave_tags = Array[String](["ARTILLERY", "INVASION"])
+special_tags = Array[String](["ranged_long"])
+balance_status = "UNTESTED"

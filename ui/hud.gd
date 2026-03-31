@@ -12,6 +12,7 @@ extends Control
 @onready var _gold_label: Label = $ResourceDisplay/GoldLabel
 @onready var _material_label: Label = $ResourceDisplay/MaterialLabel
 @onready var _research_label: Label = $ResourceDisplay/ResearchLabel
+@onready var _research_button: Button = $ResourceDisplay/ResearchButton
 @onready var _wave_label: Label = $WaveDisplay/WaveLabel
 @onready var _countdown_label: Label = $WaveDisplay/CountdownLabel
 @onready var _tower_hp_bar: ProgressBar = $TowerHPBar
@@ -43,6 +44,8 @@ func _ready() -> void:
 
 	_build_mode_hint.hide()
 	_countdown_label.hide()
+
+	_research_button.pressed.connect(_on_research_button_pressed)
 
 	_gold_label.text = "Gold: %d" % EconomyManager.get_gold()
 	_material_label.text = "Mat: %d" % EconomyManager.get_building_material()
@@ -115,6 +118,14 @@ func _on_build_mode_entered() -> void:
 
 func _on_build_mode_exited() -> void:
 	_build_mode_hint.hide()
+
+
+func _on_research_button_pressed() -> void:
+	if GameManager.get_game_state() != Types.GameState.BUILD_MODE:
+		return
+	var panel: Node = get_tree().get_first_node_in_group("research_panel")
+	if panel != null and panel.has_method("show_panel"):
+		panel.call("show_panel")
 
 
 func _update_weapon_hud() -> void:

@@ -1,9 +1,11 @@
-[gd_resource type="Resource" script_class="BuildingData" format=3]
+[gd_resource type="Resource" script_class="BuildingData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/projectile_base.tscn" id="2_projectile"]
 
 [resource]
 script = ExtResource("1_buildingdata")
+building_id = "anti_air_bolt"
 building_type = 6
 display_name = "Anti-Air Bolt"
 gold_cost = 70
@@ -22,5 +24,9 @@ is_locked = true
 unlock_research_id = "unlock_anti_air"
 research_damage_boost_id = ""
 research_range_boost_id = ""
-color = Color(0.2, 0.5, 0.9, 1.0)
-
+color = Color(0.2, 0.5, 0.9, 1)
+footprint_size_class = 0
+size_class = "SMALL"
+role_tags = Array[String](["DPS", "AA"])
+balance_status = "BASELINE"
+projectile_scene = ExtResource("2_projectile")

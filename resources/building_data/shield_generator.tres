@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_buildingdata")
+building_id = "shield_generator"
 building_type = 7
 display_name = "Shield Generator"
 gold_cost = 120
@@ -28,4 +29,8 @@ barracks_buff_radius = 0.0
 barracks_ally_damage_bonus = 0.0
 shield_hp_per_pulse = 35.0
 shield_pulse_duration = 12.0
+footprint_size_class = 0
+size_class = "MEDIUM"
+role_tags = Array[String](["SUPPORT"])
+balance_status = "BASELINE"
 

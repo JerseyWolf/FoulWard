@@ -52,7 +52,7 @@ var _struck_instance_ids: Array[int] = []
 
 ## CombatStatsTracker attribution (initialize_from_weapon / initialize_from_building).
 var _stat_source_kind: String = "none"
-var _stat_building_instance_id: int = 0
+var _stat_placed_instance_id: String = ""
 var _stat_slot_index: int = -1
 
 func _ready() -> void:
@@ -75,7 +75,7 @@ func initialize_from_weapon(
 	# Credit (two-path initialization pattern, overshoot buffer):
 	#   FOUL WARD SYSTEMS_part2.md §6.5 initialize_from_weapon.
 	_stat_source_kind = "tower" if track_tower_damage_for_stats else "none"
-	_stat_building_instance_id = 0
+	_stat_placed_instance_id = ""
 	_stat_slot_index = -1
 	_damage = custom_damage if custom_damage >= 0.0 else weapon_data.damage
 	_damage_type = custom_damage_type
@@ -113,12 +113,12 @@ func initialize_from_building(
 	dot_effect_type: String,
 	dot_source_id: String,
 	dot_in_addition_to_hit: bool,
-	source_building_instance_id: int = 0,
+	source_placed_instance_id: String = "",
 	source_slot_index: int = -1
 ) -> void:
-	_stat_building_instance_id = source_building_instance_id
+	_stat_placed_instance_id = source_placed_instance_id
 	_stat_slot_index = source_slot_index
-	_stat_source_kind = "building" if source_building_instance_id != 0 else "none"
+	_stat_source_kind = "building" if not source_placed_instance_id.is_empty() else "none"
 	_damage = damage
 	_damage_type = damage_type
 	_speed = speed
@@ -193,6 +193,8 @@ func _configure_visuals(is_standard_size: bool) -> void:
 			mat.albedo_color = Color.MEDIUM_PURPLE
 		Types.DamageType.POISON:
 			mat.albedo_color = Color.GREEN_YELLOW
+		Types.DamageType.TRUE:
+			mat.albedo_color = Color.WHITE
 		_:
 			mat.albedo_color = Color.WHITE
 	_mesh.material_override = mat
@@ -396,9 +398,18 @@ func _notify_combat_stat(enemy: EnemyBase, hp_before: int) -> void:
 	var killed: bool = hp_before > 0 and hp_after <= 0
 	if dmg <= 0.0:
 		return
+	var enemy_id_str: String = ""
+	var ed: EnemyData = enemy.get_enemy_data()
+	if ed != null:
+		if not ed.id.strip_edges().is_empty():
+			enemy_id_str = ed.id
+		else:
+			enemy_id_str = str(ed.enemy_type)
+	if _stat_source_kind == "building" and not _stat_placed_instance_id.is_empty():
+		SignalBus.building_dealt_damage.emit(_stat_placed_instance_id, dmg, enemy_id_str)
 	CombatStatsTracker.record_projectile_damage(
 		_stat_source_kind,
-		_stat_building_instance_id,
+		_stat_placed_instance_id,
 		_stat_slot_index,
 		dmg,
 		killed

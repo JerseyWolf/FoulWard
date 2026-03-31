@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/projectile_base.tscn" id="2_projectile"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_id = "arcane_lens"
+building_type = 22
+display_name = "Arcane Lens"
+gold_cost = 130
+material_cost = 4
+upgrade_gold_cost = 78
+upgrade_material_cost = 2
+damage = 30.0
+upgraded_damage = 48.0
+fire_rate = 0.9
+attack_range = 20.0
+upgraded_range = 22.0
+damage_type = 2
+targets_air = false
+targets_ground = true
+is_locked = true
+unlock_research_id = "unlock_arcane_lens"
+color = Color(0.4, 0.0, 0.8, 1.0)
+footprint_size_class = 0
+size_class = "MEDIUM"
+role_tags = Array[String](["DPS"])
+balance_status = "UNTESTED"
+projectile_scene = ExtResource("2_projectile")

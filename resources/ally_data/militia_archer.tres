@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AllyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/ally_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ally_id = "militia_archer"
+display_name = "Militia Archer"
+ally_class = 1
+role = 1
+damage_type = 0
+max_hp = 90
+move_speed = 4.0
+attack_damage = 14.0
+attack_range = 14.0
+attack_cooldown = 1.5
+patrol_radius = 12.0
+is_unique = false
+is_ranged = true
+debug_color = Color(0.7, 0.6, 0.3, 1.0)

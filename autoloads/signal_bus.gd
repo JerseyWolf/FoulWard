@@ -24,8 +24,15 @@ signal arnulf_incapacitated()
 signal arnulf_recovered()
 
 # === ALLIES ===
+## Second arg is empty for roster allies (e.g. Arnulf); set for summoner-tower allies.
 @warning_ignore("unused_signal")
-signal ally_spawned(ally_id: String)
+signal ally_spawned(ally_id: String, building_instance_id: String)
+## Emitted when a summoner ally dies (permanent death, not downed).
+@warning_ignore("unused_signal")
+signal ally_died(ally_id: String, building_instance_id: String)
+## Emitted when the last living ally for a summoner building is removed.
+@warning_ignore("unused_signal")
+signal ally_squad_wiped(building_instance_id: String)
 @warning_ignore("unused_signal")
 signal ally_downed(ally_id: String)
 @warning_ignore("unused_signal")
@@ -49,6 +56,12 @@ signal campaign_boss_attempted(day_index: int, success: bool)
 signal wave_countdown_started(wave_number: int, seconds_remaining: float)
 @warning_ignore("unused_signal")
 signal wave_started(wave_number: int, enemy_count: int)
+## Emitted once per enemy spawned into the mission (Prompt 49 / WaveManager; Prompt 9: type + XZ position).
+@warning_ignore("unused_signal")
+signal enemy_spawned(enemy_type: Types.EnemyType, position: Vector2)
+## Emitted when an enemy with [code]charge[/code] special first crosses its enrage HP threshold.
+@warning_ignore("unused_signal")
+signal enemy_enraged(enemy_instance_id: String)
 @warning_ignore("unused_signal")
 signal wave_cleared(wave_number: int)
 @warning_ignore("unused_signal")
@@ -81,6 +94,12 @@ signal building_placed(slot_index: int, building_type: Types.BuildingType)
 signal building_sold(slot_index: int, building_type: Types.BuildingType)
 @warning_ignore("unused_signal")
 signal building_upgraded(slot_index: int, building_type: Types.BuildingType)
+## Building projectile / aura attribution for CombatStatsTracker (placed_instance_id string).
+@warning_ignore("unused_signal")
+signal building_dealt_damage(instance_id: String, damage: float, enemy_id: String)
+## Florence (central tower) took damage — optional alternative to inferring from tower_damaged.
+@warning_ignore("unused_signal")
+signal florence_damaged(amount: int, source_enemy_id: String)
 ## POST-MVP: building_destroyed is not emitted in MVP. Buildings cannot take damage in MVP.
 @warning_ignore("unused_signal")
 signal building_destroyed(slot_index: int)
@@ -130,6 +149,12 @@ signal build_mode_exited()
 # === RESEARCH ===
 @warning_ignore("unused_signal")
 signal research_unlocked(node_id: String)
+## Prompt 11: alias event for research UI; mirrors [signal research_unlocked].
+@warning_ignore("unused_signal")
+signal research_node_unlocked(node_id: String)
+## Prompt 11: current research material (RP) for in-mission research panel.
+@warning_ignore("unused_signal")
+signal research_points_changed(points: int)
 
 # === SHOP ===
 @warning_ignore("unused_signal")

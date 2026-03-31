@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orc_ratling"
+enemy_type = 7
+display_name = "Orc Ratling"
+max_hp = 20
+move_speed = 5.5
+damage = 4
+attack_cooldown = 1.5
+attack_range = 1.2
+armor_type = 0
+gold_reward = 2
+is_ranged = false
+is_flying = false
+color = Color(0.5, 0.3, 0.1, 1.0)
+damage_immunities = []
+tier = 1
+point_cost = 2
+wave_tags = Array[String](["RUSH", "INVASION"])
+balance_status = "UNTESTED"

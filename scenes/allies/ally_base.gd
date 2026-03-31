@@ -19,6 +19,16 @@ const ALLY_PROJECTILE_SPEED: float = 20.0
 
 var ally_data: Variant = null
 
+## Summoner tower anchor (world space); used for patrol leash and soft-blocker hex.
+var patrol_anchor: Vector3 = Vector3.ZERO
+## Placed building [member BuildingBase.placed_instance_id] when spawned by [AllyManager].
+var owning_building_instance_id: String = ""
+
+## Emitted immediately before permanent death (not downed/recover).
+signal ally_died
+
+var _soft_blocker_registered: bool = false
+
 ## Dictionary-style get for Variant ally_data: Resource.get() only accepts one argument in Godot 4.
 func _ally_data_get(key: String, default: Variant = null) -> Variant:
 	if ally_data is Dictionary:
@@ -91,7 +101,8 @@ func initialize_ally_data(p_ally_data: Variant) -> void:
 	_apply_debug_color_from_data()
 
 	# DEVIATION: generic ally_spawned for campaign / UI integration.
-	SignalBus.ally_spawned.emit(str(_ally_data_get("ally_id", "")))
+	var bid: String = owning_building_instance_id.strip_edges()
+	SignalBus.ally_spawned.emit(str(_ally_data_get("ally_id", "")), bid)
 
 
 func _apply_starting_level_from_data() -> void:
@@ -114,6 +125,14 @@ func get_effective_damage() -> int:
 func get_effective_max_hp() -> int:
 	var base: int = _get_base_hp_stat()
 	return _scaled_stat_from_base(base)
+
+
+func receive_heal(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	if health_component == null:
+		return
+	health_component.heal(maxi(1, int(round(amount))))
 
 
 func _get_level_scaling_factor() -> float:
@@ -213,6 +232,7 @@ func _physics_process(delta: float) -> void:
 
 func _update_idle(_delta: float) -> void:
 	velocity = Vector3.ZERO
+	_try_register_soft_blocker_idle()
 	var t: EnemyBase = find_target()
 	if t != null:
 		_current_target = t
@@ -468,6 +488,8 @@ func _on_health_depleted() -> void:
 		SignalBus.ally_downed.emit(str(_ally_data_get("ally_id", "")))
 		return
 
+	_unregister_soft_blocker_if_needed()
+	ally_died.emit()
 	var id: String = str(_ally_data_get("ally_id", "")) if ally_data != null else ""
 	SignalBus.ally_killed.emit(id)
 	queue_free()
@@ -491,3 +513,43 @@ func add_barracks_strike_bonus(amount: float) -> void:
 
 func get_barracks_strike_bonus() -> float:
 	return _barracks_strike_bonus
+
+
+func _exit_tree() -> void:
+	_unregister_soft_blocker_if_needed()
+
+
+func _try_register_soft_blocker_idle() -> void:
+	if _soft_blocker_registered:
+		return
+	if owning_building_instance_id.is_empty():
+		return
+	var hg: HexGrid = _get_hex_grid_for_soft_blocker()
+	if hg == null:
+		return
+	var dist_xz: float = Vector2(global_position.x, global_position.z).distance_to(
+			Vector2(patrol_anchor.x, patrol_anchor.z)
+	)
+	if dist_xz > 2.5:
+		return
+	var hc: Vector2i = hg.world_to_hex(patrol_anchor)
+	if hc.x < 0:
+		return
+	hg.register_soft_blocker(hc)
+	_soft_blocker_registered = true
+
+
+func _unregister_soft_blocker_if_needed() -> void:
+	if not _soft_blocker_registered:
+		return
+	var hg: HexGrid = _get_hex_grid_for_soft_blocker()
+	if hg != null:
+		var hc: Vector2i = hg.world_to_hex(patrol_anchor)
+		if hc.x >= 0:
+			hg.unregister_soft_blocker(hc)
+	_soft_blocker_registered = false
+
+
+func _get_hex_grid_for_soft_blocker() -> HexGrid:
+	var n: Node = get_tree().root.get_node_or_null("Main/HexGrid")
+	return n as HexGrid

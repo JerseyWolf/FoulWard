@@ -36,7 +36,7 @@ display_name = "Blighted Road"
 ; # PLACEHOLDER
 description = "The enemy grows bolder."
 ; # PLACEHOLDER
-base_wave_count = 6
+base_wave_count = 5
 ; # TUNING
 enemy_hp_multiplier = 1.1
 ; # TUNING
@@ -57,7 +57,7 @@ display_name = "Cursed Bridge"
 ; # PLACEHOLDER
 description = "Midway. Losses mount."
 ; # PLACEHOLDER
-base_wave_count = 7
+base_wave_count = 5
 ; # TUNING
 enemy_hp_multiplier = 1.2
 ; # TUNING
@@ -78,7 +78,7 @@ display_name = "Siege at Dawngate"
 ; # PLACEHOLDER
 description = "They send their elite."
 ; # PLACEHOLDER
-base_wave_count = 8
+base_wave_count = 5
 ; # TUNING
 enemy_hp_multiplier = 1.35
 ; # TUNING
@@ -99,7 +99,7 @@ display_name = "Foul Ward - Last Stand"
 ; # PLACEHOLDER
 description = "The final assault."
 ; # PLACEHOLDER
-base_wave_count = 10
+base_wave_count = 5
 ; # TUNING
 enemy_hp_multiplier = 1.5
 ; # TUNING

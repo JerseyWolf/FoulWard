@@ -35,7 +35,7 @@ extends Resource
 @export var is_boss_attack_day: bool = false
 
 ## TUNING: desired wave count for this day.
-@export var base_wave_count: int = 10
+@export var base_wave_count: int = 5
 
 ## TUNING: per-day multipliers.
 @export var enemy_hp_multiplier: float = 1.0
@@ -48,3 +48,6 @@ extends Resource
 
 ## Optional data-driven waves + routing; when set, WaveManager uses per-wave SpawnEntryData queues.
 @export var mission_data: Resource = null
+
+## Optional per-mission economy (starting resources, duplicate k, sell refund, wave bonuses). When null, GameManager does not call [method EconomyManager.apply_mission_economy].
+@export var mission_economy: MissionEconomyData = null

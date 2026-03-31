@@ -7,6 +7,8 @@ extends Resource
 
 ## Which building type this resource describes.
 @export var building_type: Types.BuildingType
+## Unique stable ID for duplicate-cost tracking (e.g. [code]arrow_tower[/code]). Preferred over [member id] when both set.
+@export var building_id: String = ""
 ## Human-readable name shown in the build menu.
 @export var display_name: String = ""
 ## Gold cost to place this building.
@@ -95,7 +97,8 @@ extends Resource
 # Layout (future hex / multi-slot placement)
 # ---------------------------------------------------------------------------
 
-@export var size_class: Types.BuildingSizeClass = Types.BuildingSizeClass.SINGLE_SLOT
+## Hex footprint / layout tier (SINGLE_SLOT, ring SMALL/MEDIUM/LARGE, etc.).
+@export var footprint_size_class: Types.BuildingSizeClass = Types.BuildingSizeClass.SINGLE_SLOT
 ## Preferred ring for auto-layout presets (-1 = any ring).
 @export var ring_index: int = -1
 
@@ -110,7 +113,7 @@ extends Resource
 ## Fraction of placement + upgrade costs refunded on sell (1.0 = full refund; matches legacy behaviour).
 @export var sell_refund_fraction: float = 1.0
 ## When true, duplicate placements apply global duplicate scaling from mission economy.
-@export var apply_duplicate_scaling: bool = false
+@export var apply_duplicate_scaling: bool = true
 
 # ---------------------------------------------------------------------------
 # Combat — extended fields (legacy `attack_range` / DoT block remains authoritative for MVP)
@@ -142,7 +145,8 @@ extends Resource
 # ---------------------------------------------------------------------------
 
 @export var is_aura: bool = false
-@export var aura_category: Types.AuraCategory = Types.AuraCategory.OFFENSE
+## Authoring string id (e.g. "enemy_slow", "damage_flat"); distinct from [enum Types.AuraCategory] tooling.
+@export var aura_category: String = ""
 @export var aura_radius: float = 0.0
 @export_flags("allies", "buildings", "summons", "tower") var aura_targets: int = 0
 @export var aura_stat: Types.AuraStat = Types.AuraStat.DAMAGE
@@ -160,7 +164,7 @@ extends Resource
 @export var is_healer: bool = false
 @export var heal_per_second: float = 0.0
 @export var heal_radius: float = 0.0
-@export_flags("allies", "tower", "buildings") var heal_targets: int = 0
+@export_flags("allies", "tower", "buildings") var heal_target_flags: int = 0
 @export var cleanse_on_heal: bool = false
 @export var shield_on_heal: float = 0.0
 
@@ -174,6 +178,9 @@ extends Resource
 @export var upgrade_cost_material: int = -1
 ## Next tier in an upgrade chain (null = terminal).
 @export var upgrade_next: BuildingData = null
+## Gold / material paid to upgrade into [member upgrade_next] (falls back to effective legacy upgrade costs when both zero).
+@export var upgrade_next_gold_cost: int = 0
+@export var upgrade_next_material_cost: int = 0
 @export var upgrade_level: int = 0
 @export var upgrade_label: String = ""
 
@@ -181,12 +188,38 @@ extends Resource
 # Meta
 # ---------------------------------------------------------------------------
 
-@export var balance_status: Types.MissionBalanceStatus = Types.MissionBalanceStatus.UNSET
+## Content pipeline: UNTESTED, BASELINE, OVERTUNED, UNDERTUNED, CUT_CAMPAIGN_1.
+@export var balance_status: String = "UNTESTED"
 ## Preferred research gate id for new content; falls back to `unlock_research_id` when empty.
 @export var research_unlock_id: String = ""
 ## Campaign day index at which this blueprint appears (0 = no gate).
 @export var campaign_unlock_day: int = 0
 @export var tags: PackedStringArray = PackedStringArray()
+
+# ─── CONTENT AUTHORING (Prompt 50) — tower band, roles, extended summoner/aura/healer/upgrade fields ───
+
+## Tower content band: "SMALL", "MEDIUM", "LARGE" (distinct from [member footprint_size_class]).
+@export var size_class: String = "MEDIUM"
+## Valid values: "DPS", "SUMMONER", "SUPPORT", "HEALER", "AA", "BLOCKER", "AURA", "ARTILLERY"
+@export var role_tags: Array[String] = []
+@export var summon_squad_size: int = 1
+@export var summon_leader_data_path: String = ""
+@export var summon_follower_data_path: String = ""
+@export var summon_cooldown: float = 15.0
+@export var summon_respawn_type: String = "mortal"
+@export var summon_respawn_delay: float = 8.0
+@export var aura_effect_type: String = ""
+@export var aura_effect_value: float = 0.0
+@export var heal_per_tick: float = 0.0
+@export var heal_tick_interval: float = 1.0
+## "allies", "buildings", "both" — string mode for new healer pipelines (see [member heal_target_flags] for bitmask).
+@export var heal_targets: String = "allies"
+@export var max_upgrade_level: int = 2
+@export var upgrade_costs: Array[Dictionary] = []
+@export var upgrade_damage_multipliers: Array[float] = [1.25, 1.5]
+@export var upgrade_range_multipliers: Array[float] = [1.1, 1.15]
+@export var upgrade_fire_rate_multipliers: Array[float] = [1.0, 1.15]
+@export var duplicate_cost_k: float = 0.08
 
 
 ## Attack range in world units (alias for authoring tools / external specs that refer to “range”).
@@ -230,11 +263,15 @@ func collect_validation_warnings() -> PackedStringArray:
 		out.append("effective cost_material is negative")
 	if sell_refund_fraction < 0.0 or sell_refund_fraction > 1.0:
 		out.append("sell_refund_fraction should be in [0,1]")
-	if is_summoner and summon_follower_count < 1:
-		out.append("is_summoner but summon_follower_count < 1")
+	if is_summoner and summon_squad_size < 1 and summon_follower_count < 1:
+		out.append("is_summoner but summon_squad_size/summon_follower_count < 1")
 	if is_aura and aura_radius <= 0.0:
 		out.append("is_aura but aura_radius <= 0")
-	if is_healer and heal_per_second > 0.0 and heal_radius <= 0.0:
-		out.append("healer with HPS but heal_radius <= 0")
+	if (
+			is_healer
+			and (heal_per_second > 0.0 or heal_per_tick > 0.0)
+			and heal_radius <= 0.0
+	):
+		out.append("healer with healing but heal_radius <= 0")
 	return out
 

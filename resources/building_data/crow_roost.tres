@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/projectile_base.tscn" id="2_projectile"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_id = "crow_roost"
+building_type = 14
+display_name = "Crow Roost"
+gold_cost = 45
+material_cost = 1
+upgrade_gold_cost = 27
+upgrade_material_cost = 1
+damage = 14.0
+upgraded_damage = 22.0
+fire_rate = 1.4
+attack_range = 18.0
+upgraded_range = 20.0
+damage_type = 0
+targets_air = true
+targets_ground = false
+is_locked = true
+unlock_research_id = "unlock_crow_roost"
+color = Color(0.2, 0.2, 0.3, 1.0)
+footprint_size_class = 0
+size_class = "SMALL"
+role_tags = Array[String](["DPS", "AA"])
+balance_status = "UNTESTED"
+projectile_scene = ExtResource("2_projectile")
