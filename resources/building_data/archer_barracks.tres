@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_buildingdata")
+building_id = "archer_barracks"
 building_type = 5
 display_name = "Archer Barracks"
 gold_cost = 90
@@ -28,4 +29,10 @@ barracks_buff_radius = 24.0
 barracks_ally_damage_bonus = 10.0
 shield_hp_per_pulse = 0.0
 shield_pulse_duration = 0.0
+footprint_size_class = 0
+size_class = "MEDIUM"
+role_tags = Array[String](["SUMMONER"])
+is_summoner = false
+summon_squad_size = 2
+balance_status = "BASELINE"
 

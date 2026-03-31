@@ -24,6 +24,9 @@ text = "Mat: 50"
 [node name="ResearchLabel" type="Label" parent="ResourceDisplay"]
 text = "Res: 0"
 
+[node name="ResearchButton" type="Button" parent="ResourceDisplay"]
+text = "Research"
+
 [node name="WaveDisplay" type="VBoxContainer" parent="."]
 anchor_left = 0.5
 anchor_right = 0.5

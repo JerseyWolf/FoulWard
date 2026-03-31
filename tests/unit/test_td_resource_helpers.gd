@@ -50,6 +50,29 @@ func test_enemy_get_identity_falls_back_to_enum_name() -> void:
 	assert_that(ed.get_identity()).is_not_empty()
 
 
+func test_enemy_matches_tower_filter_uses_body_type_when_is_flying_mismatched() -> void:
+	var air_only: EnemyData = EnemyData.new()
+	air_only.enemy_type = Types.EnemyType.BAT_SWARM
+	air_only.body_type = Types.EnemyBodyType.FLYING
+	air_only.is_flying = false
+	assert_bool(air_only.matches_tower_air_ground_filter(true, false)).is_true()
+	assert_bool(air_only.matches_tower_air_ground_filter(false, true)).is_false()
+
+
+func test_enemy_matches_tower_filter_bat_default_data() -> void:
+	var bat: EnemyData = load("res://resources/enemy_data/bat_swarm.tres") as EnemyData
+	assert_object(bat).is_not_null()
+	assert_bool(bat.matches_tower_air_ground_filter(true, false)).is_true()
+	assert_bool(bat.matches_tower_air_ground_filter(false, true)).is_false()
+
+
+func test_enemy_matches_tower_filter_ground_grunt() -> void:
+	var orc: EnemyData = load("res://resources/enemy_data/orc_grunt.tres") as EnemyData
+	assert_object(orc).is_not_null()
+	assert_bool(orc.matches_tower_air_ground_filter(true, false)).is_false()
+	assert_bool(orc.matches_tower_air_ground_filter(false, true)).is_true()
+
+
 func test_spawn_entry_enemy_id_without_enemy_data_is_valid_for_authoring() -> void:
 	var se: SpawnEntryData = SpawnEntryData.new()
 	se.enemy_id = "catalog_orc"

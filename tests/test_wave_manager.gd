@@ -8,6 +8,8 @@
 class_name TestWaveManager
 extends GdUnitTestSuite
 
+const WaveComposerType = preload("res://scripts/wave_composer.gd")
+
 var _wave_manager: WaveManager
 var _enemy_container: Node3D
 var _spawn_points: Node3D
@@ -32,7 +34,7 @@ func _build_wave_manager() -> WaveManager:
 	var wm: WaveManager = WaveManager.new()
 	wm.wave_countdown_duration = 10.0
 	wm.max_waves = 10
-	wm.enemy_data_registry = _build_six_enemy_data()
+	wm.enemy_data_registry = _build_full_enemy_data()
 	add_child(wm)
 
 	# _ready used get_node_or_null → null without /root/Main; inject test nodes after wm enters tree.
@@ -42,17 +44,22 @@ func _build_wave_manager() -> WaveManager:
 	return wm
 
 
-func _build_six_enemy_data() -> Array[EnemyData]:
+func _flush_composed_spawns() -> void:
+	var max_iter: int = 10000
+	while _wave_manager.has_pending_composed_spawns() and max_iter > 0:
+		_wave_manager._physics_process(0.5)
+		max_iter -= 1
+
+
+func _expected_composed_count(wave_number: int) -> int:
+	var pattern: Resource = load("res://resources/wave_patterns/default_campaign_pattern.tres")
+	seed(_wave_manager.mission_spawn_seed + wave_number * 7919 + 17)
+	return WaveComposerType.new(_wave_manager.enemy_data_registry, pattern).compose_wave(wave_number - 1).size()
+
+
+func _build_full_enemy_data() -> Array[EnemyData]:
 	var registry: Array[EnemyData] = []
-	var types: Array = [
-		Types.EnemyType.ORC_GRUNT,
-		Types.EnemyType.ORC_BRUTE,
-		Types.EnemyType.GOBLIN_FIREBUG,
-		Types.EnemyType.PLAGUE_ZOMBIE,
-		Types.EnemyType.ORC_ARCHER,
-		Types.EnemyType.BAT_SWARM
-	]
-	for t: Types.EnemyType in types:
+	for t: Types.EnemyType in Types.EnemyType.values():
 		var d: EnemyData = EnemyData.new()
 		d.enemy_type = t
 		d.max_hp = 50
@@ -62,9 +69,23 @@ func _build_six_enemy_data() -> Array[EnemyData]:
 		d.attack_cooldown = 1.0
 		d.armor_type = Types.ArmorType.UNARMORED
 		d.gold_reward = 5
-		d.is_flying = (t == Types.EnemyType.BAT_SWARM)
-		d.is_ranged = (t == Types.EnemyType.ORC_ARCHER)
+		d.is_flying = (
+				t == Types.EnemyType.BAT_SWARM
+				or t == Types.EnemyType.HARPY_SCOUT
+				or t == Types.EnemyType.WYVERN_RIDER
+				or t == Types.EnemyType.ORCISH_SPIRIT
+		)
+		d.is_ranged = (
+				t == Types.EnemyType.ORC_ARCHER
+				or t == Types.EnemyType.ORC_MARKSMAN
+				or t == Types.EnemyType.WYVERN_RIDER
+				or t == Types.EnemyType.ORC_SKYTHROWER
+		)
 		d.damage_immunities = []
+		d.point_cost = 5
+		d.wave_tags = ["RUSH", "INVASION", "HEAVY", "AIRSTRIKE", "SUPPORT", "MIXED", "ARTILLERY"]
+		d.tier = 1
+		d.balance_status = "UNTESTED"
 		registry.append(d)
 	return registry
 
@@ -123,22 +144,25 @@ func test_countdown_decrements_with_delta() -> void:
 # TEST: Wave scaling formula
 # ---------------------------------------------------------------------------
 
-func test_wave_1_spawns_6_enemies() -> void:
+func test_wave_1_spawns_composed_enemies() -> void:
+	var expected: int = _expected_composed_count(1)
 	_wave_manager.force_spawn_wave(1)
-	await get_tree().process_frame
-	assert_that(_wave_manager.get_living_enemy_count()).is_equal(6)
+	_flush_composed_spawns()
+	assert_int(_wave_manager.get_living_enemy_count()).is_equal(expected)
 
 
-func test_wave_5_spawns_30_enemies() -> void:
+func test_wave_5_spawns_composed_enemies() -> void:
+	var expected: int = _expected_composed_count(5)
 	_wave_manager.force_spawn_wave(5)
-	await get_tree().process_frame
-	assert_that(_wave_manager.get_living_enemy_count()).is_equal(30)
+	_flush_composed_spawns()
+	assert_int(_wave_manager.get_living_enemy_count()).is_equal(expected)
 
 
-func test_wave_10_spawns_60_enemies() -> void:
+func test_wave_10_spawns_composed_enemies() -> void:
+	var expected: int = _expected_composed_count(10)
 	_wave_manager.force_spawn_wave(10)
-	await get_tree().process_frame
-	assert_that(_wave_manager.get_living_enemy_count()).is_equal(60)
+	_flush_composed_spawns()
+	assert_int(_wave_manager.get_living_enemy_count()).is_equal(expected)
 
 # ---------------------------------------------------------------------------
 # TEST: force_spawn_wave skips countdown
@@ -177,9 +201,10 @@ func test_all_waves_cleared_emitted_after_wave_10() -> void:
 # ---------------------------------------------------------------------------
 
 func test_clear_all_enemies_removes_from_group() -> void:
+	var expected: int = _expected_composed_count(2)
 	_wave_manager.force_spawn_wave(2)
-	await get_tree().process_frame
-	assert_that(_wave_manager.get_living_enemy_count()).is_equal(12)
+	_flush_composed_spawns()
+	assert_int(_wave_manager.get_living_enemy_count()).is_equal(expected)
 
 	_wave_manager.clear_all_enemies()
 	await get_tree().process_frame
@@ -188,9 +213,10 @@ func test_clear_all_enemies_removes_from_group() -> void:
 
 
 func test_living_enemy_count_zero_after_clear() -> void:
+	var expected: int = _expected_composed_count(3)
 	_wave_manager.force_spawn_wave(3)
-	await get_tree().process_frame
-	assert_that(_wave_manager.get_living_enemy_count()).is_equal(18)
+	_flush_composed_spawns()
+	assert_int(_wave_manager.get_living_enemy_count()).is_equal(expected)
 
 	_wave_manager.clear_all_enemies()
 	await get_tree().process_frame
@@ -203,12 +229,15 @@ func test_living_enemy_count_zero_after_clear() -> void:
 
 func test_check_wave_cleared_uses_call_deferred() -> void:
 	_wave_manager.force_spawn_wave(1)
-	await get_tree().process_frame
+	_flush_composed_spawns()
 
 	var monitor := monitor_signals(SignalBus, false)
 
-	# Emit 5 of 6 kills — enemies still in group, wave must NOT clear yet.
-	for i: int in range(5):
+	var n: int = _wave_manager.get_living_enemy_count()
+	if n < 2:
+		return
+	var kills: int = mini(5, n - 1)
+	for i: int in range(kills):
 		SignalBus.enemy_killed.emit(Types.EnemyType.ORC_GRUNT, Vector3.ZERO, 5)
 	await get_tree().process_frame
 
@@ -295,116 +324,36 @@ func _clear_enemies_in_container() -> void:
 			(node as EnemyBase).queue_free()
 
 
-func test_wave_manager_uses_only_faction_roster_enemy_types() -> void:
-	var faction: FactionData = FactionData.new()
-	faction.faction_id = "TEST_ORCS"
-	var e1: FactionRosterEntry = FactionRosterEntry.new()
-	e1.enemy_type = Types.EnemyType.ORC_GRUNT
-	e1.base_weight = 3.0
-	e1.min_wave_index = 1
-	e1.max_wave_index = 10
-	e1.tier = 1
-	var e2: FactionRosterEntry = FactionRosterEntry.new()
-	e2.enemy_type = Types.EnemyType.ORC_BRUTE
-	e2.base_weight = 1.0
-	e2.min_wave_index = 1
-	e2.max_wave_index = 10
-	e2.tier = 2
-	faction.roster = [e1, e2]
-
-	_wave_manager.set_faction_data_override(faction)
-
+func test_composed_wave_spawns_registry_enemy_types() -> void:
 	_wave_manager.force_spawn_wave(2)
-	await get_tree().process_frame
-	var types_wave2: Array[Types.EnemyType] = _collect_spawned_enemy_types()
+	_flush_composed_spawns()
+	for t: Types.EnemyType in _collect_spawned_enemy_types():
+		assert_object(_wave_manager.get_enemy_data_by_type(int(t))).is_not_null()
 
 	_clear_enemies_in_container()
 	await get_tree().process_frame
 
 	_wave_manager.force_spawn_wave(7)
-	await get_tree().process_frame
-	var types_wave7: Array[Types.EnemyType] = _collect_spawned_enemy_types()
-
-	var allowed: Array[Types.EnemyType] = [
-		Types.EnemyType.ORC_GRUNT,
-		Types.EnemyType.ORC_BRUTE,
-	]
-	for t: Types.EnemyType in types_wave2:
-		assert_bool(allowed.has(t)).is_true()
-	for t2: Types.EnemyType in types_wave7:
-		assert_bool(allowed.has(t2)).is_true()
+	_flush_composed_spawns()
+	for t2: Types.EnemyType in _collect_spawned_enemy_types():
+		assert_object(_wave_manager.get_enemy_data_by_type(int(t2))).is_not_null()
 
 
-func test_wave_manager_elites_more_common_in_late_waves() -> void:
-	var faction: FactionData = FactionData.new()
-	faction.faction_id = "TEST_ELITES"
-	var e1: FactionRosterEntry = FactionRosterEntry.new()
-	e1.enemy_type = Types.EnemyType.ORC_GRUNT
-	e1.base_weight = 1.0
-	e1.min_wave_index = 1
-	e1.max_wave_index = 10
-	e1.tier = 1
-	var e2: FactionRosterEntry = FactionRosterEntry.new()
-	e2.enemy_type = Types.EnemyType.ORC_BRUTE
-	e2.base_weight = 1.0
-	e2.min_wave_index = 3
-	e2.max_wave_index = 10
-	e2.tier = 2
-	faction.roster = [e1, e2]
-
-	_wave_manager.set_faction_data_override(faction)
-
-	_wave_manager.force_spawn_wave(3)
-	await get_tree().process_frame
-	var counts_wave3: Dictionary = _count_types_in_enemy_container()
-	var elite3: int = int(counts_wave3.get(Types.EnemyType.ORC_BRUTE, 0))
-	var total3: int = _total_count(counts_wave3)
-
-	_clear_enemies_in_container()
-	await get_tree().process_frame
-
-	_wave_manager.force_spawn_wave(9)
-	await get_tree().process_frame
-	var counts_wave9: Dictionary = _count_types_in_enemy_container()
-	var elite9: int = int(counts_wave9.get(Types.EnemyType.ORC_BRUTE, 0))
-	var total9: int = _total_count(counts_wave9)
-
-	if total3 > 0 and total9 > 0:
-		var share3: float = float(elite3) / float(total3)
-		var share9: float = float(elite9) / float(total9)
-		assert_float(share9).is_greater(share3)
+func test_wave_pattern_budget_increases_per_wave() -> void:
+	var pattern: Resource = load("res://resources/wave_patterns/default_campaign_pattern.tres")
+	var composer: RefCounted = WaveComposerType.new(_wave_manager.enemy_data_registry, pattern)
+	assert_int(composer._compute_budget_for_wave(8)).is_greater(composer._compute_budget_for_wave(7))
 
 
-func test_wave_manager_total_enemies_matches_scaling() -> void:
-	var faction: FactionData = FactionData.new()
-	faction.faction_id = "TEST_DEFAULT"
-	var types: Array[Types.EnemyType] = [
-		Types.EnemyType.ORC_GRUNT,
-		Types.EnemyType.ORC_BRUTE,
-		Types.EnemyType.GOBLIN_FIREBUG,
-		Types.EnemyType.PLAGUE_ZOMBIE,
-		Types.EnemyType.ORC_ARCHER,
-		Types.EnemyType.BAT_SWARM,
-	]
-	for t: Types.EnemyType in types:
-		var e: FactionRosterEntry = FactionRosterEntry.new()
-		e.enemy_type = t
-		e.base_weight = 1.0
-		e.min_wave_index = 1
-		e.max_wave_index = 10
-		e.tier = 1
-		faction.roster.append(e)
-
-	_wave_manager.set_faction_data_override(faction)
-
+func test_wave_manager_total_enemies_matches_composer() -> void:
 	for wave: int in [1, 5, 10]:
 		_clear_enemies_in_container()
 		await get_tree().process_frame
+		var expected: int = _expected_composed_count(wave)
 		_wave_manager.force_spawn_wave(wave)
-		await get_tree().process_frame
+		_flush_composed_spawns()
 		var counts: Dictionary = _count_types_in_enemy_container()
 		var total: int = _total_count(counts)
-		var expected: int = wave * 6
 		assert_int(total).is_equal(expected)
 
 
@@ -442,24 +391,17 @@ func test_default_faction_preserves_mixed_composition_trend() -> void:
 	for wave: int in [1, 3, 5, 7, 10]:
 		_clear_enemies_in_container()
 		await get_tree().process_frame
+		var expected: int = _expected_composed_count(wave)
 		_wave_manager.force_spawn_wave(wave)
-		await get_tree().process_frame
+		_flush_composed_spawns()
 		var counts: Dictionary = _count_types_in_enemy_container()
 		var total: int = _total_count(counts)
-		var expected: int = wave * 6
 		assert_int(total).is_equal(expected)
 		for k: Variant in counts.keys():
 			observed_types[k] = true
 
-	for t: Types.EnemyType in [
-		Types.EnemyType.ORC_GRUNT,
-		Types.EnemyType.ORC_BRUTE,
-		Types.EnemyType.GOBLIN_FIREBUG,
-		Types.EnemyType.PLAGUE_ZOMBIE,
-		Types.EnemyType.ORC_ARCHER,
-		Types.EnemyType.BAT_SWARM,
-	]:
-		assert_bool(observed_types.has(t)).is_true()
+	# Composer draws from the full registry; ensure we saw a mix across waves.
+	assert_int(observed_types.size()).is_greater_equal(2)
 
 
 func test_regular_day_spawns_no_bosses() -> void:

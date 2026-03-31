@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "plague_herald"
+enemy_type = 29
+display_name = "Plague Herald"
+max_hp = 1500
+move_speed = 2.0
+damage = 65
+attack_cooldown = 2.0
+attack_range = 2.5
+armor_type = 1
+gold_reward = 150
+is_ranged = false
+is_flying = false
+color = Color(0.4, 0.7, 0.3, 1.0)
+damage_immunities = []
+tier = 5
+point_cost = 50
+wave_tags = Array[String](["HEAVY", "SUPPORT"])
+special_tags = Array[String](["aura_heal", "regen"])
+special_values = {
+&"aura_heal": {
+&"radius": 10.0,
+&"heal_per_sec": 10.0
+},
+&"regen": {
+&"hp_per_sec": 12.0
+}
+}
+balance_status = "UNTESTED"

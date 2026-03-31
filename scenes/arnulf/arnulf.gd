@@ -487,6 +487,6 @@ func reset_for_new_mission() -> void:
 	global_position = HOME_POSITION
 	_transition_to_state(Types.ArnulfState.IDLE)
 	# DEVIATION: Arnulf also broadcasts generic ally_spawned for ally systems.
-	SignalBus.ally_spawned.emit(ALLY_ID_ARNULF)
+	SignalBus.ally_spawned.emit(ALLY_ID_ARNULF, "")
 	# POST-MVP: emit SignalBus.ally_killed(ALLY_ID_ARNULF) if a permanent-death path is added.
 

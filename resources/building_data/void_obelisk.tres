@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/projectile_base.tscn" id="2_projectile"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_id = "void_obelisk"
+building_type = 32
+display_name = "Void Obelisk"
+gold_cost = 300
+material_cost = 8
+upgrade_gold_cost = 180
+upgrade_material_cost = 5
+damage = 60.0
+upgraded_damage = 95.0
+fire_rate = 0.8
+attack_range = 24.0
+upgraded_range = 26.0
+damage_type = 2
+targets_air = false
+targets_ground = true
+is_locked = true
+unlock_research_id = "unlock_void_obelisk"
+color = Color(0.2, 0.0, 0.5, 1.0)
+footprint_size_class = 0
+size_class = "LARGE"
+role_tags = Array[String](["DPS", "SUPPORT"])
+balance_status = "UNTESTED"
+projectile_scene = ExtResource("2_projectile")

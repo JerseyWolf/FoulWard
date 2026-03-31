@@ -18,4 +18,7 @@ is_flying = true
 body_type = 1
 color = Color(0.3, 0.0, 0.5, 1.0)
 damage_immunities = []
-
+tier = 1
+point_cost = 6
+wave_tags = Array[String](["AIRSTRIKE"])
+balance_status = "BASELINE"

@@ -1,58 +1,26 @@
-# PROMPT 11 — Ally framework (implementation summary)
+# PROMPT 11 — HUD build menu + in-mission research UI
 
-**Date:** 2026-03-24  
-**Scope:** Generic ally data (`AllyData`), runtime `AllyBase`, `CampaignManager` roster, `GameManager` spawn/cleanup, `SignalBus` ally signals, Arnulf integration, `main.tscn` nodes, GdUnit tests, index/ARCHITECTURE updates.
+**Date:** 2026-03-30
 
-## Design deviations (repo alignment)
+## Summary
 
-| Topic | Prompt text | Actual |
-|--------|----------------|--------|
-| `CampaignManager` | Create new autoload | **Extended** existing `res://autoloads/campaign_manager.gd` (already present). |
-| `TargetPriority` | “NEAREST / FARTHEST / …” | Repo uses **`Types.TargetPriority.CLOSEST`**, `HIGHEST_HP`, `FLYING_FIRST`. Ally MVP uses **CLOSEST** only. |
-| `ally_state_changed` payload | Second arg unspecified | **String** `new_state` (POST-MVP detail tracking). |
-| Typed `Array[AllyData]` in autoloads | — | **Avoided** in `GameManager` / `CampaignManager` where global class cache could break headless parse; use **`Array`** + `Variant` / `Resource` + `.get()` where needed. `AllyBase` uses **`Variant`** for `ally_data` with `get("field")` for the same reason. |
-| Movement test | Distance decreases over time | **Replaced** with `test_melee_ally_find_target_returns_nearest_enemy` — nav progress is environment-sensitive; Arnulf/enemy interaction in the same scene made strict distance assertions flaky. |
+- **Build menu** lists all towers from `HexGrid.building_data_registry`, sorted by `size_class` (SMALL → MEDIUM → LARGE) then `display_name`, using `ui/build_menu_button.tscn` rows (name, gold/material cost, `role_tags`, lock overlay).
+- **Research** uses existing `EconomyManager` research material as “RP”; `SignalBus.research_points_changed` mirrors balance for UI; `research_node_unlocked` duplicates the unlock event for consumers that listen only to the new name.
+- **ResearchManager** (`scripts/research_manager.gd`): `can_unlock`, `get_research_points`, `add_research_points`, `unlock`/`unlock_node`, `show_research_panel_for`, `_unlock_building_for_node` (finds `HexGrid` via `hex_grid` group and clears `BuildingData.is_locked` when a node unlocks).
+- **BuildPhaseManager**: `build_phase_started` / `combat_phase_started`, `set_build_phase_active`; **GameManager** toggles it on mission start, wave countdown, and enter/exit build mode.
+- **Research panel** (`ui/research_panel.tscn`) in `main.tscn` under `UI`, group `research_panel`; `HUD` Research button opens it in **BUILD_MODE** only.
+- **Tests:** `tests/unit/test_research_and_build_menu.gd` (allowlist: `tools/run_gdunit_unit.sh`).
 
-## Files added
+## Files touched
 
-| Path | Purpose |
-|------|---------|
-| `res://scripts/types.gd` | `enum AllyClass { MELEE, RANGED, SUPPORT }`; comment on `TargetPriority` for allies. |
-| `res://scripts/resources/ally_data.gd` | `class_name AllyData` resource (fields per prompt). |
-| `res://resources/ally_data/ally_melee_generic.tres` | Placeholder melee merc. |
-| `res://resources/ally_data/ally_ranged_generic.tres` | Placeholder ranged merc. |
-| `res://resources/ally_data/ally_support_generic.tres` | Optional support placeholder (not in static roster by default). |
-| `res://scenes/allies/ally_base.gd` | `class_name AllyBase` — state machine, nav chase, direct damage via `EnemyBase.take_damage`. |
-| `res://scenes/allies/ally_base.tscn` | CharacterBody3D + mesh, health, nav agent, detection/attack areas. |
-| `res://tests/test_ally_data.gd` | Defaults + directory scan of `.tres`. |
-| `res://tests/test_ally_base.gd` | `find_target`, attack in range, death + `ally_killed`. |
-| `res://tests/test_ally_signals.gd` | `ally_spawned` / `ally_killed` / Arnulf mirror signals (`monitor_signals` for sync emissions). |
-| `res://tests/test_ally_spawning.gd` | Roster spawn count + cleanup on `all_waves_cleared` + `start_new_game`. |
-
-## Files modified
-
-| Path | Change |
+| Area | Files |
 |------|--------|
-| `res://autoloads/signal_bus.gd` | `ally_spawned`, `ally_downed`, `ally_recovered`, `ally_killed`, `ally_state_changed` (POST-MVP). |
-| `res://autoloads/campaign_manager.gd` | `current_ally_roster`, `current_ally_roster_ids`, `_initialize_static_roster()`, `has_ally`, `get_ally_data`, `reinitialize_ally_roster_for_test()`. |
-| `res://autoloads/game_manager.gd` | `_spawn_allies_for_current_mission`, `_cleanup_allies`, hooks in `start_mission_for_day`, `start_wave_countdown`, `start_new_game`, `_on_all_waves_cleared`, `_on_tower_destroyed`. |
-| `res://scenes/arnulf/arnulf.gd` | `ALLY_ID_ARNULF`, `ally_spawned` on `reset_for_new_mission`, `ally_downed` / `ally_recovered` alongside Arnulf-specific signals. |
-| `res://scenes/main.tscn` | `AllyContainer`, `AllySpawnPoints` + `AllySpawnPoint_00..02`. |
-| `docs/ARCHITECTURE.md` | Scene tree + autoload + ally flow notes. |
-| `docs/INDEX_SHORT.md`, `INDEX_FULL.md`, `docs/INDEX_MACHINE.md`, `docs/INDEX_TASKS.md` | Ally entries + SignalBus + test list. |
+| UI | `ui/build_menu.gd`, `ui/build_menu.tscn`, `ui/build_menu_button.gd`, `ui/build_menu_button.tscn`, `ui/research_panel.gd`, `ui/research_panel.tscn`, `ui/research_node_row.gd`, `ui/research_node_row.tscn`, `ui/hud.gd`, `ui/hud.tscn` |
+| Logic | `scripts/research_manager.gd`, `autoloads/signal_bus.gd`, `autoloads/build_phase_manager.gd`, `autoloads/game_manager.gd`, `scenes/hex_grid/hex_grid.gd` |
+| Main | `scenes/main.tscn` (`ResearchPanel` instance, `dev_unlock_anti_air_only = false`) |
+| Tests | `tests/unit/test_research_and_build_menu.gd`, `tools/run_gdunit_unit.sh` |
+| Docs | `docs/INDEX_SHORT.md`, `docs/INDEX_FULL.md`, this file |
 
-## Markers used
+## Verification
 
-- **# SOURCE:** — NavigationAgent3D chase pattern, nearest-target iteration, GdUnit patterns (in `ally_base.gd` / tests).
-- **# DEVIATION:** — Arnulf generic `SignalBus` emissions; `emit` order in `reset_for_new_mission`.
-- **# POST-MVP:** — Downed/recover for generic allies, projectiles for ranged, support buffs, `ally_state_changed`, campaign day recovery, `add_ally_to_roster` / `remove_ally_from_roster`, permanent `ally_killed` for Arnulf.
-- **# ASSUMPTION:** — BossData → AllyData conversion (comment in `ally_data.gd`); allies reuse layer 3 (Arnulf) for collision.
-
-## Tests
-
-- `res://tests/test_ally_*.gd` — **11** cases; all pass in headless run (`GdUnitCmdTool` with four suite paths).
-- **Full** `./tools/run_gdunit.sh` not completed in this session (long runtime / pathfinding suites); re-run locally after merge.
-
-## Related
-
-- `docs/PROBLEM_REPORT.md` — known issues (GdUnit `push_error`, mission hub, etc.); **not** re-addressed here unless required for Ally work.
+- `./tools/run_gdunit_unit.sh` — expect 0 failures (exit 100 may still appear from Godot GD error monitor when other suites log script errors; 0 test failures is the target).

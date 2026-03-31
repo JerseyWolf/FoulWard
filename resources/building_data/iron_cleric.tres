@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_data.gd" id="1_buildingdata"]
+
+[resource]
+script = ExtResource("1_buildingdata")
+building_id = "iron_cleric"
+building_type = 27
+display_name = "Iron Cleric"
+gold_cost = 120
+material_cost = 3
+damage = 0.0
+fire_rate = 0.0
+attack_range = 0.0
+upgraded_range = 0.0
+damage_type = 0
+targets_air = false
+targets_ground = true
+is_locked = false
+unlock_research_id = ""
+color = Color(0.9, 0.9, 0.7, 1.0)
+is_healer = true
+heal_per_tick = 15.0
+heal_tick_interval = 2.0
+heal_radius = 14.0
+heal_targets = "buildings"
+footprint_size_class = 0
+size_class = "MEDIUM"
+role_tags = Array[String](["HEALER"])
+balance_status = "UNTESTED"

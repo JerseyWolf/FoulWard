@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hexbreaker"
+enemy_type = 19
+display_name = "Hexbreaker"
+max_hp = 200
+move_speed = 3.5
+damage = 18
+attack_cooldown = 1.8
+attack_range = 2.0
+armor_type = 0
+gold_reward = 30
+is_ranged = false
+is_flying = false
+color = Color(0.8, 0.3, 0.8, 1.0)
+damage_immunities = []
+tier = 3
+point_cost = 14
+wave_tags = Array[String](["INVASION", "SUPPORT"])
+balance_status = "UNTESTED"

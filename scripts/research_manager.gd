@@ -32,8 +32,67 @@ extends Node
 var _unlocked_nodes: Array[String] = []
 
 # ---------------------------------------------------------------------------
+# Lifecycle
+# ---------------------------------------------------------------------------
+
+func _ready() -> void:
+	SignalBus.resource_changed.connect(_on_resource_changed)
+	SignalBus.research_points_changed.emit(EconomyManager.get_research_material())
+
+
+func _on_resource_changed(resource_type: Types.ResourceType, new_amount: int) -> void:
+	if resource_type == Types.ResourceType.RESEARCH_MATERIAL:
+		SignalBus.research_points_changed.emit(new_amount)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
+## Prompt 11: current research material available for unlocks (same wallet as meta).
+func get_research_points() -> int:
+	return EconomyManager.get_research_material()
+
+
+## Prompt 11: awards research material and emits [signal SignalBus.research_points_changed] via EconomyManager.
+func add_research_points(amount: int) -> void:
+	if amount <= 0:
+		push_warning("ResearchManager.add_research_points: non-positive amount %d" % amount)
+		return
+	EconomyManager.add_research_material(amount)
+
+
+## True if this node could be unlocked right now (material, prereqs, not already unlocked).
+func can_unlock(node_id: String) -> bool:
+	var node_data: ResearchNodeData = _find_node(node_id)
+	if node_data == null:
+		return false
+	if is_unlocked(node_id):
+		return false
+	for prereq_id: String in node_data.prerequisite_ids:
+		if not is_unlocked(prereq_id):
+			return false
+	var eff_cost: int = _effective_research_cost(node_data)
+	return EconomyManager.get_research_material() >= eff_cost
+
+
+## Prompt 11 alias for [method unlock_node].
+func unlock(node_id: String) -> void:
+	unlock_node(node_id)
+
+
+## Opens the in-mission research panel and scrolls to the given node when possible.
+func show_research_panel_for(node_id: String) -> void:
+	if not is_inside_tree():
+		return
+	var panel: Node = get_tree().get_first_node_in_group("research_panel")
+	if panel == null:
+		return
+	if panel.has_method("show_panel"):
+		panel.call("show_panel")
+	if node_id.strip_edges() != "" and panel.has_method("scroll_to_node"):
+		panel.call_deferred("scroll_to_node", node_id)
+
 
 ## Attempts to unlock the research node with the given node_id.
 ## Checks prerequisites, research material cost, then applies the unlock.
@@ -55,12 +114,7 @@ func unlock_node(node_id: String) -> bool:
 				% [prereq_id, node_id])
 			return false
 
-	# Research costs research_material, not gold (territory multipliers apply).
-	var eff_cost: int = int(
-		ceilf(float(node_data.research_cost) * GameManager.get_aggregate_research_cost_multiplier())
-	)
-	if eff_cost < 1:
-		eff_cost = 1
+	var eff_cost: int = _effective_research_cost(node_data)
 	if EconomyManager.get_research_material() < eff_cost:
 		return false
 
@@ -71,6 +125,8 @@ func unlock_node(node_id: String) -> bool:
 
 	_unlocked_nodes.append(node_id)
 	SignalBus.research_unlocked.emit(node_id)
+	SignalBus.research_node_unlocked.emit(node_id)
+	_unlock_building_for_node(node_id)
 
 	# Florence meta-state hook.
 	# ASSUMPTION: GameManager owns FlorenceData and exposes get_florence_data().
@@ -136,4 +192,26 @@ func _find_node(node_id: String) -> ResearchNodeData:
 		if node_data.node_id == node_id:
 			return node_data
 	return null
+
+
+func _effective_research_cost(node_data: ResearchNodeData) -> int:
+	var eff_cost: int = int(
+		ceilf(float(node_data.research_cost) * GameManager.get_aggregate_research_cost_multiplier())
+	)
+	if eff_cost < 1:
+		eff_cost = 1
+	return eff_cost
+
+
+func _unlock_building_for_node(node_id: String) -> void:
+	if node_id.strip_edges() == "":
+		return
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var hg: Node = tree.get_first_node_in_group("hex_grid")
+	if hg is HexGrid:
+		for bd: BuildingData in (hg as HexGrid).building_data_registry:
+			if bd != null and bd.unlock_research_id == node_id:
+				bd.is_locked = false
 

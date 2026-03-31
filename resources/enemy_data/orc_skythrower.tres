@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orc_skythrower"
+enemy_type = 26
+display_name = "Orc Skythrower"
+max_hp = 400
+move_speed = 2.5
+damage = 35
+attack_cooldown = 2.5
+attack_range = 20.0
+armor_type = 0
+gold_reward = 48
+is_ranged = true
+is_flying = false
+color = Color(0.7, 0.5, 0.3, 1.0)
+damage_immunities = []
+tier = 4
+point_cost = 28
+wave_tags = Array[String](["ARTILLERY", "AIRSTRIKE"])
+special_tags = Array[String](["anti_air"])
+balance_status = "UNTESTED"

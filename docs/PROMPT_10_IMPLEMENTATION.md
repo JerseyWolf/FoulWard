@@ -1,6 +1,6 @@
 # PROMPT_10_IMPLEMENTATION — Mini-boss + campaign boss + Day 50 loop
 
-Updated: 2026-03-24.
+Updated: 2026-03-24. **Wave composition (data-driven waves):** 2026-03-30 — see §Wave composition below.
 
 ## What went wrong (why work stalled)
 
@@ -83,3 +83,29 @@ Updated: 2026-03-24.
 - **`docs/PRE_GENERATION_VERIFICATION.md`** — pre-flight before further refactors.  
 - **`docs/CONVENTIONS.md`**, **`docs/ARCHITECTURE.md`** — law for paths and SignalBus.  
 - **`docs/PROMPT_9_IMPLEMENTATION.md`** — faction + wave baseline before bosses.
+
+---
+
+## Wave composition (2026-03-30)
+
+Regular (non–mission-queue) waves no longer use **FactionData** roster weights or a fixed **N×6** count. They are built by **`WaveComposer`** from the full **`enemy_data_registry`** using each **`EnemyData`** **`point_cost`**, **`wave_tags`**, and **`tier`**, driven by **`WavePatternData`** (`res://resources/wave_patterns/default_campaign_pattern.tres` by default).
+
+### Files
+
+| File | Role |
+|------|------|
+| `res://scripts/resources/wave_pattern_data.gd` | `class_name WavePatternData` — `base_point_budget`, `budget_per_wave`, `max_waves`, `wave_primary_tags`, `wave_modifiers` (plain `Array`; each wave row is an array of modifier strings). |
+| `res://scripts/wave_composer.gd` | `class_name WaveComposer` — `compose_wave(wave_index, budget_scale)`; tier caps by wave; weighted random pick; `spawn_count_multiplier` from **`WaveManager`** scales budget. |
+| `res://resources/wave_patterns/default_campaign_pattern.tres` | Default campaign curve (30 primary tags + per-wave modifiers). |
+| `res://scripts/wave_manager.gd` | `@export var wave_pattern: Resource`; **`WaveComposerScript.new(...)`** in **`_ready`**; **`_spawn_wave`** composes list, then **stagger-spawns** in **`_physics_process`**; **`clear_all_enemies()`** cancels composed + mission spawn queues. |
+| `res://scenes/main.tscn` | **`WaveManager.wave_pattern`** → `default_campaign_pattern.tres`. |
+| `res://tests/unit/test_wave_composer.gd` | Budget / tier / tag invariants. |
+
+### Tests
+
+- **`./tools/run_gdunit_unit.sh`** includes **`test_wave_composer.gd`**; **`test_wave_manager.gd`** updated for composed counts + **`_flush_composed_spawns`**.
+
+### Notes
+
+- **`WaveComposer`** reads pattern fields via **`Object.get()`** and **`Variant`** pattern handle so headless runs do not rely on global **`class_name`** resolution for **`WavePatternData`** on every path.
+- **`SignalBus`**: still **`wave_started(wave_number, enemy_count)`**, **`wave_cleared`**, **`all_waves_cleared`** (no new signals).

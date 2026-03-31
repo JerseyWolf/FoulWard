@@ -9,43 +9,24 @@
 [ext_resource type="Script" uid="uid://yeain3i4irhk" path="res://scripts/spell_manager.gd" id="5_spellmanager"]
 [ext_resource type="Script" uid="uid://ddqrdafsogm80" path="res://scripts/resources/building_data.gd" id="6_c6pm6"]
 [ext_resource type="Script" uid="uid://caigeeql81q4a" path="res://scripts/research_manager.gd" id="6_researchmanager"]
-[ext_resource type="Resource" path="res://resources/building_data/arrow_tower.tres" id="7_5he1u"]
 [ext_resource type="Script" uid="uid://b3qy6xmea1ytu" path="res://scripts/shop_manager.gd" id="7_shopmanager"]
 [ext_resource type="Script" uid="uid://dhw5kviljccvx" path="res://scripts/resources/enemy_data.gd" id="7_yq6so"]
-[ext_resource type="Resource" path="res://resources/building_data/fire_brazier.tres" id="8_5poiv"]
-[ext_resource type="Resource" path="res://resources/enemy_data/orc_grunt.tres" id="8_fv21b"]
 [ext_resource type="Script" uid="uid://5n41loe8t7vh" path="res://scripts/input_manager.gd" id="8_inputmanager"]
-[ext_resource type="Resource" path="res://resources/building_data/magic_obelisk.tres" id="9_2cjbq"]
-[ext_resource type="Resource" path="res://resources/enemy_data/orc_brute.tres" id="9_tel4y"]
 [ext_resource type="Script" uid="uid://diu512ianvrru" path="res://ui/ui_manager.gd" id="9_uimanager"]
-[ext_resource type="Resource" path="res://resources/building_data/poison_vat.tres" id="10_chjal"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="10_hud"]
-[ext_resource type="Resource" path="res://resources/enemy_data/goblin_firebug.tres" id="10_qkpxi"]
-[ext_resource type="Resource" path="res://resources/enemy_data/plague_zombie.tres" id="11_5q0nq"]
 [ext_resource type="PackedScene" path="res://ui/build_menu.tscn" id="11_buildmenu"]
-[ext_resource type="Resource" path="res://resources/building_data/ballista.tres" id="11_cjqg0"]
+[ext_resource type="PackedScene" path="res://ui/research_panel.tscn" id="11_researchpanel"]
 [ext_resource type="PackedScene" path="res://ui/between_mission_screen.tscn" id="12_bms"]
 [ext_resource type="PackedScene" path="res://ui/hub.tscn" id="40_hub"]
 [ext_resource type="PackedScene" path="res://ui/dialogue_panel.tscn" id="41_dialogue_panel"]
-[ext_resource type="Resource" path="res://resources/enemy_data/orc_archer.tres" id="12_dgi5k"]
-[ext_resource type="Resource" path="res://resources/building_data/archer_barracks.tres" id="12_vchkt"]
-[ext_resource type="Resource" path="res://resources/enemy_data/bat_swarm.tres" id="13_j8jky"]
 [ext_resource type="PackedScene" path="res://ui/main_menu.tscn" id="13_mainmenu"]
-[ext_resource type="Resource" path="res://resources/building_data/anti_air_bolt.tres" id="13_txyw0"]
 [ext_resource type="Script" uid="uid://du1u75tff1c5l" path="res://ui/end_screen.gd" id="14_endscreen"]
-[ext_resource type="Resource" path="res://resources/building_data/shield_generator.tres" id="14_vc5cj"]
 [ext_resource type="Script" uid="uid://ct0jcmhqil53d" path="res://scripts/resources/spell_data.gd" id="15_kmb1v"]
 [ext_resource type="Resource" path="res://resources/spell_data/shockwave.tres" id="16_fuf3a"]
 [ext_resource type="Resource" path="res://resources/spell_data/slow_field.tres" id="spell_sf"]
 [ext_resource type="Resource" path="res://resources/spell_data/arcane_beam.tres" id="spell_bm"]
 [ext_resource type="Resource" path="res://resources/spell_data/tower_shield.tres" id="spell_ts"]
 [ext_resource type="Script" uid="uid://dwrewkv7itq4c" path="res://scripts/resources/research_node_data.gd" id="18_pibwh"]
-[ext_resource type="Resource" path="res://resources/research_data/base_structures_tree.tres" id="19_c6pm6"]
-[ext_resource type="Resource" path="res://resources/research_data/unlock_anti_air.tres" id="25_raa"]
-[ext_resource type="Resource" path="res://resources/research_data/arrow_tower_plus_damage.tres" id="26_atd"]
-[ext_resource type="Resource" path="res://resources/research_data/unlock_shield_generator.tres" id="27_usg"]
-[ext_resource type="Resource" path="res://resources/research_data/fire_brazier_plus_range.tres" id="28_fbr"]
-[ext_resource type="Resource" path="res://resources/research_data/unlock_archer_barracks.tres" id="29_uab"]
 [ext_resource type="Script" uid="uid://cymimirt7rukp" path="res://scripts/resources/shop_item_data.gd" id="21_fv21b"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_tower_repair.tres" id="22_tel4y"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_mana_draught.tres" id="23_qkpxi"]
@@ -61,6 +42,97 @@
 [ext_resource type="Resource" path="res://resources/weapon_level_data/rapid_missile_level_2.tres" id="38_rm2"]
 [ext_resource type="Resource" path="res://resources/weapon_level_data/rapid_missile_level_3.tres" id="39_rm3"]
 
+[ext_resource type="Resource" path="res://resources/building_data/arrow_tower.tres" id="p50_bd_00"]
+[ext_resource type="Resource" path="res://resources/building_data/fire_brazier.tres" id="p50_bd_01"]
+[ext_resource type="Resource" path="res://resources/building_data/magic_obelisk.tres" id="p50_bd_02"]
+[ext_resource type="Resource" path="res://resources/building_data/poison_vat.tres" id="p50_bd_03"]
+[ext_resource type="Resource" path="res://resources/building_data/ballista.tres" id="p50_bd_04"]
+[ext_resource type="Resource" path="res://resources/building_data/archer_barracks.tres" id="p50_bd_05"]
+[ext_resource type="Resource" path="res://resources/building_data/anti_air_bolt.tres" id="p50_bd_06"]
+[ext_resource type="Resource" path="res://resources/building_data/shield_generator.tres" id="p50_bd_07"]
+[ext_resource type="Resource" path="res://resources/building_data/spike_spitter.tres" id="p50_bd_08"]
+[ext_resource type="Resource" path="res://resources/building_data/ember_vent.tres" id="p50_bd_09"]
+[ext_resource type="Resource" path="res://resources/building_data/frost_pinger.tres" id="p50_bd_10"]
+[ext_resource type="Resource" path="res://resources/building_data/netgun.tres" id="p50_bd_11"]
+[ext_resource type="Resource" path="res://resources/building_data/acid_dripper.tres" id="p50_bd_12"]
+[ext_resource type="Resource" path="res://resources/building_data/wolfden.tres" id="p50_bd_13"]
+[ext_resource type="Resource" path="res://resources/building_data/crow_roost.tres" id="p50_bd_14"]
+[ext_resource type="Resource" path="res://resources/building_data/alarm_totems.tres" id="p50_bd_15"]
+[ext_resource type="Resource" path="res://resources/building_data/crossfire_nest.tres" id="p50_bd_16"]
+[ext_resource type="Resource" path="res://resources/building_data/bolt_shrine.tres" id="p50_bd_17"]
+[ext_resource type="Resource" path="res://resources/building_data/thornwall.tres" id="p50_bd_18"]
+[ext_resource type="Resource" path="res://resources/building_data/field_medic.tres" id="p50_bd_19"]
+[ext_resource type="Resource" path="res://resources/building_data/greatbow_turret.tres" id="p50_bd_20"]
+[ext_resource type="Resource" path="res://resources/building_data/molten_caster.tres" id="p50_bd_21"]
+[ext_resource type="Resource" path="res://resources/building_data/arcane_lens.tres" id="p50_bd_22"]
+[ext_resource type="Resource" path="res://resources/building_data/plague_mortar.tres" id="p50_bd_23"]
+[ext_resource type="Resource" path="res://resources/building_data/bear_den.tres" id="p50_bd_24"]
+[ext_resource type="Resource" path="res://resources/building_data/gust_cannon.tres" id="p50_bd_25"]
+[ext_resource type="Resource" path="res://resources/building_data/warden_shrine.tres" id="p50_bd_26"]
+[ext_resource type="Resource" path="res://resources/building_data/iron_cleric.tres" id="p50_bd_27"]
+[ext_resource type="Resource" path="res://resources/building_data/siege_ballista.tres" id="p50_bd_28"]
+[ext_resource type="Resource" path="res://resources/building_data/chain_lightning.tres" id="p50_bd_29"]
+[ext_resource type="Resource" path="res://resources/building_data/fortress_cannon.tres" id="p50_bd_30"]
+[ext_resource type="Resource" path="res://resources/building_data/dragon_forge.tres" id="p50_bd_31"]
+[ext_resource type="Resource" path="res://resources/building_data/void_obelisk.tres" id="p50_bd_32"]
+[ext_resource type="Resource" path="res://resources/building_data/plague_cauldron.tres" id="p50_bd_33"]
+[ext_resource type="Resource" path="res://resources/building_data/barracks_fortress.tres" id="p50_bd_34"]
+[ext_resource type="Resource" path="res://resources/building_data/citadel_aura.tres" id="p50_bd_35"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_grunt.tres" id="p50_en_00"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_brute.tres" id="p50_en_01"]
+[ext_resource type="Resource" path="res://resources/enemy_data/goblin_firebug.tres" id="p50_en_02"]
+[ext_resource type="Resource" path="res://resources/enemy_data/plague_zombie.tres" id="p50_en_03"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_archer.tres" id="p50_en_04"]
+[ext_resource type="Resource" path="res://resources/enemy_data/bat_swarm.tres" id="p50_en_05"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_skirmisher.tres" id="p50_en_06"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_ratling.tres" id="p50_en_07"]
+[ext_resource type="Resource" path="res://resources/enemy_data/goblin_runts.tres" id="p50_en_08"]
+[ext_resource type="Resource" path="res://resources/enemy_data/hound.tres" id="p50_en_09"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_raider.tres" id="p50_en_10"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_marksman.tres" id="p50_en_11"]
+[ext_resource type="Resource" path="res://resources/enemy_data/war_shaman.tres" id="p50_en_12"]
+[ext_resource type="Resource" path="res://resources/enemy_data/plague_shaman.tres" id="p50_en_13"]
+[ext_resource type="Resource" path="res://resources/enemy_data/totem_carrier.tres" id="p50_en_14"]
+[ext_resource type="Resource" path="res://resources/enemy_data/harpy_scout.tres" id="p50_en_15"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_shieldbearer.tres" id="p50_en_16"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_berserker.tres" id="p50_en_17"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_saboteur.tres" id="p50_en_18"]
+[ext_resource type="Resource" path="res://resources/enemy_data/hexbreaker.tres" id="p50_en_19"]
+[ext_resource type="Resource" path="res://resources/enemy_data/wyvern_rider.tres" id="p50_en_20"]
+[ext_resource type="Resource" path="res://resources/enemy_data/brood_carrier.tres" id="p50_en_21"]
+[ext_resource type="Resource" path="res://resources/enemy_data/troll.tres" id="p50_en_22"]
+[ext_resource type="Resource" path="res://resources/enemy_data/ironclad_crusher.tres" id="p50_en_23"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_ogre.tres" id="p50_en_24"]
+[ext_resource type="Resource" path="res://resources/enemy_data/war_boar.tres" id="p50_en_25"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orc_skythrower.tres" id="p50_en_26"]
+[ext_resource type="Resource" path="res://resources/enemy_data/warlords_guard.tres" id="p50_en_27"]
+[ext_resource type="Resource" path="res://resources/enemy_data/orcish_spirit.tres" id="p50_en_28"]
+[ext_resource type="Resource" path="res://resources/enemy_data/plague_herald.tres" id="p50_en_29"]
+[ext_resource type="Resource" path="res://resources/wave_patterns/default_campaign_pattern.tres" id="wave_pattern_default"]
+[ext_resource type="Resource" path="res://resources/research_data/base_structures_tree.tres" id="p50_rn_00"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_anti_air.tres" id="p50_rn_01"]
+[ext_resource type="Resource" path="res://resources/research_data/arrow_tower_plus_damage.tres" id="p50_rn_02"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_shield_generator.tres" id="p50_rn_03"]
+[ext_resource type="Resource" path="res://resources/research_data/fire_brazier_plus_range.tres" id="p50_rn_04"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_archer_barracks.tres" id="p50_rn_05"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_spike_spitter.tres" id="p50_rn_06"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_wolfden.tres" id="p50_rn_07"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_crow_roost.tres" id="p50_rn_08"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_frost_pinger.tres" id="p50_rn_09"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_greatbow_turret.tres" id="p50_rn_10"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_bear_den.tres" id="p50_rn_11"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_warden_shrine.tres" id="p50_rn_12"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_chain_lightning.tres" id="p50_rn_13"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_gust_cannon.tres" id="p50_rn_14"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_siege_ballista.tres" id="p50_rn_15"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_molten_caster.tres" id="p50_rn_16"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_arcane_lens.tres" id="p50_rn_17"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_fortress_cannon.tres" id="p50_rn_18"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_dragon_forge.tres" id="p50_rn_19"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_void_obelisk.tres" id="p50_rn_20"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_plague_cauldron.tres" id="p50_rn_21"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_barracks_fortress.tres" id="p50_rn_22"]
+[ext_resource type="Resource" path="res://resources/research_data/unlock_citadel_aura.tres" id="p50_rn_23"]
 [node name="Main" type="Node3D" unique_id=278141263]
 script = ExtResource("32_mainroot")
 
@@ -85,7 +157,7 @@ auto_fire_enabled = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
 
 [node name="HexGrid" parent="." unique_id=1556408131 instance=ExtResource("3_hexgrid")]
-building_data_registry = Array[ExtResource("6_c6pm6")]([ExtResource("7_5he1u"), ExtResource("8_5poiv"), ExtResource("9_2cjbq"), ExtResource("10_chjal"), ExtResource("11_cjqg0"), ExtResource("12_vchkt"), ExtResource("13_txyw0"), ExtResource("14_vc5cj")])
+building_data_registry = Array[ExtResource("6_c6pm6")]([ExtResource("p50_bd_00"), ExtResource("p50_bd_01"), ExtResource("p50_bd_02"), ExtResource("p50_bd_03"), ExtResource("p50_bd_04"), ExtResource("p50_bd_05"), ExtResource("p50_bd_06"), ExtResource("p50_bd_07"), ExtResource("p50_bd_08"), ExtResource("p50_bd_09"), ExtResource("p50_bd_10"), ExtResource("p50_bd_11"), ExtResource("p50_bd_12"), ExtResource("p50_bd_13"), ExtResource("p50_bd_14"), ExtResource("p50_bd_15"), ExtResource("p50_bd_16"), ExtResource("p50_bd_17"), ExtResource("p50_bd_18"), ExtResource("p50_bd_19"), ExtResource("p50_bd_20"), ExtResource("p50_bd_21"), ExtResource("p50_bd_22"), ExtResource("p50_bd_23"), ExtResource("p50_bd_24"), ExtResource("p50_bd_25"), ExtResource("p50_bd_26"), ExtResource("p50_bd_27"), ExtResource("p50_bd_28"), ExtResource("p50_bd_29"), ExtResource("p50_bd_30"), ExtResource("p50_bd_31"), ExtResource("p50_bd_32"), ExtResource("p50_bd_33"), ExtResource("p50_bd_34"), ExtResource("p50_bd_35")])
 
 [node name="SpawnPoints" type="Node3D" parent="." unique_id=889060022]
 
@@ -142,7 +214,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
 
 [node name="WaveManager" type="Node" parent="Managers" unique_id=1618397993]
 script = ExtResource("4_wavemanager")
-enemy_data_registry = Array[ExtResource("7_yq6so")]([ExtResource("8_fv21b"), ExtResource("9_tel4y"), ExtResource("10_qkpxi"), ExtResource("11_5q0nq"), ExtResource("12_dgi5k"), ExtResource("13_j8jky")])
+enemy_data_registry = Array[ExtResource("7_yq6so")]([ExtResource("p50_en_00"), ExtResource("p50_en_01"), ExtResource("p50_en_02"), ExtResource("p50_en_03"), ExtResource("p50_en_04"), ExtResource("p50_en_05"), ExtResource("p50_en_06"), ExtResource("p50_en_07"), ExtResource("p50_en_08"), ExtResource("p50_en_09"), ExtResource("p50_en_10"), ExtResource("p50_en_11"), ExtResource("p50_en_12"), ExtResource("p50_en_13"), ExtResource("p50_en_14"), ExtResource("p50_en_15"), ExtResource("p50_en_16"), ExtResource("p50_en_17"), ExtResource("p50_en_18"), ExtResource("p50_en_19"), ExtResource("p50_en_20"), ExtResource("p50_en_21"), ExtResource("p50_en_22"), ExtResource("p50_en_23"), ExtResource("p50_en_24"), ExtResource("p50_en_25"), ExtResource("p50_en_26"), ExtResource("p50_en_27"), ExtResource("p50_en_28"), ExtResource("p50_en_29")])
+wave_pattern = ExtResource("wave_pattern_default")
 
 [node name="SpellManager" type="Node" parent="Managers" unique_id=1971048015]
 script = ExtResource("5_spellmanager")
@@ -150,9 +223,9 @@ spell_registry = Array[ExtResource("15_kmb1v")]([ExtResource("16_fuf3a"), ExtRes
 
 [node name="ResearchManager" type="Node" parent="Managers" unique_id=1112433558]
 script = ExtResource("6_researchmanager")
-research_nodes = Array[ExtResource("18_pibwh")]([ExtResource("19_c6pm6"), ExtResource("25_raa"), ExtResource("26_atd"), ExtResource("27_usg"), ExtResource("28_fbr"), ExtResource("29_uab")])
+research_nodes = Array[ExtResource("18_pibwh")]([ExtResource("p50_rn_00"), ExtResource("p50_rn_01"), ExtResource("p50_rn_02"), ExtResource("p50_rn_03"), ExtResource("p50_rn_04"), ExtResource("p50_rn_05"), ExtResource("p50_rn_06"), ExtResource("p50_rn_07"), ExtResource("p50_rn_08"), ExtResource("p50_rn_09"), ExtResource("p50_rn_10"), ExtResource("p50_rn_11"), ExtResource("p50_rn_12"), ExtResource("p50_rn_13"), ExtResource("p50_rn_14"), ExtResource("p50_rn_15"), ExtResource("p50_rn_16"), ExtResource("p50_rn_17"), ExtResource("p50_rn_18"), ExtResource("p50_rn_19"), ExtResource("p50_rn_20"), ExtResource("p50_rn_21"), ExtResource("p50_rn_22"), ExtResource("p50_rn_23")])
 dev_unlock_all_research = false
-dev_unlock_anti_air_only = true
+dev_unlock_anti_air_only = false
 
 [node name="ShopManager" type="Node" parent="Managers" unique_id=587576636]
 script = ExtResource("7_shopmanager")
@@ -200,6 +273,12 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="BuildMenu" parent="UI" unique_id=526512980 instance=ExtResource("11_buildmenu")]
+layout_mode = 3
+anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResearchPanel" parent="UI" instance=ExtResource("11_researchpanel")]
 layout_mode = 3
 anchors_preset = 15
 grow_horizontal = 2

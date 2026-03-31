@@ -84,6 +84,8 @@ QUICK_SUITES=(
 	"res://tests/unit/test_mission_spawn_routing.gd"
 	"res://tests/unit/test_td_resource_helpers.gd"
 	"res://tests/unit/test_economy_mission_integration.gd"
+	"res://tests/unit/test_aura_healer_runtime.gd"
+	"res://tests/unit/test_simbot_balance_integration.gd"
 )
 
 gdunit_args=()

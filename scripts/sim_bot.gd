@@ -7,6 +7,8 @@
 class_name SimBot
 extends Node
 
+const _SimBotLoadoutsScript = preload("res://scripts/simbot/simbot_loadouts.gd")
+
 var _is_active: bool = false
 var is_active: bool:
 	get:
@@ -374,9 +376,11 @@ func run_single(profile_id: String, run_index: int, seed_value: int) -> Dictiona
 	return result
 
 ## Runs multiple missions for one profile and appends results to CSV.
-func run_batch(profile_id: String, runs: int, base_seed: int = 0, csv_path: String = "") -> void:
+func run_batch(profile_id: String, runs: int, base_seed: int = 0, csv_path: String = "", debug_batch: bool = false) -> void:
 	if runs <= 0:
 		return
+
+	CombatStatsTracker.debug_mode = debug_batch
 
 	if _csv_columns.is_empty():
 		_csv_columns = _build_csv_columns()
@@ -522,7 +526,10 @@ func _activate_for_run(profile_id: String, run_index: int, seed_value: int) -> v
 	_profile = _load_profile(profile_id)
 	_current_run_index = run_index
 	_base_seed = seed_value
-	CombatStatsTracker.set_session_seed(seed_value)
+	var mid: String = profile_id
+	if _profile != null and not _profile.profile_id.is_empty():
+		mid = _profile.profile_id
+	CombatStatsTracker.begin_mission(mid, seed_value, 0.0)
 	# SOURCE: deterministic RNG seeding for simulation testing.
 	# In Godot 4.x, RandomNumberGenerator.seed is an int property (not a callable).
 	_rng.seed = seed_value
@@ -743,9 +750,7 @@ func _choose_build_or_upgrade_action() -> Dictionary:
 
 		if not _hex_grid.is_building_available(btype):
 			continue
-		var pg: int = EconomyManager.get_gold_cost(bdata)
-		var pm: int = EconomyManager.get_material_cost(bdata)
-		if not EconomyManager.can_afford(pg, pm):
+		if not EconomyManager.can_afford_building(bdata):
 			continue
 
 		if weight > best_weight:
@@ -804,8 +809,8 @@ func _choose_upgrade_action_if_desired(build_count: int) -> Dictionary:
 		var bdata: BuildingData = building.get_building_data()
 		if bdata == null:
 			continue
-		var ug: Vector2i = building.get_upgrade_cost()
-		if not EconomyManager.can_afford(ug.x, ug.y):
+		var ug: Dictionary = building.get_upgrade_cost()
+		if not EconomyManager.can_afford(int(ug.get("gold", 0)), int(ug.get("material", 0))):
 			continue
 
 		var base_weight: float = _get_build_weight_for_type(bdata.building_type)
@@ -1123,6 +1128,8 @@ func _finalize_metrics() -> void:
 	var elapsed_usec: int = Time.get_ticks_usec() - _run_start_usec
 	_metrics["duration_seconds"] = float(elapsed_usec) / 1000000.0
 
+	CombatStatsTracker.flush_to_disk()
+
 	# TUNING: simple difficulty score.
 	var base: float = float(waves_cleared) / float(max_waves) * 1000.0
 	var tower_penalty: float = float(_metrics.get("tower_damage_taken", 0)) * 0.3
@@ -1180,3 +1187,143 @@ func _store_run_single_batch_log(result: Dictionary, profile_id: String, seed_va
 	_last_batch_runs = 1
 	_last_batch_base_seed = seed_value
 	_last_batch_csv_path = ""
+
+
+# ============================================================================
+# Prompt 51: scripted campaign balance sweeps + CombatStatsTracker run labels
+# ============================================================================
+
+## Headless orchestrator: mission(s) × loadouts, CSV under [code]user://simbot/runs/[/code].
+func run_balance_sweep() -> void:
+	var missions: Array[String] = _get_balance_missions()
+	var loadout_names: Array[String] = ["balanced", "summoner_heavy", "artillery_air"]
+	var run_idx: int = 0
+	for mission_id: String in missions:
+		for loadout_name: String in loadout_names:
+			await _run_single_balance_run(mission_id, loadout_name, run_idx)
+			run_idx += 1
+
+
+func _get_balance_missions() -> Array[String]:
+	return ["mission_01"]
+
+
+func _run_single_balance_run(mission_id: String, loadout_name: String, run_idx: int) -> void:
+	print("SimBot balance run: %s / %s" % [mission_id, loadout_name])
+	deactivate()
+	var seed_val: int = run_idx * 7919 + 104729
+	CombatStatsTracker.set_session_seed(seed_val)
+	CombatStatsTracker.begin_run(mission_id, loadout_name)
+	seed(seed_val)
+
+	_wave_manager = get_node_or_null("/root/Main/Managers/WaveManager") as WaveManager
+	_hex_grid = get_node_or_null("/root/Main/HexGrid") as HexGrid
+	_research_manager = get_node_or_null("/root/Main/Managers/ResearchManager") as ResearchManager
+	var spell_mgr: SpellManager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
+
+	if _wave_manager == null or _hex_grid == null:
+		push_error("SimBot._run_single_balance_run: WaveManager or HexGrid missing.")
+		CombatStatsTracker.end_run()
+		return
+
+	_wave_manager.reset_for_new_mission()
+	_wave_manager.clear_all_enemies()
+	_hex_grid.clear_all_buildings()
+	if spell_mgr != null:
+		spell_mgr.reset_to_defaults()
+
+	GameManager.start_new_game()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	GameManager.enter_build_mode()
+	var defs: Array = _SimBotLoadoutsScript.get_loadout(loadout_name)
+	_unlock_loadout_buildings(defs)
+	await _place_loadout(defs)
+	GameManager.exit_build_mode()
+
+	await _balance_resolve_mission()
+	CombatStatsTracker.end_run()
+
+
+func _unlock_loadout_buildings(defs: Array) -> void:
+	if _research_manager == null:
+		return
+	var seen: Dictionary = {}
+	for def: Variant in defs:
+		if not def is Dictionary:
+			continue
+		var d: Dictionary = def as Dictionary
+		var bid: String = str(d.get("building_id", ""))
+		if bid.is_empty() or seen.has(bid):
+			continue
+		seen[bid] = true
+		var bd: BuildingData = _find_building_data_by_id(bid)
+		if bd == null:
+			continue
+		if bd.is_locked and bd.unlock_research_id.strip_edges() != "":
+			_research_manager.unlock_node(bd.unlock_research_id)
+
+
+func _find_building_data_by_id(building_id: String) -> BuildingData:
+	if _hex_grid == null:
+		return null
+	for bd: BuildingData in _hex_grid.building_data_registry:
+		if bd != null and bd.building_id == building_id:
+			return bd
+	return null
+
+
+func _place_loadout(defs: Array) -> void:
+	if _hex_grid == null:
+		return
+	for def: Variant in defs:
+		if not def is Dictionary:
+			continue
+		var d: Dictionary = def as Dictionary
+		var bid: String = str(d.get("building_id", ""))
+		var count: int = int(d.get("count", 0))
+		var bd: BuildingData = _find_building_data_by_id(bid)
+		if bd == null:
+			continue
+		var to_place: int = count
+		while to_place > 0:
+			var empties: Array[int] = _hex_grid.get_empty_slots()
+			if empties.is_empty():
+				break
+			empties.sort()
+			if not EconomyManager.can_afford_building(bd):
+				break
+			var placed: bool = false
+			for slot: int in empties:
+				if _hex_grid.place_building(slot, bd.building_type):
+					placed = true
+					break
+			if not placed:
+				break
+			to_place -= 1
+			await get_tree().process_frame
+
+
+func _balance_resolve_mission() -> void:
+	var max_frames: int = 12000
+	var frame_count: int = 0
+	while frame_count < max_frames:
+		frame_count += 1
+		var state: Types.GameState = GameManager.get_game_state()
+		if _is_balance_terminal_state(state):
+			break
+		if state == Types.GameState.COMBAT or state == Types.GameState.WAVE_COUNTDOWN:
+			if _wave_manager != null and _wave_manager.is_counting_down():
+				_wave_manager.force_spawn_wave(_wave_manager.get_current_wave_number())
+		await get_tree().process_frame
+
+
+func _is_balance_terminal_state(state: Types.GameState) -> bool:
+	return (
+			state == Types.GameState.BETWEEN_MISSIONS
+			or state == Types.GameState.MISSION_FAILED
+			or state == Types.GameState.GAME_WON
+			or state == Types.GameState.GAME_OVER
+	)

@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_buildingdata")
+building_id = "ballista"
 building_type = 4
 display_name = "Ballista"
 gold_cost = 100
@@ -21,4 +22,8 @@ targets_ground = true
 is_locked = true
 unlock_research_id = "unlock_ballista"
 color = Color(0.6, 0.4, 0.1, 1.0)
+footprint_size_class = 0
+size_class = "MEDIUM"
+role_tags = Array[String](["DPS"])
+balance_status = "BASELINE"
 

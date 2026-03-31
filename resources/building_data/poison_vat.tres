@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_buildingdata")
+building_id = "poison_vat"
 building_type = 3
 display_name = "Poison Vat"
 gold_cost = 55
@@ -28,4 +29,8 @@ dot_duration = 5.0
 dot_effect_type = "poison"
 dot_source_id = "poison_vat"
 dot_in_addition_to_hit = true
+footprint_size_class = 0
+size_class = "SMALL"
+role_tags = Array[String](["DPS"])
+balance_status = "BASELINE"
 

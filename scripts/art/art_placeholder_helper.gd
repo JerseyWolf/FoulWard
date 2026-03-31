@@ -349,43 +349,19 @@ static func _load_icon_texture(generated_path: String, placeholder_path: String)
 # ---------------------------------------------------------------------------
 
 static func _get_enemy_token(enemy_type: Types.EnemyType) -> String:
-	match enemy_type:
-		Types.EnemyType.ORC_GRUNT:
-			return "orc_grunt"
-		Types.EnemyType.ORC_BRUTE:
-			return "orc_brute"
-		Types.EnemyType.GOBLIN_FIREBUG:
-			return "goblin_firebug"
-		Types.EnemyType.PLAGUE_ZOMBIE:
-			return "plague_zombie"
-		Types.EnemyType.ORC_ARCHER:
-			return "orc_archer"
-		Types.EnemyType.BAT_SWARM:
-			return "bat_swarm"
-		_:
-			return "unknown"
+	var i: int = int(enemy_type)
+	var keys: Array = Types.EnemyType.keys()
+	if i >= 0 and i < keys.size():
+		return str(keys[i]).to_lower()
+	return "unknown"
 
 
 static func _get_building_token(building_type: Types.BuildingType) -> String:
-	match building_type:
-		Types.BuildingType.ARROW_TOWER:
-			return "arrow_tower"
-		Types.BuildingType.FIRE_BRAZIER:
-			return "fire_brazier"
-		Types.BuildingType.MAGIC_OBELISK:
-			return "magic_obelisk"
-		Types.BuildingType.POISON_VAT:
-			return "poison_vat"
-		Types.BuildingType.BALLISTA:
-			return "ballista"
-		Types.BuildingType.ARCHER_BARRACKS:
-			return "archer_barracks"
-		Types.BuildingType.ANTI_AIR_BOLT:
-			return "anti_air_bolt"
-		Types.BuildingType.SHIELD_GENERATOR:
-			return "shield_generator"
-		_:
-			return "unknown"
+	var i: int = int(building_type)
+	var keys: Array = Types.BuildingType.keys()
+	if i >= 0 and i < keys.size():
+		return str(keys[i]).to_lower()
+	return "unknown"
 
 
 static func _get_faction_token(faction_id: StringName) -> String:

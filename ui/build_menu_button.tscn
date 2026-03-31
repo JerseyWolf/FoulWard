@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3 uid="uid://build_menu_button_p11"]
+
+[ext_resource type="Script" path="res://ui/build_menu_button.gd" id="1_script"]
+
+[node name="BuildMenuButton" type="Button"]
+custom_minimum_size = Vector2(248, 72)
+script = ExtResource("1_script")
+flat = false
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 4.0
+offset_right = -6.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="CostLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+mouse_filter = 2
+text = "0 gold · 0 mat"
+
+[node name="RoleLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+mouse_filter = 2
+autowrap_mode = 3
+
+[node name="LockOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.1, 0.1, 0.1, 0.65)

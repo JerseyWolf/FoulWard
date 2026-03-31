@@ -8,9 +8,10 @@
 #
 # ASSUMPTION: EnemyContainer at /root/Main/EnemyContainer (Node3D).
 # ASSUMPTION: SpawnPoints at /root/Main/SpawnPoints with 10 Marker3D children.
-# ASSUMPTION: enemy_data_registry has exactly 6 entries in Types.EnemyType order.
+# ASSUMPTION: enemy_data_registry has exactly 30 entries (one per Types.EnemyType).
 #
-# Prompt 9: Waves use FactionData roster weights (Option B) while total count stays N×6.
+# Prompt 10: Regular waves use [WaveComposer] + [WavePatternData] (point budget, wave_tags, tier).
+# FactionData roster weights are no longer used for normal wave spawns (boss/escort/mission queues unchanged).
 #
 # Credit: Foul Ward SYSTEMS_part1.md §1 (WaveManager spec) — Foul Ward team.
 # Credit: Godot Engine Documentation — SceneTree.get_nodes_in_group()
@@ -33,6 +34,7 @@ const ENDLESS_SPAWN_MULT_PER_DAY: float = 0.01
 const FactionDataType = preload("res://scripts/resources/faction_data.gd")
 const FactionRosterEntryType = preload("res://scripts/resources/faction_roster_entry.gd")
 const BossSceneDefault: PackedScene = preload("res://scenes/bosses/boss_base.tscn")
+const WaveComposerScript: Script = preload("res://scripts/wave_composer.gd")
 
 # ---------------------------------------------------------------------------
 # EXPORTS
@@ -45,11 +47,15 @@ const BossSceneDefault: PackedScene = preload("res://scenes/bosses/boss_base.tsc
 @export var first_wave_countdown_seconds: float = 3.0
 
 ## Maximum number of waves per mission.
-@export var max_waves: int = 10
+@export var max_waves: int = 5
 
-## One EnemyData resource per enemy type. MUST have exactly 6 entries,
-## in the same order as Types.EnemyType (ORC_GRUNT … BAT_SWARM).
+## One EnemyData resource per enemy type (30 entries, Types.EnemyType order).
 @export var enemy_data_registry: Array[EnemyData] = []
+
+## Campaign wave curve (tags, modifiers, point budget). Defaults to default_campaign_pattern.tres.
+@export var wave_pattern: Resource = null
+
+var _composer: RefCounted = null
 
 # ---------------------------------------------------------------------------
 # SCENE REFERENCES
@@ -118,6 +124,12 @@ var _active_spawn_queue: Array[Dictionary] = []
 var _queue_spawn_index: int = 0
 var _wave_spawn_elapsed: float = 0.0
 
+## Staggered spawn queue for [WaveComposer] output (regular waves).
+var _spawn_composed_queue: Array[EnemyData] = []
+var _spawn_composed_cursor: int = 0
+var _spawn_composed_timer: float = 0.0
+var _is_spawning_composed: bool = false
+
 # ---------------------------------------------------------------------------
 # READY
 # ---------------------------------------------------------------------------
@@ -136,9 +148,12 @@ static func get_effective_spawn_count_multiplier_for_day(day_index: int) -> floa
 
 func _ready() -> void:
 	print("[WaveManager] _ready: enemy_data_registry size=%d" % enemy_data_registry.size())
-	if enemy_data_registry.size() != 6:
-		push_error("WaveManager: enemy_data_registry must have exactly 6 entries, got %d" % enemy_data_registry.size())
+	if enemy_data_registry.size() != 30:
+		push_error("WaveManager: enemy_data_registry must have exactly 30 entries, got %d" % enemy_data_registry.size())
 		return
+	if wave_pattern == null:
+		wave_pattern = load("res://resources/wave_patterns/default_campaign_pattern.tres")
+	_composer = WaveComposerScript.new(enemy_data_registry, wave_pattern) as RefCounted
 	SignalBus.enemy_killed.connect(_on_enemy_killed)
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
 	_load_faction_registry()
@@ -152,6 +167,8 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not _is_sequence_running:
 		return
+	if _is_wave_active and _is_spawning_composed:
+		_process_composed_spawn(delta)
 	if _is_wave_active and _using_spawn_queue:
 		_process_spawn_queue(delta)
 	if not _is_counting_down:
@@ -215,6 +232,11 @@ func is_counting_down() -> bool:
 	return _is_counting_down
 
 
+## True while composed-wave enemies are still being stagger-spawned.
+func has_pending_composed_spawns() -> bool:
+	return _is_spawning_composed
+
+
 ## True while inter-wave countdown is frozen during BUILD_MODE.
 func is_wave_countdown_paused() -> bool:
 	return _countdown_paused
@@ -249,6 +271,10 @@ func reset_for_new_mission() -> void:
 	_active_spawn_queue = []
 	_queue_spawn_index = 0
 	_wave_spawn_elapsed = 0.0
+	_spawn_composed_queue.clear()
+	_spawn_composed_cursor = 0
+	_spawn_composed_timer = 0.0
+	_is_spawning_composed = false
 	clear_all_enemies()
 	resolve_current_faction()
 
@@ -350,7 +376,16 @@ func get_mini_boss_info_for_wave(wave_index: int) -> Dictionary:
 ## Immediately removes all enemies from the scene and the "enemies" group.
 ## remove_from_group() is called before queue_free() so get_living_enemy_count()
 ## is accurate within the same frame.
+## Also cancels any in-progress staggered or mission spawn queue so wave-cleared logic can run.
 func clear_all_enemies() -> void:
+	_is_spawning_composed = false
+	_spawn_composed_queue.clear()
+	_spawn_composed_cursor = 0
+	_spawn_composed_timer = 0.0
+	_using_spawn_queue = false
+	_active_spawn_queue.clear()
+	_queue_spawn_index = 0
+	_wave_spawn_elapsed = 0.0
 	for node: Node in get_tree().get_nodes_in_group("enemies"):
 		node.remove_from_group("enemies")
 		node.queue_free()
@@ -410,7 +445,41 @@ func spawn_enemy_on_path(enemy_data: EnemyData, path_data: RoutePathData) -> Nod
 	_place_enemy_for_path(enemy, path_data, tuned)
 	if not enemy.is_in_group("enemies"):
 		enemy.add_to_group("enemies")
+	var pos_xz: Vector2 = Vector2(enemy.global_position.x, enemy.global_position.z)
+	SignalBus.enemy_spawned.emit(tuned.enemy_type, pos_xz)
 	return enemy
+
+
+## Spawns one enemy at an explicit world position (e.g. Brood Carrier on_death_spawn). Uses current wave multipliers.
+func spawn_enemy_at_position(enemy_data: EnemyData, world_position: Vector3) -> Node:
+	if enemy_data == null:
+		return null
+	if _enemy_container == null:
+		push_warning("WaveManager.spawn_enemy_at_position: enemy_container is null.")
+		return null
+	var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
+	_enemy_container.add_child(enemy)
+	var tuned: EnemyData = enemy_data.duplicate(true) as EnemyData
+	tuned.max_hp = maxi(1, int(round(float(enemy_data.max_hp) * enemy_hp_multiplier)))
+	tuned.damage = maxi(1, int(round(float(enemy_data.damage) * enemy_damage_multiplier)))
+	tuned.gold_reward = maxi(0, int(round(float(enemy_data.gold_reward) * gold_reward_multiplier)))
+	enemy.initialize(tuned)
+	enemy.global_position = world_position
+	if enemy_data.is_flying:
+		enemy.global_position.y = EnemyBase.FLYING_HEIGHT
+	if not enemy.is_in_group("enemies"):
+		enemy.add_to_group("enemies")
+	var pos_xz2: Vector2 = Vector2(enemy.global_position.x, enemy.global_position.z)
+	SignalBus.enemy_spawned.emit(tuned.enemy_type, pos_xz2)
+	return enemy
+
+
+## Looks up registry EnemyData by [enum Types.EnemyType] ordinal.
+func get_enemy_data_by_type(type: int) -> EnemyData:
+	for ed: EnemyData in enemy_data_registry:
+		if int(ed.enemy_type) == type:
+			return ed
+	return null
 
 # ---------------------------------------------------------------------------
 # PRIVATE — FACTION REGISTRY
@@ -491,6 +560,11 @@ func _spawn_boss_wave() -> int:
 	if not boss.is_in_group("enemies"):
 		boss.add_to_group("enemies")
 	boss.initialize_boss_data(boss_data)
+	var boss_ed: EnemyData = boss.get_enemy_data()
+	var boss_t: Types.EnemyType = Types.EnemyType.ORC_GRUNT
+	if boss_ed != null:
+		boss_t = boss_ed.enemy_type
+	SignalBus.enemy_spawned.emit(boss_t, Vector2(boss.global_position.x, boss.global_position.z))
 	var count: int = 1
 	for escort_id: String in boss_data.escort_unit_ids:
 		var escort_data: EnemyData = _resolve_escort_enemy_data(escort_id)
@@ -514,6 +588,7 @@ func _spawn_boss_wave() -> int:
 			enemy.global_position.y = 5.0
 		if not enemy.is_in_group("enemies"):
 			enemy.add_to_group("enemies")
+		SignalBus.enemy_spawned.emit(tuned.enemy_type, Vector2(enemy.global_position.x, enemy.global_position.z))
 		count += 1
 	return count
 
@@ -549,7 +624,7 @@ func _begin_countdown_for_next_wave() -> void:
 	SignalBus.wave_countdown_started.emit(_current_wave, duration)
 
 
-## Wave formula: total enemies = N × 6 (scaled by faction difficulty_offset), split by roster weights.
+## Regular waves: [WaveComposer] fills a point budget from [member wave_pattern] tags/modifiers/tiers.
 func _spawn_wave(wave_number: int) -> void:
 	if wave_number < 1 or wave_number > max_waves:
 		push_warning("WaveManager: _spawn_wave() invalid wave_number %d." % wave_number)
@@ -596,13 +671,9 @@ func _spawn_wave(wave_number: int) -> void:
 				call_deferred("_check_wave_cleared")
 			return
 
-	var roster_entries: Array[FactionRosterEntryType] = _current_faction.get_entries_for_wave(wave_number)
-	if roster_entries.is_empty():
-		push_error(
-			"WaveManager._spawn_wave: faction '%s' has no roster entries for wave %d"
-			% [_current_faction.faction_id, wave_number]
-		)
-		SignalBus.wave_started.emit(_current_wave, total_spawned)
+	if _composer == null:
+		push_error("WaveManager._spawn_wave: WaveComposer not initialised (wave_pattern / registry).")
+		SignalBus.wave_started.emit(wave_number, total_spawned)
 		if total_spawned == 0:
 			call_deferred("_check_wave_cleared")
 		return
@@ -612,48 +683,22 @@ func _spawn_wave(wave_number: int) -> void:
 		push_warning("WaveManager: No spawn points found under SpawnPoints node.")
 		return
 
-	var total_enemies: int = _compute_total_enemies_for_wave(wave_number, _current_faction)
-	var per_entry_counts: Array[int] = _allocate_counts_for_roster(roster_entries, total_enemies, wave_number)
-
-	for i: int in range(roster_entries.size()):
-		var entry: FactionRosterEntryType = roster_entries[i]
-		var count: int = per_entry_counts[i]
-		if count <= 0:
-			continue
-
-		var enemy_data: EnemyData = _get_enemy_data_for_type(entry.enemy_type)
-		if enemy_data == null:
-			push_error("WaveManager._spawn_wave: No EnemyData for enemy_type %s" % str(entry.enemy_type))
-			continue
-
-		for _j: int in range(count):
-			var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
-
-			_enemy_container.add_child(enemy)
-
-			var tuned_enemy_data: EnemyData = enemy_data.duplicate(true) as EnemyData
-			tuned_enemy_data.max_hp = maxi(1, int(round(float(enemy_data.max_hp) * enemy_hp_multiplier)))
-			tuned_enemy_data.damage = maxi(1, int(round(float(enemy_data.damage) * enemy_damage_multiplier)))
-			tuned_enemy_data.gold_reward = maxi(0, int(round(float(enemy_data.gold_reward) * gold_reward_multiplier)))
-			enemy.initialize(tuned_enemy_data)
-
-			var spawn_marker: Marker3D = spawn_point_nodes.pick_random() as Marker3D
-			var offset: Vector3 = Vector3(
-				randf_range(-2.0, 2.0),
-				0.0,
-				randf_range(-2.0, 2.0)
-			)
-			enemy.global_position = spawn_marker.global_position + offset
-
-			if enemy_data.is_flying:
-				enemy.global_position.y = 5.0
-
-			total_spawned += 1
-
-	print("[WaveManager] wave %d spawned: %d enemies total" % [wave_number, total_spawned])
-	SignalBus.wave_started.emit(wave_number, total_spawned)
-
-	if total_spawned == 0:
+	var wave_idx_0: int = wave_number - 1
+	seed(mission_spawn_seed + wave_number * 7919 + 17)
+	var enemies_for_wave: Array[EnemyData] = _composer.compose_wave(wave_idx_0, spawn_count_multiplier)
+	_spawn_composed_queue = enemies_for_wave
+	_spawn_composed_cursor = 0
+	_spawn_composed_timer = 0.0
+	_is_spawning_composed = not _spawn_composed_queue.is_empty()
+	var planned: int = total_spawned + _spawn_composed_queue.size()
+	print(
+			"[WaveManager] wave %d composed queue: %d enemies (already spawned=%d)"
+			% [wave_number, _spawn_composed_queue.size(), total_spawned]
+	)
+	SignalBus.wave_started.emit(wave_number, planned)
+	if _is_spawning_composed:
+		_process_composed_spawn(0.0)
+	elif total_spawned == 0:
 		call_deferred("_check_wave_cleared")
 
 
@@ -667,6 +712,67 @@ func _process_spawn_queue(delta: float) -> void:
 		_queue_spawn_index += 1
 	if _queue_spawn_index >= _active_spawn_queue.size():
 		_using_spawn_queue = false
+
+
+func _process_composed_spawn(delta: float) -> void:
+	_spawn_composed_timer -= delta
+	if _spawn_composed_timer > 0.0:
+		return
+	if _spawn_composed_cursor >= _spawn_composed_queue.size():
+		_is_spawning_composed = false
+		return
+	var ed: EnemyData = _spawn_composed_queue[_spawn_composed_cursor]
+	_spawn_enemy_from_composed_data(ed)
+	_spawn_composed_cursor += 1
+	_spawn_composed_timer = _compute_next_spawn_delay(ed)
+	if _spawn_composed_cursor >= _spawn_composed_queue.size():
+		_is_spawning_composed = false
+
+
+func _compute_next_spawn_delay(ed: EnemyData) -> float:
+	match ed.tier:
+		1:
+			return 0.8
+		2:
+			return 1.0
+		3:
+			return 1.2
+		4:
+			return 1.4
+		5:
+			return 1.6
+		_:
+			return 1.0
+
+
+func _spawn_enemy_from_composed_data(enemy_data: EnemyData) -> void:
+	if enemy_data == null or _enemy_container == null or _spawn_points == null:
+		return
+	var spawn_point_nodes: Array[Node] = _spawn_points.get_children()
+	if spawn_point_nodes.is_empty():
+		return
+	var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
+	_enemy_container.add_child(enemy)
+	var tuned_enemy_data: EnemyData = enemy_data.duplicate(true) as EnemyData
+	tuned_enemy_data.max_hp = maxi(1, int(round(float(enemy_data.max_hp) * enemy_hp_multiplier)))
+	tuned_enemy_data.damage = maxi(1, int(round(float(enemy_data.damage) * enemy_damage_multiplier)))
+	tuned_enemy_data.gold_reward = maxi(0, int(round(float(enemy_data.gold_reward) * gold_reward_multiplier)))
+	enemy.initialize(tuned_enemy_data)
+	var spawn_marker: Marker3D = spawn_point_nodes.pick_random() as Marker3D
+	var offset: Vector3 = Vector3(
+			randf_range(-2.0, 2.0),
+			0.0,
+			randf_range(-2.0, 2.0)
+	)
+	enemy.global_position = spawn_marker.global_position + offset
+	if enemy_data.is_flying:
+		enemy.global_position.y = EnemyBase.FLYING_HEIGHT
+	if not enemy.is_in_group("enemies"):
+		enemy.add_to_group("enemies")
+	SignalBus.enemy_spawned.emit(
+			tuned_enemy_data.enemy_type,
+			Vector2(enemy.global_position.x, enemy.global_position.z)
+	)
 
 
 func _spawn_enemy_from_queue_row(row: Dictionary) -> void:
@@ -714,76 +820,6 @@ func _place_enemy_for_path(enemy: EnemyBase, path_data: RoutePathData, tuned: En
 		enemy.global_position.y = EnemyBase.FLYING_HEIGHT
 
 
-## Computes total enemies for this wave based on MVP scaling (N * 6).
-func _compute_total_enemies_for_wave(wave_index: int, faction: FactionDataType) -> int:
-	var base_total: float = float(wave_index * 6) * spawn_count_multiplier
-
-	if faction != null and faction.difficulty_offset != 0.0:
-		base_total *= maxf(0.1, 1.0 + faction.difficulty_offset) # TUNING
-
-	return maxi(1, int(round(base_total)))
-
-
-## Allocates integer counts across roster entries based on weighted share.
-func _allocate_counts_for_roster(
-		roster_entries: Array[FactionRosterEntryType],
-		total_enemies: int,
-		wave_index: int
-) -> Array[int]:
-	var weights: Array[float] = []
-	var total_weight: float = 0.0
-
-	for entry: FactionRosterEntryType in roster_entries:
-		var w: float = _current_faction.get_effective_weight_for_wave(entry, wave_index)
-		weights.append(w)
-		total_weight += w
-
-	if total_weight <= 0.0:
-		# DEVIATION: Fallback to equal distribution when all weights are zero.
-		var equal: int = total_enemies / roster_entries.size()
-		var remainder: int = total_enemies % roster_entries.size()
-		var counts_eq: Array[int] = []
-		for i: int in range(roster_entries.size()):
-			var c: int = equal + (1 if i < remainder else 0)
-			counts_eq.append(c)
-		return counts_eq
-
-	# SOURCE: Proportional allocation with largest-remainder rounding, common in weighted selection systems.
-	var float_counts: Array[float] = []
-	var counts_int: Array[int] = []
-	var running_total: int = 0
-
-	for i: int in range(roster_entries.size()):
-		var share: float = weights[i] / total_weight
-		var ideal: float = float(total_enemies) * share
-		float_counts.append(ideal)
-		var c_int: int = int(floorf(ideal))
-		counts_int.append(c_int)
-		running_total += c_int
-
-	var remaining: int = total_enemies - running_total
-	if remaining > 0:
-		var indices: Array[int] = []
-		for j: int in range(float_counts.size()):
-			indices.append(j)
-		indices.sort_custom(func(a: int, b: int) -> bool:
-			var frac_a: float = float_counts[a] - float(counts_int[a])
-			var frac_b: float = float_counts[b] - float(counts_int[b])
-			return frac_a > frac_b
-		)
-		for k: int in range(mini(remaining, indices.size())):
-			var idx: int = indices[k]
-			counts_int[idx] += 1
-
-	return counts_int
-
-
-func _get_enemy_data_for_type(enemy_type: Types.EnemyType) -> EnemyData:
-	for data: EnemyData in enemy_data_registry:
-		if data.enemy_type == enemy_type:
-			return data
-	return null
-
 # ---------------------------------------------------------------------------
 # SIGNAL HANDLERS
 # ---------------------------------------------------------------------------
@@ -800,6 +836,8 @@ func _on_enemy_killed(
 
 func _check_wave_cleared() -> void:
 	if get_living_enemy_count() > 0:
+		return
+	if has_pending_composed_spawns():
 		return
 	_is_wave_active = false
 	print("[WaveManager] wave %d cleared!" % _current_wave)

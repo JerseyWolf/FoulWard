@@ -18,4 +18,7 @@ is_flying = false
 body_type = 5
 color = Color(0.1, 0.4, 0.0, 1.0)
 damage_immunities = []
-
+tier = 3
+point_cost = 12
+wave_tags = Array[String](["HEAVY", "INVASION"])
+balance_status = "BASELINE"

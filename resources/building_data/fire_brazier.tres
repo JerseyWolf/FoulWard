@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_buildingdata")
+building_id = "fire_brazier"
 building_type = 1
 display_name = "Fire Brazier"
 gold_cost = 60
@@ -30,4 +31,8 @@ dot_duration = 3.0
 dot_effect_type = "burn"
 dot_source_id = "fire_brazier"
 dot_in_addition_to_hit = true
+footprint_size_class = 0
+size_class = "SMALL"
+role_tags = Array[String](["DPS"])
+balance_status = "BASELINE"
 

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orc_skirmisher"
+enemy_type = 6
+display_name = "Orc Skirmisher"
+max_hp = 40
+move_speed = 7.0
+damage = 8
+attack_cooldown = 1.2
+attack_range = 1.5
+armor_type = 0
+gold_reward = 7
+is_ranged = false
+is_flying = false
+color = Color(0.7, 0.4, 0.2, 1.0)
+damage_immunities = []
+tier = 1
+point_cost = 6
+wave_tags = Array[String](["RUSH", "INVASION"])
+balance_status = "UNTESTED"

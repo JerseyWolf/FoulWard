@@ -17,7 +17,7 @@ func test_ally_spawned_signal_emitted_on_spawn() -> void:
 	data.set("attack_cooldown", 1.0)
 	ally.call("initialize_ally_data", data)
 	await get_tree().process_frame
-	await assert_signal(monitor).is_emitted("ally_spawned", ["test_ally"])
+	await assert_signal(monitor).is_emitted("ally_spawned", ["test_ally", ""])
 	ally.queue_free()
 	await get_tree().process_frame
 
@@ -64,6 +64,6 @@ func test_arnulf_reset_emits_ally_spawned() -> void:
 	var monitor := monitor_signals(SignalBus, false)
 	arnulf.reset_for_new_mission()
 	await get_tree().process_frame
-	await assert_signal(monitor).is_emitted("ally_spawned", ["arnulf"])
+	await assert_signal(monitor).is_emitted("ally_spawned", ["arnulf", ""])
 	arnulf.queue_free()
 	await get_tree().process_frame

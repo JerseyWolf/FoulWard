@@ -1,18 +1,20 @@
 ## BuildMenu — Radial building placement panel shown during BUILD_MODE; delegates all decisions to HexGrid and EconomyManager.
 # ui/build_menu.gd
 # BuildMenu — shown during BUILD_MODE when a hex slot is selected.
-# Zero game logic. All decisions delegated to HexGrid and EconomyManager.
-#
-# Credit: Foul Ward ARCHITECTURE.md §3.4 — BuildMenu class responsibilities.
+# Prompt 11: full [member HexGrid.building_data_registry] roster + research-locked towers.
 
 class_name BuildMenu
 extends Control
 
+const BuildMenuButtonScene: PackedScene = preload("res://ui/build_menu_button.tscn")
+
 var _selected_slot: int = -1
 var _is_sell_mode: bool = false
+var _buttons: Array[Node] = []
 
 @onready var _slot_label: Label = $Panel/VBox/SlotLabel
-@onready var _building_container: GridContainer = $Panel/VBox/BuildingContainer
+@onready var _building_scroll: ScrollContainer = $Panel/VBox/BuildingScroll
+@onready var _building_container: GridContainer = $Panel/VBox/BuildingScroll/BuildingContainer
 @onready var _close_button: Button = $Panel/VBox/CloseButton
 @onready var _sell_panel: VBoxContainer = $Panel/VBox/SellPanel
 @onready var _sell_building_name: Label = $Panel/VBox/SellPanel/BuildingNameLabel
@@ -21,24 +23,28 @@ var _is_sell_mode: bool = false
 @onready var _sell_button: Button = $Panel/VBox/SellPanel/Buttons/SellButton
 @onready var _sell_cancel_button: Button = $Panel/VBox/SellPanel/Buttons/CancelButton
 
-# ASSUMPTION: HexGrid path matches ARCHITECTURE.md §2.
 @onready var _hex_grid: HexGrid = get_node_or_null("/root/Main/HexGrid")
 
-# ─────────────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
-	print("[BuildMenu] _ready")
 	SignalBus.build_mode_entered.connect(_on_build_mode_entered)
 	SignalBus.build_mode_exited.connect(_on_build_mode_exited)
 	SignalBus.resource_changed.connect(_on_resource_changed)
+	SignalBus.research_unlocked.connect(_on_research_unlocked)
+	SignalBus.research_node_unlocked.connect(_on_research_unlocked)
+	BuildPhaseManager.combat_phase_started.connect(_on_combat_phase_started)
 	_close_button.pressed.connect(_on_close_pressed)
 	_sell_button.pressed.connect(_on_sell_pressed)
 	_sell_cancel_button.pressed.connect(_on_sell_cancel_pressed)
+	hide()
+
+
+func _on_combat_phase_started() -> void:
+	hide()
 
 
 ## Called by InputManager when player clicks a hex slot during BUILD_MODE.
 func open_for_slot(slot_index: int) -> void:
-	print("[BuildMenu] open_for_slot: slot=%d" % slot_index)
 	if not is_instance_valid(_hex_grid):
 		push_warning("BuildMenu: HexGrid not found")
 		return
@@ -46,13 +52,13 @@ func open_for_slot(slot_index: int) -> void:
 	_is_sell_mode = false
 	_slot_label.text = "Building on slot %d (yellow tile on ground)" % slot_index
 	_hex_grid.set_build_slot_highlight(slot_index)
-	_building_container.show()
+	_building_scroll.show()
 	_sell_panel.hide()
-	show()       # must come BEFORE _refresh() — the guard checks visibility
+	show()
 	_refresh()
 
+
 func open_for_sell_slot(slot_index: int, slot_data: Dictionary) -> void:
-	print("[BuildMenu] open_for_sell_slot: slot=%d" % slot_index)
 	if not is_instance_valid(_hex_grid):
 		push_warning("BuildMenu: HexGrid not found")
 		return
@@ -60,14 +66,13 @@ func open_for_sell_slot(slot_index: int, slot_data: Dictionary) -> void:
 	_is_sell_mode = true
 	_hex_grid.set_build_slot_highlight(slot_index)
 	_slot_label.text = "Occupied slot %d" % slot_index
-	_building_container.hide()
+	_building_scroll.hide()
 	_sell_panel.show()
 	_refresh_sell_panel(slot_data)
 	show()
 
 
 func _refresh() -> void:
-	# Deferred refresh can run after exit_build_mode — skip if menu is hidden or invalid.
 	if not visible:
 		return
 	if _selected_slot < 0:
@@ -79,48 +84,42 @@ func _refresh() -> void:
 
 	while _building_container.get_child_count() > 0:
 		_building_container.get_child(0).free()
+	_buttons.clear()
 
-	var count: int = 0
-	for i: int in range(Types.BuildingType.size()):
-		var bt: Types.BuildingType = i as Types.BuildingType
-		var bd: BuildingData = _hex_grid.get_building_data(bt)
-		if bd == null:
-			print("[BuildMenu] _refresh: WARNING no BuildingData for type %d" % i)
-			continue
-
-		var btn: Button = Button.new()
-		var is_unlocked: bool = _hex_grid.is_building_available(bt)
-		var gc: int = EconomyManager.get_gold_cost(bd)
-		var mc: int = EconomyManager.get_material_cost(bd)
-		var can_afford: bool = EconomyManager.can_afford_building(
-				bd, EconomyManager.get_gold(), EconomyManager.get_building_material()
-		)
-
-		btn.icon = ArtPlaceholderHelper.get_building_icon(bt)
-		btn.expand_icon = true
-		btn.text = "%s\n%dg %dm" % [bd.display_name, gc, mc]
-		btn.disabled = not is_unlocked or not can_afford
-		btn.custom_minimum_size = Vector2(180, 48)
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-		btn.pressed.connect(func() -> void: _on_building_selected(bt))
-		_building_container.add_child(btn)
-		count += 1
-
-	print("[BuildMenu] _refresh: slot=%d  gold=%d mat=%d  showing %d buttons" % [
-		_selected_slot, EconomyManager.get_gold(), EconomyManager.get_building_material(), count
-	])
-
-
-func _on_building_selected(building_type: Types.BuildingType) -> void:
-	print("[BuildMenu] _on_building_selected: type=%d slot=%d" % [building_type, _selected_slot])
-	if _selected_slot < 0:
-		print("[BuildMenu] _on_building_selected: REJECTED — no slot selected")
+	if not is_instance_valid(_hex_grid):
 		return
-	var placed: bool = _hex_grid.place_building(_selected_slot, building_type)
-	print("[BuildMenu] _on_building_selected: place_building returned %s" % placed)
+
+	var registry: Array[BuildingData] = []
+	for bd: BuildingData in _hex_grid.building_data_registry:
+		if bd != null:
+			registry.append(bd)
+
+	registry.sort_custom(func(a: BuildingData, b: BuildingData) -> bool:
+		var order: Dictionary = {"SMALL": 0, "MEDIUM": 1, "LARGE": 2}
+		var sa: String = a.size_class.strip_edges().to_upper()
+		var sb: String = b.size_class.strip_edges().to_upper()
+		var oa: int = int(order.get(sa, 99))
+		var ob: int = int(order.get(sb, 99))
+		if oa == ob:
+			return a.display_name < b.display_name
+		return oa < ob
+	)
+
+	for bd: BuildingData in registry:
+		var btn: BuildMenuButton = BuildMenuButtonScene.instantiate() as BuildMenuButton
+		_building_container.add_child(btn)
+		_buttons.append(btn)
+		btn.set_building(bd)
+		btn.building_clicked.connect(_on_building_data_selected)
+
+
+func _on_building_data_selected(bd: BuildingData) -> void:
+	if bd == null:
+		return
+	if _selected_slot < 0:
+		return
+	var placed: bool = _hex_grid.place_building(_selected_slot, bd.building_type)
 	if placed:
-		# Exit build mode entirely — this triggers _on_build_mode_exited → hide().
 		GameManager.exit_build_mode()
 
 
@@ -141,21 +140,23 @@ func _refresh_sell_panel(slot_data: Dictionary) -> void:
 	_sell_building_name.text = data.display_name
 	_sell_upgrade_status.text = "Status: %s" % ("Upgraded" if is_upgraded else "Basic")
 
-	var refund: Vector2i = EconomyManager.get_refund(
+	var refund: Dictionary = EconomyManager.get_refund(
 			data,
 			building.total_invested_gold,
 			building.total_invested_material
 	)
-	_sell_refund.text = "Refund: %d gold, %d material" % [refund.x, refund.y]
+	_sell_refund.text = "Refund: %d gold, %d material" % [
+			int(refund.get("gold", 0)),
+			int(refund.get("material", 0))
+	]
 
 
 func _on_build_mode_entered() -> void:
-	print("[BuildMenu] build_mode_entered — waiting for slot click")
 	_selected_slot = -1
 	_is_sell_mode = false
-	_building_container.show()
+	_building_scroll.show()
 	_sell_panel.hide()
-	hide()  # UIManager keeps BuildMenu hidden until HexGrid explicitly opens it.
+	hide()
 
 
 func _on_resource_changed(_resource_type: Types.ResourceType, _new_amount: int) -> void:
@@ -165,19 +166,28 @@ func _on_resource_changed(_resource_type: Types.ResourceType, _new_amount: int) 
 		return
 	if _selected_slot < 0:
 		return
-	# Deferred so we never free a button node while it is mid-signal-dispatch.
+	call_deferred("_refresh")
+
+
+func _on_research_unlocked(_unused_node_id: String) -> void:
+	if not visible:
+		return
+	if GameManager.get_game_state() != Types.GameState.BUILD_MODE:
+		return
+	if _selected_slot < 0:
+		return
+	if _is_sell_mode:
+		return
 	call_deferred("_refresh")
 
 
 func _on_build_mode_exited() -> void:
-	print("[BuildMenu] build_mode_exited — hiding")
 	hide()
 	_selected_slot = -1
 	_is_sell_mode = false
 
 
 func _on_close_pressed() -> void:
-	print("[BuildMenu] close pressed")
 	GameManager.exit_build_mode()
 
 

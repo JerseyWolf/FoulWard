@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orc_berserker"
+enemy_type = 17
+display_name = "Orc Berserker"
+max_hp = 260
+move_speed = 3.5
+damage = 35
+attack_cooldown = 1.0
+attack_range = 1.8
+armor_type = 0
+gold_reward = 32
+is_ranged = false
+is_flying = false
+color = Color(0.9, 0.1, 0.1, 1.0)
+damage_immunities = []
+tier = 3
+point_cost = 18
+wave_tags = Array[String](["RUSH", "INVASION"])
+special_tags = Array[String](["charge"])
+special_values = {
+&"charge": {
+&"enrage_hp_pct": 0.5,
+&"speed_bonus": 0.50
+}
+}
+balance_status = "UNTESTED"

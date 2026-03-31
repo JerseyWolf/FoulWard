@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orc_ogre"
+enemy_type = 24
+display_name = "Orc Ogre"
+max_hp = 900
+move_speed = 1.8
+damage = 70
+attack_cooldown = 2.5
+attack_range = 3.0
+armor_type = 1
+gold_reward = 60
+is_ranged = false
+is_flying = false
+color = Color(0.5, 0.4, 0.2, 1.0)
+damage_immunities = []
+tier = 4
+point_cost = 42
+wave_tags = Array[String](["HEAVY"])
+balance_status = "UNTESTED"

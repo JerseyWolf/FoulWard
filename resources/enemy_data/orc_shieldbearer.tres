@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orc_shieldbearer"
+enemy_type = 16
+display_name = "Orc Shieldbearer"
+max_hp = 350
+move_speed = 2.5
+damage = 22
+attack_cooldown = 1.5
+attack_range = 1.8
+armor_type = 1
+gold_reward = 30
+is_ranged = false
+is_flying = false
+color = Color(0.5, 0.5, 0.6, 1.0)
+damage_immunities = []
+tier = 3
+point_cost = 15
+wave_tags = Array[String](["HEAVY", "INVASION"])
+special_tags = Array[String](["shield"])
+special_values = {
+&"shield": {
+&"shield_hp": 80,
+&"shield_armor": &"HEAVY_ARMOR"
+}
+}
+balance_status = "UNTESTED"

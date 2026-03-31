@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run_gdunit_unit.sh — Runs only pure unit tests (37 files, ~65s wall-clock).
+# run_gdunit_unit.sh — Runs only pure unit tests (47 suites, ~70s wall-clock).
 # Engine startup overhead dominates; individual tests run in milliseconds.
 # Use for focused coverage checks. For fast iteration, use run_gdunit_quick.sh.
 # GdUnit4 accepts multiple -a flags in one process (same pattern as run_gdunit_quick.sh).
@@ -60,7 +60,18 @@ UNIT_SUITES=(
 	"res://tests/unit/test_mission_spawn_routing.gd"
 	"res://tests/unit/test_td_resource_helpers.gd"
 	"res://tests/unit/test_economy_mission_integration.gd"
+	"res://tests/unit/test_combat_stats_tracker.gd"
+	"res://tests/unit/test_damage_pipeline.gd"
+	"res://tests/unit/test_content_invariants.gd"
+	"res://tests/unit/test_aura_healer_runtime.gd"
+	"res://tests/unit/test_summoner_runtime.gd"
+	"res://tests/unit/test_enemy_specials.gd"
+	"res://tests/unit/test_wave_composer.gd"
+	"res://tests/unit/test_research_and_build_menu.gd"
+	"res://tests/unit/test_simbot_balance_integration.gd"
 )
+
+
 
 gdunit_args=()
 for suite in "${UNIT_SUITES[@]}"; do

@@ -109,43 +109,19 @@ func _mesh_has_material(mi: MeshInstance3D) -> bool:
 
 
 func _get_enemy_data_for_type(enemy_type: Types.EnemyType) -> EnemyData:
-	match enemy_type:
-		Types.EnemyType.ORC_GRUNT:
-			return load("res://resources/enemy_data/orc_grunt.tres") as EnemyData
-		Types.EnemyType.ORC_BRUTE:
-			return load("res://resources/enemy_data/orc_brute.tres") as EnemyData
-		Types.EnemyType.GOBLIN_FIREBUG:
-			return load("res://resources/enemy_data/goblin_firebug.tres") as EnemyData
-		Types.EnemyType.PLAGUE_ZOMBIE:
-			return load("res://resources/enemy_data/plague_zombie.tres") as EnemyData
-		Types.EnemyType.ORC_ARCHER:
-			return load("res://resources/enemy_data/orc_archer.tres") as EnemyData
-		Types.EnemyType.BAT_SWARM:
-			return load("res://resources/enemy_data/bat_swarm.tres") as EnemyData
-		_:
-			return null
+	var key: String = str(Types.EnemyType.keys()[enemy_type]).to_lower()
+	var path: String = "res://resources/enemy_data/%s.tres" % key
+	if not ResourceLoader.exists(path):
+		return null
+	return load(path) as EnemyData
 
 
 func _get_building_data_for_type(building_type: Types.BuildingType) -> BuildingData:
-	match building_type:
-		Types.BuildingType.ARROW_TOWER:
-			return load("res://resources/building_data/arrow_tower.tres") as BuildingData
-		Types.BuildingType.FIRE_BRAZIER:
-			return load("res://resources/building_data/fire_brazier.tres") as BuildingData
-		Types.BuildingType.MAGIC_OBELISK:
-			return load("res://resources/building_data/magic_obelisk.tres") as BuildingData
-		Types.BuildingType.POISON_VAT:
-			return load("res://resources/building_data/poison_vat.tres") as BuildingData
-		Types.BuildingType.BALLISTA:
-			return load("res://resources/building_data/ballista.tres") as BuildingData
-		Types.BuildingType.ARCHER_BARRACKS:
-			return load("res://resources/building_data/archer_barracks.tres") as BuildingData
-		Types.BuildingType.ANTI_AIR_BOLT:
-			return load("res://resources/building_data/anti_air_bolt.tres") as BuildingData
-		Types.BuildingType.SHIELD_GENERATOR:
-			return load("res://resources/building_data/shield_generator.tres") as BuildingData
-		_:
-			return null
+	var key: String = str(Types.BuildingType.keys()[building_type]).to_lower()
+	var path: String = "res://resources/building_data/%s.tres" % key
+	if not ResourceLoader.exists(path):
+		return null
+	return load(path) as BuildingData
 
 
 func test_enemy_base_scene_wiring_sets_mesh_and_material_for_each_enemy_type() -> void:

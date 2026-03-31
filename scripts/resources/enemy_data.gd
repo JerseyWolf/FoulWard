@@ -76,6 +76,18 @@ extends Resource
 @export var threat_value: int = 1
 @export var tags: PackedStringArray = PackedStringArray()
 
+# ─── WAVE GENERATION & CONTENT AUTHORING (Prompt 50) ───
+
+@export var point_cost: int = 5
+## Valid values: "RUSH", "HEAVY", "AIRSTRIKE", "ARTILLERY", "INVASION", "SUPPORT"
+@export var wave_tags: Array[String] = []
+@export var tier: int = 1
+## Valid values: "charge", "shield", "aura_buff", "aura_heal", "on_death_spawn", "ranged_long", "disable_building", "anti_air", "regen"
+@export var special_tags: Array[String] = []
+@export var special_values: Dictionary = {}
+## UNTESTED, BASELINE, OVERTUNED, UNDERTUNED, CUT_CAMPAIGN_1
+@export var balance_status: String = "UNTESTED"
+
 ## Bitmask aligned with `BuildingData.target_flags` (@export_flags order: ground, air, boss, structure, summoned).
 const TARGET_FLAG_GROUND: int = 1 << 0
 const TARGET_FLAG_AIR: int = 1 << 1
@@ -132,6 +144,17 @@ func matches_target_flags(flags: int) -> bool:
 		return true
 	var eb: int = get_target_flag_bits()
 	return (eb & flags) != 0
+
+
+## Used by [BuildingBase] with legacy [member BuildingData.targets_air] / [member BuildingData.targets_ground].
+## Uses [method get_target_flag_bits] so [member body_type] (e.g. FLYING) matches [member is_flying]; if neither air nor ground locomotion bits are set, falls back to [member is_flying] only.
+func matches_tower_air_ground_filter(targets_air: bool, targets_ground: bool) -> bool:
+	var eb: int = get_target_flag_bits()
+	var has_air: bool = (eb & TARGET_FLAG_AIR) != 0
+	var has_ground: bool = (eb & TARGET_FLAG_GROUND) != 0
+	if has_air or has_ground:
+		return (has_air and targets_air) or (has_ground and targets_ground)
+	return (is_flying and targets_air) or ((not is_flying) and targets_ground)
 
 
 func _has_tag(tag: String) -> bool:

@@ -42,6 +42,10 @@ var _wave_cleared_received: bool = false
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	if "--simbot_balance_sweep" in OS.get_cmdline_user_args():
+		call_deferred("_begin_simbot_balance_sweep")
+		return
+
 	var simbot_profile: String = _get_cli_string_arg("--simbot_profile=")
 	var simbot_runs: int = _get_cli_int_arg("--simbot_runs=", 1)
 	var simbot_seed: int = _get_cli_int_arg("--simbot_seed=", 0)
@@ -122,6 +126,16 @@ func _find_or_create_simbot() -> SimBot:
 	var new_sb: SimBot = SimBot.new()
 	root.add_child(new_sb)
 	return new_sb
+
+
+func _begin_simbot_balance_sweep() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var simbot: SimBot = _find_or_create_simbot()
+	await simbot.run_balance_sweep()
+	print("[SimBot] balance sweep complete.")
+	get_tree().quit(0)
 
 
 # ---------------------------------------------------------------------------
