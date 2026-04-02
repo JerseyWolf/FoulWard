@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_simbot_determinism.gd
 # GdUnit4 test suite for SimBot determinism (Phase 2).
 

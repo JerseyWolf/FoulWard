@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # tests/test_building_base.gd
 # GdUnit4 test suite for BuildingBase.
 # Tests initialization, targeting, combat process, upgrade, and effective stats.
@@ -193,8 +194,8 @@ func test_building_scene_has_collision_and_navigation_obstacle() -> void:
 	var building: BuildingBase = scene.instantiate() as BuildingBase
 	add_child(building)
 	await get_tree().process_frame
-	var collision_body: StaticBody3D = building.get_node("BuildingCollision") as StaticBody3D
-	var obstacle: NavigationObstacle3D = building.get_node("NavigationObstacle") as NavigationObstacle3D
+	var collision_body: StaticBody3D = building.get_node_or_null("BuildingCollision") as StaticBody3D
+	var obstacle: NavigationObstacle3D = building.get_node_or_null("NavigationObstacle") as NavigationObstacle3D
 	assert_object(collision_body).is_not_null()
 	assert_object(obstacle).is_not_null()
 	assert_int(collision_body.collision_layer).is_equal(8)

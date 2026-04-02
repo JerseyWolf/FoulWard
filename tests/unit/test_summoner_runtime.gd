@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — Summoner tower runtime (AllyManager squads, BuildingData paths).
 class_name TestSummonerRuntime
 extends GdUnitTestSuite

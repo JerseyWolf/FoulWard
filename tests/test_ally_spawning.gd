@@ -37,7 +37,8 @@ func test_allies_spawn_at_mission_start_from_campaign_roster() -> void:
 	GameManager.start_new_game()
 	await get_tree().process_frame
 
-	var ally_container: Node = main.get_node("AllyContainer")
+	var ally_container: Node = main.get_node_or_null("AllyContainer")
+	assert_object(ally_container).is_not_null()
 	var count: int = 0
 	for c: Node in ally_container.get_children():
 		if _is_ally_node(c):
@@ -60,7 +61,8 @@ func test_allies_cleaned_up_on_mission_end_and_new_game() -> void:
 	SignalBus.all_waves_cleared.emit()
 	await get_tree().process_frame
 
-	var ally_container: Node = main.get_node("AllyContainer")
+	var ally_container: Node = main.get_node_or_null("AllyContainer")
+	assert_object(ally_container).is_not_null()
 	var after_win: int = 0
 	for c: Node in ally_container.get_children():
 		if _is_ally_node(c):

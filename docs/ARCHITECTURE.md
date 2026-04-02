@@ -6,16 +6,30 @@
 
 ## 1. AUTOLOAD SINGLETONS
 
-Registered in `project.godot` in this exact order:
+Registered in `project.godot` in this exact order (game singletons first; MCP editor helpers last):
 
 | #  | Script Path                              | Autoload Name      | Purpose                                  |
 |----|------------------------------------------|--------------------|------------------------------------------|
-| 1  | `res://autoloads/signal_bus.gd`          | `SignalBus`        | Central signal registry (no logic)       |
-| 2  | `res://autoloads/damage_calculator.gd`   | `DamageCalculator` | Stateless damage multiplier lookups      |
-| 3  | `res://autoloads/economy_manager.gd`     | `EconomyManager`   | Resource tracking + transactions         |
-| 4  | `res://autoloads/campaign_manager.gd`    | `CampaignManager`  | Campaign/day state, faction registry, **ally roster** (`current_ally_roster`); must load **before** `GameManager` so `mission_won` / `mission_failed` handlers run in order |
-| 5  | `res://autoloads/game_manager.gd`        | `GameManager`      | Mission state, session flow, territory; **spawns/cleans up generic allies** under `Main/AllyContainer` |
-| 6  | `res://autoloads/dialogue_manager.gd`    | `DialogueManager`  | Data-driven hub dialogue: loads `res://resources/dialogue/**/*.tres`, priority / conditions / once-only / chains; emits `dialogue_line_started` / `dialogue_line_finished` |
+| 1  | `res://autoloads/signal_bus.gd`          | `SignalBus`        | Central signal registry (58+ signals, no logic) |
+| 2  | `res://scripts/nav_mesh_manager.gd`      | `NavMeshManager`   | Registers `NavigationRegion3D`, queues rebakes |
+| 3  | `res://autoloads/damage_calculator.gd`   | `DamageCalculator` | Stateless damage multiplier lookups      |
+| 4  | `res://autoloads/aura_manager.gd`       | `AuraManager`      | Aura towers + enemy aura emitters        |
+| 5  | `res://autoloads/economy_manager.gd`     | `EconomyManager`   | Resource tracking + transactions         |
+| 6  | `res://autoloads/campaign_manager.gd`    | `CampaignManager`  | Day/campaign, factions, **ally roster**; must load **before** `GameManager` |
+| 7  | `res://autoloads/relationship_manager.gd` | `RelationshipManager` | Affinity / tiers (no `class_name`)    |
+| 8  | `res://autoloads/settings_manager.gd`    | `SettingsManager`  | `user://settings.cfg`                    |
+| 9  | `res://autoloads/game_manager.gd`        | `GameManager`      | `Types.GameState`, missions, territory; allies under `Main/AllyContainer` |
+| 10 | `res://autoloads/build_phase_manager.gd` | `BuildPhaseManager` | Build-phase vs combat-phase guard        |
+| 11 | `res://autoloads/ally_manager.gd`       | `AllyManager`      | Summoner-building squads                 |
+| 12 | `res://autoloads/combat_stats_tracker.gd` | `CombatStatsTracker` | SimBot / balance CSV output          |
+| 13 | `res://autoloads/save_manager.gd`        | `SaveManager`      | Rolling autosaves (no `class_name`)      |
+| 14 | `res://autoloads/dialogue_manager.gd`    | `DialogueManager`  | Hub dialogue from `res://resources/dialogue/**` |
+| 15 | `res://autoloads/auto_test_driver.gd`   | `AutoTestDriver`   | Headless `--autotest` / SimBot driver    |
+| 16 | *(UID — GDAI extension)*                 | `GDAIMCPRuntime`   | Editor MCP bridge                        |
+| 17 | `res://autoloads/enchantment_manager.gd` | `EnchantmentManager` | Weapon enchantment slots             |
+| 18 | `res://addons/godot_mcp/mcp_screenshot_service.gd` | `MCPScreenshot` | Godot MCP Pro helper (editor)   |
+| 19 | `res://addons/godot_mcp/mcp_input_service.gd` | `MCPInputService` | Godot MCP Pro helper (editor)   |
+| 20 | `res://addons/godot_mcp/mcp_game_inspector_service.gd` | `MCPGameInspector` | Godot MCP Pro helper (editor) |
 
 `Types` is a `class_name` script at `res://scripts/types.gd` — NOT an autoload.
 It provides enums and constants via `Types.GameState`, `Types.DamageType`, etc.
@@ -24,8 +38,10 @@ It provides enums and constants via `Types.GameState`, `Types.DamageType`, etc.
 
 ## 2. COMPLETE SCENE TREE
 
+`res://scenes/main.tscn` — root scene. Runtime paths below use `/root/Main/...` (game) or match the edited scene when opened in the editor.
+
 ```
-Main (Node3D)                                  [main.tscn — root scene]
+Main (Node3D)                                  [main.tscn — script: main_root.gd]
 │
 ├── Camera3D (Camera3D)                        [Fixed isometric, orthographic]
 │       projection = PROJECTION_ORTHOGRAPHIC
@@ -35,20 +51,18 @@ Main (Node3D)                                  [main.tscn — root scene]
 │
 ├── DirectionalLight3D (DirectionalLight3D)    [Scene-wide lighting]
 │
-├── Ground (StaticBody3D)                      [Click target for aiming + navmesh host]
-│   ├── GroundMesh (MeshInstance3D)            [Large flat plane, layer 6]
-│   ├── GroundCollision (CollisionShape3D)     [For mouse raycast targeting]
-│   └── NavigationRegion3D (NavigationRegion3D) [Hosts the navigation mesh]
+├── TerrainContainer (Node3D)                  [Campaign terrain instanced here — see CampaignManager._load_terrain]
+│   └── (e.g. grassland / swamp terrain scene at runtime: Ground mesh + NavigationRegion3D + …)
 │
 ├── Tower (StaticBody3D)                       [tower.tscn — central destructible tower]
-│   ├── TowerMesh (MeshInstance3D)             [Large colored cube, labeled "TOWER"]
-│   ├── TowerCollision (CollisionShape3D)      [Layer 1]
+│   ├── TowerMesh (MeshInstance3D)             [Visual]
+│   ├── TowerCollision (CollisionShape3D)      [Layer 1 — Tower]
 │   ├── HealthComponent (Node)                 [health_component.gd — reusable HP system]
-│   └── TowerLabel (Label3D)                   ["TOWER" text]
+│   └── TowerLabel (Label3D)                   [Label]
 │
 ├── Arnulf (CharacterBody3D)                   [arnulf.tscn — AI melee unit]
-│   ├── ArnulfMesh (MeshInstance3D)            [Medium cube, distinct color]
-│   ├── ArnulfCollision (CollisionShape3D)     [Layer 3]
+│   ├── ArnulfVisual (Node3D)                  [Rig / placeholder mount]
+│   ├── ArnulfCollision (CollisionShape3D)     [Layer 3 — Arnulf]
 │   ├── HealthComponent (Node)                 [health_component.gd instance]
 │   ├── NavigationAgent3D (NavigationAgent3D)  [Pathfinding to enemies]
 │   ├── DetectionArea (Area3D)                 [Patrol radius detection]
@@ -57,8 +71,8 @@ Main (Node3D)                                  [main.tscn — root scene]
 │   │   └── AttackShape (CollisionShape3D)     [Small sphere, mask = layer 2]
 │   └── ArnulfLabel (Label3D)                  ["ARNULF" text]
 │
-├── HexGrid (Node3D)                          [hex_grid.tscn — 24-slot build grid]
-│   ├── HexSlot_00 (Area3D)                   [One per slot, layer 7]
+├── HexGrid (Node3D)                          [hex_grid.tscn — 24-slot build grid, 3 rings]
+│   ├── HexSlot_00 (Area3D)                   [One per slot — collision layer 7 bit mask “HexSlots”]
 │   │   ├── SlotCollision (CollisionShape3D)
 │   │   └── SlotMesh (MeshInstance3D)          [Hex outline, visible only in build mode]
 │   ├── HexSlot_01 (Area3D)
@@ -82,9 +96,7 @@ Main (Node3D)                                  [main.tscn — root scene]
 │   └── AllySpawnPoint_02 (Marker3D)
 │
 ├── BuildingContainer (Node3D)                 [Runtime parent for placed buildings]
-│   └── BuildingBase (Node3D)                  [building_base.tscn — instanced at runtime per placed building]
-│       ├── BuildingMesh (MeshInstance3D)       [MVP cube placeholder, color driven by BuildingData.color]
-│       └── HealthComponent (Node)             [health_component.gd instance]
+│   └── (BuildingBase instances — building_base.tscn — added at runtime per placement)
 │
 ├── ProjectileContainer (Node3D)               [Runtime parent for active projectiles]
 │   └── (projectiles added at runtime)
@@ -94,30 +106,20 @@ Main (Node3D)                                  [main.tscn — root scene]
 │   ├── SpellManager (Node)                    [spell_manager.gd]
 │   ├── ResearchManager (Node)                 [research_manager.gd]
 │   ├── ShopManager (Node)                     [shop_manager.gd]
+│   ├── WeaponUpgradeManager (Node)            [weapon_upgrade_manager.gd]
 │   └── InputManager (Node)                    [input_manager.gd]
 │
 └── UI (CanvasLayer)                           [All UI elements]
     ├── UIManager (Control)                    [ui_manager.gd — signal→panel router]
+    │   └── DialoguePanel                      [dialogue_panel.tscn — instance child]
+    ├── Hub (Control)                          [hub.tscn — meta / campaign hub UI]
     ├── HUD (Control)                          [hud.tscn — always-visible combat UI]
-    │   ├── ResourceDisplay (HBoxContainer)    [Gold | Material | Research]
-    │   ├── WaveDisplay (VBoxContainer)        [Wave X/10 + countdown]
-    │   ├── TowerHPBar (ProgressBar)
-    │   ├── SpellPanel (HBoxContainer)         [Mana bar + cooldown + button]
-    │   ├── WeaponPanel (VBoxContainer)        [Ammo + reload for both weapons]
-    │   └── BuildModeHint (Label)              ["[B] Build Mode"]
     ├── BuildMenu (Control)                    [build_menu.tscn — radial menu overlay]
-    │   └── RadialContainer (Control)          [8 building options in radial layout]
+    ├── ResearchPanel (Control)                [research_panel.tscn]
     ├── BetweenMissionScreen (Control)         [between_mission_screen.tscn]
-    │   ├── ShopTab (Control)
-    │   ├── ResearchTab (Control)
-    │   ├── BuildingsTab (Control)
-    │   └── NextMissionButton (Button)
     ├── MainMenu (Control)                     [main_menu.tscn]
-    │   ├── StartButton (Button)
-    │   ├── SettingsButton (Button)
-    │   └── QuitButton (Button)
-    ├── MissionBriefing (Control)              [Grey screen + "MISSION X"]
-    └── EndScreen (Control)                    ["YOU SURVIVED" + Quit]
+    ├── MissionBriefing (Control)              [mission_briefing.gd — e.g. BeginButton]
+    └── EndScreen (Control)                    [end_screen.gd — Restart / Quit]
 ```
 
 #### Manager node path contracts (FOUL WARD)
@@ -129,6 +131,7 @@ Several managers are resolved by absolute node path under `Main/Managers`:
 - `WeaponUpgradeManager` is expected at `/root/Main/Managers/WeaponUpgradeManager` (Tower stat lookup and upgrade resets).
 - `ShopManager` is expected at `/root/Main/Managers/ShopManager` (mission-start consumables, shop-driven mission modifiers).
 - `SpellManager` is expected at `/root/Main/Managers/SpellManager` (spell hotkeys and casting from InputManager).
+- `InputManager` is expected at `/root/Main/Managers/InputManager` (aim raycast, weapon fire, build mode, hex picks).
 
 These paths are authoritative: any change to the `Main/Managers` subtree must keep these exact node names and positions, or the dependent systems will silently degrade.
 
@@ -138,6 +141,8 @@ These paths are authoritative: any change to the `Main/Managers` subtree must ke
 
 ### 3.1 Autoloads
 
+**Full `project.godot` order and script paths:** see **§1** (17 core game singletons + `GDAIMCPRuntime` + three Godot MCP Pro helpers). The entries below expand the highest-traffic singletons only.
+
 **SignalBus** (`signal_bus.gd`):
 Declares all cross-system signals as listed in CONVENTIONS.md §5. Contains zero logic —
 only signal declarations. Every system emits and connects through this singleton.
@@ -145,7 +150,7 @@ Exists purely so systems never need direct references to each other.
 **Prompt 11:** ally lifecycle hooks: `ally_spawned`, `ally_downed`, `ally_recovered`, `ally_killed` (and POST-MVP `ally_state_changed`).
 
 **DamageCalculator** (`damage_calculator.gd`):
-Stateless utility. Holds the 4×4 damage multiplier matrix as a nested Dictionary.
+Stateless utility. Holds the damage-type × armor-type multiplier matrix (`Types.DamageType` × `Types.ArmorType`, including **TRUE** damage) as nested Dictionaries.
 Single public method `calculate_damage(base_damage, damage_type, armor_type) -> float`.
 No signals emitted, no signals consumed. Pure function.
 
@@ -202,7 +207,7 @@ Emits building_placed/sold/upgraded via SignalBus. Handles resource cost checks 
 EconomyManager before placement. Slot visibility toggled by build mode state.
 
 **BuildingBase** (`building_base.gd` on building_base.tscn root):
-Base class for all 8 building types. Initialized with a `BuildingData` resource.
+Base class for all **36** `Types.BuildingType` entries (registry-driven). Initialized with a `BuildingData` resource.
 Has HealthComponent (buildings can be damaged — MVP: buildings don't take damage,
 but the component is present for future use). Contains targeting logic:
 `_find_target() -> EnemyBase` based on TargetPriority. Fires projectiles at target
@@ -211,7 +216,7 @@ Spawner type (Archer Barracks) overrides attack behavior to spawn units instead.
 Shield Generator overrides to buff adjacent buildings instead of attacking.
 
 **EnemyBase** (`enemy_base.gd` on enemy_base.tscn root):
-Base class for all 6 enemy types. Initialized with `EnemyData` resource.
+Base class for all **30** `Types.EnemyType` entries. Initialized with an `EnemyData` resource.
 Uses NavigationAgent3D to pathfind toward tower (Vector3.ZERO).
 HealthComponent tracks HP. On death: emits `SignalBus.enemy_killed`, awards gold via
 `EconomyManager.add_gold()`, then `queue_free()`. Melee enemies attack tower/buildings
@@ -239,20 +244,13 @@ Signals (local, not on SignalBus): `health_changed(current_hp, max_hp)`,
 ### 3.3 Manager Scripts
 
 **WaveManager** (`wave_manager.gd`):
-Drives the wave loop within a mission. Owns the 30-second countdown timer between waves.
-Calculates enemies per wave (wave_number × 6 types). Spawns enemies at random spawn
-points. Tracks living enemy count via group `"enemies"`. When count reaches 0 after a
-wave starts, emits `wave_cleared`. After wave 10 cleared, emits `all_waves_cleared`.
-Public methods: `start_wave_sequence()`, `get_living_enemy_count() -> int`,
-`force_spawn_wave(wave_number: int)` (for sim bot). Does NOT decide mission success —
-that's GameManager's job via signal.
+Drives the wave loop within a mission. Uses **`WaveComposer`** + **`WavePatternData`** (`wave_pattern` export) for normal wave composition (point budget, tags — not “N × 6 types”). Exports: `first_wave_countdown_seconds` (default 3.0), `wave_countdown_duration` (default 10.0 between waves), `max_waves` (default 5, matches `GameManager.WAVES_PER_MISSION`). Spawns at random `SpawnPoints` children. `enemy_data_registry` holds **30** `EnemyData` resources (one per `Types.EnemyType`). Tracks living enemy count via group `"enemies"`; emits `wave_cleared` / `all_waves_cleared`. Does NOT decide mission success — GameManager does.
 
 **SpellManager** (`spell_manager.gd`):
 Owns mana pool: `current_mana: int`, `max_mana: int = 100`, `mana_regen_rate: float = 5.0`.
-Tracks per-spell cooldowns. In MVP, only shockwave. Public method:
-`cast_spell(spell_id: String) -> bool` — checks mana, checks cooldown, applies effect,
-returns success. Shockwave: iterates all enemies in group `"enemies"`, calls
-`take_damage()` on each. Emits `spell_cast`, `mana_changed` via SignalBus.
+Tracks per-spell cooldowns. `spell_registry` lists all spells (e.g. shockwave, slow_field, arcane_beam, tower_shield — see scene on `Main/Managers/SpellManager`). Public methods:
+`cast_spell(spell_id: String) -> bool`, `cast_selected_spell() -> bool` — checks mana, checks cooldown, applies effect.
+Emits `spell_cast`, `mana_changed` via SignalBus.
 `_physics_process` handles mana regen (respects Engine.time_scale automatically).
 
 **ResearchManager** (`research_manager.gd`):
@@ -270,9 +268,9 @@ Emits `shop_item_purchased` via SignalBus. All effects are applied immediately o
 
 **InputManager** (`input_manager.gd`):
 Translates player input into public method calls on other systems. Contains ZERO game logic.
-Handles: mouse aim (raycast to ground plane), fire_primary → `Tower.fire_crossbow()`,
-fire_secondary → `Tower.fire_rapid_missile()`, cast_shockwave → `SpellManager.cast_spell()`,
-toggle_build_mode → `GameManager.set_build_mode()`, hex slot clicks → `HexGrid.place/sell`.
+Handles: mouse aim (raycast to ground plane), `fire_primary` → `Tower.fire_crossbow()`,
+`fire_secondary` → `Tower.fire_rapid_missile()`, `cast_selected_spell` / `cast_shockwave` → `SpellManager` (`cast_selected_spell()` / `cast_spell()`),
+spell cycle / slot actions → `SpellManager`, `toggle_build_mode` → `GameManager` build mode, hex slot clicks → `HexGrid.place/sell`.
 In build mode: handles radial menu interaction.
 
 A simulation bot (`SimBot`) replaces InputManager by calling the same public methods directly.
@@ -289,8 +287,8 @@ Listens to: `resource_changed`, `wave_countdown_started`, `wave_started`, `tower
 Updates labels and progress bars. Pure display — never modifies game state.
 
 **BuildMenu** (`build_menu.gd`):
-Shown during BUILD_MODE. Displays 8 building options in a radial layout around the
-selected hex slot. Greyed-out options for locked/unaffordable buildings. Clicking an
+Shown during BUILD_MODE. Displays building options in a radial layout around the
+selected hex slot (catalog from `HexGrid` / research unlocks). Greyed-out options for locked/unaffordable buildings. Clicking an
 option calls `HexGrid.place_building()`. Pure UI — delegates all logic to HexGrid.
 
 **BetweenMissionScreen** (`between_mission_screen.gd`):
@@ -340,27 +338,27 @@ SignalBus.tower_destroyed --> GameManager._on_tower_destroyed()
 
 ```
 GameManager (enters COMBAT) --> WaveManager.start_wave_sequence()
-    → WaveManager starts 30s countdown for wave 1
-    → WaveManager emits SignalBus.wave_countdown_started(1, 30.0)
+    → WaveManager starts countdown for wave 1 (`first_wave_countdown_seconds`, default 3s)
+    → WaveManager emits SignalBus.wave_countdown_started(1, seconds)
 
 SignalBus.wave_countdown_started --> HUD._on_wave_countdown_started()
     → HUD shows "WAVE 1 INCOMING" + countdown timer
 
 WaveManager (countdown reaches 0) --> WaveManager._spawn_wave()
-    → Instantiates N enemies per type at random spawn points
+    → Composes spawns via WaveComposer / WavePatternData; instantiates at random spawn points
     → Emits SignalBus.wave_started(wave_number, enemy_count)
 
 SignalBus.wave_started --> HUD._on_wave_started()
-    → HUD updates "Wave X / 10"
+    → HUD updates wave X / max (see `WaveManager.max_waves`, default 5)
 
 SignalBus.wave_cleared --> WaveManager._on_wave_cleared()
-    → If wave_number < 10: start next 30s countdown
-    → If wave_number == 10: emit SignalBus.all_waves_cleared()
+    → If wave_number < max_waves: start next countdown (`wave_countdown_duration`, default 10s)
+    → If last wave cleared: emit SignalBus.all_waves_cleared()
 
 SignalBus.all_waves_cleared --> GameManager._on_all_waves_cleared()
     → GameManager awards post-mission resources via EconomyManager
     → GameManager emits SignalBus.mission_won(current_mission)
-    → GameManager transitions to BETWEEN_MISSIONS (or GAME_WON if mission 5)
+    → GameManager transitions to BETWEEN_MISSIONS (or GAME_WON per campaign rules)
 ```
 
 ### 4.3 Build Mode Flow
@@ -438,7 +436,7 @@ RECOVERING state:
 ### 4.5 Spell Flow
 
 ```
-InputManager (Space pressed) --> SpellManager.cast_spell("shockwave")
+InputManager (Space / cast actions) --> SpellManager.cast_selected_spell() or cast_spell(spell_id)
     → SpellManager checks: current_mana >= spell_data.mana_cost
     → SpellManager checks: cooldown_remaining <= 0
     → If both pass:
@@ -525,7 +523,7 @@ BetweenMissionScreen ("NEXT MISSION" button):
               Each slot: { index: int, axial: Vector2i, world_pos: Vector3,
                            building: BuildingBase or null, is_occupied: bool }
 
-[Layout]      24 slots in 2 rings around tower center (Vector3.ZERO):
+[Layout]      24 slots in 3 rings around tower center (Vector3.ZERO):
               Ring 1 (inner): 6 slots at distance ~6 units, 60° apart
               Ring 2 (outer): 12 slots at distance ~12 units, 30° apart
               Ring 3 (extended): 6 slots at distance ~18 units, 60° apart (offset)
@@ -546,11 +544,10 @@ BetweenMissionScreen ("NEXT MISSION" button):
 [Sell]        HexGrid.sell_building(slot_index: int):
               1. Validate: slot exists, is occupied
               2. Get BuildingData from building instance
-              3. Call: EconomyManager.add_gold(gold_cost) — full refund
-              4. Call: EconomyManager.add_building_material(material_cost) — full refund
-              5. Call building.queue_free()
-              6. Update slot: building = null, is_occupied = false
-              7. Emit SignalBus.building_sold(slot_index, building_type)
+              3. `building.get_sell_refund()` → EconomyManager.add_gold / add_building_material
+              4. Call building.queue_free() (after AllyManager despawn, etc.)
+              5. Update slot: building = null, is_occupied = false
+              6. Emit SignalBus.building_sold(slot_index, building_type)
 
 [Upgrade]     HexGrid.upgrade_building(slot_index: int):
               1. Validate: slot occupied, building not already upgraded
@@ -569,8 +566,8 @@ BetweenMissionScreen ("NEXT MISSION" button):
 [Approach]    NavigationAgent3D on each EnemyBase instance.
               Target: Tower position (Vector3.ZERO).
 
-[NavMesh]     NavigationRegion3D on Ground node hosts the navigation mesh.
-              Baked at editor time to cover the full play area.
+[NavMesh]     NavigationRegion3D lives on **campaign terrain** scenes (e.g. `terrain_grassland.tscn`, `terrain_swamp.tscn`) loaded under `Main/TerrainContainer`. Registered with `NavMeshManager`.
+              Baked at editor time to cover the playable area.
               Tower collision (layer 1) carves a hole — enemies path around it.
 
 [Movement]    EnemyBase._physics_process(delta):
@@ -602,23 +599,14 @@ BetweenMissionScreen ("NEXT MISSION" button):
 ### 5.4 Wave Scaling
 
 ```
-[Formula]     Wave N spawns N enemies of each of the 6 types.
-              Total enemies = N × 6.
-              Wave 1: 6 | Wave 5: 30 | Wave 10: 60.
+[Composition] Normal waves use WaveComposer + WavePatternData (point budget, wave_tags, tier).
+              Enemy counts are not “wave_number × 6 types”; see `wave_manager.gd` and `wave_composer.gd`.
 
-[Spawn]       WaveManager._spawn_wave(wave_number: int):
-              1. For each EnemyType in Types.EnemyType.values():
-                  a. Load EnemyData resource for this type
-                  b. For i in range(wave_number):
-                      - Pick random spawn point from SpawnPoints children
-                      - Instantiate EnemyBase, initialize(enemy_data)
-                      - Set position to spawn_point.global_position + random offset
-                      - Add to EnemyContainer
-                      - Add to group "enemies"
-              2. Emit SignalBus.wave_started(wave_number, wave_number * 6)
+[Spawn]       WaveManager spawns from composed enemy selections at random SpawnPoints children,
+              adds to EnemyContainer and group "enemies", emits SignalBus.wave_started.
 
-[Timing]      30-second countdown between waves (including before wave 1).
-              Countdown runs in _physics_process, respects Engine.time_scale.
+[Timing]      first_wave_countdown_seconds (default 3) before wave 1; wave_countdown_duration
+              (default 10) between subsequent waves. Timers respect Engine.time_scale.
 ```
 
 ### 5.5 Build Mode Time Scaling
@@ -648,16 +636,16 @@ BetweenMissionScreen ("NEXT MISSION" button):
 ```
 [Matrix]      Stored in DamageCalculator as:
               Dictionary[Types.ArmorType, Dictionary[Types.DamageType, float]]
+              Five damage types: PHYSICAL, FIRE, MAGICAL, POISON, TRUE (TRUE bypasses matrix).
 
-              DAMAGE_MATRIX = {
-                  ArmorType.UNARMORED:   { PHYSICAL: 1.0, FIRE: 1.0, MAGICAL: 1.0, POISON: 1.0 },
-                  ArmorType.HEAVY_ARMOR: { PHYSICAL: 0.5, FIRE: 1.0, MAGICAL: 2.0, POISON: 1.0 },
-                  ArmorType.UNDEAD:      { PHYSICAL: 1.0, FIRE: 2.0, MAGICAL: 1.0, POISON: 0.0 },
-                  ArmorType.FLYING:      { PHYSICAL: 1.0, FIRE: 1.0, MAGICAL: 1.0, POISON: 1.0 },
-              }
+              Example rows (see `damage_calculator.gd` for source of truth):
+                  UNARMORED:   PHYSICAL 1.0, FIRE 1.0, MAGICAL 1.0, POISON 1.0, TRUE 1.0
+                  HEAVY_ARMOR: PHYSICAL 0.5, …
+                  UNDEAD:      … POISON 0.0 …
+                  FLYING:      …
 
 [Calculation] calculate_damage(base_damage, damage_type, armor_type) -> float:
-              return base_damage * DAMAGE_MATRIX[armor_type][damage_type]
+              TRUE damage skips matrix; else base_damage * multiplier.
 
 [Note]        Poison × Undead = 0.0 → immune. Handled naturally by multiplier.
 ```
@@ -747,6 +735,8 @@ Target selection: Always closest enemy to tower center (Vector3.ZERO), not Arnul
 
 ## 6. ALL @EXPORT VARIABLES
 
+> **Note:** Default values below are illustrative — verify against the `.gd` / scene files.
+
 ### Tower (`tower.gd`)
 
 ```gdscript
@@ -786,14 +776,20 @@ Target selection: Always closest enemy to tower center (Vector3.ZERO), not Arnul
 ### WaveManager (`wave_manager.gd`)
 
 ```gdscript
-## Seconds of countdown before each wave.
-@export var wave_countdown_duration: float = 30.0
+## Seconds of countdown before waves after the first.
+@export var wave_countdown_duration: float = 10.0
+
+## Countdown for wave 1 only (quick start).
+@export var first_wave_countdown_seconds: float = 3.0
 
 ## Maximum waves per mission.
-@export var max_waves: int = 10
+@export var max_waves: int = 5
 
-## Enemy data resources for each type (6 entries).
+## Enemy data resources for each type (30 entries, Types.EnemyType order).
 @export var enemy_data_registry: Array[EnemyData] = []
+
+## Campaign wave curve (WavePatternData).
+@export var wave_pattern: Resource = null
 ```
 
 ### SpellManager (`spell_manager.gd`)
@@ -805,7 +801,7 @@ Target selection: Always closest enemy to tower center (Vector3.ZERO), not Arnul
 ## Mana regenerated per second.
 @export var mana_regen_rate: float = 5.0
 
-## Spell data resources (1 in MVP: shockwave).
+## Spell data resources (multiple entries in main scene registry).
 @export var spell_registry: Array[SpellData] = []
 ```
 
@@ -998,8 +994,8 @@ Any of the following patterns is a VIOLATION of the simulation testing constrain
 
 ### 9.1 NavigationRegion3D Setup
 
-The navigation mesh is hosted on the Ground node's NavigationRegion3D child.
-It is baked at editor time to cover the full play area (~80×80 unit flat ground).
+The navigation mesh is hosted on **terrain** scenes (e.g. under `res://scenes/terrain/`) instantiated into `Main/TerrainContainer` at day start. `NavMeshManager` registers the region and can queue rebakes.
+It is baked at editor time to cover the playable area.
 The tower's collision shape creates a natural obstacle that enemies path around.
 
 ### 9.2 Per-Enemy NavigationAgent3D

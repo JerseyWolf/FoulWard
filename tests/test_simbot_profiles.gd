@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_simbot_profiles.gd
 # GdUnit4 test suite for StrategyProfile resources (Phase 2).
 # PRE_GENERATION_VERIFICATION: ran mentally for this file after CSV fix.

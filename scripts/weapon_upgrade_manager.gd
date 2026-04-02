@@ -69,9 +69,15 @@ func upgrade_weapon(weapon_slot: Types.WeaponSlot) -> bool:
 	if not EconomyManager.can_afford(eff_gold, level_data.material_cost):
 		return false
 	if eff_gold > 0:
-		EconomyManager.spend_gold(eff_gold)
+		var spent_gold: bool = EconomyManager.spend_gold(eff_gold)
+		if not spent_gold:
+			push_warning("WeaponUpgradeManager: insufficient gold for upgrade")
+			return false
 	if level_data.material_cost > 0:
-		EconomyManager.spend_building_material(level_data.material_cost)
+		var spent_material: bool = EconomyManager.spend_building_material(level_data.material_cost)
+		if not spent_material:
+			push_warning("WeaponUpgradeManager: insufficient building material for upgrade")
+			return false
 	_set_current_level(weapon_slot, current_level + 1)
 	SignalBus.weapon_upgraded.emit(weapon_slot, get_current_level(weapon_slot))
 	return true

@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — CombatStatsTracker CSV + wave/building rows.
 extends GdUnitTestSuite
 
@@ -20,7 +21,7 @@ func test_register_and_flush() -> void:
 	assert_bool(FileAccess.file_exists(path)).is_true()
 
 
-func test_wave_lifecycle() -> void:
+func test_wave_lifecycle_records_spawns_and_leak_rate() -> void:
 	CombatStatsTracker.begin_mission("m_wave", 1, 0.0)
 	CombatStatsTracker._on_wave_started(1, 100)
 	CombatStatsTracker._on_enemy_spawned(Types.EnemyType.ORC_GRUNT, Vector2.ZERO)

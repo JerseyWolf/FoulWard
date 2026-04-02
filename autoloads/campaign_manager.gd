@@ -82,8 +82,9 @@ func _load_ally_registry() -> void:
 	while fn != "":
 		if not dir.current_is_dir() and fn.ends_with(".tres"):
 			var loaded: Resource = load("res://resources/ally_data/%s" % fn) as Resource
-			if loaded != null and str(loaded.get("ally_id")) != "":
-				_ally_registry[str(loaded.get("ally_id"))] = loaded
+			var ad_reg: AllyData = loaded as AllyData
+			if ad_reg != null and ad_reg.ally_id != "":
+				_ally_registry[ad_reg.ally_id] = loaded
 		fn = dir.get_next()
 	dir.list_dir_end()
 
@@ -147,7 +148,8 @@ func _bootstrap_starter_allies() -> void:
 	active_allies_for_next_day.clear()
 	for ally_id: String in _ally_registry.keys():
 		var d: Resource = _ally_registry[ally_id] as Resource
-		if d != null and bool(d.get("is_starter_ally")):
+		var ad_boot: AllyData = d as AllyData
+		if ad_boot != null and ad_boot.is_starter_ally:
 			if not owned_allies.has(ally_id):
 				owned_allies.append(ally_id)
 	_apply_default_active_selection()
@@ -443,9 +445,10 @@ func _pick_best_active(simulated_roster: Array[String], strategy_profile: Types.
 	var scored_ids: Array[Dictionary] = []
 	for aid2: String in simulated_roster:
 		var d: Resource = get_ally_data(aid2)
-		if d == null:
+		var ad_pick: AllyData = d as AllyData
+		if ad_pick == null:
 			continue
-		var role_i: int = int(d.get("role"))
+		var role_i: int = int(ad_pick.role)
 		var sc: float = _role_alignment_score(role_i, strategy_profile)
 		scored_ids.append({"id": aid2, "score": sc})
 	scored_ids.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -472,13 +475,17 @@ func _score_offer(
 	var orr: int = int(offer.get("cost_research_material"))
 	var total_cost: float = float(og + 2 * ob + 3 * orr)
 	var cost_eff: float = maxf(0.0, 1.0 - total_cost / 300.0)
-	var my_role: int = int(ally_data.get("role"))
+	var ad_score: AllyData = ally_data as AllyData
+	if ad_score == null:
+		return 0.0
+	var my_role: int = int(ad_score.role)
 	var role_part: float = _role_alignment_score(my_role, strategy_profile)
 	var diversity: float = 0.0
 	var has_same_role: bool = false
 	for oid: String in current_roster:
 		var od: Resource = get_ally_data(oid)
-		if od != null and int(od.get("role")) == my_role:
+		var ad_od: AllyData = od as AllyData
+		if ad_od != null and int(ad_od.role) == my_role:
 			has_same_role = true
 			break
 	if not has_same_role:
@@ -543,9 +550,10 @@ func _sync_current_ally_roster_for_spawn() -> void:
 		if aid == "arnulf":
 			continue
 		var data: Resource = get_ally_data(aid)
-		if data == null:
+		var ad_sync: AllyData = data as AllyData
+		if ad_sync == null:
 			continue
-		if str(data.get("scene_path")).strip_edges().is_empty():
+		if ad_sync.scene_path.strip_edges().is_empty():
 			continue
 		current_ally_roster.append(data)
 		current_ally_roster_ids.append(aid)
@@ -560,6 +568,12 @@ func has_ally(ally_id: String) -> bool:
 func start_next_day() -> void:
 	GameManager.prepare_next_campaign_day_if_needed()
 	_start_current_day_internal()
+
+
+## Sets current_day directly — use only from GameManager edge-case paths.
+## Normal day advancement happens via _on_mission_won signal handler.
+func force_set_day(day: int) -> void:
+	current_day = day
 
 
 ## Returns the current day index (0-based) within the active campaign.

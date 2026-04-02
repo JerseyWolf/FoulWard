@@ -79,7 +79,7 @@ func test_passive_income_accumulates_deterministically() -> void:
 	me.starting_material = 0
 	EconomyManager.apply_mission_economy(me)
 	var g0: int = EconomyManager.get_gold()
-	EconomyManager.call("_process", 0.5)
+	EconomyManager.call("_physics_process", 0.5)
 	assert_int(EconomyManager.get_gold() - g0).is_equal(5)
 
 

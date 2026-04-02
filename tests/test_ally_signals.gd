@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_ally_signals.gd — SignalBus ally_* and Arnulf generic mirror signals.
 
 class_name TestAllySignals
@@ -32,7 +33,9 @@ func test_ally_killed_signal_emitted_on_death() -> void:
 	data.set("max_hp", 10)
 	data.set("attack_cooldown", 1.0)
 	ally.call("initialize_ally_data", data)
-	ally.get_node("HealthComponent").call("take_damage", float(10))
+	var health_comp: Node = ally.get_node_or_null("HealthComponent")
+	assert_object(health_comp).is_not_null()
+	health_comp.call("take_damage", float(10))
 	await get_tree().process_frame
 	await assert_signal(monitor).is_emitted("ally_killed", ["test_ally_killed"])
 

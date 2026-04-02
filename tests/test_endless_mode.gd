@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_endless_mode.gd — Endless Run (AUDIT 6 §3.4) headless-safe checks.
 class_name TestEndlessMode
 extends GdUnitTestSuite

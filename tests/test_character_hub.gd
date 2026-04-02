@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 ## test_character_hub.gd
 ## GdUnit4 tests for between-mission hub framework (Prompt 14).
 
@@ -275,8 +276,10 @@ func test_dialogue_panel_displays_text_from_dialogue_entry() -> void:
 	panel.show_entry("Speaker Name", entry)
 	await get_tree().process_frame
 
-	var speaker_label: Label = panel.get_node("SpeakerLabel")
-	var text_label: Label = panel.get_node("TextLabel")
+	var speaker_label: Label = panel.get_node_or_null("SpeakerLabel") as Label
+	var text_label: Label = panel.get_node_or_null("TextLabel") as Label
+	assert_object(speaker_label).is_not_null()
+	assert_object(text_label).is_not_null()
 
 	assert_str(speaker_label.text).is_equal("Speaker Name")
 	assert_str(text_label.text).is_equal("Panel text")

@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_faction_data.gd
 # GdUnit4: FactionData .tres integrity and campaign day → faction validation.
 

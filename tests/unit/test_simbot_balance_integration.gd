@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — SimBot balance sweep + CombatStatsTracker run labels (Prompt 51).
 extends GdUnitTestSuite
 

@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_ally_combat.gd — Downed/recovery, flying skip, preferred targeting (GdUnit4).
 class_name TestAllyCombat
 extends GdUnitTestSuite

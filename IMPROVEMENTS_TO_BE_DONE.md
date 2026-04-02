@@ -204,7 +204,7 @@ until parallel runner is implemented).
 ## 5. Documentation & Files
 
 ### Unindexed Files (55 total from pre-pass)
-All 55 files from `docs/PROMPT_26_PRE_INDEX_DIFF.txt` are legitimate files that need INDEX_SHORT.md entries. Key categories:
+All 55 files from `docs/archived/PROMPT_26_PRE_INDEX_DIFF.txt` are legitimate files that need INDEX_SHORT.md entries. Key categories:
 - **6 scripts:** `character_base_2d.gd`, `florence_data.gd`, `strategyprofileconfig.gd`, `test_strategyprofileconfig.gd`, `simbot_logger.gd`, `weapon_upgrade_manager.gd`
 - **1 UI script:** `dialogue_ui.gd`
 - **48 test files:** All test files listed in pre-pass
@@ -279,9 +279,9 @@ No files listed in INDEX_SHORT.md are missing from disk.
 |-----|---------|-------------|
 | 7a | `docs/INDEX_SHORT.md` | Added 55 unindexed files to the test files section |
 | 7e | `tools/run_gdunit_visible.sh` | Verified exists and is correct (created by Sonnet pre-pass) |
-| 7f | `docs/AGENTS.md` | Created authoritative standing orders document |
-| Log | `docs/PROMPT_26_IMPLEMENTATION.md` | Session log with all audit findings |
-| Prompt 28 | `docs/PROMPT_28_IMPLEMENTATION.md` | Tier/slots tests, DialogueManager/WaveManager stubs, test harness fixes; INDEX + metrics refresh |
+| 7f | `AGENTS.md` (repo root) | Created authoritative standing orders document |
+| Log | `docs/archived/PROMPT_26_IMPLEMENTATION.md` | Session log with all audit findings |
+| Prompt 28 | `docs/archived/PROMPT_28_IMPLEMENTATION.md` | Tier/slots tests, DialogueManager/WaveManager stubs, test harness fixes; INDEX + metrics refresh |
 
 ---
 
@@ -293,14 +293,14 @@ No files listed in INDEX_SHORT.md are missing from disk.
 | `scripts/resources/test_strategyprofileconfig.gd` | KEEP | Test helper resource class used by SimBot test suites |
 | `scripts/resources/strategyprofileconfig.gd` | KEEP | Active resource wrapper for strategy profile loading |
 | `scripts/simbot_logger.gd` | KEEP | SimBot CSV logging utility actively used by `sim_bot.gd` |
-| `AUDIT_IMPLEMENTATION_AUDIT_6.md` | DELETE | Content merged into `docs/ALL_AUDITS.md` — root-level copy is redundant |
-| `AUDIT_IMPLEMENTATION_UPDATE.md` | DELETE | Superseded by `docs/ALL_AUDITS.md` |
+| `AUDIT_IMPLEMENTATION_AUDIT_6.md` | DELETE | Content merged into `docs/archived/ALL_AUDITS.md` — root-level copy is redundant |
+| `AUDIT_IMPLEMENTATION_UPDATE.md` | DELETE | Superseded by `docs/archived/ALL_AUDITS.md` |
 | `AUDIT_IMPLEMENTATION_TASK.md` | DELETE | Superseded by this file |
 | `FUTURE_3D_MODELS_PLAN.md` | KEEP | Active production art roadmap referenced in INDEX_SHORT.md |
 
 ## Appendix B: Every TODO/FIXME/HACK (file, line, text, recommendation)
 
-Full scan: 84 items found. See `docs/PROMPT_26_PRE_TODO_LIST.txt` for complete listing.
+Full scan: 84 items found. See `docs/archived/PROMPT_26_PRE_TODO_LIST.txt` for complete listing.
 
 Key categories:
 - **POST-MVP markers (68):** Deferred features with clear labels. No action needed until feature development.

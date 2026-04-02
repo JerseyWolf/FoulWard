@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 ## test_projectile_system.gd
 ## GdUnit4 tests for ProjectileBase initialization, travel, collision, and damage application.
 

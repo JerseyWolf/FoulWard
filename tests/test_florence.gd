@@ -147,7 +147,8 @@ func test_hub_florence_panel_updates_on_florence_state_changed_signal() -> void:
 	SignalBus.florence_state_changed.emit()
 	await get_tree().process_frame
 
-	var label: Label = screen.get_node("FlorenceDebugLabel") as Label
+	var label: Label = screen.get_node_or_null("FlorenceDebugLabel") as Label
+	assert_object(label).is_not_null()
 	assert_str(label.text).contains("Failures 5")
 
 	screen.queue_free()

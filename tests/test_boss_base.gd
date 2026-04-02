@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_boss_base.gd
 # GdUnit4: BossBase damage, death signals, and movement vs tower (Prompt 10).
 
@@ -60,6 +61,6 @@ func test_boss_base_has_navigation_agent_like_enemy_base() -> void:
 	data.move_speed = 3.0
 	data.boss_scene = BOSS_SCENE
 	boss.initialize_boss_data(data)
-	var nav: NavigationAgent3D = boss.get_node("NavigationAgent3D") as NavigationAgent3D
+	var nav: NavigationAgent3D = boss.get_node_or_null("NavigationAgent3D") as NavigationAgent3D
 	assert_object(nav).is_not_null()
 	boss.queue_free()

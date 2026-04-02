@@ -46,10 +46,6 @@ func _get_display_name(character_id: String) -> String:
 			return "Merchant"
 		"MERCENARY_COMMANDER":
 			return "Commander"
-		"CAMPAIGN_CHARACTER_X":
-			return "Campaign Ally"
-		"EXAMPLE_CHARACTER":
-			return "Example"
 		_:
 			return character_id
 

@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_boss_data.gd
 # GdUnit4: BossData resources and FactionData mini_boss_ids integrity (Prompt 10).
 

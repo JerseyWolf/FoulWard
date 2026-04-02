@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_ally_base.gd — AllyBase movement, combat, death via HealthComponent.
 # SOURCE: GdUnit4 await physics_frame stepping, https://mikeschulze.github.io/gdUnit4/
 
@@ -107,7 +108,9 @@ func test_ally_hp_decreases_and_uses_health_component() -> void:
 	ally.call("initialize_ally_data", data)
 
 	var monitor := monitor_signals(SignalBus, false)
-	ally.get_node("HealthComponent").call("take_damage", float(40))
+	var health_comp: Node = ally.get_node_or_null("HealthComponent")
+	assert_object(health_comp).is_not_null()
+	health_comp.call("take_damage", float(40))
 	await get_tree().process_frame
 	assert_bool(is_instance_valid(ally)).is_false()
 	await assert_signal(monitor).is_emitted("ally_killed", ["test_ally_hp"])

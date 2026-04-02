@@ -358,7 +358,28 @@ func run_single(profile_id: String, run_index: int, seed_value: int) -> Dictiona
 	# Arrange
 	deactivate() # ensure legacy mercenary handlers are not active
 
-	_activate_for_run(profile_id, run_index, seed_value)
+	if not _activate_for_run(profile_id, run_index, seed_value):
+		var pid: String = profile_id
+		if _profile != null and not _profile.profile_id.is_empty():
+			pid = _profile.profile_id
+		var skipped: Dictionary = {
+			"profile_id": pid,
+			"run_index": run_index,
+			"seed_value": seed_value,
+			"result": "ERROR",
+			"waves_cleared": 0,
+			"final_wave": 0,
+			"enemies_killed": 0,
+			"tower_hp_start": 0,
+			"tower_hp_end": 0,
+			"gold_earned": 0,
+			"building_material_spent": 0,
+			"spell_casts": 0,
+			"duration_seconds": 0.0,
+		}
+		_store_run_single_batch_log(skipped, profile_id, seed_value)
+		return skipped
+
 	_reset_managers_for_run()
 	_capture_starting_resource_state()
 	_connect_metric_signals()
@@ -522,10 +543,26 @@ func _csv_append_row(file_path: String, columns: Array[String], row: Dictionary)
 # Orchestration helpers
 # ---------------------------------------------------------------------------
 
-func _activate_for_run(profile_id: String, run_index: int, seed_value: int) -> void:
+func _activate_for_run(profile_id: String, run_index: int, seed_value: int) -> bool:
 	_profile = _load_profile(profile_id)
 	_current_run_index = run_index
 	_base_seed = seed_value
+
+	_wave_manager = get_node_or_null("/root/Main/Managers/WaveManager") as WaveManager
+	_spell_manager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
+	_hex_grid = get_node_or_null("/root/Main/HexGrid") as HexGrid
+	_research_manager = get_node_or_null("/root/Main/Managers/ResearchManager") as ResearchManager
+
+	if not is_instance_valid(_wave_manager):
+		push_warning("SimBot: WaveManager missing from scene tree — skipping run.")
+		return false
+	if not is_instance_valid(_spell_manager):
+		push_warning("SimBot: SpellManager missing from scene tree — skipping run.")
+		return false
+	if not is_instance_valid(_hex_grid):
+		push_warning("SimBot: HexGrid missing from scene tree — skipping run.")
+		return false
+
 	var mid: String = profile_id
 	if _profile != null and not _profile.profile_id.is_empty():
 		mid = _profile.profile_id
@@ -538,16 +575,8 @@ func _activate_for_run(profile_id: String, run_index: int, seed_value: int) -> v
 	_last_spell_eval_frame = -1
 	_run_done = false
 
-	_wave_manager = get_node_or_null("/root/Main/Managers/WaveManager") as WaveManager
-	_spell_manager = get_node_or_null("/root/Main/Managers/SpellManager") as SpellManager
-	_hex_grid = get_node_or_null("/root/Main/HexGrid") as HexGrid
-	_research_manager = get_node_or_null("/root/Main/Managers/ResearchManager") as ResearchManager
-
-	assert(_wave_manager != null, "SimBot.run_single: WaveManager missing from scene tree.")
-	assert(_spell_manager != null, "SimBot.run_single: SpellManager missing from scene tree.")
-	assert(_hex_grid != null, "SimBot.run_single: HexGrid missing from scene tree.")
-
 	_reset_run_metrics()
+	return true
 
 func _load_strategy_profile_for_enum(strategy: Types.StrategyProfile) -> StrategyProfile:
 	var base_path: String = "res://resources/strategyprofiles/"
@@ -662,9 +691,11 @@ func _process_combat_tick() -> void:
 
 	if can_cast:
 		# Deterministic tie-break between spell and building actions.
+		# Use strict `>` so equal scores prefer building — `>=` made BALANCED_DEFAULT
+		# (spell_priority 1.0 vs build weight 1.0) never place buildings.
 		var spell_priority: float = float(_profile.spell_usage.get("priority_vs_building", 1.0))
 		var best_build_score: float = float(build_choice.get("score", 0.0))
-		if spell_priority >= best_build_score:
+		if spell_priority > best_build_score:
 			_cast_spell()
 			return
 
@@ -851,6 +882,15 @@ func _perform_build_action(choice: Dictionary) -> void:
 	if slot_index < 0:
 		return
 
+	# HexGrid.place_building / upgrade_building require BuildPhaseManager (Prompt 49).
+	# During COMBAT, enter BUILD_MODE for one placement tick then resume combat.
+	var gs: Types.GameState = GameManager.get_game_state()
+	var toggle_build_mode: bool = (
+			gs == Types.GameState.COMBAT or gs == Types.GameState.WAVE_COUNTDOWN
+	)
+	if toggle_build_mode:
+		GameManager.enter_build_mode()
+
 	match action_type:
 		"upgrade":
 			_hex_grid.upgrade_building(slot_index)
@@ -859,7 +899,12 @@ func _perform_build_action(choice: Dictionary) -> void:
 			var btype: Types.BuildingType = _cast_building_type(raw_btype)
 			_hex_grid.place_building(slot_index, btype)
 		_:
+			if toggle_build_mode:
+				GameManager.exit_build_mode()
 			return
+
+	if toggle_build_mode:
+		GameManager.exit_build_mode()
 
 func _cast_building_type(raw: Variant) -> Types.BuildingType:
 	var idx: int = int(raw)

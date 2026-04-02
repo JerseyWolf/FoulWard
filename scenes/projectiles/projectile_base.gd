@@ -146,7 +146,7 @@ func initialize_from_building(
 func _configure_collision(_targets_air_only_flag: bool) -> void:
 	# Projectiles always live on layer 5, hit enemies on layer 2 only.
 	# Credit (layer/mask convention):
-	#   FOUL WARD CONVENTIONS.md §16 Physics layers & PRE_GENERATION_VERIFICATION.md §3.3.
+	#   FOUL WARD CONVENTIONS.md §16 Physics layers & docs/archived/PRE_GENERATION_VERIFICATION.md §3.3.
 	collision_layer = 0
 	collision_mask = 0
 	set_collision_layer_value(5, true)

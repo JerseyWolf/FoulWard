@@ -32,6 +32,7 @@ func before_test() -> void:
 	EconomyManager.add_gold(1000)
 	EconomyManager.add_building_material(50)
 	EconomyManager.add_research_material(20)
+	BuildPhaseManager.set_build_phase_active(true)
 
 	# ── Minimal headless scene ────────────────────────────────────────────
 	_enemy_container = Node3D.new()
