@@ -12,6 +12,9 @@ var _queue_bake: bool = false
 
 
 func _ready() -> void:
+	# nav_mesh_rebake_requested is wired for future dynamic terrain / geometry changes.
+	# MVP: terrain navmesh is baked once at load; buildings use NavigationObstacle3D (see BuildingBase)
+	# via HexGrid placement — no runtime rebake. Nothing in gameplay emits this signal yet.
 	if not SignalBus.nav_mesh_rebake_requested.is_connected(request_rebake):
 		SignalBus.nav_mesh_rebake_requested.connect(request_rebake)
 

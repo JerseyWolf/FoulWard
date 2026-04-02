@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — AuraManager + healer tower data (Prompt 08 / Prompt 50 fields).
 extends GdUnitTestSuite
 

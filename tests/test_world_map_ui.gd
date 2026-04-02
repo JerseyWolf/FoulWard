@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 ## test_world_map_ui.gd
 ## WorldMap presenter reacts to territory_state_changed.
 

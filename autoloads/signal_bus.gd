@@ -145,6 +145,12 @@ signal campaign_completed(campaign_id: String)
 signal build_mode_entered()
 @warning_ignore("unused_signal")
 signal build_mode_exited()
+## Emitted when [member BuildPhaseManager.is_build_phase] becomes true (mission build phase / build mode).
+@warning_ignore("unused_signal")
+signal build_phase_started()
+## Emitted when [member BuildPhaseManager.is_build_phase] becomes false (combat / waves).
+@warning_ignore("unused_signal")
+signal combat_phase_started()
 
 # === RESEARCH ===
 @warning_ignore("unused_signal")

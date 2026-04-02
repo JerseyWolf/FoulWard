@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_wave_composer.gd — WaveComposer budgets, tags, and tier caps.
 
 class_name TestWaveComposer

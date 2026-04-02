@@ -73,10 +73,10 @@
 |------|---------|
 | `docs/INDEX_SHORT.md` | Compact one-liner-per-file index |
 | `docs/INDEX_FULL.md` | Full public API reference for every script, resource, and system |
-| `docs/AGENTS.md` | Standing orders for every Cursor/LLM session — **read first** (MCP habits; expands on [§1.1](#11-cursor-mcp-and-agent-toolchain)) |
+| `AGENTS.md` (repo root) | Standing orders for every Cursor/LLM session — **read first** (MCP habits; expands on [§1.1](#11-cursor-mcp-and-agent-toolchain)) |
 | `docs/CONVENTIONS.md` | Naming, typing, and style law |
 | `docs/SUMMARY_VERIFICATION.md` | Three-part read-only audit results |
-| `docs/OPUS_ALL_ACTIONS.md` | Consolidated snapshot + improvement backlog |
+| `docs/archived/OPUS_ALL_ACTIONS.md` | Archived consolidated snapshot + improvement backlog (historical) |
 
 ### 1.1 Cursor, MCP, and agent toolchain
 
@@ -93,7 +93,7 @@ Cursor loads MCP servers from **`.cursor/mcp.json`**. There is no separate “au
 | `github` | GitHub API; requires **`GITHUB_PERSONAL_ACCESS_TOKEN`** (never commit secrets). |
 | `foulward-rag` | Project RAG (`query_project_knowledge`, etc.); **optional** — requires the RAG service under **`~/LLM`** to be running; agents must not block if it is down. |
 
-**Authoritative detail** (ports, “No tools” recovery, mandatory calls like `get_scene_tree` / `get_godot_errors`, GDAI stdout/stderr rule): **`docs/AGENTS.md`** and **`.cursor/rules/mcp-godot-workflow.mdc`**. This section does not duplicate those files.
+**Authoritative detail** (ports, “No tools” recovery, mandatory calls like `get_scene_tree` / `get_godot_errors`, GDAI stdout/stderr rule): **`AGENTS.md`** (repo root) and **`.cursor/rules/mcp-godot-workflow.mdc`**. This section does not duplicate those files.
 
 ---
 
@@ -159,7 +159,7 @@ Weapon upgrades tracked via `SignalBus.weapon_upgraded(weapon_slot, new_level)`.
 
 ## 3. Autoloads — Init Order and Complete Public APIs
 
-All registered in `project.godot`. **Init order matters** — do not change without reading `docs/AGENTS.md`.
+All registered in `project.godot`. **Init order matters** — do not change without reading repo-root **`AGENTS.md`**.
 
 ### 3.1 SignalBus (`res://autoloads/signal_bus.gd`) — Init #1
 
@@ -346,9 +346,9 @@ Headless-safe guard for hex placement. Default `is_build_phase = true` (headless
 | Signature | Returns | Usage |
 |-----------|---------|-------|
 | `assert_build_phase(context: String) -> bool` | bool | Returns true if in build phase; warns otherwise |
-| `set_build_phase_active(active: bool) -> void` | void | Toggles + emits `build_phase_started` or `combat_phase_started` |
+| `set_build_phase_active(active: bool) -> void` | void | Toggles + emits `SignalBus.build_phase_started` or `SignalBus.combat_phase_started` |
 
-**Signals (local, not on SignalBus):** `build_phase_started()`, `combat_phase_started()`.
+**Signals (on SignalBus):** `build_phase_started()`, `combat_phase_started()` — emitted from here when `is_build_phase` changes.
 
 ### 3.11 AllyManager (`res://autoloads/ally_manager.gd`) — Init #11
 
@@ -968,7 +968,7 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 
 - `SimBot` — headless simulation: `run_balance_sweep`, `run_batch`, `run_single`.
 - Loadouts: `balanced`, `summoner_heavy`, `artillery_air`.
-- `CombatStatsTracker` writes wave/building CSVs (under `user://simbot/…` for SimBot runs); balance tooling includes `tools/simbot_balance_report.py` and related scripts (see repo and `docs/AGENTS.md` test commands).
+- `CombatStatsTracker` writes wave/building CSVs (under `user://simbot/…` for SimBot runs); balance tooling includes `tools/simbot_balance_report.py` and related scripts (see repo and repo-root `AGENTS.md` test commands).
 
 **Headless automation (not GdUnit):** `AutoTestDriver` activates when the project is run with CLI user args such as `--autotest`, `--simbot_profile=…`, or `--simbot_balance_sweep` (see `autoloads/auto_test_driver.gd`). That path boots the real game flow and drives `SimBot`, so **economy, waves, and combat stats behave like a mission** — useful for sweeps and integration-style balance checks. It is **not** a substitute for **GdUnit** unit/integration tests (`./tools/run_gdunit*.sh`), which assert specific APIs and run without full interactive mission requirements.
 
@@ -1461,7 +1461,7 @@ Manager node path contracts:
 
 ## 29. Conventions and Rules for LLM Agents
 
-These rules apply to **every** future Cursor session. See also `docs/AGENTS.md`.
+These rules apply to **every** future Cursor session. See also repo-root **`AGENTS.md`**.
 
 1. **Never add logic to SignalBus.** Pure signal hub. No state, no methods beyond signal declarations.
 2. **CampaignManager must be registered before GameManager** in `project.godot` init order.
@@ -1757,19 +1757,19 @@ await timer.timeout
 | Star difficulty multipliers | Exact HP/damage/gold multipliers for Veteran and Nightmare | Designer/playtester |
 
 ---
-
+ 
 ## 34. Related Documents
 
 | Document | Purpose |
 |----------|---------|
-| `docs/AGENTS.md` | Standing orders for every LLM session — **read first** (MCP habits; expands on [§1.1](#11-cursor-mcp-and-agent-toolchain)) |
+| `AGENTS.md` (repo root) | Standing orders for every LLM session — **read first** (MCP habits; expands on [§1.1](#11-cursor-mcp-and-agent-toolchain)) |
 | `docs/CONVENTIONS.md` | Naming, typing, and style rules (LAW) |
 | `docs/INDEX_SHORT.md` | Compact one-liner per file index |
 | `docs/INDEX_FULL.md` | Full public API reference |
 | `docs/SUMMARY_VERIFICATION.md` | Three-part read-only codebase audit results |
-| `docs/OPUS_ALL_ACTIONS.md` | Consolidated snapshot + improvement backlog |
+| `docs/archived/OPUS_ALL_ACTIONS.md` | Archived consolidated snapshot + improvement backlog (historical) |
 | `docs/IMPROVEMENTS_TO_BE_DONE.md` | 78-issue backlog |
 | `FUTURE_3D_MODELS_PLAN.md` | Production 3D art roadmap |
 | `.cursorrules` | Workspace rules for Cursor agent behavior |
 | `.cursor/rules/mcp-godot-workflow.mdc` | MCP server usage rules |
-| `docs/PROMPT_*_IMPLEMENTATION.md` | Per-session implementation logs |
+| `docs/PROMPT_[N]_IMPLEMENTATION.md` (new) · `docs/archived/PROMPT_*_IMPLEMENTATION.md` (history) | Per-session implementation logs |

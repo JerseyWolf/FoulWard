@@ -46,10 +46,11 @@ var _passive_material_accum: float = 0.0
 func _ready() -> void:
 	SignalBus.enemy_killed.connect(_on_enemy_killed)
 	SignalBus.wave_cleared.connect(_on_wave_cleared)
-	set_process(false)
+	set_physics_process(false)
 
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	# Passive accrual in _physics_process — gameplay logic rule (godot-conventions §14)
 	if not (_mission_economy is MissionEconomyData):
 		return
 	var me: MissionEconomyData = _mission_economy as MissionEconomyData
@@ -268,7 +269,7 @@ func get_refund(_building_data: BuildingData, paid_gold: int, paid_material: int
 	}
 
 
-## Applies mission economy overrides and optional starting stock. Enables `_process` passive income when rates &gt; 0.
+## Applies mission economy overrides and optional starting stock. Enables `_physics_process` passive income when rates &gt; 0.
 ## Clears per-mission duplicate placement counts whenever mission economy is (re)applied.
 func apply_mission_economy(econ: MissionEconomyData = null) -> void:
 	reset_for_mission()
@@ -277,7 +278,7 @@ func apply_mission_economy(econ: MissionEconomyData = null) -> void:
 	_passive_material_accum = 0.0
 	if econ == null:
 		sell_refund_global_multiplier = 1.0
-		set_process(false)
+		set_physics_process(false)
 		return
 	sell_refund_global_multiplier = maxf(0.0, econ.sell_refund_global_multiplier)
 	if econ.sell_refund_fraction >= 0.0:
@@ -288,7 +289,7 @@ func apply_mission_economy(econ: MissionEconomyData = null) -> void:
 	building_material = econ.starting_material
 	SignalBus.resource_changed.emit(Types.ResourceType.GOLD, gold)
 	SignalBus.resource_changed.emit(Types.ResourceType.BUILDING_MATERIAL, building_material)
-	set_process(econ.passive_gold_per_sec > 0.0 or econ.passive_material_per_sec > 0.0)
+	set_physics_process(econ.passive_gold_per_sec > 0.0 or econ.passive_material_per_sec > 0.0)
 
 
 ## Gold granted for clearing [param wave] (1-based). [param econ] may be null (returns 0).
@@ -341,7 +342,7 @@ func reset_to_defaults() -> void:
 	reset_for_mission()
 	_passive_gold_accum = 0.0
 	_passive_material_accum = 0.0
-	set_process(false)
+	set_physics_process(false)
 
 	var is_playtest_starting_bundle: bool = not (_is_gdunit_run() or _is_headless_run())
 

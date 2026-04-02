@@ -75,6 +75,7 @@ func _ready() -> void:
 	if _building_container == null:
 		var c: Node3D = Node3D.new()
 		c.name = "BuildingContainer"
+		# AP-06 exception: Node3D placeholder has no initialize() — name set above only
 		add_child(c)
 		_building_container = c
 	print("[HexGrid] _ready: building_data_registry size=%d" % building_data_registry.size())
@@ -107,6 +108,8 @@ func place_building(slot_index: int, building_type: Types.BuildingType) -> bool:
 
 ## Shop voucher: places first available [param building_type] without spending resources.
 ## Uses lowest empty slot index. Returns false if no slot or validation fails.
+# Intentional: shop voucher placement bypasses build-phase guard by design.
+# See docs/FOUL_WARD_MASTER_DOC.md §ShopManager for voucher rules.
 func place_building_shop_free(building_type: Types.BuildingType) -> bool:
 	var empty: Array[int] = get_empty_slots()
 	if empty.is_empty():
@@ -199,6 +202,9 @@ func _try_place_building(
 			return false
 
 		var building: BuildingBase = BuildingScene.instantiate() as BuildingBase
+		# AP-06 exception: add_child before initialize_with_economy — BuildingBase.initialize()
+		# expects the node in the tree (see docstring); slot world_pos is applied immediately
+		# after add_child, then init. (Swapping init before add_child broke nav/path tests.)
 		_building_container.add_child(building)
 		building.global_position = slot["world_pos"]
 		building.add_to_group("buildings")
@@ -222,6 +228,7 @@ func _try_place_building(
 		return true
 
 	var building_free: BuildingBase = BuildingScene.instantiate() as BuildingBase
+	# Same AP-06 exception as paid placement (add_child → pose → initialize_with_economy).
 	_building_container.add_child(building_free)
 	building_free.global_position = slot["world_pos"]
 	building_free.add_to_group("buildings")

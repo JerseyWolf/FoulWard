@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 ## tests/unit/test_terrain.gd
 ## Unit tests for TerrainZone, EnemyBase terrain speed, NavMeshManager, TerritoryData terrain_type.
 

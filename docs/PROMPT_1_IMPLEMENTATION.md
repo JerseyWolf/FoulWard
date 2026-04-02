@@ -1,100 +1,71 @@
-# PROMPT 1 IMPLEMENTATION
+# PROMPT 1 — Agent Skills verification (read-only)
 
-Date: 2026-03-24
+**Date:** 2026-03-31  
+**Scope:** Cross-check `.cursor/skills/**` against the repo; update skills; no tests run.
 
-## Implemented
+## Summary
 
-- `res://scripts/input_manager.gd`
-  - Added build-mode left-click routing that raycasts hex slots on collision layer 7.
-  - Added occupancy-aware menu open flow:
-    - empty slot -> `BuildMenu.open_for_slot(slot_index)`
-    - occupied slot -> `BuildMenu.open_for_sell_slot(slot_index, slot_data)`
-  - Kept `InputManager` as a pure input router (no economy/build mutation logic).
+Verified flagged `⚠️ VERIFY` items against sources of truth and corrected skill content where it diverged.
 
-- `res://ui/build_menu.gd`
-  - Added sell-mode support with:
-    - `open_for_sell_slot(slot_index: int, slot_data: Dictionary) -> void`
-    - sell info refresh for building name, upgrade state, and display-only refund text.
-  - Added button handlers:
-    - Sell -> calls `HexGrid.sell_building(_selected_slot)` then closes menu.
-    - Cancel -> closes menu.
-  - Preserved placement-mode behavior in `open_for_slot`.
+### Autoloads (`godot-conventions/SKILL.md`)
 
-- `res://ui/build_menu.tscn`
-  - Added `SellPanel` UI under `Panel/VBox`:
-    - `BuildingNameLabel`
-    - `UpgradeStatusLabel`
-    - `RefundLabel`
-    - `Buttons/SellButton`
-    - `Buttons/CancelButton`
-  - `SellPanel` starts hidden.
+- **`project.godot`** lists **20** `[autoload]` entries, not 17: after `EnchantmentManager`, three addon autoloads are registered (`MCPScreenshot`, `MCPInputService`, `MCPGameInspector` from `addons/godot_mcp/`).
+- Documented full ordered table (1–20) and noted 17 core game + tooling/MCP entries.
 
-- `res://scenes/hex_grid/hex_grid.gd`
-  - Updated `_on_hex_slot_input(...)` to highlight slot only in `BUILD_MODE`.
-  - Removed direct BuildMenu open from `HexGrid` so input routing stays centralized in `InputManager`.
+### Economy (`economy-system/SKILL.md`)
 
-- `res://tests/test_hex_grid.gd`
-  - Added sell-flow tests:
-    - `test_sell_building_empties_slot_and_refunds_base_cost`
-    - `test_sell_upgraded_building_refunds_base_and_upgrade_costs`
-    - `test_sell_building_emits_building_sold_signal`
+- Confirmed `EconomyManager`: `DEFAULT_GOLD = 1000`, `DEFAULT_BUILDING_MATERIAL = 50`, `DEFAULT_RESEARCH_MATERIAL = 0` in `autoloads/economy_manager.gd`.
 
-## Notes
+### Campaign (`campaign-and-progression/SKILL.md`, `references/game-manager-api.md`)
 
-- No behavior change was made to `HexGrid.sell_building()` logic.
-- No additional game logic was added to `InputManager` or `BuildMenu`; both only route/call into existing systems.
-- Continuation note: follow-up firing assist/miss implementation details are documented in `docs/PROMPT_2_IMPLEMENTATION.md`.
+- Confirmed `GameManager`: `WAVES_PER_MISSION = 5`, `TOTAL_MISSIONS = 5` in `autoloads/game_manager.gd`.
 
-## Second-pass audit (2026-03-24)
+### Enums (`enemy-system/references/enemy-types.md`, `building-system/references/building-types.md`)
 
-- Verified each checklist item above against actual files.
-- Fixed one comment drift in `res://ui/build_menu.gd` (`open_for_slot` caller now documented as `InputManager`).
-- Hardened `res://scenes/hex_grid/hex_grid.gd` test-safety path:
-  - guarded `get_surface_override_material(0)` behind a mesh/surface-count check.
-  - prevents headless test noise from empty `MeshInstance3D` surfaces in test doubles.
-- Improved `res://tests/test_hex_grid.gd` headless stability:
-  - added a minimal `/root/Main/ProjectileContainer` test stub in setup to avoid runtime node-path errors when instantiating `BuildingBase` during sell-flow tests.
-- Re-ran `test_hex_grid.gd`: all 22 tests pass, 0 failures.
+- **EnemyType** (30 values), **DamageType** including **TRUE**, and **EnemyBodyType** ordinals match `scripts/types.gd`.
+- **BuildingType** (36 values) and **BuildingSizeClass** match `scripts/types.gd`.
 
-## Source prompt summary
+### SignalBus (`signal-bus/references/signal-table.md`, `signal-bus/SKILL.md`)
 
-The source prompt requested two primary outcomes for FOUL WARD:
+- Rebuilt the signal table from `autoloads/signal_bus.gd`: **63** signals with correct parameter lists. Previous table had wrong names (`boss_defeated`, `territory_captured`, etc.) and outdated payloads (e.g. `enemy_killed` uses `Types.EnemyType`, not `EnemyData`).
 
-1. Wire the already-implemented `HexGrid.sell_building()` flow into player-facing UX in build mode.
-2. Complete remaining Phase 6 verification gaps through tests and/or clearly documented manual checks.
+### WeaponUpgradeManager (`spell-and-research-system/SKILL.md`)
 
-Key requirements from the source prompt:
+- Documented public API from `scripts/weapon_upgrade_manager.gd` (`upgrade_weapon`, `get_current_level`, `get_max_level`, `get_effective_*`, `get_next_level_data`, `get_level_data`, `reset_to_defaults`, exports).
 
-- Preserve existing behavior; do not break current systems.
-- Do not add autoloads.
-- Avoid public API signature changes unless absolutely necessary (`# DEVIATION` if needed).
-- Follow `CONVENTIONS.md` strictly.
-- Read architecture/index/project files first; do not invent signatures.
-- Keep `InputManager` as input routing only.
-- Keep UI scripts as presentation + delegation only (no game logic).
+### Allies (`ally-and-mercenary-system/SKILL.md`)
 
-Requested implementation direction:
+- Listed all **12** `ally_id` values from `resources/ally_data/*.tres`; noted starter (`arnulf`) and unique flags from files.
 
-- In build mode, left-clicking a hex slot should branch by occupancy:
-  - empty slot -> placement mode menu
-  - occupied slot -> sell mode menu
-- Build menu sell mode should display building context and expose Sell/Cancel actions.
-- Sell action should call `HexGrid.sell_building(slot_index)` and close.
-- `HexGrid.sell_building()` behavior itself should remain unchanged.
-- Optional between-mission sell UX was explicitly allowed to remain `# POST-MVP` if non-trivial.
+### Scene tree (`scene-tree-and-physics/SKILL.md`)
 
-Requested testing direction:
+- Replaced overview with structure from **`scenes/main.tscn`**: added `TerrainContainer`, `AllyContainer`, `AllySpawnPoints`, `BuildingContainer`, `Camera3D`, `ResearchPanel`, `MissionBriefing`, `Hub`, `UIManager`/`DialoguePanel` layout; removed incorrect direct `NavigationRegion3D` under `Main` (nav lives in terrain scenes under `scenes/terrain/`).
+- Input: confirmed `cast_shockwave` and `cast_selected_spell` both exist in `project.godot`; noted spell slots and cycle actions.
 
-- Strengthen sell coverage (`sell_building` slot state/refunds/signals/empty-slot behavior).
-- Validate Phase 6 items for:
-  - Shockwave (ground/flying behavior + mana/cooldown/signals)
-  - Arnulf state machine transitions and recovery cycle
-  - Mission win/fail and between-mission progression
-  - Simulation-loop stability
-- If some flows are impractical to fully automate, document clear manual verification steps.
+### Factions & bosses (`enemy-system/SKILL.md`)
 
-Requested deliverables:
+- **Faction:** `campaign_main_50days.tres` uses empty `faction_id`; `CampaignManager.validate_day_configs` maps empty to `"DEFAULT_MIXED"`.
+- **Boss IDs:** Corrected path to `resources/bossdata_*.tres` and actual `boss_id` values: `final_boss`, `orc_warlord`, `plague_cult_miniboss`, `audit5_territory_mini` (replacing placeholder names like `plague_lord` / `brood_mother`).
 
-- Code changes in gameplay/UI/test files as needed.
-- Updated project indexes when API/surface changes are introduced.
-- A dedicated `CURSOR_INSTRUCTIONS_1.md` checklist describing final verification execution steps for Cursor.
+### Other
+
+- **`enemy-system/SKILL.md`:** Fixed `enemy_killed` emit signature in the flow section to match `signal_bus.gd`.
+- **`building-system/SKILL.md`:** Confirmed 36 building types vs `types.gd`.
+- Removed all `⚠️ VERIFY` markers after confirmation; no new VERIFY flags added (no remaining uncertainties requiring a flag).
+
+## Files touched
+
+- `.cursor/skills/godot-conventions/SKILL.md`
+- `.cursor/skills/economy-system/SKILL.md`
+- `.cursor/skills/campaign-and-progression/SKILL.md`
+- `.cursor/skills/campaign-and-progression/references/game-manager-api.md`
+- `.cursor/skills/enemy-system/SKILL.md`
+- `.cursor/skills/enemy-system/references/enemy-types.md`
+- `.cursor/skills/building-system/SKILL.md`
+- `.cursor/skills/building-system/references/building-types.md`
+- `.cursor/skills/signal-bus/SKILL.md`
+- `.cursor/skills/signal-bus/references/signal-table.md`
+- `.cursor/skills/spell-and-research-system/SKILL.md`
+- `.cursor/skills/ally-and-mercenary-system/SKILL.md`
+- `.cursor/skills/scene-tree-and-physics/SKILL.md`
+- `docs/PROMPT_1_IMPLEMENTATION.md` (this file)

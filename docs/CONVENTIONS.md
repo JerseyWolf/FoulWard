@@ -5,94 +5,78 @@
 
 ---
 
+## Changelog
+
+### 2026-03-31
+
+- Refreshed counts, defaults, enums, SignalBus registry, autoload list, and init order to match `docs/FOUL_WARD_MASTER_DOC.md` (§2 Core Architecture, §3 Autoloads, §5 Types.gd, §29–30 agent rules, §32 field names). The MVP-era snapshot is preserved as `docs/archived/CONVENTIONS_MVP.md`.
+- **Authoritative detail:** Full APIs, enum-to-integer tables, and the grouped signal reference also live in `docs/FOUL_WARD_MASTER_DOC.md` (especially §3, §5, §24).
+
+---
+
 ## 1. FILE & DIRECTORY STRUCTURE
+
+High-level layout (not exhaustive — see repo tree for every file):
 
 ```
 res://
 ├── project.godot
 ├── autoloads/
-│   ├── signal_bus.gd          # SignalBus singleton
-│   ├── game_manager.gd        # GameManager singleton
-│   ├── economy_manager.gd     # EconomyManager singleton
-│   └── damage_calculator.gd   # DamageCalculator singleton
-├── scenes/
-│   ├── main.tscn              # Root scene
-│   ├── tower/
-│   │   └── tower.tscn
-│   ├── arnulf/
-│   │   └── arnulf.tscn
-│   ├── hex_grid/
-│   │   └── hex_grid.tscn
-│   ├── buildings/
-│   │   ├── building_base.tscn
-│   │   └── building_base.gd
-│   ├── enemies/
-│   │   ├── enemy_base.tscn
-│   │   └── enemy_base.gd
-│   └── projectiles/
-│       ├── projectile_base.tscn
-│       └── projectile_base.gd
+│   ├── signal_bus.gd              # SignalBus — init #1
+│   ├── damage_calculator.gd       # DamageCalculator — init #3
+│   ├── aura_manager.gd            # AuraManager — init #4
+│   ├── economy_manager.gd         # EconomyManager — init #5
+│   ├── campaign_manager.gd        # CampaignManager — init #6
+│   ├── relationship_manager.gd    # RelationshipManager — init #7
+│   ├── settings_manager.gd        # SettingsManager — init #8
+│   ├── game_manager.gd            # GameManager — init #9
+│   ├── build_phase_manager.gd     # BuildPhaseManager — init #10
+│   ├── ally_manager.gd            # AllyManager — init #11
+│   ├── combat_stats_tracker.gd    # CombatStatsTracker — init #12
+│   ├── save_manager.gd            # SaveManager — init #13
+│   ├── dialogue_manager.gd        # DialogueManager — init #14
+│   ├── auto_test_driver.gd        # AutoTestDriver — init #15
+│   └── enchantment_manager.gd     # EnchantmentManager — init #17
 ├── scripts/
-│   ├── types.gd               # Global enums + constants (class_name Types)
-│   ├── health_component.gd    # Reusable HP component
-│   ├── wave_manager.gd
-│   ├── spell_manager.gd
-│   ├── research_manager.gd
-│   ├── shop_manager.gd
-│   ├── input_manager.gd       # Translates input → public method calls
-│   └── sim_bot.gd             # Headless bot stub
+│   ├── nav_mesh_manager.gd        # NavMeshManager autoload — init #2
+│   ├── types.gd                   # Global enums + constants (class_name Types)
+│   ├── health_component.gd
+│   ├── wave_manager.gd            # Scene-bound: /root/Main/Managers/WaveManager
+│   ├── spell_manager.gd           # Scene-bound: .../SpellManager
+│   ├── research_manager.gd        # Scene-bound: .../ResearchManager
+│   ├── shop_manager.gd            # Scene-bound: .../ShopManager
+│   ├── input_manager.gd           # Scene-bound: .../InputManager
+│   ├── weapon_upgrade_manager.gd  # Scene-bound: .../WeaponUpgradeManager
+│   └── sim_bot.gd                 # Headless / SimBot
+├── scenes/
+│   ├── main.tscn
+│   ├── tower/
+│   ├── arnulf/
+│   ├── hex_grid/
+│   ├── buildings/
+│   ├── enemies/
+│   └── projectiles/
 ├── ui/
-│   ├── ui_manager.gd          # Lightweight signal→panel router
-│   ├── hud.gd
-│   ├── hud.tscn
-│   ├── build_menu.gd
-│   ├── build_menu.tscn
-│   ├── between_mission_screen.gd
-│   ├── between_mission_screen.tscn
-│   ├── main_menu.gd
-│   ├── main_menu.tscn
+│   ├── ui_manager.gd
+│   ├── hud.gd / hud.tscn
+│   ├── build_menu.gd / build_menu.tscn
+│   ├── between_mission_screen.gd / between_mission_screen.tscn
+│   ├── main_menu.gd / main_menu.tscn
 │   └── end_screen.gd
 ├── resources/
 │   ├── enemy_data/
-│   │   ├── orc_grunt.tres
-│   │   ├── orc_brute.tres
-│   │   ├── goblin_firebug.tres
-│   │   ├── plague_zombie.tres
-│   │   ├── orc_archer.tres
-│   │   └── bat_swarm.tres
 │   ├── building_data/
-│   │   ├── arrow_tower.tres
-│   │   ├── fire_brazier.tres
-│   │   ├── magic_obelisk.tres
-│   │   ├── poison_vat.tres
-│   │   ├── ballista.tres
-│   │   ├── archer_barracks.tres
-│   │   ├── anti_air_bolt.tres
-│   │   └── shield_generator.tres
 │   ├── weapon_data/
-│   │   ├── crossbow.tres
-│   │   └── rapid_missile.tres
 │   ├── research_data/
-│   │   └── base_structures_tree.tres
 │   ├── shop_data/
-│   │   └── shop_catalog.tres
 │   └── spell_data/
-│       └── shockwave.tres
 └── tests/
-    ├── test_economy_manager.gd
-    ├── test_damage_calculator.gd
-    ├── test_wave_manager.gd
-    ├── test_spell_manager.gd
-    ├── test_arnulf_state_machine.gd
-    ├── test_health_component.gd
-    ├── test_research_manager.gd
-    ├── test_shop_manager.gd
-    ├── test_game_manager.gd
-    ├── test_hex_grid.gd
-    ├── test_building_base.gd
-    ├── test_projectile_system.gd
-    └── test_simulation_api.gd
+    └── unit/                      # GdUnit4 — `test_<module>.gd`
 ```
+
+**GDAIMCPRuntime** (init #16) is registered in `project.godot` from the GDAI GDExtension (editor / MCP tooling). **17 gameplay-related autoloads** are listed in §19; with GDAIMCPRuntime that is **18** engine registrations before optional MCP addon autoloads.
+
+Scene-bound managers live under `/root/Main/Managers/` — not additional autoloads. See `docs/FOUL_WARD_MASTER_DOC.md` §4.
 
 ---
 
@@ -108,7 +92,7 @@ res://
 | class_name           | PascalCase           | `class_name EconomyManager` |
 | Enum type            | PascalCase           | `enum DamageType`           |
 | Enum value           | UPPER_SNAKE_CASE     | `DamageType.PHYSICAL`       |
-| Constant             | UPPER_SNAKE_CASE     | `const MAX_WAVES := 10`     |
+| Constant             | UPPER_SNAKE_CASE     | `const WAVES_PER_MISSION := 5` |
 | Variable (local/member) | snake_case        | `var current_hp: int`       |
 | Private variable     | _snake_case          | `var _internal_timer: float` |
 | Function (public)    | snake_case           | `func add_gold(amount: int)` |
@@ -125,7 +109,7 @@ All cross-system signals live on `SignalBus` autoload. Signal names:
 - Past tense for events that happened: `enemy_killed`, `wave_started`
 - Present tense for requests: `build_requested`, `sell_requested`
 - NEVER future tense
-- Payload is always typed: `signal enemy_killed(enemy_data: EnemyData, position: Vector3, gold_reward: int)`
+- Payload is always typed: `signal enemy_killed(enemy_type: Types.EnemyType, position: Vector3, gold_reward: int)`
 
 Local signals (within one scene tree) may live on the emitting node directly.
 Name format: `<noun>_<past_verb>` — e.g., `health_depleted`, `cooldown_finished`.
@@ -152,15 +136,20 @@ if mana >= spell_data.mana_cost:
 These exact variable names and types MUST be used by every module that touches them.
 No aliases. No abbreviations. No synonyms.
 
+Extended method lists for autoloads: **`docs/FOUL_WARD_MASTER_DOC.md` §3**.
+
 ### 3.1 EconomyManager (autoload: `EconomyManager`)
 
+Defaults match `EconomyManager` constants (`DEFAULT_GOLD`, etc.):
+
 ```gdscript
-var gold: int = 100                 # Starting gold
-var building_material: int = 10     # Starting building material
-var research_material: int = 0      # Starting research material
+var gold: int = 1000                # DEFAULT_GOLD
+var building_material: int = 50     # DEFAULT_BUILDING_MATERIAL
+var research_material: int = 0      # DEFAULT_RESEARCH_MATERIAL
 ```
 
-Public method signatures (canonical — do not rename parameters):
+Public method signatures (canonical — do not rename parameters; additional APIs in master doc §3.5):
+
 ```gdscript
 func add_gold(amount: int) -> void
 func spend_gold(amount: int) -> bool           # Returns false if insufficient
@@ -175,11 +164,11 @@ func reset_to_defaults() -> void
 ### 3.2 GameManager (autoload: `GameManager`)
 
 ```gdscript
-var current_mission: int = 1        # 1-5
-var current_wave: int = 0           # 0 = pre-first-wave, 1-10 during combat
+var current_mission: int = 1        # Mission index (see CampaignManager / DayConfig)
+var current_wave: int = 0           # 0 = pre-first-wave; 1..WAVES_PER_MISSION during combat
 var game_state: Types.GameState = Types.GameState.MAIN_MENU
 const TOTAL_MISSIONS: int = 5
-const WAVES_PER_MISSION: int = 10
+const WAVES_PER_MISSION: int = 5
 ```
 
 ### 3.3 DamageCalculator (autoload: `DamageCalculator`)
@@ -192,6 +181,8 @@ func calculate_damage(
 ) -> float
 ```
 
+`Types.DamageType.TRUE` bypasses the armor matrix (see master doc §3.3).
+
 ### 3.4 Tower (scene node)
 
 ```gdscript
@@ -201,6 +192,10 @@ var max_hp: int
 ```
 
 ### 3.5 Types.gd (class_name Types — NOT an autoload, used via class reference)
+
+`Types.gd` is the single source of truth for enums. **Non-existent:** `Types.SpellType`, `Types.SpellID`.
+
+Additional enums (`AllyRole`, `BuildingSizeClass`, `EnemyBodyType`, `TerrainType`, …): see `scripts/types.gd` and master doc §5.
 
 ```gdscript
 class_name Types
@@ -215,6 +210,8 @@ enum GameState {
     MISSION_WON,
     MISSION_FAILED,
     GAME_WON,
+    GAME_OVER,
+    ENDLESS,
 }
 
 enum DamageType {
@@ -222,6 +219,7 @@ enum DamageType {
     FIRE,
     MAGICAL,
     POISON,
+    TRUE,
 }
 
 enum ArmorType {
@@ -240,6 +238,34 @@ enum BuildingType {
     ARCHER_BARRACKS,
     ANTI_AIR_BOLT,
     SHIELD_GENERATOR,
+    SPIKE_SPITTER,
+    EMBER_VENT,
+    FROST_PINGER,
+    NETGUN,
+    ACID_DRIPPER,
+    WOLFDEN,
+    CROW_ROOST,
+    ALARM_TOTEMS,
+    CROSSFIRE_NEST,
+    BOLT_SHRINE,
+    THORNWALL,
+    FIELD_MEDIC,
+    GREATBOW_TURRET,
+    MOLTEN_CASTER,
+    ARCANE_LENS,
+    PLAGUE_MORTAR,
+    BEAR_DEN,
+    GUST_CANNON,
+    WARDEN_SHRINE,
+    IRON_CLERIC,
+    SIEGE_BALLISTA,
+    CHAIN_LIGHTNING,
+    FORTRESS_CANNON,
+    DRAGON_FORGE,
+    VOID_OBELISK,
+    PLAGUE_CAULDRON,
+    BARRACKS_FORTRESS,
+    CITADEL_AURA,
 }
 
 enum ArnulfState {
@@ -264,6 +290,30 @@ enum EnemyType {
     PLAGUE_ZOMBIE,
     ORC_ARCHER,
     BAT_SWARM,
+    ORC_SKIRMISHER,
+    ORC_RATLING,
+    GOBLIN_RUNTS,
+    HOUND,
+    ORC_RAIDER,
+    ORC_MARKSMAN,
+    WAR_SHAMAN,
+    PLAGUE_SHAMAN,
+    TOTEM_CARRIER,
+    HARPY_SCOUT,
+    ORC_SHIELDBEARER,
+    ORC_BERSERKER,
+    ORC_SABOTEUR,
+    HEXBREAKER,
+    WYVERN_RIDER,
+    BROOD_CARRIER,
+    TROLL,
+    IRONCLAD_CRUSHER,
+    ORC_OGRE,
+    WAR_BOAR,
+    ORC_SKYTHROWER,
+    WARLORDS_GUARD,
+    ORCISH_SPIRIT,
+    PLAGUE_HERALD,
 }
 
 enum WeaponSlot {
@@ -275,6 +325,7 @@ enum TargetPriority {
     CLOSEST,
     HIGHEST_HP,
     FLYING_FIRST,
+    LOWEST_HP,
 }
 ```
 
@@ -388,60 +439,158 @@ extends Resource
 @export var description: String = ""
 ```
 
+**Field name discipline (wrong → correct):** `gold_cost` not `build_gold_cost`; `target_priority` not `targeting_priority`; `research_cost` not `rp_cost`; `damage` on WeaponData not `base_damage_min`/`base_damage_max`. Full table: **`docs/FOUL_WARD_MASTER_DOC.md` §32**.
+
 ---
 
 ## 5. SIGNAL BUS — COMPLETE SIGNAL REGISTRY
 
-All signals below live on the `SignalBus` autoload. This is the ONLY place cross-system
-signals are declared. No exceptions.
+All signals below live on the `SignalBus` autoload (`res://autoloads/signal_bus.gd`). **58+** typed declarations — the only place cross-system signals are declared. No logic or state on SignalBus.
 
-```gdscript
-# === COMBAT ===
-signal enemy_killed(enemy_type: Types.EnemyType, position: Vector3, gold_reward: int)
-signal building_destroyed(slot_index: int)  # POST-MVP — not emitted by any module in MVP. Buildings cannot take damage in MVP. Keep as stub for future use.
-signal tower_damaged(current_hp: int, max_hp: int)
-signal tower_destroyed()
-signal projectile_fired(weapon_slot: Types.WeaponSlot, origin: Vector3, target: Vector3)
-signal arnulf_state_changed(new_state: Types.ArnulfState)
-signal arnulf_incapacitated()
-signal arnulf_recovered()
+Grouped reference (matches `docs/FOUL_WARD_MASTER_DOC.md` §24):
 
-# === WAVES ===
-signal wave_countdown_started(wave_number: int, seconds_remaining: float)
-signal wave_started(wave_number: int, enemy_count: int)
-signal wave_cleared(wave_number: int)
-signal all_waves_cleared()
+### Combat
 
-# === ECONOMY ===
-signal resource_changed(resource_type: Types.ResourceType, new_amount: int)
+| Signal | Parameters |
+|--------|-----------|
+| `enemy_killed` | `enemy_type: Types.EnemyType, position: Vector3, gold_reward: int` |
+| `enemy_reached_tower` | `enemy_type: Types.EnemyType, damage: int` |
+| `tower_damaged` | `current_hp: int, max_hp: int` |
+| `tower_destroyed` | (none) |
+| `projectile_fired` | `weapon_slot: Types.WeaponSlot, origin: Vector3, target: Vector3` |
+| `arnulf_state_changed` | `new_state: Types.ArnulfState` |
+| `arnulf_incapacitated` | (none) |
+| `arnulf_recovered` | (none) |
+| `building_dealt_damage` | `instance_id: String, damage: float, enemy_id: String` |
+| `florence_damaged` | `amount: int, source_enemy_id: String` |
 
-# === BUILDINGS ===
-signal building_placed(slot_index: int, building_type: Types.BuildingType)
-signal building_sold(slot_index: int, building_type: Types.BuildingType)
-signal building_upgraded(slot_index: int, building_type: Types.BuildingType)
-signal building_destroyed(slot_index: int)  # POST-MVP — not emitted by any module in MVP. Buildings cannot take damage in MVP. Keep as stub for future use.
+### Allies
 
-# === SPELLS ===
-signal spell_cast(spell_id: String)
-signal spell_ready(spell_id: String)
-signal mana_changed(current_mana: int, max_mana: int)
+| Signal | Parameters |
+|--------|-----------|
+| `ally_spawned` | `ally_id: String, building_instance_id: String` |
+| `ally_died` | `ally_id: String, building_instance_id: String` |
+| `ally_squad_wiped` | `building_instance_id: String` |
+| `ally_downed` | `ally_id: String` |
+| `ally_recovered` | `ally_id: String` |
+| `ally_killed` | `ally_id: String` |
+| `ally_state_changed` | `ally_id: String, new_state: String` |
 
-# === GAME STATE ===
-signal game_state_changed(old_state: Types.GameState, new_state: Types.GameState)
-signal mission_started(mission_number: int)
-signal mission_won(mission_number: int)
-signal mission_failed(mission_number: int)
+### Bosses
 
-# === BUILD MODE ===
-signal build_mode_entered()
-signal build_mode_exited()
+| Signal | Parameters |
+|--------|-----------|
+| `boss_spawned` | `boss_id: String` |
+| `boss_killed` | `boss_id: String` |
+| `campaign_boss_attempted` | `day_index: int, success: bool` |
 
-# === RESEARCH ===
-signal research_unlocked(node_id: String)
+### Waves
 
-# === SHOP ===
-signal shop_item_purchased(item_id: String)
-```
+| Signal | Parameters |
+|--------|-----------|
+| `wave_countdown_started` | `wave_number: int, seconds_remaining: float` |
+| `wave_started` | `wave_number: int, enemy_count: int` |
+| `enemy_spawned` | `enemy_type: Types.EnemyType, position: Vector2` |
+| `enemy_enraged` | `enemy_instance_id: String` |
+| `wave_cleared` | `wave_number: int` |
+| `all_waves_cleared` | (none) |
+
+### Economy
+
+| Signal | Parameters |
+|--------|-----------|
+| `resource_changed` | `resource_type: Types.ResourceType, new_amount: int` |
+
+### Territories / World Map
+
+| Signal | Parameters |
+|--------|-----------|
+| `territory_state_changed` | `territory_id: String` |
+| `world_map_updated` | (none) |
+
+### Terrain
+
+| Signal | Parameters |
+|--------|-----------|
+| `enemy_entered_terrain_zone` | `enemy: Node, speed_multiplier: float` |
+| `enemy_exited_terrain_zone` | `enemy: Node, speed_multiplier: float` |
+| `terrain_prop_destroyed` | `prop: Node, world_position: Vector3` |
+| `nav_mesh_rebake_requested` | (none) |
+
+### Buildings
+
+| Signal | Parameters |
+|--------|-----------|
+| `building_placed` | `slot_index: int, building_type: Types.BuildingType` |
+| `building_sold` | `slot_index: int, building_type: Types.BuildingType` |
+| `building_upgraded` | `slot_index: int, building_type: Types.BuildingType` |
+| `building_destroyed` | `slot_index: int` |
+
+### Spells
+
+| Signal | Parameters |
+|--------|-----------|
+| `spell_cast` | `spell_id: String` |
+| `spell_ready` | `spell_id: String` |
+| `mana_changed` | `current_mana: int, max_mana: int` |
+
+### Game State
+
+| Signal | Parameters |
+|--------|-----------|
+| `game_state_changed` | `old_state: Types.GameState, new_state: Types.GameState` |
+| `mission_started` | `mission_number: int` |
+| `mission_won` | `mission_number: int` |
+| `mission_failed` | `mission_number: int` |
+| `florence_state_changed` | (none) |
+
+### Campaign
+
+| Signal | Parameters |
+|--------|-----------|
+| `campaign_started` | `campaign_id: String` |
+| `day_started` | `day_index: int` |
+| `day_won` | `day_index: int` |
+| `day_failed` | `day_index: int` |
+| `campaign_completed` | `campaign_id: String` |
+
+### Build Mode
+
+| Signal | Parameters |
+|--------|-----------|
+| `build_mode_entered` | (none) |
+| `build_mode_exited` | (none) |
+
+### Research
+
+| Signal | Parameters |
+|--------|-----------|
+| `research_unlocked` | `node_id: String` |
+| `research_node_unlocked` | `node_id: String` |
+| `research_points_changed` | `points: int` |
+
+### Shop
+
+| Signal | Parameters |
+|--------|-----------|
+| `shop_item_purchased` | `item_id: String` |
+| `mana_draught_consumed` | (none) |
+
+### Weapons / Enchantments
+
+| Signal | Parameters |
+|--------|-----------|
+| `weapon_upgraded` | `weapon_slot: Types.WeaponSlot, new_level: int` |
+| `enchantment_applied` | `weapon_slot: Types.WeaponSlot, slot_type: String, enchantment_id: String` |
+| `enchantment_removed` | `weapon_slot: Types.WeaponSlot, slot_type: String` |
+
+### Mercenaries / Roster
+
+| Signal | Parameters |
+|--------|-----------|
+| `mercenary_offer_generated` | `ally_id: String` |
+| `mercenary_recruited` | `ally_id: String` |
+| `ally_roster_changed` | (none) |
 
 ---
 
@@ -462,6 +611,8 @@ GameManager.some_method()
 # CORRECT — cross-scene via signal (preferred for loose coupling)
 SignalBus.enemy_killed.connect(_on_enemy_killed)
 ```
+
+Runtime lookups outside the edited scene: use `get_node_or_null()` and null-guard (see `docs/FOUL_WARD_MASTER_DOC.md` §30.2).
 
 ### 6.2 @onready pattern
 
@@ -514,14 +665,27 @@ node needs to be in the tree first.
 
 ## 8. AUTOLOAD ACCESS PATTERNS
 
-Autoloads are registered in `project.godot` with these exact names:
+Autoloads are registered in `project.godot` with these exact names (order: §19):
 
-| Script                          | Autoload Name      |
-|---------------------------------|--------------------|
-| `res://autoloads/signal_bus.gd` | `SignalBus`        |
-| `res://autoloads/game_manager.gd` | `GameManager`   |
-| `res://autoloads/economy_manager.gd` | `EconomyManager` |
+| Script | Autoload Name |
+|--------|----------------|
+| `res://autoloads/signal_bus.gd` | `SignalBus` |
+| `res://scripts/nav_mesh_manager.gd` | `NavMeshManager` |
 | `res://autoloads/damage_calculator.gd` | `DamageCalculator` |
+| `res://autoloads/aura_manager.gd` | `AuraManager` |
+| `res://autoloads/economy_manager.gd` | `EconomyManager` |
+| `res://autoloads/campaign_manager.gd` | `CampaignManager` |
+| `res://autoloads/relationship_manager.gd` | `RelationshipManager` |
+| `res://autoloads/settings_manager.gd` | `SettingsManager` |
+| `res://autoloads/game_manager.gd` | `GameManager` |
+| `res://autoloads/build_phase_manager.gd` | `BuildPhaseManager` |
+| `res://autoloads/ally_manager.gd` | `AllyManager` |
+| `res://autoloads/combat_stats_tracker.gd` | `CombatStatsTracker` |
+| `res://autoloads/save_manager.gd` | `SaveManager` |
+| `res://autoloads/dialogue_manager.gd` | `DialogueManager` |
+| `res://autoloads/auto_test_driver.gd` | `AutoTestDriver` |
+| *(GDAI GDExtension UID in project.godot)* | `GDAIMCPRuntime` |
+| `res://autoloads/enchantment_manager.gd` | `EnchantmentManager` |
 
 Access pattern: Always use the autoload name directly. Never cache it in a variable.
 
@@ -539,13 +703,15 @@ econ.add_gold(50)
 
 ## 9. ERROR HANDLING & NULL CHECKS
 
-### 9.1 Assertions for development
+### 9.1 Assertions vs production and headless
 
-Use `assert()` for conditions that should NEVER be false in correct code:
+Avoid `assert()` for conditions that must hold during normal gameplay or in **headless / export** builds — failed asserts crash the process. Use `push_warning()` and early return instead (see `docs/FOUL_WARD_MASTER_DOC.md` §30.4). Reserve `assert()` for strict editor-only or test-only checks if used at all.
 
 ```gdscript
 func spend_gold(amount: int) -> bool:
-    assert(amount > 0, "spend_gold called with non-positive amount: %d" % amount)
+    if amount <= 0:
+        push_warning("spend_gold called with non-positive amount: %d" % amount)
+        return false
     if gold < amount:
         return false
     gold -= amount
@@ -659,7 +825,7 @@ Every @export variable must have an inline `##` comment above it:
 
 ### 12.1 File naming
 
-Test file: `test_<module_name>.gd` in `res://tests/` directory.
+Test file: `test_<module_name>.gd` in `res://tests/unit/` directory.
 Test class: `class_name Test<ModuleName>` extending `GdUnitTestSuite`.
 
 ### 12.2 Test function naming
@@ -690,7 +856,7 @@ func test_spend_gold_sufficient_funds_returns_true() -> void:
 
     # Assert
     assert_bool(result).is_true()
-    assert_int(econ.gold).is_equal(150)  # 100 default + 200 added - 150 spent
+    assert_int(econ.gold).is_equal(1050)  # 1000 default + 200 added - 150 spent
 ```
 
 ### 12.4 Test isolation
@@ -807,11 +973,25 @@ Defined in `project.godot` Input Map:
 
 ## 19. INITIALIZATION ORDER
 
-Autoloads initialize in this order (as registered in project.godot):
-1. SignalBus (no dependencies)
-2. DamageCalculator (no dependencies)
-3. EconomyManager (depends on SignalBus)
-4. GameManager (depends on SignalBus, EconomyManager)
+Autoloads initialize in **registration order** in `project.godot` (do not reorder without reading `AGENTS.md` / master doc §3):
 
-Scene _ready() order follows Godot's bottom-up tree traversal.
-NEVER rely on _ready() order between sibling nodes — use signals or call_deferred().
+1. SignalBus (no dependencies)
+2. NavMeshManager (no dependencies)
+3. DamageCalculator (no dependencies)
+4. AuraManager (no dependencies)
+5. EconomyManager (depends on SignalBus)
+6. CampaignManager (must load before GameManager)
+7. RelationshipManager
+8. SettingsManager
+9. GameManager (depends on CampaignManager)
+10. BuildPhaseManager
+11. AllyManager
+12. CombatStatsTracker
+13. SaveManager
+14. DialogueManager
+15. AutoTestDriver
+16. GDAIMCPRuntime (editor / MCP)
+17. EnchantmentManager
+
+Scene `_ready()` order follows Godot's bottom-up tree traversal.
+NEVER rely on `_ready()` order between sibling nodes — use signals or call_deferred().

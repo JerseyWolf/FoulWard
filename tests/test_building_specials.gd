@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 ## Headless tests for Archer Barracks pulse buff and Shield Generator tower shield (Audit 6 §1.3).
 class_name TestBuildingSpecials
 extends GdUnitTestSuite

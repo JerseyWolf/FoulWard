@@ -332,8 +332,8 @@ func test_game_state_changed_old_state_payload_is_main_menu_on_new_game() -> voi
 func test_total_missions_constant_is_5() -> void:
 	assert_int(GameManager.TOTAL_MISSIONS).is_equal(5)
 
-func test_waves_per_mission_constant_is_3() -> void:
-	assert_int(GameManager.WAVES_PER_MISSION).is_equal(3)
+func test_waves_per_mission_constant_is_5() -> void:
+	assert_int(GameManager.WAVES_PER_MISSION).is_equal(5)
 
 func test_start_new_game_resets_campaign_and_mission() -> void:
 	# Two explicit wins (bounded). A `while current_day < N` loop can hang if `mission_won` is ignored

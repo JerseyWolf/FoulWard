@@ -15,13 +15,23 @@ var _enemy_container: Node3D = null
 func before_test() -> void:
 	_main = MAIN_SCENE.instantiate() as Node3D
 	get_tree().root.add_child(_main)
-	_hex_grid = _main.get_node("HexGrid") as HexGrid
-	_wave_manager = _main.get_node("Managers/WaveManager") as WaveManager
-	_tower = _main.get_node("Tower") as Tower
-	_enemy_container = _main.get_node("EnemyContainer") as Node3D
+	_hex_grid = _main.get_node_or_null("HexGrid") as HexGrid
+	_wave_manager = _main.get_node_or_null("Managers/WaveManager") as WaveManager
+	_tower = _main.get_node_or_null("Tower") as Tower
+	_enemy_container = _main.get_node_or_null("EnemyContainer") as Node3D
+	assert_object(_hex_grid).is_not_null()
+	assert_object(_wave_manager).is_not_null()
+	assert_object(_tower).is_not_null()
+	assert_object(_enemy_container).is_not_null()
 	GameManager.start_new_game()
+	BuildPhaseManager.set_build_phase_active(true)
 	EconomyManager.add_gold(20000)
 	EconomyManager.add_building_material(2000)
+	# Pathfinding tests assert tower damage from ground enemies; Arnulf clears the wave
+	# before contact unless disabled (ally is not under test here).
+	var arnulf: Node = _main.get_node_or_null("Arnulf")
+	if arnulf != null:
+		arnulf.process_mode = Node.PROCESS_MODE_DISABLED
 	await get_tree().process_frame
 
 
@@ -31,9 +41,20 @@ func after_test() -> void:
 	await get_tree().process_frame
 
 
+## Keeps nav obstacles; stops turrets from clearing the wave before pathfinding assertions run.
+func _disable_building_combat_on_main() -> void:
+	var bc: Node = _main.get_node_or_null("BuildingContainer")
+	if bc == null:
+		return
+	for child: Node in bc.get_children():
+		if child is BuildingBase:
+			(child as Node).process_mode = Node.PROCESS_MODE_DISABLED
+
+
 func test_ground_enemy_paths_around_buildings_reaches_tower() -> void:
 	for i: int in range(INNER_RING_SLOT_COUNT):
 		assert_bool(_hex_grid.place_building(i, Types.BuildingType.ARROW_TOWER)).is_true()
+	_disable_building_combat_on_main()
 	var hp_before: int = _tower.get_current_hp()
 	_wave_manager.force_spawn_wave(1)
 	await _run_steps(TEST_MAX_STEPS)
@@ -51,12 +72,19 @@ func test_ground_enemy_paths_to_tower_without_buildings_unchanged() -> void:
 func test_flying_enemy_ignores_building_obstacles() -> void:
 	for i: int in range(INNER_RING_SLOT_COUNT):
 		assert_bool(_hex_grid.place_building(i, Types.BuildingType.ARROW_TOWER)).is_true()
+	_disable_building_combat_on_main()
 	var hp_before: int = _tower.get_current_hp()
-	_wave_manager.force_spawn_wave(1)
-	var flying_enemy: EnemyBase = await _wait_for_flying_enemy(300)
+	# Wave 1 composition can be ground-only; spawn a known flyer directly.
+	var fly_data: EnemyData = _wave_manager.get_enemy_data_by_type(Types.EnemyType.HARPY_SCOUT)
+	assert_object(fly_data).is_not_null()
+	var flying_enemy: EnemyBase = _wave_manager.spawn_enemy_at_position(
+			fly_data,
+			Vector3(20.0, 0.0, 20.0)
+	) as EnemyBase
 	assert_object(flying_enemy).is_not_null()
 	var xz_before: Vector2 = Vector2(flying_enemy.global_position.x, flying_enemy.global_position.z)
 	await _run_steps(FLYING_STEPS)
+	assert_bool(is_instance_valid(flying_enemy)).is_true()
 	var xz_after: Vector2 = Vector2(flying_enemy.global_position.x, flying_enemy.global_position.z)
 	var radial_before: float = xz_before.length()
 	var radial_after: float = xz_after.length()
@@ -68,6 +96,7 @@ func test_enemy_paths_through_area_after_selling_building() -> void:
 	assert_bool(_hex_grid.place_building(0, Types.BuildingType.ARROW_TOWER)).is_true()
 	assert_bool(_hex_grid.place_building(1, Types.BuildingType.ARROW_TOWER)).is_true()
 	assert_bool(_hex_grid.place_building(2, Types.BuildingType.ARROW_TOWER)).is_true()
+	_disable_building_combat_on_main()
 	_wave_manager.force_spawn_wave(1)
 	var constrained_enemy: EnemyBase = await _wait_for_ground_enemy(300)
 	assert_object(constrained_enemy).is_not_null()
@@ -88,6 +117,7 @@ func test_enemy_stuck_near_building_eventually_reaches_tower() -> void:
 	assert_bool(_hex_grid.place_building(0, Types.BuildingType.ARROW_TOWER)).is_true()
 	assert_bool(_hex_grid.place_building(2, Types.BuildingType.ARROW_TOWER)).is_true()
 	assert_bool(_hex_grid.place_building(4, Types.BuildingType.ARROW_TOWER)).is_true()
+	_disable_building_combat_on_main()
 	var hp_before: int = _tower.get_current_hp()
 	_wave_manager.force_spawn_wave(1)
 	await _run_steps(1500)
@@ -122,6 +152,7 @@ func _wait_for_flying_enemy(max_steps: int) -> EnemyBase:
 func test_ground_enemy_position_changes_over_time_dense_layout() -> void:
 	for i: int in range(INNER_RING_SLOT_COUNT):
 		assert_bool(_hex_grid.place_building(i, Types.BuildingType.ARROW_TOWER)).is_true()
+	_disable_building_combat_on_main()
 	_wave_manager.force_spawn_wave(1)
 	var enemy: EnemyBase = await _wait_for_ground_enemy(400)
 	assert_object(enemy).is_not_null()

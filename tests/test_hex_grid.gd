@@ -54,10 +54,15 @@ func before_test() -> void:
 	EconomyManager.reset_to_defaults()
 	EconomyManager.add_gold(1000)
 	EconomyManager.add_building_material(100)
+	BuildPhaseManager.set_build_phase_active(true)
 	_ensure_main_projectile_container_stub()
 
 
 func after_test() -> void:
+	EconomyManager.reset_to_defaults()
+	EconomyManager.add_gold(1000)
+	EconomyManager.add_building_material(100)
+	BuildPhaseManager.set_build_phase_active(true)
 	if is_instance_valid(_hex_grid):
 		_hex_grid.queue_free()
 	if is_instance_valid(_main_stub):
@@ -265,8 +270,11 @@ func test_sell_building_empties_slot_and_refunds_base_cost() -> void:
 	assert_bool(slot_data.get("is_occupied", false)).is_false()
 
 	var data: BuildingData = _hex_grid.get_building_data(Types.BuildingType.ARROW_TOWER)
-	assert_int(EconomyManager.get_gold() - gold_before_sell).is_equal(data.gold_cost)
-	assert_int(EconomyManager.get_building_material() - mat_before_sell).is_equal(data.material_cost)
+	var expected_refund: Dictionary = EconomyManager.get_refund(data, data.gold_cost, data.material_cost)
+	assert_int(EconomyManager.get_gold() - gold_before_sell).is_equal(int(expected_refund.get("gold", 0)))
+	assert_int(EconomyManager.get_building_material() - mat_before_sell).is_equal(
+			int(expected_refund.get("material", 0))
+	)
 
 
 func test_sell_upgraded_building_refunds_base_and_upgrade_costs() -> void:
@@ -285,8 +293,13 @@ func test_sell_upgraded_building_refunds_base_and_upgrade_costs() -> void:
 	assert_bool(slot_data.get("is_occupied", false)).is_false()
 
 	var data: BuildingData = _hex_grid.get_building_data(Types.BuildingType.BALLISTA)
-	assert_int(EconomyManager.get_gold() - gold_before_sell).is_equal(data.gold_cost + data.upgrade_gold_cost)
-	assert_int(EconomyManager.get_building_material() - mat_before_sell).is_equal(data.material_cost + data.upgrade_material_cost)
+	var invested_g: int = data.gold_cost + data.upgrade_gold_cost
+	var invested_m: int = data.material_cost + data.upgrade_material_cost
+	var expected_upgraded: Dictionary = EconomyManager.get_refund(data, invested_g, invested_m)
+	assert_int(EconomyManager.get_gold() - gold_before_sell).is_equal(int(expected_upgraded.get("gold", 0)))
+	assert_int(EconomyManager.get_building_material() - mat_before_sell).is_equal(
+			int(expected_upgraded.get("material", 0))
+	)
 
 
 func test_sell_building_emits_building_sold_signal() -> void:

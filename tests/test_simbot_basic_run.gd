@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_simbot_basic_run.gd
 # GdUnit4 test suite for a basic SimBot headless run (Phase 2).
 

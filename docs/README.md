@@ -1,6 +1,6 @@
 # Foul Ward — `docs/` layout
 
-Quick map of **active** documentation. Session implementation logs use `PROMPT_*_IMPLEMENTATION.md` at repo root or under `docs/` (see `INDEX_SHORT.md` “Latest changes”).
+Quick map of **active** documentation. New session implementation logs go under **`docs/PROMPT_[N]_IMPLEMENTATION.md`**; older prompt logs and one-off artifacts live in **`docs/archived/`** (see repo-root **`AGENTS.md`**).
 
 ## Primary indexes (read these first)
 
@@ -8,8 +8,8 @@ Quick map of **active** documentation. Session implementation logs use `PROMPT_*
 |------|------|
 | **`INDEX_SHORT.md`** | Compact map: autoloads, managers, scenes, resources, tests, known open issues. |
 | **`INDEX_FULL.md`** | Expanded API-style reference (signals, methods, resource fields). |
-| **`INDEX_MACHINE.md`** | Machine-oriented matrices (autoload/script CSV summaries). |
-| **`INDEX_TASKS.md`** | Checklist for keeping the indexes accurate when the codebase changes. |
+
+**Archived (historical):** `docs/archived/INDEX_MACHINE.md`, `docs/archived/INDEX_TASKS.md` — machine-oriented matrices and index maintenance checklist from earlier workflow.
 
 ## Architecture and rules
 
@@ -18,8 +18,8 @@ Quick map of **active** documentation. Session implementation logs use `PROMPT_*
 | **`ARCHITECTURE.md`** | Scene tree, autoload order, system boundaries. |
 | **`CONVENTIONS.md`** | Naming, signals, typing, project habits. |
 | **`SYSTEMS_part1.md` … `part3.md`** | Deeper system notes (split for size). |
-| **`PRE_GENERATION_SPECIFICATION.md`** | Dense signal/config snapshot for refactors/codegen (may lag; live code wins). |
-| **`PRE_GENERATION_VERIFICATION.md`** | Short pre-flight checklist before large changes. |
+
+**Archived (historical):** `docs/archived/PRE_GENERATION_SPECIFICATION.md`, `docs/archived/PRE_GENERATION_VERIFICATION.md` — dense signal/config snapshot and pre-flight checklist (may lag; live code wins).
 
 ## Design and product
 
@@ -33,18 +33,21 @@ Quick map of **active** documentation. Session implementation logs use `PROMPT_*
 
 | File | Role |
 |------|------|
-| **`CURRENT_STATUS.md`** | Recreate dev environment (Godot, GdUnit, MCP) on a new machine. |
-| **`FULL_PROJECT_SUMMARY.md`** | Contributor / clone handoff: layout, systems, tests pointer. |
 | **`UBUNTU_REPLAY_SETUP.md`** | Ubuntu-specific replay or tooling notes. |
-| **`PROBLEM_REPORT.md`** | Active defect / test-failure handoff snippets. |
 
-## Audits and meta
+**Archived (historical):** `docs/archived/CURRENT_STATUS.md` (environment recreate), `docs/archived/FULL_PROJECT_SUMMARY.md` (contributor handoff), `docs/archived/PROBLEM_REPORT.md` (defect/test handoff snippets).
+
+## Living reference
 
 | File | Role |
 |------|------|
-| **`ALL_AUDITS.md`** | Consolidated audit notes (large). |
-| **`AUDIT_CONTEXT_SUMMARY.md`** | Dense context export for audit tooling. |
+| **`FOUL_WARD_MASTER_DOC.md`** | Comprehensive LLM/human reference (APIs, flows, anti-patterns). |
+| **`SUMMARY_VERIFICATION.md`** | Read-only audit aggregate (three-part verification). |
+
+## Audits and meta
+
+**Archived (historical):** `docs/archived/ALL_AUDITS.md`, `docs/archived/AUDIT_CONTEXT_SUMMARY.md`, plus consolidated snapshot `docs/archived/OPUS_ALL_ACTIONS.md`. Prefer **`SUMMARY_VERIFICATION.md`**, **`FOUL_WARD_MASTER_DOC.md`**, and root **`IMPROVEMENTS_TO_BE_DONE.md`** for current truth.
 
 ## Obsolete / archive
 
-Historical one-off snapshots, early prompts, and old session logs live under **`obsolete/`** (see **`obsolete/README.md`**). They are kept for archaeology only; **`INDEX_SHORT.md`** and **`ARCHITECTURE.md`** describe the current repo.
+Historical snapshots, prompt logs, and pre-audit artifacts live under **`docs/archived/`** and legacy **`docs/obsolete/`** (see **`obsolete/README.md`** where present). **`INDEX_SHORT.md`** and **`ARCHITECTURE.md`** describe the current repo.

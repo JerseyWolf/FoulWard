@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 class_name TestEnemyDotSystem
 extends GdUnitTestSuite
 

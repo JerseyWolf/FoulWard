@@ -3,6 +3,26 @@ class_name TestCampaignAutoloadAndDayFlow
 extends GdUnitTestSuite
 
 
+func before_test() -> void:
+	Engine.time_scale = 1.0
+	CampaignManager.is_endless_mode = false
+	GameManager.reset_boss_campaign_state_for_test()
+	GameManager.current_mission = 1
+	GameManager.current_wave = 0
+	GameManager.game_state = Types.GameState.MAIN_MENU
+	GameManager.final_boss_defeated = false
+	GameManager.final_boss_active = false
+	EconomyManager.reset_to_defaults()
+	CampaignManager.set_active_campaign_config_for_test(CampaignManager.DEFAULT_SHORT_CAMPAIGN)
+	CampaignManager.campaign_completed = false
+	CampaignManager.failed_attempts_on_current_day = 0
+	CampaignManager.current_day = 1
+	if CampaignManager.campaign_config != null:
+		CampaignManager.campaign_length = CampaignManager.campaign_config.get_effective_length()
+		if CampaignManager.campaign_config.day_configs.size() > 0:
+			CampaignManager.current_day_config = CampaignManager.campaign_config.day_configs[0]
+
+
 func after_test() -> void:
 	CampaignManager.is_endless_mode = false
 	CampaignManager.set_active_campaign_config_for_test(CampaignManager.DEFAULT_SHORT_CAMPAIGN)

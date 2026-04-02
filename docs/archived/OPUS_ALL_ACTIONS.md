@@ -1,3 +1,5 @@
+> ⚠️ **ARCHIVED:** foulward-rag references in this document treat RAG as mandatory. Current policy: RAG is optional. See `.cursor/skills/mcp-workflow/SKILL.md`.
+
 # FOUL WARD — OPUS ALL ACTIONS (Consolidated)
 
 **Generated:** 2026-03-28

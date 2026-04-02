@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — MissionSpawnRouting queue + deterministic path picks.
 extends GdUnitTestSuite
 
@@ -115,7 +116,7 @@ func test_spawn_offset_variance_is_deterministic() -> void:
 	assert_float(float(a[1].get("spawn_time_sec", 0.0))).is_equal(float(b[1].get("spawn_time_sec", 0.0)))
 
 
-func test_validate_mission() -> void:
+func test_validate_mission_valid_routing_returns_true() -> void:
 	var m: MissionData = MissionData.new()
 	m.routing = MissionRoutingData.new()
 	var p: RoutePathData = RoutePathData.new()

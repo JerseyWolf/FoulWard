@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — Parametric content validation for BuildingData / EnemyData .tres (Prompt 50).
 extends GdUnitTestSuite
 

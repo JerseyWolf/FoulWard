@@ -138,7 +138,7 @@ func test_enemy_base_scene_wiring_sets_mesh_and_material_for_each_enemy_type() -
 		enemy.initialize(enemy_data)
 		await get_tree().process_frame
 
-		var enemy_vis: Node3D = enemy.get_node("EnemyVisual") as Node3D
+		var enemy_vis: Node3D = enemy.get_node_or_null("EnemyVisual") as Node3D
 		assert_object(enemy_vis).is_not_null()
 		var enemy_mesh: MeshInstance3D = _find_first_mesh_instance3d(enemy_vis)
 		assert_object(enemy_mesh).is_not_null()
@@ -163,7 +163,7 @@ func test_building_base_scene_wiring_sets_mesh_for_each_building_type() -> void:
 		building.initialize(building_data)
 		await get_tree().process_frame
 
-		var building_mesh: MeshInstance3D = building.get_node("BuildingMesh") as MeshInstance3D
+		var building_mesh: MeshInstance3D = building.get_node_or_null("BuildingMesh") as MeshInstance3D
 		assert_object(building_mesh.mesh).is_not_null()
 
 		building.queue_free()
@@ -176,7 +176,7 @@ func test_tower_scene_ready_sets_tower_mesh_non_null() -> void:
 	get_tree().root.add_child(tower)
 	await get_tree().process_frame
 
-	var tower_mesh: MeshInstance3D = tower.get_node("TowerMesh") as MeshInstance3D
+	var tower_mesh: MeshInstance3D = tower.get_node_or_null("TowerMesh") as MeshInstance3D
 	assert_object(tower_mesh.mesh).is_not_null()
 
 	tower.queue_free()
@@ -189,7 +189,7 @@ func test_arnulf_scene_ready_sets_arnulf_mesh_non_null() -> void:
 	get_tree().root.add_child(arnulf)
 	await get_tree().process_frame
 
-	var arnulf_vis: Node3D = arnulf.get_node("ArnulfVisual") as Node3D
+	var arnulf_vis: Node3D = arnulf.get_node_or_null("ArnulfVisual") as Node3D
 	assert_object(arnulf_vis).is_not_null()
 	var arnulf_mesh: MeshInstance3D = _find_first_mesh_instance3d(arnulf_vis)
 	assert_object(arnulf_mesh).is_not_null()

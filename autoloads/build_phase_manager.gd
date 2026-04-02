@@ -9,9 +9,6 @@ extends Node
 ## Default true matches headless tests that place buildings without toggling mission state.
 var is_build_phase: bool = true
 
-signal build_phase_started()
-signal combat_phase_started()
-
 
 func assert_build_phase(context: String) -> bool:
 	if is_build_phase:
@@ -31,6 +28,6 @@ func set_build_phase_active(active: bool) -> void:
 		return
 	is_build_phase = active
 	if active:
-		build_phase_started.emit()
+		SignalBus.build_phase_started.emit()
 	else:
-		combat_phase_started.emit()
+		SignalBus.combat_phase_started.emit()

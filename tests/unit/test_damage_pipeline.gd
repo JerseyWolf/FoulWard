@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — EnemyBase.receive_damage mitigation + shield + DoT (Prompt 49).
 extends GdUnitTestSuite
 

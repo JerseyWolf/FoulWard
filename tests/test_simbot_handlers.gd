@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_simbot_handlers.gd — SimBot AUDIT 6 §6.1–6.2 handler and difficulty-fit tests (headless-safe).
 
 class_name TestSimBotHandlers

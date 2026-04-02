@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 # test_simbot_logging.gd
 # GdUnit4 test suite for SimBot CSV batch logging (Phase 2).
 

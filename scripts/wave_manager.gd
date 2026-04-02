@@ -436,6 +436,8 @@ func spawn_enemy_on_path(enemy_data: EnemyData, path_data: RoutePathData) -> Nod
 		push_error("WaveManager.spawn_enemy_on_path: enemy_container or spawn_points is null.")
 		return null
 	var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
+	# AP-06 exception: EnemyBase.initialize uses @onready HealthComponent and global_position
+	# (distance to tower) — must add_child before initialize.
 	_enemy_container.add_child(enemy)
 	var tuned: EnemyData = enemy_data.duplicate(true) as EnemyData
 	tuned.max_hp = maxi(1, int(round(float(enemy_data.max_hp) * enemy_hp_multiplier)))
@@ -458,6 +460,7 @@ func spawn_enemy_at_position(enemy_data: EnemyData, world_position: Vector3) -> 
 		push_warning("WaveManager.spawn_enemy_at_position: enemy_container is null.")
 		return null
 	var enemy: EnemyBase = EnemyScene.instantiate() as EnemyBase
+	# AP-06 exception: same as spawn_enemy_on_path (EnemyBase.initialize needs tree + @onready).
 	_enemy_container.add_child(enemy)
 	var tuned: EnemyData = enemy_data.duplicate(true) as EnemyData
 	tuned.max_hp = maxi(1, int(round(float(enemy_data.max_hp) * enemy_hp_multiplier)))
@@ -555,6 +558,7 @@ func _spawn_boss_wave() -> int:
 		0.0,
 		randf_range(-2.0, 2.0)
 	)
+	# AP-06 exception: BossBase mirrors EnemyBase init — needs tree for @onready / pose before init.
 	_enemy_container.add_child(boss)
 	boss.global_position = spawn_marker.global_position + offset
 	if not boss.is_in_group("enemies"):

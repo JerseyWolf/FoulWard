@@ -1,3 +1,4 @@
+## TODO: add before_test() isolation — see testing SKILL
 ## test_campaign_territory_mapping.gd
 ## Validates every DayConfig in the main 50-day campaign references a real territory.
 

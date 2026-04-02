@@ -249,12 +249,12 @@ func get_current_day_index() -> int:
 	return CampaignManager.get_current_day()
 
 
-## Alias for tests / Prompt 10 (syncs with CampaignManager.current_day).
+## Alias for tests / Prompt 10 (syncs calendar via CampaignManager.force_set_day).
 var current_day_index: int:
 	get:
 		return CampaignManager.get_current_day()
 	set(value):
-		CampaignManager.current_day = value
+		CampaignManager.force_set_day(value)
 
 
 ## Campaign timeline resource (same as CampaignManager.campaign_config).
@@ -303,8 +303,8 @@ func get_synthetic_boss_day_config() -> DayConfig:
 
 ## Advances calendar by one day; after a failed final boss, assigns a random threatened territory.
 func advance_to_next_day() -> void:
-	CampaignManager.current_day += 1
-	var day: DayConfig = get_day_config_for_index(CampaignManager.current_day)
+	CampaignManager.force_set_day(CampaignManager.get_current_day() + 1)
+	var day: DayConfig = get_day_config_for_index(CampaignManager.get_current_day())
 	if final_boss_active and not final_boss_defeated:
 		if day == null:
 			day = _ensure_synthetic_boss_attack_day_config()

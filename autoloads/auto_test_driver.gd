@@ -8,7 +8,7 @@
 # When active this autoload:
 #   1. Waits for the scene tree to finish _ready().
 #   2. Drives the game through a scripted sequence (start, build, wave, kills…).
-#   3. Prints structured [AUTOTEST] PASS / FAIL / TIMEOUT lines to stdout.
+#   3. Logs structured [AUTOTEST] PASS / FAIL / TIMEOUT lines to stderr (printerr / push_warning).
 #   4. Calls get_tree().quit() when done.
 #
 # When --autotest is NOT present the class does absolutely nothing.
@@ -59,9 +59,9 @@ func _ready() -> void:
 	if "--autotest" not in OS.get_cmdline_user_args():
 		return  # Invisible in normal play.
 
-	print("[AUTOTEST] ============================================================")
-	print("[AUTOTEST] Foul Ward Integration AutoTest — %s" % Time.get_datetime_string_from_system())
-	print("[AUTOTEST] ============================================================")
+	printerr("[AUTOTEST] ============================================================")
+	printerr("[AUTOTEST] Foul Ward Integration AutoTest — %s" % Time.get_datetime_string_from_system())
+	printerr("[AUTOTEST] ============================================================")
 
 	SignalBus.enemy_killed.connect(_on_enemy_killed)
 	SignalBus.wave_cleared.connect(_on_wave_cleared)
@@ -97,7 +97,7 @@ func _begin_simbot_batch(profile_id: String, runs: int, base_seed: int) -> void:
 	var simbot: SimBot = _find_or_create_simbot()
 	if runs == 1:
 		var single_result: Dictionary = await simbot.run_single(profile_id, 0, base_seed)
-		print("[SimBot] run_single: %s" % str(single_result))
+		printerr("[SimBot] run_single: %s" % str(single_result))
 	else:
 		await simbot.run_batch(profile_id, runs, base_seed)
 		var log: Dictionary = simbot.get_log()
@@ -111,7 +111,7 @@ func _begin_simbot_batch(profile_id: String, runs: int, base_seed: int) -> void:
 					wins += 1
 				elif r == "LOSS":
 					losses += 1
-		print("SimBot batch complete. Runs: %d, Wins: %d, Losses: %d" % [
+		printerr("SimBot batch complete. Runs: %d, Wins: %d, Losses: %d" % [
 			int(log.get("runs", runs)), wins, losses
 		])
 
@@ -134,7 +134,7 @@ func _begin_simbot_balance_sweep() -> void:
 	await get_tree().process_frame
 	var simbot: SimBot = _find_or_create_simbot()
 	await simbot.run_balance_sweep()
-	print("[SimBot] balance sweep complete.")
+	printerr("[SimBot] balance sweep complete.")
 	get_tree().quit(0)
 
 
@@ -145,19 +145,19 @@ func _begin_simbot_balance_sweep() -> void:
 func _on_enemy_killed(enemy_type: Types.EnemyType, _pos: Vector3, gold: int) -> void:
 	_enemy_killed_count += 1
 	_enemy_killed_types.append(enemy_type)
-	print("[AUTOTEST] event enemy_killed #%d: %s  gold_reward=%d" % [
+	printerr("[AUTOTEST] event enemy_killed #%d: %s  gold_reward=%d" % [
 		_enemy_killed_count, Types.EnemyType.keys()[enemy_type], gold
 	])
 
 
 func _on_wave_started(wave_number: int, enemy_count: int) -> void:
-	print("[AUTOTEST] event wave_started: wave=%d enemies=%d" % [wave_number, enemy_count])
+	printerr("[AUTOTEST] event wave_started: wave=%d enemies=%d" % [wave_number, enemy_count])
 	_wave_started_received = true
 	_wave_number_started = wave_number
 
 
 func _on_wave_cleared(wave_number: int) -> void:
-	print("[AUTOTEST] event wave_cleared: wave=%d" % wave_number)
+	printerr("[AUTOTEST] event wave_cleared: wave=%d" % wave_number)
 	_wave_cleared_received = true
 
 
@@ -180,13 +180,13 @@ func _begin_tests() -> void:
 	_check("scene: WaveManager node found", _wave_manager != null)
 
 	if _tower == null or _hex_grid == null or _wave_manager == null:
-		print("[AUTOTEST] FATAL: critical nodes missing — cannot continue")
+		push_warning("[AUTOTEST] FATAL: critical nodes missing — cannot continue")
 		_finish()
 		return
 
 	# Enable auto-fire so the tower kills enemies without simulated mouse input.
 	_tower.auto_fire_enabled = true
-	print("[AUTOTEST] Tower auto_fire_enabled = true")
+	printerr("[AUTOTEST] Tower auto_fire_enabled = true")
 
 	await _test_start_game()
 	await _test_place_arrow_tower()
@@ -207,7 +207,7 @@ func _begin_tests() -> void:
 # ---------------------------------------------------------------------------
 
 func _test_start_game() -> void:
-	print("[AUTOTEST] --- start_new_game ---")
+	printerr("[AUTOTEST] --- start_new_game ---")
 	var gold_before: int = EconomyManager.get_gold()
 	GameManager.start_new_game()
 	await get_tree().process_frame
@@ -216,14 +216,14 @@ func _test_start_game() -> void:
 		GameManager.get_game_state() == Types.GameState.COMBAT)
 	_check("start_new_game: gold > 0",
 		EconomyManager.get_gold() > 0)
-	print("[AUTOTEST] gold after reset: %d  mat: %d" % [
+	printerr("[AUTOTEST] gold after reset: %d  mat: %d" % [
 		EconomyManager.get_gold(), EconomyManager.get_building_material()
 	])
 	gold_before = gold_before  # suppress unused warning
 
 
 func _test_place_arrow_tower() -> void:
-	print("[AUTOTEST] --- place_building: Arrow Tower (slot 0) ---")
+	printerr("[AUTOTEST] --- place_building: Arrow Tower (slot 0) ---")
 	var gold_before: int = EconomyManager.get_gold()
 	var mat_before: int = EconomyManager.get_building_material()
 	var ok: bool = _hex_grid.place_building(0, Types.BuildingType.ARROW_TOWER)
@@ -231,13 +231,13 @@ func _test_place_arrow_tower() -> void:
 	_check("place_building: Arrow Tower returned true", ok)
 	_check("place_building: gold decreased after Arrow Tower",
 		EconomyManager.get_gold() < gold_before)
-	print("[AUTOTEST] gold: %d→%d  mat: %d→%d" % [
+	printerr("[AUTOTEST] gold: %d→%d  mat: %d→%d" % [
 		gold_before, EconomyManager.get_gold(), mat_before, EconomyManager.get_building_material()
 	])
 
 
 func _test_place_anti_air_tower() -> void:
-	print("[AUTOTEST] --- place_building: Anti-Air Bolt (slot 1) ---")
+	printerr("[AUTOTEST] --- place_building: Anti-Air Bolt (slot 1) ---")
 	var gold_before: int = EconomyManager.get_gold()
 	var ok: bool = _hex_grid.place_building(1, Types.BuildingType.ANTI_AIR_BOLT)
 	await get_tree().process_frame
@@ -245,17 +245,17 @@ func _test_place_anti_air_tower() -> void:
 		_check("place_building: Anti-Air Bolt placed (gold decreased)",
 			EconomyManager.get_gold() < gold_before)
 	else:
-		print("[AUTOTEST] INFO: Anti-Air Bolt not placed (likely locked or too expensive) — skipping")
+		push_warning("[AUTOTEST] INFO: Anti-Air Bolt not placed (likely locked or too expensive) — skipping")
 
 
 func _test_slot_occupied() -> void:
-	print("[AUTOTEST] --- place_building on already-occupied slot 0 ---")
+	printerr("[AUTOTEST] --- place_building on already-occupied slot 0 ---")
 	var ok: bool = _hex_grid.place_building(0, Types.BuildingType.ARROW_TOWER)
 	_check("slot_occupied: place_building returns false", not ok)
 
 
 func _test_wave_starts() -> void:
-	print("[AUTOTEST] --- wave 1 countdown + start (timeout 15 s) ---")
+	printerr("[AUTOTEST] --- wave 1 countdown + start (timeout 15 s) ---")
 	var ok: bool = await _wait_until(
 		func() -> bool: return _wave_started_received,
 		15.0, "wave_started signal"
@@ -266,16 +266,16 @@ func _test_wave_starts() -> void:
 
 
 func _test_enemies_spawn() -> void:
-	print("[AUTOTEST] --- enemies in scene after wave start ---")
+	printerr("[AUTOTEST] --- enemies in scene after wave start ---")
 	# Give spawner a moment to add all enemy nodes.
 	await get_tree().create_timer(0.5).timeout
 	var count: int = _wave_manager.get_living_enemy_count()
 	_check("enemies_spawn: at least 1 enemy alive", count > 0)
-	print("[AUTOTEST] living enemies after spawn: %d" % count)
+	printerr("[AUTOTEST] living enemies after spawn: %d" % count)
 
 
 func _test_first_kill() -> void:
-	print("[AUTOTEST] --- first enemy kill via auto-fire (timeout 60 s) ---")
+	printerr("[AUTOTEST] --- first enemy kill via auto-fire (timeout 60 s) ---")
 	var kills_before: int = _enemy_killed_count
 	var ok: bool = await _wait_until(
 		func() -> bool: return _enemy_killed_count > kills_before,
@@ -283,11 +283,11 @@ func _test_first_kill() -> void:
 	)
 	_check("first_kill: auto-fire kills at least one enemy within 60 s", ok)
 	if ok:
-		print("[AUTOTEST] first kill confirmed, total kills: %d" % _enemy_killed_count)
+		printerr("[AUTOTEST] first kill confirmed, total kills: %d" % _enemy_killed_count)
 
 
 func _test_flying_enemy_killed() -> void:
-	print("[AUTOTEST] --- Bat Swarm (flying) killed (timeout 120 s) ---")
+	printerr("[AUTOTEST] --- Bat Swarm (flying) killed (timeout 120 s) ---")
 	var ok: bool = await _wait_until(
 		func() -> bool: return Types.EnemyType.BAT_SWARM in _enemy_killed_types,
 		120.0, "Bat Swarm killed"
@@ -296,7 +296,7 @@ func _test_flying_enemy_killed() -> void:
 
 
 func _test_wave_cleared() -> void:
-	print("[AUTOTEST] --- wave_cleared signal (timeout 180 s) ---")
+	printerr("[AUTOTEST] --- wave_cleared signal (timeout 180 s) ---")
 	var ok: bool = await _wait_until(
 		func() -> bool: return _wave_cleared_received,
 		180.0, "wave_cleared signal"
@@ -308,10 +308,10 @@ func _test_wave_cleared() -> void:
 
 
 func _test_economy_reward() -> void:
-	print("[AUTOTEST] --- economy reward after kills ---")
+	printerr("[AUTOTEST] --- economy reward after kills ---")
 	var gold: int = EconomyManager.get_gold()
 	_check("economy: gold > 0 after kills", gold > 0)
-	print("[AUTOTEST] final gold: %d  final kills: %d" % [gold, _enemy_killed_count])
+	printerr("[AUTOTEST] final gold: %d  final kills: %d" % [gold, _enemy_killed_count])
 
 
 # ---------------------------------------------------------------------------
@@ -321,10 +321,10 @@ func _test_economy_reward() -> void:
 func _check(label: String, condition: bool) -> void:
 	if condition:
 		_pass_count += 1
-		print("[AUTOTEST] PASS: %s" % label)
+		printerr("[AUTOTEST] PASS: %s" % label)
 	else:
 		_fail_count += 1
-		print("[AUTOTEST] FAIL: %s" % label)
+		push_warning("[AUTOTEST] FAIL: %s" % label)
 
 
 ## Polls [param condition] every 0.25 s until it returns true or [param timeout] elapses.
@@ -336,12 +336,12 @@ func _wait_until(condition: Callable, timeout: float, label: String) -> bool:
 			return true
 		await get_tree().create_timer(0.25).timeout
 		elapsed += 0.25
-	print("[AUTOTEST] TIMEOUT: '%s' did not occur within %.0f s" % [label, timeout])
+	push_warning("[AUTOTEST] TIMEOUT: '%s' did not occur within %.0f s" % [label, timeout])
 	return false
 
 
 func _finish() -> void:
-	print("[AUTOTEST] ============================================================")
-	print("[AUTOTEST] RESULTS  PASS: %d   FAIL: %d" % [_pass_count, _fail_count])
-	print("[AUTOTEST] ============================================================")
+	printerr("[AUTOTEST] ============================================================")
+	printerr("[AUTOTEST] RESULTS  PASS: %d   FAIL: %d" % [_pass_count, _fail_count])
+	printerr("[AUTOTEST] ============================================================")
 	get_tree().quit(0 if _fail_count == 0 else 1)

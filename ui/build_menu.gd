@@ -32,7 +32,8 @@ func _ready() -> void:
 	SignalBus.resource_changed.connect(_on_resource_changed)
 	SignalBus.research_unlocked.connect(_on_research_unlocked)
 	SignalBus.research_node_unlocked.connect(_on_research_unlocked)
-	BuildPhaseManager.combat_phase_started.connect(_on_combat_phase_started)
+	if not SignalBus.combat_phase_started.is_connected(_on_combat_phase_started):
+		SignalBus.combat_phase_started.connect(_on_combat_phase_started)
 	_close_button.pressed.connect(_on_close_pressed)
 	_sell_button.pressed.connect(_on_sell_pressed)
 	_sell_cancel_button.pressed.connect(_on_sell_cancel_pressed)
