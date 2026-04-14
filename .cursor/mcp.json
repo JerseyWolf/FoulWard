@@ -3,9 +3,9 @@
     "godot-mcp-pro": {
       "command": "node",
       "args": [
-        "/home/jerzy-wolf/workspace/foul-ward/FoulWard/MCPs/godot-mcp-pro-v1.6.1/server/build/index.js"
+        "server/build/index.js"
       ],
-      "cwd": "/home/jerzy-wolf/workspace/foul-ward/FoulWard",
+      "cwd": "../foulward-mcp-servers/godot-mcp-pro",
       "env": {
         "GODOT_MCP_PORT": "6505",
         "PATH": "/home/jerzy-wolf/.local/bin:/usr/bin:/usr/local/bin:/bin"
@@ -15,9 +15,9 @@
       "command": "/home/jerzy-wolf/.local/bin/uv",
       "args": [
         "run",
-        "/home/jerzy-wolf/workspace/foul-ward/FoulWard/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"
+        "gdai_mcp_server.py"
       ],
-      "cwd": "/home/jerzy-wolf/workspace/foul-ward/FoulWard",
+      "cwd": "../foulward-mcp-servers/gdai-mcp-godot",
       "env": {
         "GDAI_MCP_SERVER_PORT": "3571",
         "GODOT_PROJECT_DIR": "/home/jerzy-wolf/workspace/foul-ward/FoulWard",

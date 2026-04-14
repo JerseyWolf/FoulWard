@@ -24,9 +24,10 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Godot MCP Pro (npm install lives under MCPs/.../server)
-MCPs/godot-mcp-pro-v1.6.1/server/node_modules/
+# Godot MCP Pro npm vendoring lives outside the repo (../foulward-mcp-servers/godot-mcp-pro)
 tools/mcp-support/node_modules/
+/tools/mcp-support/godot-mcp-pro/
+/tools/mcp-support/gdai-mcp-godot/
 
 # Local MCP secrets (never commit real tokens)
 .cursor/github-mcp.env

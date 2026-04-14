@@ -43,7 +43,7 @@ Filtered `.position` in `autoloads/`, `scripts/`, `scenes/` `.gd` files: hits ar
 
 1. **`SignalBus.nav_mesh_rebake_requested` is never emitted** in `autoloads/`, `scripts/`, or `scenes/`. `NavMeshManager` connects the signal to `request_rebake()`, but no game code triggers rebakes through the documented SignalBus path (e.g. after terrain/build changes). **Violates the documented “rebake via signal” workflow.**
 2. **`NavMeshManager.request_rebake()`** calls `_nav_region.bake_navigation_mesh(true)` **inside NavMeshManager** — allowed by “outside NavMeshManager” wording, but production code never goes through `nav_mesh_rebake_requested` as specified in the skill.
-3. **Tooling (non-game):** `addons/godot_mcp/commands/navigation_commands.gd` and duplicate under `MCPs/godot-mcp-pro-v1.6.1/...` call `region.bake_navigation_mesh()` directly — acceptable for editor MCP, but **not** routed through `NavMeshManager` / SignalBus.
+3. **Tooling (non-game):** `addons/godot_mcp/commands/navigation_commands.gd` and duplicate under `../foulward-mcp-servers/godot-mcp-pro/...` call `region.bake_navigation_mesh()` directly — acceptable for editor MCP, but **not** routed through `NavMeshManager` / SignalBus.
 
 `tests/unit/test_terrain.gd` calls `NavMeshManager.request_rebake()` directly — acceptable for unit tests.
 

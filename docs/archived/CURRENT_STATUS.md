@@ -11,7 +11,7 @@ Use this checklist to match **Godot + Cursor + optional MCP** setup after clonin
 | **Git** | Clone `main` from your remote (e.g. GitHub). |
 | **Godot 4.6+** | Project targets **4.6** (`project.godot` → `config/features`). Install [Godot for Linux](https://godotengine.org/download/linux/) or distro package if version matches. |
 | **Node.js (LTS)** | For MCP servers that use `node` (Godot MCP Pro build, Sequential Thinking). |
-| **Python 3** | For `addons/gdai-mcp-plugin-godot/gdai_mcp_server.py` (GDAI MCP). |
+| **Python 3** | For `../foulward-mcp-servers/gdai-mcp-godot/gdai_mcp_server.py` (GDAI MCP). |
 | **`uv`** | [Recommended by GDAI](https://gdaimcp.com/docs/installation): run the MCP bridge with `uv run …/gdai_mcp_server.py` (`.cursor/mcp.json` uses this). Install via [uv install guide](https://docs.astral.sh/uv/getting-started/installation/) (binary ends up in `~/.local/bin/uv`). |
 
 Optional: `rg` (ripgrep) for fast search; same as most dev setups.
@@ -92,10 +92,10 @@ cd "$REPO/tools/mcp-support"
 npm install
 ```
 
-**Godot MCP Pro** (if you use the `godot-mcp-pro` server): vendor tree lives under `MCPs/godot-mcp-pro-v1.6.1/`. The repo **ignores** `MCPs/godot-mcp-pro-v1.6.1/server/node_modules/`. If documentation for that bundle requires it:
+**Godot MCP Pro** (if you use the `godot-mcp-pro` server): vendor tree lives under `../foulward-mcp-servers/godot-mcp-pro/`. The repo **ignores** `../foulward-mcp-servers/godot-mcp-pro/server/node_modules/`. If documentation for that bundle requires it:
 
 ```bash
-cd "$REPO/MCPs/godot-mcp-pro-v1.6.1/server"
+cd "$REPO/../foulward-mcp-servers/godot-mcp-pro/server"
 npm install
 ```
 
@@ -107,9 +107,9 @@ The **canonical** Godot MCP addon used by the **project** is under **`addons/god
 
 The repo ships **`.cursor/mcp.json`** with **Linux-friendly** absolute paths (example: `/home/you/workspace/FoulWard/...`). After cloning, **replace** those paths with your real **`$REPO`** if your home or folder name differs.
 
-1. Install **Node** (for `godot-mcp-pro` + sequential-thinking) and **`uv`** (for GDAI), then run **`npm install`** in `tools/mcp-support` and `MCPs/godot-mcp-pro-v1.6.1/server` (see §5).
+1. Install **Node** (for `godot-mcp-pro` + sequential-thinking) and **`uv`** (for GDAI), then run **`npm install`** in `tools/mcp-support` and `../foulward-mcp-servers/godot-mcp-pro/server` (see §5).
 2. Open **Cursor Settings → MCP** — Cursor loads **project** `.cursor/mcp.json` when this folder is the workspace. Use **MCP: Restart Servers** after edits.
-3. **GDAI** uses **`uv run`** → `addons/gdai-mcp-plugin-godot/gdai_mcp_server.py` (same pattern as [GDAI docs](https://gdaimcp.com/docs/installation)). Ensure **`~/.local/bin`** is on `PATH` for MCP (the checked-in `env.PATH` includes it).
+3. **GDAI** uses **`uv run`** → `../foulward-mcp-servers/gdai-mcp-godot/gdai_mcp_server.py` (same pattern as [GDAI docs](https://gdaimcp.com/docs/installation)). Ensure **`~/.local/bin`** is on `PATH` for MCP (the checked-in `env.PATH` includes it).
 4. **Godot**: open **`$REPO`** in the editor, enable **GDAI MCP** + **Godot MCP** under **Project → Project Settings → Plugins**, and keep the editor running while using MCP tools that talk to the game.
 5. **Filesystem** (`filesystem-workspace`): `npx` runs `@modelcontextprotocol/server-filesystem` with your **workspace parent** as the allowed root (checked-in default: `/home/jerzy-wolf/workspace` — change in `.cursor/mcp.json` to match your machine).
 6. **GitHub** (`github`): `npx` runs `@modelcontextprotocol/server-github`. **Cursor has no separate “MCP secrets” form for stdio servers** — use **`env` / `envFile` in `mcp.json`** (see [Cursor MCP](https://cursor.com/docs/mcp)) or **`~/.cursor/mcp.json`** for global tools.
@@ -123,7 +123,7 @@ The repo ships **`.cursor/mcp.json`** with **Linux-friendly** absolute paths (ex
 
 | Server | What you need |
 |--------|----------------|
-| `godot-mcp-pro` | Node, `npm install` under `MCPs/godot-mcp-pro-v1.6.1/server`, **Godot** open, plugin on, **6505** |
+| `godot-mcp-pro` | Node, `npm install` under `../foulward-mcp-servers/godot-mcp-pro/server`, **Godot** open, plugin on, **6505** |
 | `gdai-mcp-godot` | `uv`, **Godot editor open** on this project, GDAI plugin enabled; HTTP on **3571** is served **by Godot** (not by Cursor). Avoid duplicate GDAI copies under `res://` (only `addons/gdai-mcp-plugin-godot/`). |
 | `sequential-thinking` | `npm install` in `tools/mcp-support` |
 | `filesystem-workspace` | `npx` (may download first run); `PATH` in `mcp.json` |
@@ -138,13 +138,13 @@ The repo ships **`.cursor/mcp.json`** with **Linux-friendly** absolute paths (ex
   "mcpServers": {
     "godot-mcp-pro": {
       "command": "node",
-      "args": ["/home/you/FoulWard/MCPs/godot-mcp-pro-v1.6.1/server/build/index.js"],
+      "args": ["/home/you/FoulWard/../foulward-mcp-servers/godot-mcp-pro/server/build/index.js"],
       "cwd": "/home/you/FoulWard",
       "env": { "GODOT_MCP_PORT": "6505" }
     },
     "gdai-mcp-godot": {
       "command": "/home/you/.local/bin/uv",
-      "args": ["run", "/home/you/FoulWard/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"],
+      "args": ["run", "/home/you/FoulWard/../foulward-mcp-servers/gdai-mcp-godot/gdai_mcp_server.py"],
       "cwd": "/home/you/FoulWard",
       "env": { "GDAI_MCP_SERVER_PORT": "3571" }
     },

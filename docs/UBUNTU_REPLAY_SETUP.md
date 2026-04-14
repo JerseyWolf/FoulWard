@@ -61,7 +61,7 @@ Then:
 
 ```bash
 cd tools/mcp-support && npm install
-cd MCPs/godot-mcp-pro-v1.6.1/server && npm install
+cd ../foulward-mcp-servers/godot-mcp-pro/server && npm install
 ```
 
 ---
