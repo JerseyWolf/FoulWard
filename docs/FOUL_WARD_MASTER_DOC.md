@@ -11,6 +11,7 @@
 
 | Date | Author | Summary |
 |------|--------|---------|
+| 2026-04-14 | mcp-purge | Moved godot-mcp-pro and gdai-mcp-godot above repo root to ../foulward-mcp-servers/. |
 | 2026-04-14 | Cursor agent | §2.4 C# Integration; §3.3 DamageCalculator (C#); §30.15 C# `class_name` vs autoloads; §34 `FoulWard.csproj` + `CREDITS.md`. |
 | 2026-03-31 | Cursor agent | §1.1 Cursor/MCP toolchain (minimal consolidation); §23 headless automation vs GdUnit clarified. |
 | 2026-03-31 | Opus (Prompt 53) | Full expansion: complete public APIs with GDScript signatures for every autoload/manager, three lifecycle flow sections, four "how to add X" templates, full enum-to-integer mapping table, expanded anti-patterns section. |
@@ -85,14 +86,14 @@
 
 Cursor loads MCP servers from **`.cursor/mcp.json`**. There is no separate “auto session” product mode documented in this repo: any Cursor chat or agent run can use whatever MCP tools Cursor exposes, subject to the servers below being up and reachable.
 
-| Server (name in `mcp.json`) | Role (one line) |
-|----------------------------|------------------|
-| `godot-mcp-pro` | Editor integration over WebSocket (default port **6505**); needs Godot open with the **Godot MCP Pro** plugin enabled. |
-| `gdai-mcp-godot` | Python bridge to the editor’s **HTTP API** (default port **3571**); needs Godot open with **GDAI MCP** enabled; proxies to `addons/gdai-mcp-plugin-godot/`. |
-| `sequential-thinking` | Step-by-step reasoning MCP; needs **`node`** and `npm install` under `tools/mcp-support` (see workflow rule file). |
-| `filesystem-workspace` | Broader workspace filesystem access via MCP. |
-| `github` | GitHub API; requires **`GITHUB_PERSONAL_ACCESS_TOKEN`** (never commit secrets). |
-| `foulward-rag` | Project RAG (`query_project_knowledge`, etc.); **optional** — requires the RAG service under **`~/LLM`** to be running; agents must not block if it is down. |
+| Server (name in `mcp.json`) | Role (one line) | Path / vendor |
+|----------------------------|------------------|----------------|
+| `godot-mcp-pro` | Editor integration over WebSocket (default port **6505**); needs Godot open with the **Godot MCP Pro** plugin enabled. | `../foulward-mcp-servers/godot-mcp-pro` (paid — outside repo) |
+| `gdai-mcp-godot` | Python bridge to the editor’s **HTTP API** (default port **3571**); needs Godot open with **GDAI MCP** enabled; proxies to `addons/gdai-mcp-plugin-godot/`. | `../foulward-mcp-servers/gdai-mcp-godot` (paid — outside repo) |
+| `sequential-thinking` | Step-by-step reasoning MCP; needs **`node`** and `npm install` under `tools/mcp-support` (see workflow rule file). | — |
+| `filesystem-workspace` | Broader workspace filesystem access via MCP. | — |
+| `github` | GitHub API; requires **`GITHUB_PERSONAL_ACCESS_TOKEN`** (never commit secrets). | — |
+| `foulward-rag` | Project RAG (`query_project_knowledge`, etc.); **optional** — requires the RAG service under **`~/LLM`** to be running; agents must not block if it is down. | — |
 
 **Authoritative detail** (ports, “No tools” recovery, mandatory calls like `get_scene_tree` / `get_godot_errors`, GDAI stdout/stderr rule): **`AGENTS.md`** (repo root) and **`.cursor/rules/mcp-godot-workflow.mdc`**. This section does not duplicate those files.
 

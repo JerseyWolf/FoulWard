@@ -69,6 +69,13 @@ dotnet build FoulWard.csproj       # required when .cs files change; before run_
 - `.cs` files → run `dotnet build` before `run_gdunit.sh`.
 - `FoulWardTypes.cs` = C# enum mirror. `.cs` imports it. `.gd` never does.
 
+NOTE: godot-mcp-pro and gdai-mcp-godot live outside the repo at ../foulward-mcp-servers/ and are not in version control.
+
+| Server (name in `.cursor/mcp.json`) | Path (relative to repo root) |
+|-------------------------------------|------------------------------|
+| `godot-mcp-pro` | `../foulward-mcp-servers/godot-mcp-pro` |
+| `gdai-mcp-godot` | `../foulward-mcp-servers/gdai-mcp-godot` |
+
 MCP verification after every session:
 - `get_scene_tree` — validate node paths before any get_node() call
 - `get_godot_errors` — check for new errors after changes

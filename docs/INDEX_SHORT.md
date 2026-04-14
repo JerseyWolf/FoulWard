@@ -17,7 +17,7 @@ AGENT STANDING ORDERS & CURSOR SKILLS (read `AGENTS.md` first)
 `.cursor/skills/enemy-system/SKILL.md` — Enemies, spawning, damage matrix, factions, bosses (`EnemyBase`, `EnemyData`, `WaveManager`, `DamageCalculator`).
 `.cursor/skills/godot-conventions/SKILL.md` — Naming, static typing, signals, field discipline, process rules, sixteen agent rules (`types.gd`, `CONVENTIONS.md` alignment).
 `.cursor/skills/lifecycle-flows/SKILL.md` — Startup, mission loop, waves, win/fail, build vs combat (`GameManager`, `BuildPhaseManager`, SignalBus lifecycle).
-`.cursor/skills/mcp-workflow/SKILL.md` — Godot MCP Pro, GDAI, sequential-thinking, RAG, ports, `get_scene_tree` / `get_godot_errors` habits (`.cursor/mcp.json`).
+`.cursor/skills/mcp-workflow/SKILL.md` — Godot MCP Pro (`../foulward-mcp-servers/godot-mcp-pro`), GDAI bridge (`../foulward-mcp-servers/gdai-mcp-godot`, paid — outside repo), sequential-thinking, RAG, ports, `get_scene_tree` / `get_godot_errors` habits (`.cursor/mcp.json`).
 `.cursor/skills/save-and-dialogue/SKILL.md` — Save slots, autosave, dialogue, relationships (`SaveManager`, `DialogueManager`, `RelationshipManager`).
 `.cursor/skills/scene-tree-and-physics/SKILL.md` — `main.tscn` manager paths, layers/masks, input map, coordinates (`InputManager`, physics layers).
 `.cursor/skills/signal-bus/SKILL.md` — Declaring, emitting, connecting cross-system signals (`autoloads/signal_bus.gd`, payload typing).

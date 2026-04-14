@@ -72,7 +72,7 @@ CURSOR AGENT SKILLS (`.cursor/skills/*/SKILL.md` — YAML `description` is the a
 
 **mcp-workflow** — `.cursor/skills/mcp-workflow/SKILL.md`
 - **Trigger:** MCP, Godot editor integration, scene validation, errors, ports, RAG, session checklist.
-- **Covers:** `.cursor/mcp.json` servers (`godot-mcp-pro`, `gdai-mcp-godot`, `sequential-thinking`, `foulward-rag`, etc.), default ports 6505 / 3571, `get_scene_tree` / `get_godot_errors`, GDAI stdout rule.
+- **Covers:** `.cursor/mcp.json` servers (`godot-mcp-pro` at `../foulward-mcp-servers/godot-mcp-pro`, `gdai-mcp-godot` at `../foulward-mcp-servers/gdai-mcp-godot` — paid, outside repo; `sequential-thinking`, `foulward-rag`, etc.), default ports 6505 / 3571, `get_scene_tree` / `get_godot_errors`, GDAI stdout rule.
 
 **save-and-dialogue** — `.cursor/skills/save-and-dialogue/SKILL.md`
 - **Trigger:** Save, load, autosave, dialogue, relationship, affinity, tier, conditions.

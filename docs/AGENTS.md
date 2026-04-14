@@ -7,6 +7,7 @@ Canonical standing orders live in **`AGENTS.md`** (repo root; symlinked as `.cur
 ## Orientation
 
 - **`.cs` files:** run `dotnet build FoulWard.csproj` **before** GdUnit when C# sources change. C# compile errors prevent correct autoload registration and cause GdUnit autoload failures.
+- **MCP (paid bridges):** `godot-mcp-pro` and `gdai-mcp-godot` live outside the repo at `../foulward-mcp-servers/<name>` (not version-controlled). Paths and habits: root **`AGENTS.md`**, **`docs/FOUL_WARD_MASTER_DOC.md`** §1.1, **`.cursor/skills/mcp-workflow/SKILL.md`**.
 
 ---
 

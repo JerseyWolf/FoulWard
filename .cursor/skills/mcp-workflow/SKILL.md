@@ -17,12 +17,14 @@ compatibility: Godot 4.4, Cursor Pro, MCP servers listed below.
 
 | Server name (in `.cursor/mcp.json`) | Role | Port / Notes |
 |---|---|---|
-| `godot-mcp-pro` | Editor integration via WebSocket | Port **6505**; needs Godot open with Godot MCP Pro plugin enabled |
-| `gdai-mcp-godot` | Python bridge to editor HTTP API | Port **3571**; needs Godot open with GDAI MCP plugin enabled |
+| `godot-mcp-pro` | Editor integration via WebSocket | Port **6505**; cwd `../foulward-mcp-servers/godot-mcp-pro` (paid — outside repo); needs Godot open with Godot MCP Pro plugin enabled |
+| `gdai-mcp-godot` | Python bridge to editor HTTP API | Port **3571**; cwd `../foulward-mcp-servers/gdai-mcp-godot` (paid — outside repo); needs Godot open with GDAI MCP plugin enabled |
 | `sequential-thinking` | Step-by-step reasoning | Needs `node` + `npm install` under `tools/mcp-support` |
 | `filesystem-workspace` | Broader workspace filesystem access | — |
 | `github` | GitHub API | Requires `GITHUB_PERSONAL_ACCESS_TOKEN` — never commit |
 | `foulward-rag` | Project RAG (`query_project_knowledge`, etc.) | **Optional** — requires RAG service running from `~/LLM`; agents must NOT block if down |
+
+**Prerequisites:** `godot-mcp-pro` and `gdai-mcp-godot` are not inside the repo. Find them at `../foulward-mcp-servers/` relative to the repo root.
 
 ---
 
