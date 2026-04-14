@@ -12,14 +12,14 @@ config_version=5
 
 config/name="foul_ward"
 run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.6", "Forward Plus")
+config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
 SignalBus="*res://autoloads/signal_bus.gd"
 NavMeshManager="*res://scripts/nav_mesh_manager.gd"
-DamageCalculator="*res://autoloads/damage_calculator.gd"
+DamageCalculator="*res://autoloads/DamageCalculator.cs"
 AuraManager="*res://autoloads/aura_manager.gd"
 EconomyManager="*res://autoloads/economy_manager.gd"
 CampaignManager="*res://autoloads/campaign_manager.gd"
@@ -43,6 +43,11 @@ window/stretch/mode="viewport"
 window/stretch/aspect="expand"
 window/size/width=1152
 window/size/height=648
+
+[dotnet]
+
+project/assembly_name="foul_ward"
+enabled=true
 
 [editor_plugins]
 

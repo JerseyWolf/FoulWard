@@ -7,6 +7,10 @@
 
 ## Changelog
 
+### 2026-04-14
+
+- §2.4 C# Conventions — PascalCase/`_camelCase`, collections, `FoulWardTypes.cs`; autoload tree lists `DamageCalculator.cs`.
+
 ### 2026-03-31
 
 - Refreshed counts, defaults, enums, SignalBus registry, autoload list, and init order to match `docs/FOUL_WARD_MASTER_DOC.md` (§2 Core Architecture, §3 Autoloads, §5 Types.gd, §29–30 agent rules, §32 field names). The MVP-era snapshot is preserved as `docs/archived/CONVENTIONS_MVP.md`.
@@ -23,7 +27,7 @@ res://
 ├── project.godot
 ├── autoloads/
 │   ├── signal_bus.gd              # SignalBus — init #1
-│   ├── damage_calculator.gd       # DamageCalculator — init #3
+│   ├── DamageCalculator.cs        # DamageCalculator — init #3 (C#)
 │   ├── aura_manager.gd            # AuraManager — init #4
 │   ├── economy_manager.gd         # EconomyManager — init #5
 │   ├── campaign_manager.gd        # CampaignManager — init #6
@@ -128,6 +132,20 @@ if mana >= 50:
 if mana >= spell_data.mana_cost:
     mana -= spell_data.mana_cost
 ```
+
+### 2.4 C# Conventions
+
+| Topic | Rule |
+|-------|------|
+| Methods | **PascalCase** on public and private instance/static methods. |
+| Private fields | **`_camelCase`**. |
+| Public API | **PascalCase** properties and public fields intended as API. |
+| `class_name` | Not required for C# scripts; avoid patterns that shadow autoload singleton names (see `docs/FOUL_WARD_MASTER_DOC.md` §30.15). |
+| Helpers | Prefer **`RefCounted`** for stateless or shared helpers not in the scene tree. |
+| Scene nodes | Inherit **`Node`** (or appropriate `Node` subclass). |
+| Public API surface to GDScript | Prefer **`Godot.Collections`** types where marshalling matters. |
+| Internal C#-only code | **`System.Collections.Generic`** is fine. |
+| Enums | **`FoulWardTypes.cs`** mirrors `types.gd`; **`types.gd` is source of truth**. |
 
 ---
 

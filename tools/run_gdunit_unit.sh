@@ -7,7 +7,13 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-default_bin="$repo_root/Godot_v4.6.1-stable_linux.x86_64"
+mono_bin="$repo_root/Godot_v4.6.2-stable_mono_linux.x86_64"
+std_bin="$repo_root/Godot_v4.6.1-stable_linux.x86_64"
+if [[ -x "$mono_bin" ]]; then
+	default_bin="$mono_bin"
+else
+	default_bin="$std_bin"
+fi
 godot_bin="${GODOT_BIN:-$default_bin}"
 log_file="${GDUNIT_LOG_FILE:-$repo_root/reports/gdunit_unit_run.log}"
 summary_file="${GDUNIT_UNIT_SUMMARY_FILE:-$repo_root/reports/gdunit_unit_run.summary.txt}"

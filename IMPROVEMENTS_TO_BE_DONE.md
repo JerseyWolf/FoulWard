@@ -156,7 +156,7 @@ until parallel runner is implemented).
 
 | File | Issue Type | Line(s) | Description | Severity | Suggested Fix |
 |------|-----------|---------|-------------|----------|---------------|
-| `scripts/wave_manager.gd` | Long function | 469–551 | `_spawn_wave` is 82 lines | Medium | Extract roster spawn loop (509–542) to `_spawn_enemies_for_roster(roster, wave_number, total)` |
+| `scripts/wave_manager.gd` | Long function | 469–551 | `_spawn_wave` is 82 lines — **Status: FIXED** — extracted to `WaveCompositionHelper.cs` (Phase 2B) | Medium (resolved) | Extract roster spawn loop (509–542) to `_spawn_enemies_for_roster(roster, wave_number, total)` |
 | `scripts/sim_bot.gd` | Long function | 706–775 | `_choose_build_or_upgrade_action` is 69 lines | Low | Extract build-priority scan (722–753) to `_collect_weighted_build_entries()` |
 | `scripts/input_manager.gd` | Long function | 37–100 | `_unhandled_input` is 63 lines | Medium | Extract `_handle_mouse_combat(mb)`, `_handle_spell_keybinds(event)`, `_handle_build_mode_keys()` |
 | `scripts/input_manager.gd` | Bare get_node | 18–22 | Five `get_node("/root/Main/...")` without null guards | High | Replace with `get_node_or_null(...)` + null check before use |

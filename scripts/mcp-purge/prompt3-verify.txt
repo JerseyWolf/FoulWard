@@ -1,0 +1,60 @@
+You are a verification agent. Run every check below in order. For each one
+print either PASS or FAIL and a one-line reason. Do not fix anything — only
+report. At the end print a summary table of all 10 results.
+
+CHECK 1 — Paid folders absent from working tree.
+Run: find . -type d \( -name "godot-mcp-pro" -o -name "gdai-mcp-godot" \) -not -path "*/foulward-mcp-servers/*"
+PASS: no output. FAIL: a path is printed.
+
+CHECK 2 — Paid folders exist above the repo.
+Run: ls ../foulward-mcp-servers/
+PASS: both godot-mcp-pro and gdai-mcp-godot appear. FAIL: either is missing.
+
+CHECK 3 — Zero paid MCP commits in full git history.
+Run:
+  git log --all --full-history -- "tools/mcp-support/godot-mcp-pro" | head -3
+  git log --all --full-history -- "tools/mcp-support/gdai-mcp-godot" | head -3
+PASS: no output for both. FAIL: any commit lines appear.
+
+CHECK 4 — No dangling MCP objects.
+Run: git fsck --unreachable 2>&1 | grep -i "mcp" | head -5
+PASS: no output. FAIL: mcp-named objects appear (run: git gc --prune=now --aggressive to fix).
+
+CHECK 5 — No stale in-repo paths in tracked files.
+Run: grep -r "tools/mcp-support/godot-mcp-pro\|tools/mcp-support/gdai-mcp-godot" . \
+  --include="*.md" --include="*.json" --include="*.mdc" --include="*.cfg" \
+  --exclude-dir=".git"
+PASS: no output. FAIL: file names printed (missed in Prompt 1 Step 9).
+
+CHECK 6 — Correct above-repo path references in config files.
+Run: grep -r "foulward-mcp-servers" . \
+  --include="*.md" --include="*.json" --include="*.mdc" --exclude-dir=".git" -l
+PASS: only these files appear: .cursormcp.json, FOUL_WARD_MASTER_DOC.md,
+  .cursor/skills/mcp-workflow/SKILL.md, docs/AGENTS.md,
+  .cursor/rules/mcp-godot-workflow.mdc (if it existed).
+FAIL: expected files missing, or unexpected files appear.
+
+CHECK 7 — .gitignore safety lines present.
+Run: grep -n "godot-mcp-pro\|gdai-mcp-godot" .gitignore
+PASS: at least one match per server. FAIL: no output.
+
+CHECK 8 — Free/open MCP servers still intact in repo.
+Run: find . -type d \( -name "sequential-thinking" -o -name "filesystem-workspace" -o -name "foulward-rag" \) -not -path "*node_modules*"
+PASS: all three found. FAIL: any missing (wrong folders were moved in Prompt 1).
+
+CHECK 9 — .cursormcp.json is valid JSON with correct server paths.
+Run: python3 -m json.tool .cursormcp.json > /dev/null && echo "VALID" || echo "INVALID"
+Run: grep -A3 "godot-mcp-pro\|gdai-mcp-godot" .cursormcp.json
+PASS: JSON valid; path values contain ../foulward-mcp-servers/. FAIL: parse error or old paths.
+
+CHECK 10 — Git working tree is clean.
+Run: git status --short
+PASS: no output. FAIL: uncommitted files listed.
+
+FINAL SUMMARY: Print a table:
+  Check | Name | Result
+  ------|------|-------
+  1     | Folders absent from tree | PASS/FAIL
+  ... (all 10)
+If all pass: print "ALL CHECKS PASSED — safe to proceed to doc updates."
+If any fail: print "CHECKS FAILED — resolve before proceeding." and list the failing steps.

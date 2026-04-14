@@ -4,6 +4,8 @@
 
 # Optional local Godot editor binary (not part of the repo; set GODOT or PATH for smoke/tests)
 Godot_v*-stable_linux.x86_64
+Godot_v*-stable_mono_linux.x86_64
+GodotSharp/
 
 # Cross-platform / local OS & tool noise (safe on Windows + Ubuntu)
 .DS_Store
@@ -41,3 +43,10 @@ repo_dump_option_b_with_tests.txt
 
 # Generated docs dump exports for LLM context
 docs/DOCS_DUMP.md
+
+# Godot C# build artifacts
+.mono/
+.godot/mono/
+*.csproj.user
+bin/
+obj/

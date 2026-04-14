@@ -28,7 +28,7 @@ func set_building(bd: BuildingData) -> void:
 	if tags.is_empty():
 		_role_label.text = ""
 	else:
-		_role_label.text = String.join(", ", tags)
+		_role_label.text = ", ".join(tags)
 	_refresh_state()
 
 

@@ -44,7 +44,6 @@ func _build_nodes() -> void:
 		_nodes_container.add_child(row)
 		if row.has_method("set_node"):
 			row.call("set_node", n)
-	)
 
 
 func _on_points_changed(points: int) -> void:

@@ -13,6 +13,8 @@
 class_name ProjectileBase
 extends Area3D
 
+const ProjectilePhysicsScript: CSharpScript = preload("res://scripts/ProjectilePhysics.cs")
+
 const MAX_LIFETIME: float = 5.0
 
 # Visual/collision scaling for all projectile types.
@@ -55,9 +57,30 @@ var _stat_source_kind: String = "none"
 var _stat_placed_instance_id: String = ""
 var _stat_slot_index: int = -1
 
+## Bridge for ProjectilePhysics.cs — straight-line speed vector (read via .Get("velocity") from C#).
+var velocity: Vector3:
+	get:
+		return _direction * _speed
+
+## Max travel before despawn (read via .Get("max_range") from C#).
+var max_range: float:
+	get:
+		return _max_travel_distance
+
+## Distance along the flight vector (read/write from C# via .Get/.Set).
+var traveled_distance: float:
+	get:
+		return _distance_traveled
+	set(value):
+		_distance_traveled = value
+
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	monitoring = true
+	# Physics process loop runs in C# — see res://scripts/ProjectilePhysics.cs
+	var physics_child: Node = ProjectilePhysicsScript.new() as Node
+	physics_child.name = "ProjectilePhysics"
+	add_child(physics_child)
 
 # === PUBLIC INITIALIZATION PATHS ===================================
 
@@ -199,30 +222,15 @@ func _configure_visuals(is_standard_size: bool) -> void:
 			mat.albedo_color = Color.WHITE
 	_mesh.material_override = mat
 
-# === PHYSICS LOOP ===================================================
+# === PHYSICS LOOP (C# child ProjectilePhysics) =======================
 
-func _physics_process(delta: float) -> void:
-	# Credit (straight-line, distance_traveled + tolerance + lifetime checks):
-	#   FOUL WARD SYSTEMS_part2.md §6.5 ProjectileBase.physics_process.
-	if _hit_processed:
-		return
-	_lifetime += delta
-	if _lifetime >= MAX_LIFETIME:
-		queue_free()
-		return
+func _on_hit(_target: Variant) -> bool:
+	# Invoked from ProjectilePhysics._PhysicsProcess — overlap + ray order matches legacy _physics_process.
+	return _try_hit_overlapping_enemy()
 
-	var movement: Vector3 = _direction * _speed * delta
-	global_position += movement
-	force_update_transform()
-	_distance_traveled += movement.length()
-	# Headless / manual _physics_process: physics server may not run, so body_entered
-	# never fires — resolve overlaps here (same rules as _on_body_entered).
-	if _try_hit_overlapping_enemy():
-		return
 
-	if _distance_traveled >= _max_travel_distance:
-		queue_free()
-		return
+func _on_range_exceeded() -> void:
+	queue_free()
 
 # === COLLISION HANDLER =============================================
 

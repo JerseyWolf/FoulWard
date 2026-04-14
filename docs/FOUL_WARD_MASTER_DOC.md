@@ -11,6 +11,7 @@
 
 | Date | Author | Summary |
 |------|--------|---------|
+| 2026-04-14 | Cursor agent | §2.4 C# Integration; §3.3 DamageCalculator (C#); §30.15 C# `class_name` vs autoloads; §34 `FoulWard.csproj` + `CREDITS.md`. |
 | 2026-03-31 | Cursor agent | §1.1 Cursor/MCP toolchain (minimal consolidation); §23 headless automation vs GdUnit clarified. |
 | 2026-03-31 | Opus (Prompt 53) | Full expansion: complete public APIs with GDScript signatures for every autoload/manager, three lifecycle flow sections, four "how to add X" templates, full enum-to-integer mapping table, expanded anti-patterns section. |
 | 2026-03-31 | Opus (Prompt 52) | Initial creation from MASTER STATE BRIEFING, SUMMARY_VERIFICATION, INDEX_SHORT, INDEX_FULL, and CONVENTIONS sources. Verified against Prompt 51 codebase snapshot (525 passing tests). |
@@ -20,7 +21,7 @@
 ## Table of Contents
 
 - [1. Project Identity](#1-project-identity) — [1.1 Cursor, MCP, and agent toolchain](#11-cursor-mcp-and-agent-toolchain)
-- [2. Core Architecture](#2-core-architecture)
+- [2. Core Architecture](#2-core-architecture) — [2.4 C# Integration](#24-c-integration)
 - [3. Autoloads — Init Order and Complete Public APIs](#3-autoloads--init-order-and-complete-public-apis)
 - [4. Scene-Bound Managers — Complete Public APIs](#4-scene-bound-managers--complete-public-apis)
 - [5. Types.gd — Full Enum-to-Integer Mapping](#5-typesgd--full-enum-to-integer-mapping)
@@ -155,6 +156,29 @@ Additional fields (Phase 2): `assist_angle_degrees`, `assist_max_distance`, `bas
 
 Weapon upgrades tracked via `SignalBus.weapon_upgraded(weapon_slot, new_level)`. `WeaponUpgradeManager` scene-bound under `/root/Main/Managers/WeaponUpgradeManager`.
 
+### 2.4 C# Integration
+
+**STATUS: EXISTS IN CODE**
+
+| File | Role |
+|------|------|
+| `res://autoloads/DamageCalculator.cs` | Autoload singleton — damage matrix |
+| `res://autoloads/SavePayload.cs` | RefCounted save payload helpers |
+| `res://scripts/FoulWardTypes.cs` | Integer enum mirror for C# (see [§5](#5-typesgd--full-enum-to-integer-mapping)) |
+| `res://scripts/WaveCompositionHelper.cs` | RefCounted helper (wave roster) |
+| `res://scripts/ProjectilePhysics.cs` | Node — projectile `_PhysicsProcess` |
+
+**Interop rules**
+
+- **Autoloads:** implemented in GDScript unless listed above; C# autoloads register in `project.godot` like GDScript.
+- **Signals:** declare and emit only from `autoloads/signal_bus.gd` — C# consumes `SignalBus` like any autoload.
+- **Enums:** `FoulWardTypes.cs` mirrors `types.gd` integer values; edit `types.gd` first, then align C#.
+
+**Build requirements**
+
+- **.NET 8 SDK** and **Godot .NET** editor/binary (Mono-enabled export template where relevant).
+- Run `dotnet build FoulWard.csproj` **before** `./tools/run_gdunit.sh` when `.cs` sources change; stale or failing C# builds break GdUnit autoload resolution.
+
 ---
 
 ## 3. Autoloads — Init Order and Complete Public APIs
@@ -176,9 +200,9 @@ Registers `NavigationRegion3D`, queues bake on `nav_mesh_rebake_requested`.
 | `register_region(region: NavigationRegion3D) -> void` | void | Call when a NavRegion enters the tree |
 | `request_rebake() -> void` | void | Queues a `bake_navigation_mesh()` on next idle |
 
-### 3.3 DamageCalculator (`res://autoloads/damage_calculator.gd`) — Init #3
+### 3.3 DamageCalculator (`res://autoloads/DamageCalculator.cs`) — Init #3 — **C#**
 
-Stateless 4×5 damage-type × armor-type matrix. Pure function singleton.
+Stateless 4×5 damage-type × armor-type matrix. Pure function singleton (C# autoload).
 
 | Signature | Returns | Usage |
 |-----------|---------|-------|
@@ -1698,6 +1722,20 @@ signal_ref.emit()
 await timer.timeout
 ```
 
+### 30.15 Adding `class_name` to C# Scripts That Shadow Autoload Names
+
+**WRONG:**
+
+```csharp
+// DamageCalculator.cs — NEVER
+public partial class DamageCalculator : Node
+{
+    // class_name-equivalent in C# can shadow the autoload singleton in tests/tools
+}
+```
+
+**RIGHT:** Do not declare a `class_name`-style global name on C# types that duplicate autoload singleton names. Access the autoload by its registered name (`DamageCalculator`, `SavePayload`, etc.) from GDScript and from C# via the Godot autoload API.
+
 ---
 
 ## 31. Formally Cut Features — Never Implement
@@ -1772,4 +1810,6 @@ await timer.timeout
 | `FUTURE_3D_MODELS_PLAN.md` | Production 3D art roadmap |
 | `.cursorrules` | Workspace rules for Cursor agent behavior |
 | `.cursor/rules/mcp-godot-workflow.mdc` | MCP server usage rules |
+| `FoulWard.csproj` | C# project file — `dotnet build` before GdUnit when `.cs` changes |
+| `CREDITS.md` (repo root) | Third-party / technique credits for C# modules |
 | `docs/PROMPT_[N]_IMPLEMENTATION.md` (new) · `docs/archived/PROMPT_*_IMPLEMENTATION.md` (history) | Per-session implementation logs |

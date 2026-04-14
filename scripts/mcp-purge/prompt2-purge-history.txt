@@ -1,0 +1,66 @@
+You are a git history rewrite agent. Permanently and completely erase
+godot-mcp-pro and gdai-mcp-godot from every commit in this repository's entire
+history so that nobody who clones or checks out any past commit can ever access
+those files. This cannot be undone.
+
+BEFORE STARTING: Run: git status
+Must be clean. If not: git stash
+
+STEP 1 — Find every historical path for both paid servers.
+Run:
+  git log --all --full-history --name-only --pretty=format: -- "tools/mcp-support/godot-mcp-pro" | sort -u | head -30
+  git log --all --full-history --name-only --pretty=format: -- "tools/mcp-support/gdai-mcp-godot" | sort -u | head -30
+  git log --all --diff-filter=A --name-only --pretty=format: | grep -i "godot-mcp\|gdai-mcp" | sort -u
+Record every distinct path variant. You will pass all of them to git-filter-repo.
+
+STEP 2 — Install git-filter-repo if missing.
+Run: git filter-repo --version
+If not found:
+  pip install git-filter-repo
+  (or: pip3 install git-filter-repo)
+  (or: brew install git-filter-repo)
+Confirm: git filter-repo --version
+
+STEP 3 — Run the purge. THIS IS IRREVERSIBLE.
+Use one command with a --path flag for every path found in Step 1. At minimum:
+  git filter-repo \
+    --path tools/mcp-support/godot-mcp-pro \
+    --path tools/mcp-support/gdai-mcp-godot \
+    --invert-paths \
+    --force
+Add extra --path flags for any additional historical paths found in Step 1.
+--invert-paths means: delete these paths from every commit, keep everything else.
+--force is required because this is not a fresh clone.
+
+STEP 4 — Expire reflogs and garbage collect.
+Run:
+  git reflog expire --expire=now --all
+  git gc --prune=now --aggressive
+
+STEP 5 — Force-push all branches and tags to remote.
+Run:
+  git remote -v
+  git push origin --force --all
+  git push origin --force --tags
+NOTE: Disable GitHub branch protection rules before pushing if needed, then
+re-enable afterward (Settings → Branches → edit protection rule).
+
+STEP 6 — Print these manual follow-up instructions for the user:
+"ACTION REQUIRED AFTER THIS SCRIPT COMPLETES:
+ 1. GitHub caches pack files for up to 90 days. Contact GitHub Support at
+    https://support.github.com and request a cached pack purge. Include your
+    repo URL and the SHA of the rewrite commit.
+ 2. Quick alternative: briefly make the repo private (Settings → Danger Zone →
+    Change visibility), wait 60 seconds, then make it public again. This flushes
+    most CDN caches.
+ 3. Tell every collaborator: delete their local clone and re-clone from origin.
+    Any local clone with old history that gets pushed will re-contaminate the remote.
+ 4. If the MCP folders contained license keys, API tokens, or .env files, rotate
+    those credentials NOW through the vendor portal. History purge stops future
+    access but cannot un-expose what was already public."
+
+STEP 7 — Local verification.
+Run:
+  git log --all --full-history -- "tools/mcp-support/godot-mcp-pro" | head -5
+  git log --all --full-history -- "tools/mcp-support/gdai-mcp-godot" | head -5
+PASS: no output. If commits appear, the purge failed — report the error.

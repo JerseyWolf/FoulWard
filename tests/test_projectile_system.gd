@@ -11,6 +11,13 @@ extends GdUnitTestSuite
 const ProjectileScene: PackedScene = preload("res://scenes/projectiles/projectile_base.tscn")
 const EnemyScene: PackedScene = preload("res://scenes/enemies/enemy_base.tscn")
 
+
+func _step_projectile_physics(proj: ProjectileBase, delta: float) -> void:
+	var pp: Node = proj.get_node_or_null("ProjectilePhysics")
+	assert_bool(pp != null).is_true()
+	pp.call("_physics_process", delta)
+
+
 func after_test() -> void:
 	for child: Node in get_children():
 		if child is ProjectileBase or child is EnemyBase:
@@ -124,7 +131,7 @@ func test_projectile_freed_on_miss() -> void:
 		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(200):
-		proj._physics_process(0.016)
+		_step_projectile_physics(proj, 0.016)
 	await await_idle_frame()
 	assert_bool(is_instance_valid(proj)).is_false()
 
@@ -140,7 +147,7 @@ func test_projectile_freed_on_lifetime_exceeded() -> void:
 		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(400):
-		proj._physics_process(0.016)
+		_step_projectile_physics(proj, 0.016)
 	await await_idle_frame()
 	assert_bool(is_instance_valid(proj)).is_false()
 
@@ -162,7 +169,7 @@ func test_projectile_skips_dead_enemy() -> void:
 		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(60):
-		proj._physics_process(0.016)
+		_step_projectile_physics(proj, 0.016)
 
 	await await_idle_frame()
 	# Should not crash — test passes if we reach this line without error.
@@ -184,7 +191,7 @@ func test_projectile_respects_fire_immunity() -> void:
 		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(60):
-		proj._physics_process(0.016)
+		_step_projectile_physics(proj, 0.016)
 
 	assert_int(enemy.health_component.current_hp).is_equal(100)
 	enemy.queue_free()
@@ -203,7 +210,7 @@ func test_projectile_deals_double_damage_magical_vs_heavy_armor() -> void:
 		false, 0.0, 1.0, 0.0, "", "", true
 	)
 	for i in range(60):
-		proj._physics_process(0.016)
+		_step_projectile_physics(proj, 0.016)
 
 	# DAMAGE_MATRIX: MAGICAL vs HEAVY_ARMOR = 2.0 → 60 damage → 40 hp remaining.
 	assert_int(enemy.health_component.current_hp).is_equal(40)
@@ -224,7 +231,7 @@ func test_fire_brazier_projectile_applies_instant_and_burn_dot() -> void:
 		true, 15.0, 1.0, 3.0, "burn", "fire_brazier", true
 	)
 	for i in range(60):
-		proj._physics_process(0.016)
+		_step_projectile_physics(proj, 0.016)
 	assert_int(enemy.health_component.current_hp).is_less(hp_before)
 	assert_int(enemy.active_status_effects.size()).is_equal(1)
 	var first_effect: Dictionary = enemy.active_status_effects[0]
@@ -251,7 +258,7 @@ func test_poison_vat_projectile_applies_instant_and_poison_dot() -> void:
 		true, 12.0, 1.0, 4.0, "poison", "poison_vat", true
 	)
 	for i in range(60):
-		proj._physics_process(0.016)
+		_step_projectile_physics(proj, 0.016)
 	assert_int(enemy.health_component.current_hp).is_less(hp_before)
 	assert_int(enemy.active_status_effects.size()).is_equal(1)
 	var first_effect: Dictionary = enemy.active_status_effects[0]

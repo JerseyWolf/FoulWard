@@ -35,6 +35,7 @@ const FactionDataType = preload("res://scripts/resources/faction_data.gd")
 const FactionRosterEntryType = preload("res://scripts/resources/faction_roster_entry.gd")
 const BossSceneDefault: PackedScene = preload("res://scenes/bosses/boss_base.tscn")
 const WaveComposerScript: Script = preload("res://scripts/wave_composer.gd")
+const WaveCompositionHelperScript: CSharpScript = preload("res://scripts/WaveCompositionHelper.cs")
 
 # ---------------------------------------------------------------------------
 # EXPORTS
@@ -628,6 +629,14 @@ func _begin_countdown_for_next_wave() -> void:
 	SignalBus.wave_countdown_started.emit(_current_wave, duration)
 
 
+## MVP scaling for faction roster composition (Prompt 9): N×6, optional [member FactionData.difficulty_offset].
+func _compute_total_enemies_for_wave(wave_index: int, faction: FactionDataType) -> int:
+	var base_total: float = float(wave_index * 6)
+	if faction != null and faction.difficulty_offset != 0.0:
+		base_total *= maxf(0.1, 1.0 + faction.difficulty_offset)
+	return maxi(1, int(round(base_total)))
+
+
 ## Regular waves: [WaveComposer] fills a point budget from [member wave_pattern] tags/modifiers/tiers.
 func _spawn_wave(wave_number: int) -> void:
 	if wave_number < 1 or wave_number > max_waves:
@@ -686,6 +695,11 @@ func _spawn_wave(wave_number: int) -> void:
 	if spawn_point_nodes.size() == 0:
 		push_warning("WaveManager: No spawn points found under SpawnPoints node.")
 		return
+
+	var total_for_roster: int = _compute_total_enemies_for_wave(wave_number, _current_faction)
+	var helper: Object = WaveCompositionHelperScript.new()
+	# Faction roster counts (Prompt 9 allocation in C#); regular spawns still use WaveComposer below.
+	var roster: Variant = helper.build_roster(_current_faction, wave_number, total_for_roster)
 
 	var wave_idx_0: int = wave_number - 1
 	seed(mission_spawn_seed + wave_number * 7919 + 17)

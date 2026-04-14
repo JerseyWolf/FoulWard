@@ -6,6 +6,12 @@ const ProjectileScene: PackedScene = preload("res://scenes/projectiles/projectil
 const EnemyScene: PackedScene = preload("res://scenes/enemies/enemy_base.tscn")
 
 
+func _step_projectile_physics(proj: ProjectileBase, delta: float) -> void:
+	var pp: Node = proj.get_node_or_null("ProjectilePhysics")
+	assert_bool(pp != null).is_true()
+	pp.call("_physics_process", delta)
+
+
 func _enemy_at(pos: Vector3) -> EnemyBase:
 	var data := EnemyData.new()
 	data.max_hp = 200
@@ -41,7 +47,7 @@ func test_pierce_hits_second_enemy_in_line() -> void:
 	)
 	await get_tree().process_frame
 	for _i: int in range(200):
-		proj._physics_process(0.016)
+		_step_projectile_physics(proj, 0.016)
 		if not is_instance_valid(proj):
 			break
 	assert_that(e1.health_component.get_current_hp()).is_equal(160)
@@ -63,7 +69,7 @@ func test_splash_damages_nearby_enemy() -> void:
 		Types.DamageType.PHYSICAL, 0, 3.0
 	)
 	for _i: int in range(400):
-		proj._physics_process(0.016)
+		_step_projectile_physics(proj, 0.016)
 		if not is_instance_valid(proj):
 			break
 	assert_that(primary.health_component.get_current_hp()).is_equal(160)

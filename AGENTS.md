@@ -11,7 +11,7 @@ Last updated: 2026-03-31 (upgraded to Agent Skills root file)
 Godot 4.4 GDScript real-time tower defense (inspired by TAUR).
 Player IS Florence — a stationary tower aimed manually with the mouse.
 50-day main campaign. Each day = one mission (build phase → wave combat).
-525 GdUnit4 tests. 17 autoloads. 36 building types. 30 enemy types. 58+ signals.
+612 GdUnit4 tests. 17 autoloads. 36 building types. 30 enemy types. 58+ signals.
 Two weapons: Crossbow (CROSSBOW slot) and Rapid Missile (RAPID_MISSILE slot).
 AI ally Arnulf (melee), Sybil (spell support). Hex grid: 24 slots across 3 rings.
 
@@ -29,7 +29,7 @@ SimBot / AutoTestDriver enables headless simulation without UI nodes.
 
 1.  SignalBus (`autoloads/signal_bus.gd`) — no deps
 2.  NavMeshManager (`scripts/nav_mesh_manager.gd`) — no deps
-3.  DamageCalculator (`autoloads/damage_calculator.gd`) — no deps
+3.  DamageCalculator (`autoloads/DamageCalculator.cs`) — no deps
 4.  AuraManager (`autoloads/aura_manager.gd`) — no deps
 5.  EconomyManager (`autoloads/economy_manager.gd`) — depends on SignalBus
 6.  CampaignManager (`autoloads/campaign_manager.gd`) — MUST load before GameManager
@@ -59,11 +59,15 @@ SimBot / AutoTestDriver enables headless simulation without UI nodes.
 ## How to Verify Changes
 
 ```bash
+dotnet build FoulWard.csproj       # required when .cs files change; before run_gdunit.sh
 ./tools/run_gdunit_quick.sh        # after every change (~fast)
 ./tools/run_gdunit_unit.sh         # unit tests only, ~65s
 ./tools/run_gdunit_parallel.sh     # full suite, 8 parallel, ~2m45s
 ./tools/run_gdunit.sh              # sequential baseline before declaring done
 ```
+
+- `.cs` files → run `dotnet build` before `run_gdunit.sh`.
+- `FoulWardTypes.cs` = C# enum mirror. `.cs` imports it. `.gd` never does.
 
 MCP verification after every session:
 - `get_scene_tree` — validate node paths before any get_node() call
