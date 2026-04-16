@@ -167,13 +167,20 @@ func _try_place_building(
 		slot_index, building_type, str(charge_resources),
 		EconomyManager.get_gold(), EconomyManager.get_building_material()
 	])
+	if not _validate_placement(slot_index, building_type):
+		return false
+	return _instantiate_and_place(slot_index, building_type, charge_resources)
+
+
+## Validates that slot_index is in range, unoccupied, has a BuildingData entry, and is unlocked.
+## Does not check affordability (handled by _instantiate_and_place when charge_economy is true).
+func _validate_placement(slot_index: int, building_type: Types.BuildingType) -> bool:
 	if not _is_valid_index(slot_index):
 		push_warning("HexGrid.place_building: invalid slot_index %d" % slot_index)
 		print("[HexGrid] place_building FAILED: invalid slot %d" % slot_index)
 		return false
 
 	var slot: Dictionary = _slots[slot_index]
-
 	if slot["is_occupied"]:
 		push_warning("HexGrid.place_building: slot %d already occupied" % slot_index)
 		print("[HexGrid] place_building FAILED: slot %d already occupied" % slot_index)
@@ -189,7 +196,22 @@ func _try_place_building(
 		print("[HexGrid] place_building FAILED: building type %d is locked" % building_type)
 		return false
 
-	if charge_resources:
+	return true
+
+
+## Instantiates and places a building on slot_index.
+## When charge_economy is true, checks affordability, registers the purchase, and records costs.
+## When charge_economy is false (shop voucher), skips economy checks entirely.
+## Assumes _validate_placement(slot_index, building_type) has already returned true.
+func _instantiate_and_place(
+		slot_index: int,
+		building_type: Types.BuildingType,
+		charge_economy: bool
+) -> bool:
+	var slot: Dictionary = _slots[slot_index]
+	var building_data: BuildingData = get_building_data(building_type)
+
+	if charge_economy:
 		if not EconomyManager.can_afford_building(building_data):
 			print("[HexGrid] place_building FAILED: cannot afford scaled cost  have=%dg %dm" % [
 				EconomyManager.get_gold(), EconomyManager.get_building_material()
@@ -420,6 +442,56 @@ func has_empty_slot() -> bool:
 		if not slot["is_occupied"]:
 			return true
 	return false
+
+
+## Called by BuildingBase on health_depleted. Clears slot data and frees building node.
+func clear_slot_on_destruction(slot_index: int) -> void:
+	if not _is_valid_index(slot_index):
+		push_warning("HexGrid.clear_slot_on_destruction: invalid index %d" % slot_index)
+		return
+	var slot: Dictionary = _slots[slot_index]
+	if not slot["is_occupied"]:
+		push_warning("HexGrid.clear_slot_on_destruction: slot %d not occupied" % slot_index)
+		return
+	var building: BuildingBase = slot["building"] as BuildingBase
+	if is_instance_valid(building):
+		building.remove_from_group("buildings")
+		_disable_building_obstacle(building)
+		building.queue_free()
+	slot["building"] = null
+	slot["is_occupied"] = false
+
+
+func _disable_building_obstacle(building: BuildingBase) -> void:
+	if not is_instance_valid(building):
+		return
+	var obs: NavigationObstacle3D = building.get_node_or_null("NavigationObstacle") as NavigationObstacle3D
+	if obs != null:
+		obs.set_deferred("enabled", false)
+	var col: CollisionShape3D = building.get_node_or_null("BuildingCollision/CollisionShape3D") as CollisionShape3D
+	if col != null:
+		col.set_deferred("disabled", true)
+
+
+## Returns building with lowest HP percentage among alive buildings with HealthComponent.
+## Returns null if none found or all at full HP.
+func get_lowest_hp_pct_building() -> BuildingBase:
+	var best: BuildingBase = null
+	var best_pct: float = 1.0
+	for slot: Dictionary in _slots:
+		if not slot["is_occupied"]:
+			continue
+		var b: BuildingBase = slot["building"] as BuildingBase
+		if not is_instance_valid(b):
+			continue
+		var hc: HealthComponent = b.get_node_or_null("HealthComponent") as HealthComponent
+		if hc == null or not hc.is_alive():
+			continue
+		var pct: float = float(hc.current_hp) / float(hc.max_hp)
+		if pct < best_pct:
+			best_pct = pct
+			best = b
+	return best
 
 
 ## Frees all buildings and resets all slots. Called on new game only.

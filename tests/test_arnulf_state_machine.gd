@@ -46,12 +46,16 @@ func _spawn_enemy(pos: Vector3, is_flying: bool = false) -> EnemyBase:
 # ---------------------------------------------------------------------------
 
 func before_test() -> void:
+	EconomyManager.reset_to_defaults()
 	_arnulf = _create_arnulf()
 
 
 func after_test() -> void:
 	if is_instance_valid(_arnulf):
 		_arnulf.queue_free()
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer and child != _arnulf:
+			child.queue_free()
 	await get_tree().process_frame
 
 # ---------------------------------------------------------------------------

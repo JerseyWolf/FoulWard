@@ -69,6 +69,7 @@ func _build_full_enemy_data() -> Array[EnemyData]:
 
 
 func before_test() -> void:
+	EconomyManager.reset_to_defaults()
 	_gm_all_waves_handler_paused = false
 	if SignalBus.all_waves_cleared.is_connected(GameManager._on_all_waves_cleared):
 		SignalBus.all_waves_cleared.disconnect(GameManager._on_all_waves_cleared)

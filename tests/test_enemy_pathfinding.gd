@@ -13,6 +13,7 @@ var _tower: Tower = null
 var _enemy_container: Node3D = null
 
 func before_test() -> void:
+	EconomyManager.reset_to_defaults()
 	_main = MAIN_SCENE.instantiate() as Node3D
 	get_tree().root.add_child(_main)
 	_hex_grid = _main.get_node_or_null("HexGrid") as HexGrid

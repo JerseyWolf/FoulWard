@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_simbot_safety.gd
 # GdUnit4 test suite for SimBot safety (no UI dependencies).
 

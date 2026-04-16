@@ -1,10 +1,20 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_ally_signals.gd — SignalBus ally_* and Arnulf generic mirror signals.
 
 class_name TestAllySignals
 extends GdUnitTestSuite
 
 const ALLY_DATA_SCRIPT: GDScript = preload("res://scripts/resources/ally_data.gd")
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+
+
+func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
+	await get_tree().process_frame
 
 
 func test_ally_spawned_signal_emitted_on_spawn() -> void:

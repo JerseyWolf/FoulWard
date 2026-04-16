@@ -39,7 +39,7 @@ signal ally_downed(ally_id: String)
 signal ally_recovered(ally_id: String)
 @warning_ignore("unused_signal")
 signal ally_killed(ally_id: String)
-# POST-MVP: detailed ally state tracking.
+## POST-MVP: not yet emitted. Will be emitted from AllyBase._transition_state() when ally state tracking is implemented.
 @warning_ignore("unused_signal")
 signal ally_state_changed(ally_id: String, new_state: String)
 
@@ -82,8 +82,10 @@ signal world_map_updated()
 signal enemy_entered_terrain_zone(enemy: Node, speed_multiplier: float)
 @warning_ignore("unused_signal")
 signal enemy_exited_terrain_zone(enemy: Node, speed_multiplier: float)
+## POST-MVP: not yet emitted. Reserved for destructible terrain props.
 @warning_ignore("unused_signal")
 signal terrain_prop_destroyed(prop: Node, world_position: Vector3)
+## POST-MVP: connected in NavMeshManager but never emitted. Will be emitted from terrain/build flows.
 @warning_ignore("unused_signal")
 signal nav_mesh_rebake_requested()
 
@@ -97,10 +99,10 @@ signal building_upgraded(slot_index: int, building_type: Types.BuildingType)
 ## Building projectile / aura attribution for CombatStatsTracker (placed_instance_id string).
 @warning_ignore("unused_signal")
 signal building_dealt_damage(instance_id: String, damage: float, enemy_id: String)
-## Florence (central tower) took damage — optional alternative to inferring from tower_damaged.
+## POST-MVP: connected in CombatStatsTracker but not yet emitted from game code. EnemyBase attack flow should emit this.
 @warning_ignore("unused_signal")
 signal florence_damaged(amount: int, source_enemy_id: String)
-## POST-MVP: building_destroyed is not emitted in MVP. Buildings cannot take damage in MVP.
+## POST-MVP: not yet emitted. Requires building HP/destruction system.
 @warning_ignore("unused_signal")
 signal building_destroyed(slot_index: int)
 
@@ -140,6 +142,12 @@ signal day_failed(day_index: int)
 @warning_ignore("unused_signal")
 signal campaign_completed(campaign_id: String)
 
+# === DIALOGUE ===
+@warning_ignore("unused_signal")
+signal dialogue_line_started(entry_id: String, character_id: String)
+@warning_ignore("unused_signal")
+signal dialogue_line_finished(entry_id: String, character_id: String)
+
 # === BUILD MODE ===
 @warning_ignore("unused_signal")
 signal build_mode_entered()
@@ -178,6 +186,10 @@ signal weapon_upgraded(weapon_slot: Types.WeaponSlot, new_level: int)
 signal enchantment_applied(weapon_slot: Types.WeaponSlot, slot_type: String, enchantment_id: String)
 @warning_ignore("unused_signal")
 signal enchantment_removed(weapon_slot: Types.WeaponSlot, slot_type: String)
+
+# === SETTINGS ===
+@warning_ignore("unused_signal")
+signal graphics_quality_changed(quality: int)
 
 # === CAMPAIGN / ALLY ROSTER (Prompt 12) ===
 @warning_ignore("unused_signal")

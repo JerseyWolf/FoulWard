@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 # tests/test_building_base.gd
 # GdUnit4 test suite for BuildingBase.
 # Tests initialization, targeting, combat process, upgrade, and effective stats.
@@ -38,6 +37,11 @@ func _make_building_data(
 
 
 var _tracked_bare_buildings: Array[BuildingBase] = []
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+	BuildPhaseManager.set_build_phase_active(true)
 
 
 func _make_bare_building(bd: BuildingData) -> BuildingBase:

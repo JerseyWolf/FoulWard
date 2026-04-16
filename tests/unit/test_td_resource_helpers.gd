@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — TD data resource helpers (identity, range alias, spawn/routing validation).
 extends GdUnitTestSuite
 

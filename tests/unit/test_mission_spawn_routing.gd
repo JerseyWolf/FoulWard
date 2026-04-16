@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — MissionSpawnRouting queue + deterministic path picks.
 extends GdUnitTestSuite
 

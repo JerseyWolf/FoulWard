@@ -190,6 +190,7 @@ func initialize(data: BuildingData) -> void:
 
 	_apply_visuals_from_building_data(data)
 	_apply_data_stats()
+	_setup_health_component()
 
 	print("[Building] initialized: %s  dmg=%.0f range=%.1f fire_rate=%.2f  air=%s gnd=%s" % [
 		data.display_name, data.damage, data.attack_range, data.fire_rate,
@@ -679,6 +680,61 @@ func _notification(what: int) -> void:
 			AuraManager.deregister_aura(placed_instance_id)
 		_stop_healer_timer()
 		_despawn_all_summons()
+
+
+func _setup_health_component() -> void:
+	if _building_data == null or _building_data.max_hp <= 0:
+		return
+	if health_component != null and is_instance_valid(health_component):
+		health_component.max_hp = _building_data.max_hp
+		health_component.current_hp = _building_data.max_hp
+		if not health_component.health_depleted.is_connected(_on_health_depleted):
+			health_component.health_depleted.connect(_on_health_depleted)
+		return
+	var hc: HealthComponent = HealthComponent.new()
+	hc.max_hp = _building_data.max_hp
+	hc.current_hp = _building_data.max_hp
+	add_child(hc)
+	health_component = hc
+	hc.health_depleted.connect(_on_health_depleted)
+
+
+func _on_health_depleted() -> void:
+	if slot_id >= 0:
+		SignalBus.building_destroyed.emit(slot_id)
+	if _building_data != null and _building_data.is_summoner:
+		AllyManager.despawn_squad(placed_instance_id)
+	if _building_data != null and _building_data.is_aura:
+		AuraManager.deregister_aura(placed_instance_id)
+	_spawn_destruction_effect()
+	var hex: Node = get_node_or_null("/root/Main/HexGrid")
+	if hex != null and hex.has_method("clear_slot_on_destruction"):
+		hex.clear_slot_on_destruction(slot_id)
+	else:
+		push_warning("BuildingBase._on_health_depleted: HexGrid not found")
+		_disable_collision_and_obstacle()
+		queue_free()
+
+
+func _spawn_destruction_effect() -> void:
+	var fx_container: Node = get_node_or_null("/root/Main/FX")
+	if fx_container == null:
+		fx_container = get_parent()
+	if fx_container == null:
+		return
+	var effect_scene: PackedScene = load("res://scenes/buildings/destruction_effect.tscn") as PackedScene
+	if effect_scene == null or not effect_scene.can_instantiate():
+		return
+	var fx: Node3D = effect_scene.instantiate() as Node3D
+	if fx == null:
+		return
+	fx_container.add_child(fx)
+	fx.global_position = global_position
+	if fx.has_method("play"):
+		var mesh_ref: Mesh = null
+		if is_instance_valid(mesh) and mesh.mesh != null:
+			mesh_ref = mesh.mesh
+		fx.call("play", global_position, mesh_ref)
 
 
 ## Returns the currently effective damage value (base or upgraded).

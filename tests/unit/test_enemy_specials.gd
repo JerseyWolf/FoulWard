@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — Enemy special_tags / ShieldComponent (Prompt 9).
 extends GdUnitTestSuite
 

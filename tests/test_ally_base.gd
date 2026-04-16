@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_ally_base.gd — AllyBase movement, combat, death via HealthComponent.
 # SOURCE: GdUnit4 await physics_frame stepping, https://mikeschulze.github.io/gdUnit4/
 
@@ -7,6 +6,10 @@ extends GdUnitTestSuite
 
 const ALLY_DATA_SCRIPT: GDScript = preload("res://scripts/resources/ally_data.gd")
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
 
 
 func after_test() -> void:

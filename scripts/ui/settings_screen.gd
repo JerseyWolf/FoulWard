@@ -8,6 +8,11 @@ extends Control
 @onready var _quality_option: OptionButton = %QualityOption
 @onready var _keybind_rows: VBoxContainer = %KeybindRows
 @onready var _back_button: Button = %BackButton
+@onready var _custom_toggles: VBoxContainer = %CustomTogglesContainer
+@onready var _shadows_check: CheckBox = %ShadowsCheck
+@onready var _msaa_check: CheckBox = %MsaaCheck
+@onready var _ssao_check: CheckBox = %SsaoCheck
+@onready var _glow_check: CheckBox = %GlowCheck
 
 var _listening_action: String = ""
 var _listening_button: Button = null
@@ -20,6 +25,10 @@ func _ready() -> void:
 	_sfx_slider.value_changed.connect(func(v: float) -> void: SettingsManager.set_volume("SFX", v))
 	_quality_option.item_selected.connect(_on_quality_selected)
 	_back_button.pressed.connect(_on_back_pressed)
+	_shadows_check.toggled.connect(_on_shadows_toggled)
+	_msaa_check.toggled.connect(_on_msaa_toggled)
+	_ssao_check.toggled.connect(_on_ssao_toggled)
+	_glow_check.toggled.connect(_on_glow_toggled)
 	_build_keybind_rows()
 
 
@@ -31,16 +40,14 @@ func _populate_from_settings() -> void:
 		_quality_option.add_item("Low")
 		_quality_option.add_item("Medium")
 		_quality_option.add_item("High")
-	var q: String = SettingsManager.graphics_quality
-	var qi: int = 1
-	match q:
-		"Low":
-			qi = 0
-		"High":
-			qi = 2
-		_:
-			qi = 1
+		_quality_option.add_item("Custom")
+	var qi: int = int(SettingsManager.graphics_quality)
 	_quality_option.select(qi)
+	_shadows_check.set_pressed_no_signal(SettingsManager.shadows_enabled)
+	_msaa_check.set_pressed_no_signal(SettingsManager.msaa_enabled)
+	_ssao_check.set_pressed_no_signal(SettingsManager.ssao_enabled)
+	_glow_check.set_pressed_no_signal(SettingsManager.glow_enabled)
+	_custom_toggles.visible = (SettingsManager.graphics_quality == Types.GraphicsQuality.CUSTOM)
 
 
 func _build_keybind_rows() -> void:
@@ -111,9 +118,29 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_quality_selected(index: int) -> void:
-	var labels: PackedStringArray = ["Low", "Medium", "High"]
-	if index >= 0 and index < labels.size():
-		SettingsManager.set_graphics_quality(labels[index])
+	var quality: Types.GraphicsQuality = index as Types.GraphicsQuality
+	SettingsManager.set_graphics_quality(quality)
+	_custom_toggles.visible = (quality == Types.GraphicsQuality.CUSTOM)
+
+
+func _on_shadows_toggled(pressed: bool) -> void:
+	SettingsManager.shadows_enabled = pressed
+	SettingsManager.set_graphics_quality(Types.GraphicsQuality.CUSTOM)
+
+
+func _on_msaa_toggled(pressed: bool) -> void:
+	SettingsManager.msaa_enabled = pressed
+	SettingsManager.set_graphics_quality(Types.GraphicsQuality.CUSTOM)
+
+
+func _on_ssao_toggled(pressed: bool) -> void:
+	SettingsManager.ssao_enabled = pressed
+	SettingsManager.set_graphics_quality(Types.GraphicsQuality.CUSTOM)
+
+
+func _on_glow_toggled(pressed: bool) -> void:
+	SettingsManager.glow_enabled = pressed
+	SettingsManager.set_graphics_quality(Types.GraphicsQuality.CUSTOM)
 
 
 func _on_back_pressed() -> void:
@@ -123,4 +150,3 @@ func _on_back_pressed() -> void:
 		if mm != null:
 			mm.show()
 	queue_free()
-

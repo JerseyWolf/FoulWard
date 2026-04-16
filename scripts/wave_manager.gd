@@ -155,8 +155,10 @@ func _ready() -> void:
 	if wave_pattern == null:
 		wave_pattern = load("res://resources/wave_patterns/default_campaign_pattern.tres")
 	_composer = WaveComposerScript.new(enemy_data_registry, wave_pattern) as RefCounted
-	SignalBus.enemy_killed.connect(_on_enemy_killed)
-	SignalBus.game_state_changed.connect(_on_game_state_changed)
+	if not SignalBus.enemy_killed.is_connected(_on_enemy_killed):
+		SignalBus.enemy_killed.connect(_on_enemy_killed)
+	if not SignalBus.game_state_changed.is_connected(_on_game_state_changed):
+		SignalBus.game_state_changed.connect(_on_game_state_changed)
 	_load_faction_registry()
 	resolve_current_faction()
 	ensure_boss_registry_loaded()

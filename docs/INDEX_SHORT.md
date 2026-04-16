@@ -8,6 +8,7 @@ Source of truth: REPO_DUMP_AFTER_MVP.md; **re-run** `./tools/run_gdunit.sh` afte
 
 AGENT STANDING ORDERS & CURSOR SKILLS (read `AGENTS.md` first)
 `AGENTS.md` (repo root) — Lean standing orders for every session; symlinked as `.cursorrules`; skills table + deep systems reference in `docs/FOUL_WARD_MASTER_DOC.md`.
+**Planning / verification (2026-04-14):** `docs/DELIVERABLE_A_ERROR_FIX_PLAN.md` (Sonnet batch prompts); `docs/DELIVERABLE_B_FEATURE_WORKPLAN.md` (feature + Perplexity session specs); `docs/perplexity_sessions/session_*` (PROMPT + CONTEXT_BRIEF + FILES_TO_UPLOAD per session); `docs/EXECUTION_GUIDE.md` (run order + Cursor handoff); `docs/POST_BATCH_FIXES.md` (post-batch test notes); `docs/PROMPT_68_IMPLEMENTATION.md`, `docs/PROMPT_69_IMPLEMENTATION.md` (session logs).
 `.cursor/skills/add-new-entity/SKILL.md` — Templates for new buildings, enemies, spells, research nodes, and SignalBus signals (`types.gd`, `signal_bus.gd`, `.tres` authoring).
 `.cursor/skills/ally-and-mercenary-system/SKILL.md` — Allies, Arnulf, Sybil, mercenaries, roster, summoner squads (`AllyManager`, `AllyData`, ally scenes).
 `.cursor/skills/anti-patterns/SKILL.md` — Fourteen project failure modes with WRONG/RIGHT examples (SignalBus, null guards, headless safety).
@@ -23,14 +24,14 @@ AGENT STANDING ORDERS & CURSOR SKILLS (read `AGENTS.md` first)
 `.cursor/skills/signal-bus/SKILL.md` — Declaring, emitting, connecting cross-system signals (`autoloads/signal_bus.gd`, payload typing).
 `.cursor/skills/spell-and-research-system/SKILL.md` — Spells, mana, research, enchantments, weapon upgrades (`SpellManager`, `ResearchManager`, `EnchantmentManager`, `WeaponUpgradeManager`).
 `.cursor/skills/testing/SKILL.md` — GdUnit4, SimBot, headless runs, test isolation (`AutoTestDriver`, `tools/run_gdunit*.sh`).
-`.cursor/skills/signal-bus/references/signal-table.md` — Full typed signal table for all 58+ SignalBus signals, organised by category
+`.cursor/skills/signal-bus/references/signal-table.md` — Full typed signal table for all **67** SignalBus signals (as of **2026-04-14**), organised by category (includes `dialogue_line_started` / `dialogue_line_finished`; source of truth: `autoloads/signal_bus.gd`)
 `.cursor/skills/enemy-system/references/enemy-types.md` — EnemyType (30), ArmorType, EnemyBodyType, DamageType enum tables with integer values
 `.cursor/skills/building-system/references/building-types.md` — BuildingType (36) and BuildingSizeClass enum tables with integer values
 `.cursor/skills/campaign-and-progression/references/game-manager-api.md` — Full GameManager public method table (30+ methods) and key constants
 
 AUTOLOADS (registered in project.godot, in init order)
 Autoload Name	Path	What it does
-SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. Prompt 10: boss_spawned, boss_killed, campaign_boss_attempted. Prompt 11 (research UI): research_node_unlocked, research_points_changed. Prompt 11 (allies): ally_downed, ally_recovered, ally_killed, ally_state_changed (POST-MVP). Prompt 07: ally_spawned(ally_id, building_instance_id), ally_died, ally_squad_wiped. Prompt 12: mercenary_offer_generated, mercenary_recruited, ally_roster_changed. Prompt 33: enemy_entered_terrain_zone, enemy_exited_terrain_zone, terrain_prop_destroyed, nav_mesh_rebake_requested. No logic, no state.
+SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. Prompt 10: boss_spawned, boss_killed, campaign_boss_attempted. Prompt 11 (research UI): research_node_unlocked, research_points_changed. Prompt 11 (allies): ally_downed, ally_recovered, ally_killed, ally_state_changed (POST-MVP). Prompt 07: ally_spawned(ally_id, building_instance_id), ally_died, ally_squad_wiped. Prompt 12: mercenary_offer_generated, mercenary_recruited, ally_roster_changed. Prompt 33: enemy_entered_terrain_zone, enemy_exited_terrain_zone, terrain_prop_destroyed, nav_mesh_rebake_requested. **2026-04-14:** `dialogue_line_started` / `dialogue_line_finished` declared here (DialogueManager emits via SignalBus only). No logic, no state.
 NavMeshManager	res://scripts/nav_mesh_manager.gd	Prompt 33: registers `NavigationRegion3D`, queues `bake_navigation_mesh` on `nav_mesh_rebake_requested` (rebake queue pattern). Autoload only (no `class_name`).
 DamageCalculator (C#)	res://autoloads/DamageCalculator.cs	C# static damage type/armor type matrix lookup. Replaces damage_calculator.gd.
 SavePayload	res://autoloads/SavePayload.cs	C# RefCounted typed container mirroring SaveManager's save payload structure. Includes System.Text.Json helpers.
@@ -44,13 +45,13 @@ BuildPhaseManager	res://autoloads/build_phase_manager.gd	Prompt 49 + 11 + I-D: `
 AllyManager	res://autoloads/ally_manager.gd	Prompt 07: summoner `BuildingData` → spawn `AllyBase` squad from paths; `_squads` by `placed_instance_id`; `spawn_squad`/`despawn_squad`; connects `ally_died` → SignalBus. After BuildPhaseManager in `project.godot`.
 CombatStatsTracker	res://autoloads/combat_stats_tracker.gd	Prompt 34 + 48–49 + 07 + 51: `begin_mission`/`begin_run`/`register_building`/`flush_to_disk`/`end_run` → `user://simbot/runs/{mission_id}_{timestamp}/` or `{mission_id}_{loadout}_{timestamp}/` (wave_summary, building_summary, optional event_log); `run_label` column; String `placed_instance_id` rows; `ally_deaths` column; SignalBus + `ProjectileBase` hook; `SimBot` `begin_mission` + `flush_to_disk` + `run_batch` `debug_batch`. Loads after AllyManager in `project.godot`.
 SaveManager	res://autoloads/save_manager.gd	Audit 6: rolling autosaves `user://saves/attempt_*/slot_*.json`; autoload singleton only (no `class_name`).
-DialogueManager	res://autoloads/dialogue_manager.gd	Prompt 13: loads `DialogueEntry` `.tres` under `res://resources/dialogue/**`; priority, AND conditions, once-only, chain_next_id; signals `dialogue_line_started` / `dialogue_line_finished`; ResearchManager heuristics for `sybil_research_unlocked_any` (`spell` in node_id) and `arnulf_research_unlocked_any` (`arnulf` in node_id). Prompt 28: runtime tracking for gold/research/shop/Arnulf/spell conditions (`get_tracked_gold()`, etc.). See `docs/archived/PROMPT_13_IMPLEMENTATION.md`.
+DialogueManager	res://autoloads/dialogue_manager.gd	Prompt 13: loads `DialogueEntry` `.tres` under `res://resources/dialogue/**`; priority, AND conditions, once-only, chain_next_id; **emits** `dialogue_line_started` / `dialogue_line_finished` **through SignalBus** (not local signals). ResearchManager heuristics for `sybil_research_unlocked_any` (`spell` in node_id) and `arnulf_research_unlocked_any` (`arnulf` in node_id). Prompt 28: runtime tracking for gold/research/shop/Arnulf/spell conditions (`get_tracked_gold()`, etc.). See `docs/archived/PROMPT_13_IMPLEMENTATION.md`.
 AutoTestDriver	res://autoloads/auto_test_driver.gd	Headless smoke-test driver. Active when `--autotest` or `--simbot_profile` or `--simbot_balance_sweep` (Prompt 51) is present.
 GDAIMCPRuntime	(uid plugin autoload in project.godot)	GDAI MCP GDExtension bridge — editor HTTP API for MCP when `addons/gdai-mcp-plugin-godot` is enabled.
 EnchantmentManager	res://autoloads/enchantment_manager.gd	Phase 4: per-weapon enchantment slots (elemental/power); Tower + BetweenMissionScreen integration.
 SCRIPTS (attached to Manager nodes in main.tscn under /root/Main/Managers/)
 Class Name	Path	What it does
-Types	res://scripts/types.gd	All enums and shared constants. Prompt 11: `AllyClass` (MELEE/RANGED/SUPPORT); `TargetPriority` shared with allies (MVP: CLOSEST). Prompt 14: `HubRole` marks between-mission hub character categories. Prompt 32: `BuildingBaseMesh`, `BuildingTopMesh` (modular kit). Prompt 33: `TerrainType`, `TerrainEffect`. Prompt 35–42: `BuildingSizeClass` (+ SMALL/MEDIUM/LARGE), `UnitSize`, `AllyAiMode`, `SummonLifetimeType`, `AuraModifierOp`, aura enums, `EnemyBodyType` (+ SIEGE/ETHEREAL), `AllyCombatRole`, `MissionBalanceStatus`; legacy `AllyRole`, `AuraModifierKind`. Prompt 50: `BuildingType` 8–35, `EnemyType` 6–29 (30 total). Not an autoload; referenced as Types.XXX.
+Types	res://scripts/types.gd	All enums and shared constants. Prompt 11: `AllyClass` (MELEE/RANGED/SUPPORT); `TargetPriority` shared with allies (MVP: CLOSEST). Prompt 14: `HubRole` marks between-mission hub character categories. Prompt 32: `BuildingBaseMesh`, `BuildingTopMesh` (modular kit). Prompt 33: `TerrainType`, `TerrainEffect`. Prompt 35–42: `BuildingSizeClass` (+ SMALL/MEDIUM/LARGE), `UnitSize`, `AllyAiMode`, `SummonLifetimeType`, `AuraModifierOp`, aura enums, `EnemyBodyType` (+ SIEGE/ETHEREAL), `AllyCombatRole`, `MissionBalanceStatus`; legacy `AllyRole` (**four values:** MELEE_FRONTLINE, RANGED_SUPPORT, ANTI_AIR, SPELL_SUPPORT — TANK removed), `AuraModifierKind`. Prompt 50: `BuildingType` 8–35, `EnemyType` 6–29 (30 total). Not an autoload; referenced as Types.XXX.
 FoulWardTypes	res://scripts/FoulWardTypes.cs	C# enum mirrors of Types.* — same integer values. For use in .cs files only. types.gd is source of truth.
 WaveCompositionHelper	res://scripts/WaveCompositionHelper.cs	C# RefCounted helper. Builds wave enemy roster from faction data. Called from wave_manager.gd spawn_wave().
 ProjectilePhysics	res://scripts/ProjectilePhysics.cs	C# Node child handling _PhysicsProcess for projectile base. Reads/writes parent via .Get()/.Call().
@@ -97,7 +98,6 @@ Class Name	Script Path	Scene Path	What it does
 UIManager	res://ui/ui_manager.gd	(Control node in main.tscn)	Lightweight state router + hub dialogue router. Shows/hides UI panels on game_state_changed and wires `Hub2DHub` + `DialoguePanel`. Prompt 14: `show_dialogue(display_name, entry)` + `clear_dialogue()`; still supports `show_dialogue_for_character` with queue.
 Hub2DHub	res://ui/hub.gd	res://ui/hub.tscn	2D between-mission hub overlay. Instantiates clickable characters from `CharacterCatalog` and routes focus to `BetweenMissionScreen` + dialogue.
 DialoguePanel	res://ui/dialogue_panel.gd	res://ui/dialogue_panel.tscn	Global click-to-continue dialogue overlay (SpeakerLabel + TextLabel). Chains via `DialogueEntry.chain_next_id`.
-DialogueUI	res://ui/dialogueui.gd	res://ui/dialogueui.tscn	Legacy placeholder hub dialogue panel (Prompt 13). Kept for reference; hub now uses DialoguePanel.
 HUD	res://ui/hud.gd	res://ui/hud.tscn	Combat overlay: resources, wave counter, HP bar, spells. Prompt 11: Research button (build mode only) opens `ResearchPanel`.
 BuildMenu	res://ui/build_menu.gd	res://ui/build_menu.tscn	Prompt 11: scrollable grid of `BuildMenuButton` from full `building_data_registry` (sorted SMALL/MEDIUM/LARGE + name); refresh on research unlock. Opens on hex slot click in BUILDMODE.
 BuildMenuButton	res://ui/build_menu_button.gd	res://ui/build_menu_button.tscn	Prompt 11: per-tower row; lock overlay; locked click → `ResearchManager.show_research_panel_for`.
@@ -299,11 +299,8 @@ File	What it does
 scenes/hub/character_base_2d.gd	Prompt 14: Clickable hub character node — exports CharacterData, emits character_interacted
 scripts/florence_data.gd	Prompt 15: FlorenceData resource class — run meta-state (counters, unlock flags)
 scripts/resources/strategyprofileconfig.gd	Prompt 16: StrategyProfileConfig wrapper for SimBot profile loading
-scripts/resources/test_strategyprofileconfig.gd	Prompt 16: Test helper resource class for SimBot profile tests
-scripts/simbot_logger.gd	Prompt 16: SimBot CSV logging utility — writes batch results to user://simbot/logs/
 scripts/weapon_upgrade_manager.gd	Prompt 3: WeaponUpgradeManager — per-weapon level tracking, upgrade cost, stat lookup
 scripts/ui/settings_screen.gd	Prompt 24: SettingsScreen — audio sliders, graphics quality, keybind remap, Back button
-ui/dialogue_ui.gd	Prompt 13: Legacy DialogueUI placeholder panel (kept for reference; DialoguePanel is active)
 KNOWN OPEN ISSUES (as of Autonomous Session 3)
 
     Sell UX is now wired in build mode: InputManager routes slot clicks to BuildMenu placement/sell mode.

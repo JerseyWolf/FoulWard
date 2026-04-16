@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 ## test_projectile_system.gd
 ## GdUnit4 tests for ProjectileBase initialization, travel, collision, and damage application.
 
@@ -16,6 +15,10 @@ func _step_projectile_physics(proj: ProjectileBase, delta: float) -> void:
 	var pp: Node = proj.get_node_or_null("ProjectilePhysics")
 	assert_bool(pp != null).is_true()
 	pp.call("_physics_process", delta)
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
 
 
 func after_test() -> void:

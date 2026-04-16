@@ -1,0 +1,23 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/building_hp_bar.gd" id="1_bhb"]
+
+[node name="BuildingHpBar" type="Node3D"]
+script = ExtResource("1_bhb")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+transparent_bg = true
+size = Vector2i(128, 16)
+render_target_update_mode = 4
+
+[node name="HpBar" type="ProgressBar" parent="SubViewport"]
+offset_right = 128.0
+offset_bottom = 16.0
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+pixel_size = 0.005
+billboard = 1
+position = Vector3(0, 2.5, 0)

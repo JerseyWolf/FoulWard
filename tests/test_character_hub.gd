@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 ## test_character_hub.gd
 ## GdUnit4 tests for between-mission hub framework (Prompt 14).
 
@@ -56,6 +55,21 @@ func _mouse_left_click_event() -> InputEventMouseButton:
 	ev.button_index = MOUSE_BUTTON_LEFT
 	ev.pressed = true
 	return ev
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+	DialogueManager.entries_by_id.clear()
+	DialogueManager.entries_by_character.clear()
+
+
+func after_test() -> void:
+	DialogueManager.entries_by_id.clear()
+	DialogueManager.entries_by_character.clear()
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
+	await get_tree().process_frame
 
 
 func _register_dialogue_entries(entries: Array[DialogueEntry]) -> void:
@@ -314,7 +328,7 @@ func test_dialogue_panel_click_advances_chain_and_signals_finished() -> void:
 	var panel: DialoguePanel = scene.instantiate() as DialoguePanel
 	add_child(panel)
 
-	var monitor := monitor_signals(DialogueManager, false)
+	var monitor := monitor_signals(SignalBus, false)
 
 	panel.show_entry("Speaker", part1)
 	await get_tree().process_frame

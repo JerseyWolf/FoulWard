@@ -63,9 +63,12 @@ func _ready() -> void:
 	printerr("[AUTOTEST] Foul Ward Integration AutoTest — %s" % Time.get_datetime_string_from_system())
 	printerr("[AUTOTEST] ============================================================")
 
-	SignalBus.enemy_killed.connect(_on_enemy_killed)
-	SignalBus.wave_cleared.connect(_on_wave_cleared)
-	SignalBus.wave_started.connect(_on_wave_started)
+	if not SignalBus.enemy_killed.is_connected(_on_enemy_killed):
+		SignalBus.enemy_killed.connect(_on_enemy_killed)
+	if not SignalBus.wave_cleared.is_connected(_on_wave_cleared):
+		SignalBus.wave_cleared.connect(_on_wave_cleared)
+	if not SignalBus.wave_started.is_connected(_on_wave_started):
+		SignalBus.wave_started.connect(_on_wave_started)
 
 	call_deferred("_begin_tests")
 

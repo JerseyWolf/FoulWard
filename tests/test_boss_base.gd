@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_boss_base.gd
 # GdUnit4: BossBase damage, death signals, and movement vs tower (Prompt 10).
 
@@ -6,6 +5,17 @@ class_name TestBossBase
 extends GdUnitTestSuite
 
 const BOSS_SCENE: PackedScene = preload("res://scenes/bosses/boss_base.tscn")
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+
+
+func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
+	await get_tree().process_frame
 
 
 func test_boss_base_initializes_combat_stats_like_enemy_base() -> void:

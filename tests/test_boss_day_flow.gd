@@ -7,6 +7,7 @@ var _gm_all_waves_handler_paused: bool = false
 
 
 func before_test() -> void:
+	EconomyManager.reset_to_defaults()
 	_saved_territory_map = GameManager.territory_map
 	GameManager.reset_boss_campaign_state_for_test()
 	_gm_all_waves_handler_paused = false
@@ -26,6 +27,9 @@ func after_test() -> void:
 	GameManager.reload_territory_map_from_active_campaign()
 	CampaignManager.set_active_campaign_config_for_test(CampaignManager.DEFAULT_SHORT_CAMPAIGN)
 	GameManager.start_new_game()
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
 	await get_tree().process_frame
 
 

@@ -1,6 +1,9 @@
-## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — CombatStatsTracker CSV + wave/building rows.
 extends GdUnitTestSuite
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
 
 
 func test_register_and_flush() -> void:

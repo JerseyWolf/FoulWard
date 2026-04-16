@@ -40,14 +40,15 @@ Cross-system phase **state** is still reflected by `game_state_changed` on
 
 ---
 
-## How to Add a New Signal (6 steps)
+## How to Add a New Signal (7 steps)
 
 1. Declare in `autoloads/signal_bus.gd` — past tense, typed payload
 2. Emit at the correct point: `SignalBus.your_signal.emit(args)`
 3. Connect with guard: `if not SignalBus.x.is_connected(fn): SignalBus.x.connect(fn)`
-4. Add to signal table in `docs/INDEX_FULL.md`
-5. Update `docs/PROMPT_[N]_IMPLEMENTATION.md`
-6. Write a test using `monitor_signals` + `assert_signal`
+4. Add the signal row to `references/signal-table.md` (correct category) and to the SignalBus registry in `docs/INDEX_FULL.md`
+5. **Bump the repo-wide signal count** — see **Signal count in documentation** below (re-count `^signal ` in `signal_bus.gd`, then update every listed file + the date stamp)
+6. Update `docs/PROMPT_[N]_IMPLEMENTATION.md`
+7. Write a test using `monitor_signals` + `assert_signal`
 
 ---
 
@@ -94,6 +95,30 @@ func test_gold_awarded_on_enemy_killed() -> void:
 
 ---
 
+## Signal count in documentation (maintenance)
+
+The **exact** number of top-level `signal` declarations in `autoloads/signal_bus.gd` is repeated in prose so standing orders, the master doc, indexes, and this skill stay aligned. **Baseline: 67 (verified 2026-04-14).** Prefer re-counting `^signal ` in that file over guessing.
+
+**Whenever you add or remove a `signal` in `signal_bus.gd`, update the total and the “as of” date in every place below** (same session as the code change):
+
+| Location | What to edit |
+|----------|----------------|
+| `AGENTS.md` | Hero **What** paragraph — integer + verification date; one-line reminder to use this skill |
+| `docs/FOUL_WARD_MASTER_DOC.md` | §3.1 SignalBus blurb; §24 intro under “Signal Bus Reference”; §28.2 step 5 if the template text still matches; Document Update Checklist |
+| `docs/ARCHITECTURE.md` | Autoload init-order table — SignalBus row parenthetical count |
+| `docs/CONVENTIONS.md` | Opening sentence of the SignalBus signal inventory (if present) |
+| `docs/INDEX_SHORT.md` | One-liner for `references/signal-table.md` |
+| `docs/INDEX_FULL.md` | Bullet describing `signal-table.md` / registry intro |
+| `docs/archived/INDEX_MACHINE.md` | Only if you edit the archived machine index for other reasons — optional; banner may reference “see `signal_bus.gd`” |
+| `.cursor/skills/signal-bus/references/signal-table.md` | Header **Count:** line and verification date |
+| `docs/perplexity_sessions/**` | Any `PROMPT.md` / `CONTEXT_BRIEF.md` that states an explicit signal **count** (search `58+`, `60+`, or a stale integer) |
+
+Then search the repo for stale phrasing (`58+ signal`, `60+ signal`, old integers like `65` in signal-count context) and fix stragglers.
+
+`references/signal-table.md` must still mirror **declaration order** and **payload types** from `signal_bus.gd` — the count line is only one part of that file.
+
+---
+
 ## When to Read the Signal Table
 
 Read `references/signal-table.md` when:
@@ -104,4 +129,4 @@ Read `references/signal-table.md` when:
 
 ---
 
-`references/signal-table.md` is maintained to mirror `autoloads/signal_bus.gd` (65 signals as of 2026-03-31). Prefer the `.gd` file when adding or changing signals.
+**Source of truth:** `autoloads/signal_bus.gd`. **Typed mirror + count:** `references/signal-table.md` (keep both in lockstep when signals change).

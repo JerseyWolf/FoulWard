@@ -1,5 +1,5 @@
 # Foul Ward — Agent Standing Orders
-Last updated: 2026-03-31 (upgraded to Agent Skills root file)
+Last updated: 2026-04-14 (doc sync: SignalBus dialogue signals, **67** signal-count parity across docs, test baseline)
 
 > Read this file FIRST in every Cursor session, before opening any other file.
 > This file is the always-loaded foundation. It points to skills for detail.
@@ -11,7 +11,8 @@ Last updated: 2026-03-31 (upgraded to Agent Skills root file)
 Godot 4.4 GDScript real-time tower defense (inspired by TAUR).
 Player IS Florence — a stationary tower aimed manually with the mouse.
 50-day main campaign. Each day = one mission (build phase → wave combat).
-612 GdUnit4 tests. 17 autoloads. 36 building types. 30 enemy types. 58+ signals.
+612 GdUnit4 tests. 17 autoloads. 36 building types. 30 enemy types. **67** SignalBus signals (verified **2026-04-14** against `^signal ` lines in `autoloads/signal_bus.gd`).
+When you add or remove a SignalBus signal, bump that total and update every location listed under **Signal count in documentation** in `.cursor/skills/signal-bus/SKILL.md`.
 Two weapons: Crossbow (CROSSBOW slot) and Rapid Missile (RAPID_MISSILE slot).
 AI ally Arnulf (melee), Sybil (spell support). Hex grid: 24 slots across 3 rings.
 
@@ -44,6 +45,8 @@ SimBot / AutoTestDriver enables headless simulation without UI nodes.
 15. AutoTestDriver (`autoloads/auto_test_driver.gd`)
 16. GDAIMCPRuntime — editor only
 17. EnchantmentManager (`autoloads/enchantment_manager.gd`)
+
+**Dialogue line events:** `dialogue_line_started` and `dialogue_line_finished` are **declared on `SignalBus`** (`autoloads/signal_bus.gd`). `DialogueManager` emits them via `SignalBus` only — they are not local signals on DialogueManager. UI and tests connect to `SignalBus`.
 
 ### Scene-Bound Manager Paths (contracted — never assume)
 
@@ -173,3 +176,4 @@ MCP verification after every session:
 5. **`slow_field.tres` has `damage = 0.0`** — intentional control spell; do not fix
 6. **`mission_won` listener order is load-order-dependent** — `CampaignManager` increments `current_day` in its `_on_mission_won` listener. `GameManager`'s hub transition listener runs after because `CampaignManager` is autoload #6 and `GameManager` is autoload #9. Never reorder these autoloads and never connect to `mission_won` in a way that fires before `CampaignManager`.
 7. **`GameManager.advance_to_next_day()` and `current_day_index` setter** — route calendar updates through `CampaignManager.force_set_day(day: int)` (DIAG-1 mitigation). Do not assign to `CampaignManager.current_day` directly elsewhere; do not replicate the old pattern.
+8. **Dialogue line signals live on SignalBus** — connect `SignalBus.dialogue_line_started` / `dialogue_line_finished`, not `DialogueManager` local signals (none exist).

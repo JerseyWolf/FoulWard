@@ -44,8 +44,10 @@ var _passive_gold_accum: float = 0.0
 var _passive_material_accum: float = 0.0
 
 func _ready() -> void:
-	SignalBus.enemy_killed.connect(_on_enemy_killed)
-	SignalBus.wave_cleared.connect(_on_wave_cleared)
+	if not SignalBus.enemy_killed.is_connected(_on_enemy_killed):
+		SignalBus.enemy_killed.connect(_on_enemy_killed)
+	if not SignalBus.wave_cleared.is_connected(_on_wave_cleared):
+		SignalBus.wave_cleared.connect(_on_wave_cleared)
 	set_physics_process(false)
 
 

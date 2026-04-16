@@ -56,8 +56,10 @@ func _ready() -> void:
 	_load_ally_registry()
 	_load_mini_boss_registry()
 	_ensure_default_mercenary_catalog()
-	SignalBus.mission_won.connect(_on_mission_won)
-	SignalBus.mission_failed.connect(_on_mission_failed)
+	if not SignalBus.mission_won.is_connected(_on_mission_won):
+		SignalBus.mission_won.connect(_on_mission_won)
+	if not SignalBus.mission_failed.is_connected(_on_mission_failed):
+		SignalBus.mission_failed.connect(_on_mission_failed)
 	if active_campaign_config == null:
 		active_campaign_config = DEFAULT_SHORT_CAMPAIGN
 	if active_campaign_config != null:
@@ -382,9 +384,50 @@ func auto_select_best_allies(
 		budget_material: int,
 		budget_research: int
 ) -> Dictionary:
+	var scored: Array = _sort_offers_by_value(
+			available_offers,
+			current_roster,
+			budget_gold,
+			budget_material,
+			budget_research,
+			strategy_profile
+	)
+	var budget: Dictionary = {
+		"gold": budget_gold,
+		"material": budget_material,
+		"research": budget_research,
+	}
+	var fill: Dictionary = _greedy_fill_roster(scored, budget, max_purchases, current_roster)
+	var raw_indices: Variant = fill.get("recommended_indices", [])
+	var recommended_indices: Array[int] = []
+	if raw_indices is Array:
+		for v: Variant in raw_indices as Array:
+			recommended_indices.append(int(v))
+	var raw_roster: Variant = fill.get("sim_roster", [])
+	var sim_roster: Array[String] = []
+	if raw_roster is Array:
+		for s2: Variant in raw_roster as Array:
+			sim_roster.append(str(s2))
+	var recommended_active: Array[String] = _pick_best_active(sim_roster, strategy_profile)
+	return {
+		"recommended_offer_indices": recommended_indices,
+		"recommended_active_allies": recommended_active,
+	}
+
+
+## Builds a scored and sorted array of affordable, non-roster offers.
+## Each element is a Dictionary with keys: i (original index), score (float), offer (Variant).
+func _sort_offers_by_value(
+		offers: Array,
+		current_roster: Array[String],
+		budget_gold: int,
+		budget_material: int,
+		budget_research: int,
+		strategy_profile: Types.StrategyProfile
+) -> Array:
 	var scored: Array[Dictionary] = []
 	var idx: int = 0
-	for offer: Variant in available_offers:
+	for offer: Variant in offers:
 		if offer == null:
 			idx += 1
 			continue
@@ -405,18 +448,27 @@ func auto_select_best_allies(
 		var s: float = _score_offer(offer, ad, strategy_profile, current_roster)
 		scored.append({"i": idx, "score": s, "offer": offer})
 		idx += 1
-
 	scored.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a["score"]) > float(b["score"])
 	)
+	return scored
 
-	var bg: int = budget_gold
-	var bm: int = budget_material
-	var br: int = budget_research
+
+## Greedily selects offers from the sorted list within the given budget.
+## Returns a Dictionary with keys: recommended_indices (Array[int]), sim_roster (Array[String]).
+func _greedy_fill_roster(
+		sorted_offers: Array,
+		budget: Dictionary,
+		max_count: int,
+		starting_roster: Array[String]
+) -> Dictionary:
+	var bg: int = int(budget.get("gold", 0))
+	var bm: int = int(budget.get("material", 0))
+	var br: int = int(budget.get("research", 0))
 	var recommended_indices: Array[int] = []
-	var sim_roster: Array[String] = current_roster.duplicate()
-	for entry: Dictionary in scored:
-		if recommended_indices.size() >= max_purchases:
+	var sim_roster: Array[String] = starting_roster.duplicate()
+	for entry: Dictionary in sorted_offers:
+		if recommended_indices.size() >= max_count:
 			break
 		var off: Variant = entry.get("offer", null)
 		if off == null:
@@ -433,12 +485,7 @@ func auto_select_best_allies(
 		var oid: String = str(off.get("ally_id"))
 		if not sim_roster.has(oid):
 			sim_roster.append(oid)
-
-	var recommended_active: Array[String] = _pick_best_active(sim_roster, strategy_profile)
-	return {
-		"recommended_offer_indices": recommended_indices,
-		"recommended_active_allies": recommended_active,
-	}
+	return {"recommended_indices": recommended_indices, "sim_roster": sim_roster}
 
 
 func _pick_best_active(simulated_roster: Array[String], strategy_profile: Types.StrategyProfile) -> Array[String]:
@@ -742,11 +789,21 @@ func get_save_data() -> Dictionary:
 
 ## Restores state from a previously saved Dictionary snapshot.
 func restore_from_save(data: Dictionary) -> void:
+	_apply_campaign_from_dict(data)
+	_apply_roster_from_dict(data)
+	_apply_offers_from_dict(data)
+
+
+## Restores scalar campaign fields (day, completion flags) from a save Dictionary.
+func _apply_campaign_from_dict(data: Dictionary) -> void:
 	current_day = int(data.get("current_day", 1))
 	campaign_completed = bool(data.get("campaign_completed", false))
 	is_endless_mode = bool(data.get("is_endless_mode", false))
 	failed_attempts_on_current_day = int(data.get("failed_attempts_on_current_day", 0))
 
+
+## Restores owned and active ally lists from a save Dictionary.
+func _apply_roster_from_dict(data: Dictionary) -> void:
 	owned_allies.clear()
 	var owned: Variant = data.get("owned_ally_ids", [])
 	if owned is Array:
@@ -763,6 +820,10 @@ func restore_from_save(data: Dictionary) -> void:
 
 	_sync_current_ally_roster_for_spawn()
 
+
+## Restores campaign config, held territories, and regenerates day offers from a save Dictionary.
+## Must be called after _apply_campaign_from_dict (reads is_endless_mode).
+func _apply_offers_from_dict(data: Dictionary) -> void:
 	var cfg_path: String = str(data.get("campaign_config_resource_path", ""))
 	if is_endless_mode:
 		var stub: CampaignConfig = CampaignConfig.new()

@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 ## tests/unit/test_terrain.gd
 ## Unit tests for TerrainZone, EnemyBase terrain speed, NavMeshManager, TerritoryData terrain_type.
 
@@ -9,7 +8,16 @@ const _TerrainZoneScript: GDScript = preload("res://scripts/terrain_zone.gd")
 const _CountingNavRegionScript: GDScript = preload("res://tests/support/counting_navigation_region.gd")
 
 
+func before_test() -> void:
+	NavMeshManager.register_region(null)
+	NavMeshManager._baking = false
+	NavMeshManager._queue_bake = false
+
+
 func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
 	NavMeshManager.register_region(null)
 	NavMeshManager._baking = false
 	NavMeshManager._queue_bake = false

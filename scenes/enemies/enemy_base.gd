@@ -75,6 +75,8 @@ var _aura_check_timer: float = 0.0
 var _last_tower_aura_speed_mod: float = 0.0
 const AURA_CHECK_INTERVAL: float = 0.25
 
+var _current_building_target: BuildingBase = null
+
 # PUBLIC — required by BuildingBase._find_target() and Arnulf._find_closest_enemy_to_tower().
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
@@ -548,6 +550,62 @@ func _try_saboteur_building_attack(delta: float) -> bool:
 	return true
 
 
+func _try_building_target_attack(delta: float) -> bool:
+	if _enemy_data == null or not _enemy_data.prefer_building_targets:
+		return false
+	_current_building_target = _find_building_target()
+	if not is_instance_valid(_current_building_target):
+		_current_building_target = null
+		return false
+	_attack_building(_current_building_target, delta)
+	return true
+
+
+func _find_building_target() -> BuildingBase:
+	var ed: EnemyData = _enemy_data
+	if ed == null or not ed.prefer_building_targets:
+		return null
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	var best: BuildingBase = null
+	var best_dist: float = INF
+	var radius: float = ed.building_detection_radius
+	for node: Node in tree.get_nodes_in_group("buildings"):
+		var b: BuildingBase = node as BuildingBase
+		if b == null or not is_instance_valid(b):
+			continue
+		var bd: BuildingData = b.get_building_data()
+		if bd == null or not bd.can_be_targeted_by_enemies:
+			continue
+		var hc: HealthComponent = b.get_node_or_null("HealthComponent") as HealthComponent
+		if hc == null or not hc.is_alive():
+			continue
+		var d: float = global_position.distance_to(b.global_position)
+		if d > radius:
+			continue
+		if d < best_dist:
+			best_dist = d
+			best = b
+	return best
+
+
+func _attack_building(target: BuildingBase, delta: float) -> void:
+	if not is_instance_valid(target):
+		_current_building_target = null
+		return
+	var hc: HealthComponent = target.get_node_or_null("HealthComponent") as HealthComponent
+	if hc == null or not hc.is_alive():
+		_current_building_target = null
+		return
+	_is_attacking = true
+	velocity = Vector3.ZERO
+	_attack_timer += delta
+	if _attack_timer >= _enemy_data.attack_cooldown:
+		_attack_timer = 0.0
+		hc.take_damage(_get_effective_damage_int())
+
+
 func _is_ally_considered_flying(ally: AllyBase) -> bool:
 	return ally.global_position.y >= 2.5
 
@@ -798,21 +856,21 @@ func _apply_poison_effect(effect_data: Dictionary) -> void:
 func _update_status_effects(delta: float) -> void:
 	if active_status_effects.is_empty():
 		return
+	_tick_dot_effects(delta)
+	_cleanup_expired_effects()
 
-	var i: int = 0
-	while i < active_status_effects.size():
+
+## Advances timers and fires damage ticks for all active_status_effects.
+## Does not remove expired effects — call _cleanup_expired_effects() afterward.
+func _tick_dot_effects(delta: float) -> void:
+	for i: int in range(active_status_effects.size()):
 		var effect: Dictionary = active_status_effects[i]
 		if str(effect.get("stack_key", "")) != "":
-			i += 1
 			continue
+
 		if effect.get("effect_type", "") == "slow":
-			var slow_rem: float = float(effect.get("remaining_time", 0.0)) - delta
-			effect["remaining_time"] = slow_rem
-			if slow_rem <= 0.0:
-				active_status_effects.remove_at(i)
-			else:
-				active_status_effects[i] = effect
-				i += 1
+			effect["remaining_time"] = float(effect.get("remaining_time", 0.0)) - delta
+			active_status_effects[i] = effect
 			continue
 
 		var previous_remaining_time: float = float(effect.get("remaining_time", 0.0))
@@ -848,11 +906,18 @@ func _update_status_effects(delta: float) -> void:
 							"is_dot": true,
 						})
 
-		if remaining_time <= 0.0:
+		active_status_effects[i] = effect
+
+
+## Removes all non-stack_key effects whose remaining_time has reached or fallen below zero.
+## Uses a backward pass so remove_at() does not shift unvisited indices.
+func _cleanup_expired_effects() -> void:
+	var i: int = active_status_effects.size() - 1
+	while i >= 0:
+		var effect: Dictionary = active_status_effects[i]
+		if str(effect.get("stack_key", "")) == "" and float(effect.get("remaining_time", 0.0)) <= 0.0:
 			active_status_effects.remove_at(i)
-		else:
-			active_status_effects[i] = effect
-			i += 1
+		i -= 1
 
 
 # === MOVEMENT =======================================================
@@ -923,6 +988,9 @@ func _physics_process_ground(delta: float) -> void:
 	if _arnulf_retaliation_target != null and not is_instance_valid(_arnulf_retaliation_target):
 		_arnulf_retaliation_target = null
 	if _try_saboteur_building_attack(delta):
+		_sync_locomotion_animation()
+		return
+	if _try_building_target_attack(delta):
 		_sync_locomotion_animation()
 		return
 	var dest_flat: Vector3 = _get_active_combat_destination_flat()

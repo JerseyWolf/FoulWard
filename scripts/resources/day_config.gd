@@ -46,6 +46,10 @@ extends Resource
 ## Scales total wave spawn count (WaveManager: applied to N×6 base). Default 1.0 = unchanged.
 @export var spawn_count_multiplier: float = 1.0
 
+## TUNING: gold player starts this mission with. Linear 1000→1500 over 50 days.
+## NOTE: if MissionEconomyData.starting_gold exists, defer to that, remove this.
+@export var starting_gold: int = 1000
+
 ## Optional data-driven waves + routing; when set, WaveManager uses per-wave SpawnEntryData queues.
 @export var mission_data: Resource = null
 

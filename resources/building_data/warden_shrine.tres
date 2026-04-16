@@ -28,3 +28,5 @@ footprint_size_class = 0
 size_class = "MEDIUM"
 role_tags = Array[String](["AURA", "SUPPORT"])
 balance_status = "UNTESTED"
+max_hp = 300
+can_be_targeted_by_enemies = true

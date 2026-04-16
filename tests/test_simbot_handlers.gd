@@ -1,8 +1,19 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_simbot_handlers.gd — SimBot AUDIT 6 §6.1–6.2 handler and difficulty-fit tests (headless-safe).
 
 class_name TestSimBotHandlers
 extends GdUnitTestSuite
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+
+
+func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
+	await get_tree().process_frame
+
 
 func test_on_mission_started_resets_counters() -> void:
 	var bot: SimBot = SimBot.new()

@@ -37,8 +37,7 @@ var _rng := RandomNumberGenerator.new() # TUNING
 ## Test-only: incremented when CampaignManager starts a campaign day (non–endless mode).
 var _campaign_day_started_calls_for_test: int = 0
 
-signal dialogue_line_started(entry_id: String, character_id: String)
-signal dialogue_line_finished(entry_id: String, character_id: String)
+# dialogue_line_started and dialogue_line_finished are declared on SignalBus.
 
 
 func _ready() -> void:
@@ -132,15 +131,24 @@ func _try_register_entry(path: String) -> void:
 
 
 func _connect_signals() -> void:
-	SignalBus.game_state_changed.connect(_on_game_state_changed)
-	SignalBus.mission_started.connect(_on_mission_started)
-	SignalBus.mission_won.connect(_on_mission_won)
-	SignalBus.mission_failed.connect(_on_mission_failed)
-	SignalBus.resource_changed.connect(_on_resource_changed)
-	SignalBus.research_unlocked.connect(_on_research_unlocked)
-	SignalBus.shop_item_purchased.connect(_on_shop_item_purchased)
-	SignalBus.arnulf_state_changed.connect(_on_arnulf_state_changed)
-	SignalBus.spell_cast.connect(_on_spell_cast)
+	if not SignalBus.game_state_changed.is_connected(_on_game_state_changed):
+		SignalBus.game_state_changed.connect(_on_game_state_changed)
+	if not SignalBus.mission_started.is_connected(_on_mission_started):
+		SignalBus.mission_started.connect(_on_mission_started)
+	if not SignalBus.mission_won.is_connected(_on_mission_won):
+		SignalBus.mission_won.connect(_on_mission_won)
+	if not SignalBus.mission_failed.is_connected(_on_mission_failed):
+		SignalBus.mission_failed.connect(_on_mission_failed)
+	if not SignalBus.resource_changed.is_connected(_on_resource_changed):
+		SignalBus.resource_changed.connect(_on_resource_changed)
+	if not SignalBus.research_unlocked.is_connected(_on_research_unlocked):
+		SignalBus.research_unlocked.connect(_on_research_unlocked)
+	if not SignalBus.shop_item_purchased.is_connected(_on_shop_item_purchased):
+		SignalBus.shop_item_purchased.connect(_on_shop_item_purchased)
+	if not SignalBus.arnulf_state_changed.is_connected(_on_arnulf_state_changed):
+		SignalBus.arnulf_state_changed.connect(_on_arnulf_state_changed)
+	if not SignalBus.spell_cast.is_connected(_on_spell_cast):
+		SignalBus.spell_cast.connect(_on_spell_cast)
 
 
 ## Returns the highest-priority eligible DialogueEntry for the given character and tags.
@@ -210,7 +218,7 @@ func _entry_matches_tags(_entry: DialogueEntry, _tags: Array[String]) -> bool:
 
 
 func _emit_started(entry: DialogueEntry) -> void:
-	dialogue_line_started.emit(entry.entry_id, entry.character_id)
+	SignalBus.dialogue_line_started.emit(entry.entry_id, entry.character_id)
 
 
 ## Marks a once_only DialogueEntry as played so it will not be returned again.
@@ -233,7 +241,7 @@ func mark_entry_played(entry_id: String) -> void:
 
 ## Called when a dialogue line finishes; handles chain_next_id and emits dialogue_line_finished.
 func notify_dialogue_finished(entry_id: String, character_id: String) -> void:
-	dialogue_line_finished.emit(entry_id, character_id)
+	SignalBus.dialogue_line_finished.emit(entry_id, character_id)
 	active_chains_by_character.erase(character_id)
 
 

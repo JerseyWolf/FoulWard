@@ -378,42 +378,49 @@ func _apply_auto_aim(weapon_data: WeaponData, raw_target: Vector3) -> Vector3:
 		var raw_offset: Vector3 = raw_target - global_position
 		if raw_offset.length_squared() > 0.000001:
 			var raw_dir: Vector3 = raw_offset.normalized()
-			var nearest_enemy: EnemyBase = null
-			var nearest_distance: float = INF
-			for node: Node in get_tree().get_nodes_in_group("enemies"):
-				var enemy: EnemyBase = node as EnemyBase
-				if enemy == null or not is_instance_valid(enemy):
-					continue
-				if enemy.health_component == null or not enemy.health_component.is_alive():
-					continue
-				var enemy_data: EnemyData = enemy.get_enemy_data()
-				if enemy_data == null:
-					continue
-				if enemy_data.is_flying and not weapon_data.can_target_flying:
-					continue
-
-				var to_enemy_vec: Vector3 = enemy.global_position - global_position
-				var to_enemy_len_sq: float = to_enemy_vec.length_squared()
-				if to_enemy_len_sq <= 0.000001:
-					continue
-				var distance_to_enemy: float = sqrt(to_enemy_len_sq)
-				if weapon_data.assist_max_distance > 0.0 and distance_to_enemy > weapon_data.assist_max_distance:
-					continue
-
-				# SOURCE: Godot docs Vector3.angle_to + rad_to_deg cone check pattern.
-				var to_enemy: Vector3 = to_enemy_vec / distance_to_enemy
-				var angle_deg: float = rad_to_deg(raw_dir.angle_to(to_enemy))
-				if angle_deg > weapon_data.assist_angle_degrees:
-					continue
-
-				if distance_to_enemy < nearest_distance:
-					nearest_distance = distance_to_enemy
-					nearest_enemy = enemy
-
+			var nearest_enemy: Node3D = _find_assist_target(global_position, raw_dir, weapon_data)
 			if nearest_enemy != null:
 				assisted_target = nearest_enemy.global_position
 
 	return assisted_target
+
+
+## Scans the "enemies" group for the nearest living enemy within the assist cone.
+## Returns null when no qualifying target is found.
+func _find_assist_target(origin: Vector3, direction: Vector3, weapon_data: WeaponData) -> Node3D:
+	var nearest_enemy: EnemyBase = null
+	var nearest_distance: float = INF
+	for node: Node in get_tree().get_nodes_in_group("enemies"):
+		var enemy: EnemyBase = node as EnemyBase
+		if enemy == null or not is_instance_valid(enemy):
+			continue
+		if enemy.health_component == null or not enemy.health_component.is_alive():
+			continue
+		var enemy_data: EnemyData = enemy.get_enemy_data()
+		if enemy_data == null:
+			continue
+		if enemy_data.is_flying and not weapon_data.can_target_flying:
+			continue
+
+		var to_enemy_vec: Vector3 = enemy.global_position - origin
+		var to_enemy_len_sq: float = to_enemy_vec.length_squared()
+		if to_enemy_len_sq <= 0.000001:
+			continue
+		var distance_to_enemy: float = sqrt(to_enemy_len_sq)
+		if weapon_data.assist_max_distance > 0.0 and distance_to_enemy > weapon_data.assist_max_distance:
+			continue
+
+		# SOURCE: Godot docs Vector3.angle_to + rad_to_deg cone check pattern.
+		var to_enemy: Vector3 = to_enemy_vec / distance_to_enemy
+		var angle_deg: float = rad_to_deg(direction.angle_to(to_enemy))
+		if angle_deg > weapon_data.assist_angle_degrees:
+			continue
+
+		if distance_to_enemy < nearest_distance:
+			nearest_distance = distance_to_enemy
+			nearest_enemy = enemy
+
+	return nearest_enemy
 
 
 func _apply_miss_chance(weapon_data: WeaponData, aim_target: Vector3) -> Vector3:

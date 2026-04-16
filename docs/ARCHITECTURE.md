@@ -10,9 +10,9 @@ Registered in `project.godot` in this exact order (game singletons first; MCP ed
 
 | #  | Script Path                              | Autoload Name      | Purpose                                  |
 |----|------------------------------------------|--------------------|------------------------------------------|
-| 1  | `res://autoloads/signal_bus.gd`          | `SignalBus`        | Central signal registry (58+ signals, no logic) |
+| 1  | `res://autoloads/signal_bus.gd`          | `SignalBus`        | Central signal registry (**67** signals as of **2026-04-14**, no logic) |
 | 2  | `res://scripts/nav_mesh_manager.gd`      | `NavMeshManager`   | Registers `NavigationRegion3D`, queues rebakes |
-| 3  | `res://autoloads/damage_calculator.gd`   | `DamageCalculator` | Stateless damage multiplier lookups      |
+| 3  | `res://autoloads/DamageCalculator.cs`    | `DamageCalculator` | Stateless damage multiplier lookups (C#) |
 | 4  | `res://autoloads/aura_manager.gd`       | `AuraManager`      | Aura towers + enemy aura emitters        |
 | 5  | `res://autoloads/economy_manager.gd`     | `EconomyManager`   | Resource tracking + transactions         |
 | 6  | `res://autoloads/campaign_manager.gd`    | `CampaignManager`  | Day/campaign, factions, **ally roster**; must load **before** `GameManager` |
@@ -149,7 +149,7 @@ only signal declarations. Every system emits and connects through this singleton
 Exists purely so systems never need direct references to each other.
 **Prompt 11:** ally lifecycle hooks: `ally_spawned`, `ally_downed`, `ally_recovered`, `ally_killed` (and POST-MVP `ally_state_changed`).
 
-**DamageCalculator** (`damage_calculator.gd`):
+**DamageCalculator** (`DamageCalculator.cs`):
 Stateless utility. Holds the damage-type × armor-type multiplier matrix (`Types.DamageType` × `Types.ArmorType`, including **TRUE** damage) as nested Dictionaries.
 Single public method `calculate_damage(base_damage, damage_type, armor_type) -> float`.
 No signals emitted, no signals consumed. Pure function.
@@ -638,7 +638,7 @@ BetweenMissionScreen ("NEXT MISSION" button):
               Dictionary[Types.ArmorType, Dictionary[Types.DamageType, float]]
               Five damage types: PHYSICAL, FIRE, MAGICAL, POISON, TRUE (TRUE bypasses matrix).
 
-              Example rows (see `damage_calculator.gd` for source of truth):
+              Example rows (see `DamageCalculator.cs` for source of truth):
                   UNARMORED:   PHYSICAL 1.0, FIRE 1.0, MAGICAL 1.0, POISON 1.0, TRUE 1.0
                   HEAVY_ARMOR: PHYSICAL 0.5, …
                   UNDEAD:      … POISON 0.0 …

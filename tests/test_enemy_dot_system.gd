@@ -1,8 +1,19 @@
-## TODO: add before_test() isolation — see testing SKILL
 class_name TestEnemyDotSystem
 extends GdUnitTestSuite
 
 const ENEMY_SCENE: PackedScene = preload("res://scenes/enemies/enemy_base.tscn")
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+
+
+func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
+	await get_tree().process_frame
+
 
 func _spawn_enemy(data: EnemyData) -> EnemyBase:
 	var enemy: EnemyBase = ENEMY_SCENE.instantiate() as EnemyBase

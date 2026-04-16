@@ -36,6 +36,7 @@ This file breaks index generation into small, verifiable tasks so updates stay a
   - an `@export` variable is added/removed/renamed,
   - a SignalBus signal is added/removed/renamed,
   - autoload registration changes.
+- **Dialogue (2026-04-14):** `dialogue_line_started` / `dialogue_line_finished` are declared on **SignalBus**; `DialogueManager` emits via `SignalBus.*.emit()` only (no local `signal` on DialogueManager). Document under SignalBus registry, not as DialogueManager-local signals.
 
 ## Task 6: `docs/` layout
 - Prefer **`docs/README.md`** for human-oriented categorization (indexes vs architecture vs ops).

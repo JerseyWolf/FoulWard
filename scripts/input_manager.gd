@@ -35,72 +35,85 @@ func _ready() -> void:
 # ─────────────────────────────────────────────────────────────────────────
 
 func _unhandled_input(event: InputEvent) -> void:
-	var state: Types.GameState = GameManager.get_game_state()
-
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
 		if mb.pressed:
-			var can_manual_fire: bool = (
-				state == Types.GameState.COMBAT
-				or state == Types.GameState.WAVE_COUNTDOWN
-			)
-			if mb.button_index == MOUSE_BUTTON_LEFT and can_manual_fire:
-				if not is_instance_valid(_tower):
-					return
-				var aim: Vector3 = _get_fire_aim_position()
-				if aim != Vector3.ZERO:
-					print("[InputManager] LEFT click → fire_crossbow at (%.1f, %.1f, %.1f)" % [aim.x, aim.y, aim.z])
-					_tower.fire_crossbow(aim)
-				else:
-					print("[InputManager] LEFT click — no aim (ZERO)")
-
-			elif mb.button_index == MOUSE_BUTTON_RIGHT and can_manual_fire:
-				if not is_instance_valid(_tower):
-					return
-				var aim: Vector3 = _get_fire_aim_position()
-				if aim != Vector3.ZERO:
-					print("[InputManager] RIGHT click → fire_rapid_missile at (%.1f, %.1f, %.1f)" % [aim.x, aim.y, aim.z])
-					_tower.fire_rapid_missile(aim)
-				else:
-					print("[InputManager] RIGHT click — no aim (ZERO)")
-
-			elif mb.button_index == MOUSE_BUTTON_LEFT and state == Types.GameState.BUILD_MODE:
-				_handle_build_mode_left_click()
+			_handle_mouse_combat(mb)
 
 	if event is InputEventKey and event.pressed and not event.echo:
 		if not is_instance_valid(_spell_manager):
 			return
-		if event.is_action("cast_selected_spell") or event.is_action("cast_shockwave"):
-			print("[InputManager] cast selected spell")
-			_spell_manager.cast_selected_spell()
+		_handle_spell_keybinds(event)
+		_handle_build_mode_keys(event)
 
-		elif event.is_action("spell_cycle_next"):
-			_spell_manager.cycle_selected_spell(1)
-		elif event.is_action("spell_cycle_prev"):
-			_spell_manager.cycle_selected_spell(-1)
-		elif event.is_action("spell_slot_1"):
-			_spell_manager.set_selected_spell_index(0)
-		elif event.is_action("spell_slot_2"):
-			_spell_manager.set_selected_spell_index(1)
-		elif event.is_action("spell_slot_3"):
-			_spell_manager.set_selected_spell_index(2)
-		elif event.is_action("spell_slot_4"):
-			_spell_manager.set_selected_spell_index(3)
 
-		elif event.is_action("toggle_build_mode"):
-			if state == Types.GameState.COMBAT or state == Types.GameState.WAVE_COUNTDOWN:
-				print("[InputManager] toggle_build_mode → entering BUILD_MODE")
-				GameManager.enter_build_mode()
-			elif state == Types.GameState.BUILD_MODE:
-				print("[InputManager] toggle_build_mode → exiting BUILD_MODE")
-				GameManager.exit_build_mode()
-			else:
-				print("[InputManager] toggle_build_mode ignored — state=%s" % Types.GameState.keys()[state])
+## Dispatches mouse-button presses during combat and build mode.
+func _handle_mouse_combat(event: InputEventMouseButton) -> void:
+	var state: Types.GameState = GameManager.get_game_state()
+	var can_manual_fire: bool = (
+		state == Types.GameState.COMBAT
+		or state == Types.GameState.WAVE_COUNTDOWN
+	)
+	if event.button_index == MOUSE_BUTTON_LEFT and can_manual_fire:
+		if not is_instance_valid(_tower):
+			return
+		var aim: Vector3 = _get_fire_aim_position()
+		if aim != Vector3.ZERO:
+			print("[InputManager] LEFT click → fire_crossbow at (%.1f, %.1f, %.1f)" % [aim.x, aim.y, aim.z])
+			_tower.fire_crossbow(aim)
+		else:
+			print("[InputManager] LEFT click — no aim (ZERO)")
 
-		elif event.is_action("cancel"):
-			if state == Types.GameState.BUILD_MODE:
-				print("[InputManager] cancel → exiting BUILD_MODE")
-				GameManager.exit_build_mode()
+	elif event.button_index == MOUSE_BUTTON_RIGHT and can_manual_fire:
+		if not is_instance_valid(_tower):
+			return
+		var aim: Vector3 = _get_fire_aim_position()
+		if aim != Vector3.ZERO:
+			print("[InputManager] RIGHT click → fire_rapid_missile at (%.1f, %.1f, %.1f)" % [aim.x, aim.y, aim.z])
+			_tower.fire_rapid_missile(aim)
+		else:
+			print("[InputManager] RIGHT click — no aim (ZERO)")
+
+	elif event.button_index == MOUSE_BUTTON_LEFT and state == Types.GameState.BUILD_MODE:
+		_handle_build_mode_left_click()
+
+
+## Dispatches spell-related key actions (cast, cycle, slot select).
+## Requires a valid _spell_manager — caller must guard before invoking.
+func _handle_spell_keybinds(event: InputEvent) -> void:
+	if event.is_action("cast_selected_spell") or event.is_action("cast_shockwave"):
+		print("[InputManager] cast selected spell")
+		_spell_manager.cast_selected_spell()
+	elif event.is_action("spell_cycle_next"):
+		_spell_manager.cycle_selected_spell(1)
+	elif event.is_action("spell_cycle_prev"):
+		_spell_manager.cycle_selected_spell(-1)
+	elif event.is_action("spell_slot_1"):
+		_spell_manager.set_selected_spell_index(0)
+	elif event.is_action("spell_slot_2"):
+		_spell_manager.set_selected_spell_index(1)
+	elif event.is_action("spell_slot_3"):
+		_spell_manager.set_selected_spell_index(2)
+	elif event.is_action("spell_slot_4"):
+		_spell_manager.set_selected_spell_index(3)
+
+
+## Dispatches build-mode toggle and cancel key actions.
+func _handle_build_mode_keys(event: InputEvent) -> void:
+	var state: Types.GameState = GameManager.get_game_state()
+	if event.is_action("toggle_build_mode"):
+		if state == Types.GameState.COMBAT or state == Types.GameState.WAVE_COUNTDOWN:
+			print("[InputManager] toggle_build_mode → entering BUILD_MODE")
+			GameManager.enter_build_mode()
+		elif state == Types.GameState.BUILD_MODE:
+			print("[InputManager] toggle_build_mode → exiting BUILD_MODE")
+			GameManager.exit_build_mode()
+		else:
+			print("[InputManager] toggle_build_mode ignored — state=%s" % Types.GameState.keys()[state])
+	elif event.is_action("cancel"):
+		if state == Types.GameState.BUILD_MODE:
+			print("[InputManager] cancel → exiting BUILD_MODE")
+			GameManager.exit_build_mode()
 
 
 ## World point on Y=0 under the mouse (no enemy bias). Used for build slot picking.

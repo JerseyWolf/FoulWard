@@ -1,11 +1,18 @@
-## TODO: add before_test() isolation — see testing SKILL
 # GdUnit4 — AuraManager + healer tower data (Prompt 08 / Prompt 50 fields).
 extends GdUnitTestSuite
 
 const _BuildingScene: PackedScene = preload("res://scenes/buildings/building_base.tscn")
 
 
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+	AuraManager.clear_all_emitters_for_tests()
+
+
 func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
 	AuraManager.clear_all_emitters_for_tests()
 
 

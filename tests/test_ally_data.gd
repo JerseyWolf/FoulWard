@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_ally_data.gd — AllyData resource defaults and placeholder .tres loads.
 # Credit: GdUnit4 — https://mikeschulze.github.io/gdUnit4/
 

@@ -53,8 +53,10 @@ func _get_dialogue_panel() -> DialoguePanel:
 # ─────────────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
-	SignalBus.game_state_changed.connect(_on_game_state_changed)
-	DialogueManager.dialogue_line_finished.connect(_on_dialogue_line_finished)
+	if not SignalBus.game_state_changed.is_connected(_on_game_state_changed):
+		SignalBus.game_state_changed.connect(_on_game_state_changed)
+	if not SignalBus.dialogue_line_finished.is_connected(_on_dialogue_line_finished):
+		SignalBus.dialogue_line_finished.connect(_on_dialogue_line_finished)
 
 	# Wire the hub with stable references so it can route tab changes + dialogue.
 	var hub: Control = _get_hub()

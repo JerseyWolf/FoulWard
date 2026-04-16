@@ -194,8 +194,7 @@ public static class FoulWardTypes
 		MeleeFrontline = 0,
 		RangedSupport = 1,
 		AntiAir = 2,
-		Tank = 3,
-		SpellSupport = 4,
+		SpellSupport = 3,
 	}
 
 	/// <summary>C# mirror of Types.AllyCombatRole from res://scripts/types.gd. Integer values are identical.</summary>
@@ -349,5 +348,14 @@ public static class FoulWardTypes
 		Draft = 1,
 		Review = 2,
 		Shipped = 3,
+	}
+
+	/// <summary>C# mirror of Types.GraphicsQuality from res://scripts/types.gd. Integer values are identical.</summary>
+	public enum GraphicsQuality
+	{
+		Low = 0,
+		Medium = 1,
+		High = 2,
+		Custom = 3,
 	}
 }

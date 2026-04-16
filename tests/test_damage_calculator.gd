@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 ## test_damage_calculator.gd
 ## Exhaustive GdUnit4 tests for the DamageCalculator autoload — all 16 matrix cells.
 ## Simulation API: all public methods callable without UI nodes present.

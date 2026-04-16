@@ -33,7 +33,9 @@ compatibility: Godot 4.4 GDScript. Foul Ward project only.
 
 ---
 
-## How to Add a New Signal (6 steps)
+## How to Add a New Signal (7 steps)
+
+Full detail and the **repo-wide signal-count checklist** live in `.cursor/skills/signal-bus/SKILL.md` — use that file as canonical when in doubt.
 
 1. Declare in `autoloads/signal_bus.gd` — past tense, fully typed payload:
 ```gdscript
@@ -49,8 +51,9 @@ if not SignalBus.your_event_happened.is_connected(_on_your_event_happened):
     SignalBus.your_event_happened.connect(_on_your_event_happened)
 ```
 4. Add to `.cursor/skills/signal-bus/references/signal-table.md` under the correct category
-5. Add to `docs/INDEX_FULL.md` signal section
-6. Write a test using `monitor_signals` + `assert_signal`
+5. Add to `docs/INDEX_FULL.md` SignalBus registry section
+6. **Bump the documented signal total** — follow **Signal count in documentation** in `signal-bus/SKILL.md` (re-count `^signal ` in `signal_bus.gd`, update `AGENTS.md`, master doc, `CONVENTIONS.md`, `ARCHITECTURE.md`, indexes, `signal-table.md` header, Perplexity prompts if they cite a number)
+7. Write a test using `monitor_signals` + `assert_signal`
 
 **Never declare a cross-system signal anywhere other than `signal_bus.gd`.**
 

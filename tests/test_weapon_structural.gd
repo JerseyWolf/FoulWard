@@ -6,6 +6,17 @@ const ProjectileScene: PackedScene = preload("res://scenes/projectiles/projectil
 const EnemyScene: PackedScene = preload("res://scenes/enemies/enemy_base.tscn")
 
 
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+
+
+func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
+	await get_tree().process_frame
+
+
 func _step_projectile_physics(proj: ProjectileBase, delta: float) -> void:
 	var pp: Node = proj.get_node_or_null("ProjectilePhysics")
 	assert_bool(pp != null).is_true()

@@ -1,7 +1,12 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_endless_mode.gd — Endless Run (AUDIT 6 §3.4) headless-safe checks.
 class_name TestEndlessMode
 extends GdUnitTestSuite
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+	CampaignManager.is_endless_mode = false
+	CampaignManager.set_active_campaign_config_for_test(CampaignManager.DEFAULT_SHORT_CAMPAIGN)
 
 
 func after_test() -> void:

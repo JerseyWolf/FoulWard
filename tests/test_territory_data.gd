@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 ## test_territory_data.gd
 ## Loads main campaign territory map and validates placeholder content.
 

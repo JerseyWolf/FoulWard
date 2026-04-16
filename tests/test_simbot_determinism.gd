@@ -1,9 +1,16 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_simbot_determinism.gd
 # GdUnit4 test suite for SimBot determinism (Phase 2).
 
 class_name TestSimBotDeterminism
 extends GdUnitTestSuite
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+	CampaignManager.set_active_campaign_config_for_test(CampaignManager.DEFAULT_SHORT_CAMPAIGN)
+	CampaignManager.current_day = 1
+	GameManager.game_state = Types.GameState.MAIN_MENU
+
 
 func test_simbot_is_deterministic_for_fixed_seed() -> void:
 	# Arrange

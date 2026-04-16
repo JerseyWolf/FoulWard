@@ -175,7 +175,6 @@ enum AllyRole {
 	MELEE_FRONTLINE,
 	RANGED_SUPPORT,
 	ANTI_AIR,
-	TANK,
 	SPELL_SUPPORT,
 }
 
@@ -333,6 +332,14 @@ static func get_day_advance_priority(reason: DayAdvanceReason) -> int:
 			return 2
 		_:
 			return 0
+
+## Rendering quality preset for SettingsManager.
+enum GraphicsQuality {
+	LOW = 0,
+	MEDIUM = 1,
+	HIGH = 2,
+	CUSTOM = 3,
+}
 
 # ASSUMPTION: Types uses enums + static helpers as a shared registry across systems.
 

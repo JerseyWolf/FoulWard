@@ -11,6 +11,8 @@
 
 | Date | Author | Summary |
 |------|--------|---------|
+| 2026-04-14 | Cursor agent | SignalBus **67** typed signals (as of this date) — same total in `AGENTS.md`, §3.1, §24, `CONVENTIONS.md`, `ARCHITECTURE.md`, indexes, `.cursor/skills/signal-bus/` (see skill § *Signal count in documentation*). |
+| 2026-04-14 | Cursor agent | Batch verification doc sync: dialogue line signals on SignalBus (§3.14, §24 Dialogue); `AllyRole` four values / TANK removed (§5); test baseline 612 GdUnit4 (§1, §23); main campaign path `res://resources/campaign_main_50days.tres`. |
 | 2026-04-14 | mcp-purge | Moved godot-mcp-pro and gdai-mcp-godot above repo root to ../foulward-mcp-servers/. |
 | 2026-04-14 | Cursor agent | §2.4 C# Integration; §3.3 DamageCalculator (C#); §30.15 C# `class_name` vs autoloads; §34 `FoulWard.csproj` + `CREDITS.md`. |
 | 2026-03-31 | Cursor agent | §1.1 Cursor/MCP toolchain (minimal consolidation); §23 headless automation vs GdUnit clarified. |
@@ -67,7 +69,7 @@
 | **Genre** | Real-time tower defense, stationary perspective (player IS the tower, aims manually with mouse) |
 | **Inspiration** | TAUR |
 | **Campaign structure** | 50-day main campaign. Each day = one mission. Missions have a build phase then wave combat. |
-| **Test count** | 525 passing GdUnit4 tests (as of Prompt 51) |
+| **Test count** | 612 GdUnit4 tests (full parallel suite baseline; run `./tools/run_gdunit.sh` for sequential) |
 
 ### Primary Files of Record
 
@@ -188,7 +190,7 @@ All registered in `project.godot`. **Init order matters** — do not change with
 
 ### 3.1 SignalBus (`res://autoloads/signal_bus.gd`) — Init #1
 
-Central typed signal hub. 58+ signals. **No logic, no state. Never add logic here.**
+Central typed signal hub. **67** typed `signal` declarations as of **2026-04-14** (re-count `^signal ` in this file when changed). **No logic, no state. Never add logic here.**
 
 All signals are declared only — no methods, no variables besides signals. See [Section 24](#24-signal-bus-reference) for the full signal table.
 
@@ -425,7 +427,7 @@ Loads `DialogueEntry` `.tres` from `res://resources/dialogue/**`. Priority, AND 
 | `request_entry_for_character(character_id: String, tags: Array[String] = []) -> DialogueEntry` | DialogueEntry | Highest-priority eligible entry (chains have priority) |
 | `get_entry_by_id(entry_id: String) -> DialogueEntry` | DialogueEntry | Direct lookup |
 | `mark_entry_played(entry_id: String) -> void` | void | Marks once_only as played; activates chain |
-| `notify_dialogue_finished(entry_id: String, character_id: String) -> void` | void | Emits `dialogue_line_finished`; clears chain |
+| `notify_dialogue_finished(entry_id: String, character_id: String) -> void` | void | Emits `SignalBus.dialogue_line_finished`; clears chain |
 | `on_campaign_day_started() -> void` | void | Syncs state from GameManager at day start |
 | `get_tracked_gold() -> int` | int | Gold snapshot for conditions |
 | `get_unlocked_research_ids_snapshot() -> Dictionary` | Dict | Research IDs tracked for conditions |
@@ -433,7 +435,7 @@ Loads `DialogueEntry` `.tres` from `res://resources/dialogue/**`. Priority, AND 
 | `get_arnulf_state_tracked() -> Types.ArnulfState` | ArnulfState | Arnulf state for conditions |
 | `get_spell_cast_count_tracked() -> int` | int | Spell cast counter |
 
-**Signals (local):** `dialogue_line_started(entry_id, character_id)`, `dialogue_line_finished(entry_id, character_id)`.
+**Dialogue signals (SignalBus):** `dialogue_line_started(entry_id: String, character_id: String)` and `dialogue_line_finished(entry_id: String, character_id: String)` are **declared on `SignalBus`** (see [Section 24](#24-signal-bus-reference), Dialogue subsection). `DialogueManager` emits them via `SignalBus.dialogue_line_started.emit(...)` / `SignalBus.dialogue_line_finished.emit(...)` — they are not local signals on DialogueManager.
 
 **Condition keys:** `current_mission_number`, `mission_won_count`, `gold_amount`, `sybil_research_unlocked_any`, `arnulf_research_unlocked_any`, `research_unlocked_<id>`, `shop_item_purchased_<id>`, `arnulf_is_downed`, `florence.*`, `campaign.*`.
 
@@ -770,7 +772,7 @@ All enums defined in `res://scripts/types.gd`. Accessed as `Types.EnumName.VALUE
 
 ### Other Enums (stable, rarely referenced directly)
 
-`AllyRole` (0–4), `StrategyProfile` (0–4), `BuildingBaseMesh` (0–3), `BuildingTopMesh` (0–6), `DayAdvanceReason` (0–2), `UnitSize` (0–3), `AllyAiMode` (0–4), `AuraModifierKind` (0–2), `AuraModifierOp` (0–1), `AuraCategory` (0–3), `AuraStat` (0–5), `MissionBalanceStatus` (0–3).
+`AllyRole` (0–3: `MELEE_FRONTLINE`, `RANGED_SUPPORT`, `ANTI_AIR`, `SPELL_SUPPORT` — `TANK` was removed), `StrategyProfile` (0–4), `BuildingBaseMesh` (0–3), `BuildingTopMesh` (0–6), `DayAdvanceReason` (0–2), `UnitSize` (0–3), `AllyAiMode` (0–4), `AuraModifierKind` (0–2), `AuraModifierOp` (0–1), `AuraCategory` (0–3), `AuraStat` (0–5), `MissionBalanceStatus` (0–3).
 
 **Non-existent enum: `Types.SpellType` / `Types.SpellID` — do NOT use or assume.**
 
@@ -896,7 +898,7 @@ See the research manager API in [Section 4.3](#43-researchmanager).
 ## 13. Campaign and Progression
 
 ### Day/Wave Structure
-- 50 days main campaign (`campaign_main_50days.tres`), 5 days short (`campaign_short_5days.tres`).
+- 50 days main campaign (`res://resources/campaign_main_50days.tres` — `GameManager` loads this path; a duplicate packaged variant may exist under `res://resources/campaigns/`), 5 days short (`campaign_short_5days.tres`).
 - Each mission = 5 waves (`WAVES_PER_MISSION`).
 - After Day 50 final boss: loop continues until player wins or tower destroyed.
 
@@ -997,14 +999,14 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 
 **Headless automation (not GdUnit):** `AutoTestDriver` activates when the project is run with CLI user args such as `--autotest`, `--simbot_profile=…`, or `--simbot_balance_sweep` (see `autoloads/auto_test_driver.gd`). That path boots the real game flow and drives `SimBot`, so **economy, waves, and combat stats behave like a mission** — useful for sweeps and integration-style balance checks. It is **not** a substitute for **GdUnit** unit/integration tests (`./tools/run_gdunit*.sh`), which assert specific APIs and run without full interactive mission requirements.
 
-- **525 passing GdUnit4 tests.**
+- **612 GdUnit4 tests** (full suite; exact per-runner totals may vary slightly with GdUnit statistics aggregation).
 - Quick: `./tools/run_gdunit_quick.sh`, Unit (~65s): `./tools/run_gdunit_unit.sh`, Parallel (~2m45s): `./tools/run_gdunit_parallel.sh`, Sequential: `./tools/run_gdunit.sh`.
 
 ---
 
 ## 24. Signal Bus Reference
 
-**STATUS: EXISTS IN CODE** — All 58+ signals declared in `res://autoloads/signal_bus.gd`.
+**STATUS: EXISTS IN CODE** — **67** signals declared in `res://autoloads/signal_bus.gd` as of **2026-04-14** (includes dialogue line signals under the `=== DIALOGUE ===` block). Keep the hero-line total in sync across repo docs — see `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*.
 
 ### Combat
 
@@ -1110,6 +1112,15 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 | `day_won` | `day_index: int` |
 | `day_failed` | `day_index: int` |
 | `campaign_completed` | `campaign_id: String` |
+
+### Dialogue
+
+| Signal | Parameters |
+|--------|-----------|
+| `dialogue_line_started` | `entry_id: String, character_id: String` |
+| `dialogue_line_finished` | `entry_id: String, character_id: String` |
+
+Declared on `SignalBus`; emitted by `DialogueManager` when a line starts / when `notify_dialogue_finished` runs. UI (e.g. `UIManager`) connects to `SignalBus`, not to DialogueManager local signals.
 
 ### Build Mode
 
@@ -1429,9 +1440,11 @@ Manager node path contracts:
 
 4. **Update Signal Bus Reference** in this document ([Section 24](#24-signal-bus-reference)).
 
-5. **If RelationshipManager should react**, create `res://resources/relationship_events/my_event.tres` with `signal_name = "my_event_happened"` and `character_deltas`.
+5. **Update the SignalBus signal total** in prose everywhere (hero line in §3.1 and §24 intro, `AGENTS.md`, `docs/CONVENTIONS.md`, `docs/ARCHITECTURE.md`, `INDEX_SHORT.md` / `INDEX_FULL.md`, `.cursor/skills/signal-bus/references/signal-table.md`, and any other file listed in `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*). Re-verify with a line count of `^signal ` in `signal_bus.gd`.
 
-6. **In tests**, if you emit the signal using the real autoload, reset state in `after_test()`.
+6. **If RelationshipManager should react**, create `res://resources/relationship_events/my_event.tres` with `signal_name = "my_event_happened"` and `character_deltas`.
+
+7. **In tests**, if you emit the signal using the real autoload, reset state in `after_test()`.
 
 ### 28.3 How to Add a New Spell
 
@@ -1510,6 +1523,7 @@ These rules apply to **every** future Cursor session. See also repo-root **`AGEN
 - [ ] Move feature from "planned" to "exists" (or vice versa if cut).
 - [ ] Add correct field names to [Section 32](#32-field-name-discipline--correct-vs-wrong-names).
 - [ ] Add new signals to [Section 24](#24-signal-bus-reference).
+- [ ] If the number of `signal` lines in `signal_bus.gd` changed, update the **67** (or new total) and **as-of date** in every file listed in `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*.
 - [ ] Add a changelog entry at the top.
 - [ ] Update `docs/INDEX_SHORT.md` and `docs/INDEX_FULL.md`.
 

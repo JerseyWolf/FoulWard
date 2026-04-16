@@ -102,6 +102,60 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
 
+[node name="CustomTogglesContainer" type="VBoxContainer" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+theme_override_constants/separation = 8
+
+[node name="ShadowsRow" type="HBoxContainer" parent="VBox/CustomTogglesContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/CustomTogglesContainer/ShadowsRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 0)
+text = "Shadows"
+
+[node name="ShadowsCheck" type="CheckBox" parent="VBox/CustomTogglesContainer/ShadowsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MsaaRow" type="HBoxContainer" parent="VBox/CustomTogglesContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/CustomTogglesContainer/MsaaRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 0)
+text = "MSAA"
+
+[node name="MsaaCheck" type="CheckBox" parent="VBox/CustomTogglesContainer/MsaaRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="SsaoRow" type="HBoxContainer" parent="VBox/CustomTogglesContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/CustomTogglesContainer/SsaoRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 0)
+text = "SSAO"
+
+[node name="SsaoCheck" type="CheckBox" parent="VBox/CustomTogglesContainer/SsaoRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="GlowRow" type="HBoxContainer" parent="VBox/CustomTogglesContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/CustomTogglesContainer/GlowRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 0)
+text = "Glow"
+
+[node name="GlowCheck" type="CheckBox" parent="VBox/CustomTogglesContainer/GlowRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
 [node name="KeybindsLabel" type="Label" parent="VBox"]
 layout_mode = 2
 text = "Keybinds"

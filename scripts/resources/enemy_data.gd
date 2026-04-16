@@ -76,6 +76,11 @@ extends Resource
 @export var threat_value: int = 1
 @export var tags: PackedStringArray = PackedStringArray()
 
+## When true, enemy scans for targetable buildings in detection radius before pathing to tower.
+@export var prefer_building_targets: bool = false
+## Scan radius for targetable buildings (separate from attack_range).
+@export var building_detection_radius: float = 8.0
+
 # ─── WAVE GENERATION & CONTENT AUTHORING (Prompt 50) ───
 
 @export var point_cost: int = 5

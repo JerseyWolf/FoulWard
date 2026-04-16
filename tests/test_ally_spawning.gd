@@ -23,6 +23,12 @@ func before_test() -> void:
 			CampaignManager.current_day_config = CampaignManager.campaign_config.day_configs[0]
 
 
+func after_test() -> void:
+	EconomyManager.reset_to_defaults()
+	GameManager.game_state = Types.GameState.MAIN_MENU
+	await get_tree().process_frame
+
+
 func _is_ally_node(n: Node) -> bool:
 	return n.has_method("initialize_ally_data")
 

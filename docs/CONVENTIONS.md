@@ -463,7 +463,7 @@ extends Resource
 
 ## 5. SIGNAL BUS — COMPLETE SIGNAL REGISTRY
 
-All signals below live on the `SignalBus` autoload (`res://autoloads/signal_bus.gd`). **58+** typed declarations — the only place cross-system signals are declared. No logic or state on SignalBus.
+All signals below live on the `SignalBus` autoload (`res://autoloads/signal_bus.gd`). **67** typed `signal` declarations as of **2026-04-14** — the only place cross-system signals are declared. No logic or state on SignalBus. When you add or remove a signal, re-count lines matching `^signal ` in that file and update the same total everywhere (see `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*).
 
 Grouped reference (matches `docs/FOUL_WARD_MASTER_DOC.md` §24):
 
@@ -689,7 +689,7 @@ Autoloads are registered in `project.godot` with these exact names (order: §19)
 |--------|----------------|
 | `res://autoloads/signal_bus.gd` | `SignalBus` |
 | `res://scripts/nav_mesh_manager.gd` | `NavMeshManager` |
-| `res://autoloads/damage_calculator.gd` | `DamageCalculator` |
+| `res://autoloads/DamageCalculator.cs` | `DamageCalculator` |
 | `res://autoloads/aura_manager.gd` | `AuraManager` |
 | `res://autoloads/economy_manager.gd` | `EconomyManager` |
 | `res://autoloads/campaign_manager.gd` | `CampaignManager` |

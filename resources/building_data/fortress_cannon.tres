@@ -28,3 +28,5 @@ size_class = "LARGE"
 role_tags = Array[String](["DPS", "ARTILLERY"])
 balance_status = "UNTESTED"
 projectile_scene = ExtResource("2_projectile")
+max_hp = 650
+can_be_targeted_by_enemies = true

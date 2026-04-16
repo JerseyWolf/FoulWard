@@ -754,6 +754,33 @@ func _choose_build_or_upgrade_action() -> Dictionary:
 		return upgrade_choice
 
 	# Build preference.
+	var best_entries: Array[Dictionary] = _collect_weighted_build_entries()
+	if best_entries.is_empty():
+		return {}
+
+	var chosen_entry: Dictionary = best_entries[0]
+	if best_entries.size() > 1:
+		var pick: int = _rng.randi_range(0, best_entries.size() - 1)
+		chosen_entry = best_entries[pick]
+
+	var chosen_btype: Types.BuildingType = _cast_building_type(chosen_entry.get("building_type", 0))
+	var empties: Array[int] = _hex_grid.get_empty_slots()
+	var slot_index: int = _choose_slot_for_build(empties)
+	if slot_index < 0:
+		return {}
+
+	return {
+		"action_type": "build",
+		"slot_index": slot_index,
+		"building_type": chosen_btype,
+		"score": float(chosen_entry.get("weight", 0.0)),
+	}
+
+
+## Scans _profile.build_priorities and returns the subset of entries tied for the highest
+## passing weight. Entries that fail wave-range, availability, or affordability checks are
+## excluded. The caller picks one entry from the returned array (random tie-break via _rng).
+func _collect_weighted_build_entries() -> Array[Dictionary]:
 	var wave_number: int = _wave_manager.get_current_wave_number()
 	var best_weight: float = -1.0
 	var best_entries: Array[Dictionary] = []
@@ -791,26 +818,7 @@ func _choose_build_or_upgrade_action() -> Dictionary:
 		elif is_equal_approx(weight, best_weight):
 			best_entries.append(entry)
 
-	if best_entries.is_empty():
-		return {}
-
-	var chosen_entry: Dictionary = best_entries[0]
-	if best_entries.size() > 1:
-		var pick: int = _rng.randi_range(0, best_entries.size() - 1)
-		chosen_entry = best_entries[pick]
-
-	var chosen_btype: Types.BuildingType = _cast_building_type(chosen_entry.get("building_type", 0))
-	var empties: Array[int] = _hex_grid.get_empty_slots()
-	var slot_index: int = _choose_slot_for_build(empties)
-	if slot_index < 0:
-		return {}
-
-	return {
-		"action_type": "build",
-		"slot_index": slot_index,
-		"building_type": chosen_btype,
-		"score": best_weight,
-	}
+	return best_entries
 
 func _choose_upgrade_action_if_desired(build_count: int) -> Dictionary:
 	var upgrade_cfg: Dictionary = _profile.upgrade_behavior

@@ -1,11 +1,10 @@
 [gd_resource type="Resource" script_class="CampaignConfig" format=3]
-; campaign_main_50_days.tres — 50-day main campaign (Prompt 7).
-; # PLACEHOLDER: display_name "Day N", description "Placeholder briefing." on every day until narrative pass.
-; # TUNING (per day i = day_index): base_wave_count follows clamp(5 + floor((i-1)/5), 5, 10) — PLACEHOLDER linear ramp.
-; # TUNING: enemy_hp_multiplier = 1.0 + (i-1)*0.02 — PLACEHOLDER +2% per day from day 1.
-; # TUNING: enemy_damage_multiplier = 1.0 + (i-1)*0.015 — PLACEHOLDER +1.5% per day.
-; # TUNING: gold_reward_multiplier = 1.0 + (i-1)*0.01 — PLACEHOLDER +1% per day.
-; # TUNING: is_mini_boss_day true on days 10,20,30,40; is_final_boss true on day 50 only.
+; campaign_main_50_days.tres — 50-day main campaign.
+; Scaling: smoothstep HP/damage 1.0→3.0, linear gold 1.0→1.5, linear spawn 1.0→2.5.
+; Formulas: t=(day-1)/49; hp/dmg=1+2*t*t*(3-2t); gold=1+0.5*t; spawn=1+1.5*t; starting_gold=1000+floor((day-1)*500/49).
+; Wave counts: days 1-10 → 3, days 11-30 → 4, days 31-50 → 5.
+; Faction rotation: no run >5 consecutive same faction. Territory-biased assignment.
+; Mini-boss days: 10, 20, 30, 40. Final boss: day 50.
 
 
 [ext_resource type="Script" path="res://scripts/resources/campaign_config.gd" id="1_campaignconfig"]
@@ -15,1004 +14,857 @@
 script = ExtResource("2_dayconfig")
 day_index = 1
 display_name = "Day 1"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.0
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.0
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.0
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 3
+enemy_hp_multiplier = 1.0
+enemy_damage_multiplier = 1.0
+gold_reward_multiplier = 1.0
+spawn_count_multiplier = 1.0
+starting_gold = 1000
 
 [sub_resource type="Resource" id="DayConfig_2"]
 script = ExtResource("2_dayconfig")
 day_index = 2
 display_name = "Day 2"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.02
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.015
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.01
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 3
+enemy_hp_multiplier = 1.0025
+enemy_damage_multiplier = 1.0025
+gold_reward_multiplier = 1.0102
+spawn_count_multiplier = 1.0306
+starting_gold = 1010
 
 [sub_resource type="Resource" id="DayConfig_3"]
 script = ExtResource("2_dayconfig")
 day_index = 3
 display_name = "Day 3"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.04
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.03
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.02
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 3
+enemy_hp_multiplier = 1.0097
+enemy_damage_multiplier = 1.0097
+gold_reward_multiplier = 1.0204
+spawn_count_multiplier = 1.0612
+starting_gold = 1020
 
 [sub_resource type="Resource" id="DayConfig_4"]
 script = ExtResource("2_dayconfig")
 day_index = 4
 display_name = "Day 4"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.06
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.045
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.03
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 3
+enemy_hp_multiplier = 1.0216
+enemy_damage_multiplier = 1.0216
+gold_reward_multiplier = 1.0306
+spawn_count_multiplier = 1.0918
+starting_gold = 1030
 
 [sub_resource type="Resource" id="DayConfig_5"]
 script = ExtResource("2_dayconfig")
 day_index = 5
 display_name = "Day 5"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.08
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.06
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.04
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 3
+enemy_hp_multiplier = 1.0378
+enemy_damage_multiplier = 1.0378
+gold_reward_multiplier = 1.0408
+spawn_count_multiplier = 1.1224
+starting_gold = 1040
 
 [sub_resource type="Resource" id="DayConfig_6"]
 script = ExtResource("2_dayconfig")
 day_index = 6
 display_name = "Day 6"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.1
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.075
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.05
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 3
+enemy_hp_multiplier = 1.0582
+enemy_damage_multiplier = 1.0582
+gold_reward_multiplier = 1.051
+spawn_count_multiplier = 1.1531
+starting_gold = 1051
 
 [sub_resource type="Resource" id="DayConfig_7"]
 script = ExtResource("2_dayconfig")
 day_index = 7
 display_name = "Day 7"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.12
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.09
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.06
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 3
+enemy_hp_multiplier = 1.0826
+enemy_damage_multiplier = 1.0826
+gold_reward_multiplier = 1.0612
+spawn_count_multiplier = 1.1837
+starting_gold = 1061
 
 [sub_resource type="Resource" id="DayConfig_8"]
 script = ExtResource("2_dayconfig")
 day_index = 8
 display_name = "Day 8"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.14
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.105
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.07
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 3
+enemy_hp_multiplier = 1.1108
+enemy_damage_multiplier = 1.1108
+gold_reward_multiplier = 1.0714
+spawn_count_multiplier = 1.2143
+starting_gold = 1071
 
 [sub_resource type="Resource" id="DayConfig_9"]
 script = ExtResource("2_dayconfig")
 day_index = 9
 display_name = "Day 9"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.16
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.12
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.08
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 3
+enemy_hp_multiplier = 1.1425
+enemy_damage_multiplier = 1.1425
+gold_reward_multiplier = 1.0816
+spawn_count_multiplier = 1.2449
+starting_gold = 1081
 
 [sub_resource type="Resource" id="DayConfig_10"]
 script = ExtResource("2_dayconfig")
 day_index = 10
 display_name = "Day 10"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.18
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.135
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.09
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "DEFAULT_MIXED"
+territory_id = "heartland_plains"
 is_mini_boss_day = true
-; # TUNING: milestone mini-boss days
+is_mini_boss = true
 is_final_boss = false
-; # TUNING: final campaign boss
+boss_id = "orc_warlord"
+base_wave_count = 3
+enemy_hp_multiplier = 1.1776
+enemy_damage_multiplier = 1.1776
+gold_reward_multiplier = 1.0918
+spawn_count_multiplier = 1.2755
+starting_gold = 1091
 
 [sub_resource type="Resource" id="DayConfig_11"]
 script = ExtResource("2_dayconfig")
 day_index = 11
 display_name = "Day 11"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.2
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.15
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.1
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "blackwood_forest"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.2159
+enemy_damage_multiplier = 1.2159
+gold_reward_multiplier = 1.102
+spawn_count_multiplier = 1.3061
+starting_gold = 1102
 
 [sub_resource type="Resource" id="DayConfig_12"]
 script = ExtResource("2_dayconfig")
 day_index = 12
 display_name = "Day 12"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.22
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.165
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.11
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "blackwood_forest"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.2571
+enemy_damage_multiplier = 1.2571
+gold_reward_multiplier = 1.1122
+spawn_count_multiplier = 1.3367
+starting_gold = 1112
 
 [sub_resource type="Resource" id="DayConfig_13"]
 script = ExtResource("2_dayconfig")
 day_index = 13
 display_name = "Day 13"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.24
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.18
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.12
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "blackwood_forest"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.3011
+enemy_damage_multiplier = 1.3011
+gold_reward_multiplier = 1.1224
+spawn_count_multiplier = 1.3673
+starting_gold = 1122
 
 [sub_resource type="Resource" id="DayConfig_14"]
 script = ExtResource("2_dayconfig")
 day_index = 14
 display_name = "Day 14"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.26
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.195
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.13
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "blackwood_forest"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.3476
+enemy_damage_multiplier = 1.3476
+gold_reward_multiplier = 1.1327
+spawn_count_multiplier = 1.398
+starting_gold = 1132
 
 [sub_resource type="Resource" id="DayConfig_15"]
 script = ExtResource("2_dayconfig")
 day_index = 15
 display_name = "Day 15"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.28
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.21
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.14
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "blackwood_forest"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.3965
+enemy_damage_multiplier = 1.3965
+gold_reward_multiplier = 1.1429
+spawn_count_multiplier = 1.4286
+starting_gold = 1142
 
 [sub_resource type="Resource" id="DayConfig_16"]
 script = ExtResource("2_dayconfig")
 day_index = 16
 display_name = "Day 16"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.3
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.225
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.15
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "blackwood_forest"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.4475
+enemy_damage_multiplier = 1.4475
+gold_reward_multiplier = 1.1531
+spawn_count_multiplier = 1.4592
+starting_gold = 1153
 
 [sub_resource type="Resource" id="DayConfig_17"]
 script = ExtResource("2_dayconfig")
 day_index = 17
 display_name = "Day 17"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.32
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.24
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.16
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "blackwood_forest"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.5005
+enemy_damage_multiplier = 1.5005
+gold_reward_multiplier = 1.1633
+spawn_count_multiplier = 1.4898
+starting_gold = 1163
 
 [sub_resource type="Resource" id="DayConfig_18"]
 script = ExtResource("2_dayconfig")
 day_index = 18
 display_name = "Day 18"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.34
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.255
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.17
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "blackwood_forest"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.5552
+enemy_damage_multiplier = 1.5552
+gold_reward_multiplier = 1.1735
+spawn_count_multiplier = 1.5204
+starting_gold = 1173
 
 [sub_resource type="Resource" id="DayConfig_19"]
 script = ExtResource("2_dayconfig")
 day_index = 19
 display_name = "Day 19"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.36
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.27
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.18
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.6114
+enemy_damage_multiplier = 1.6114
+gold_reward_multiplier = 1.1837
+spawn_count_multiplier = 1.551
+starting_gold = 1183
 
 [sub_resource type="Resource" id="DayConfig_20"]
 script = ExtResource("2_dayconfig")
 day_index = 20
 display_name = "Day 20"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.38
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.285
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.19
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "ashen_swamp"
 is_mini_boss_day = true
-; # TUNING: milestone mini-boss days
+is_mini_boss = true
 is_final_boss = false
-; # TUNING: final campaign boss
+boss_id = "plague_cult_miniboss"
+base_wave_count = 4
+enemy_hp_multiplier = 1.6689
+enemy_damage_multiplier = 1.6689
+gold_reward_multiplier = 1.1939
+spawn_count_multiplier = 1.5816
+starting_gold = 1193
 
 [sub_resource type="Resource" id="DayConfig_21"]
 script = ExtResource("2_dayconfig")
 day_index = 21
 display_name = "Day 21"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.4
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.3
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.2
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.7276
+enemy_damage_multiplier = 1.7276
+gold_reward_multiplier = 1.2041
+spawn_count_multiplier = 1.6122
+starting_gold = 1204
 
 [sub_resource type="Resource" id="DayConfig_22"]
 script = ExtResource("2_dayconfig")
 day_index = 22
 display_name = "Day 22"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.42
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.315
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.21
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.7872
+enemy_damage_multiplier = 1.7872
+gold_reward_multiplier = 1.2143
+spawn_count_multiplier = 1.6429
+starting_gold = 1214
 
 [sub_resource type="Resource" id="DayConfig_23"]
 script = ExtResource("2_dayconfig")
 day_index = 23
 display_name = "Day 23"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.44
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.33
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.22
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.8475
+enemy_damage_multiplier = 1.8475
+gold_reward_multiplier = 1.2245
+spawn_count_multiplier = 1.6735
+starting_gold = 1224
 
 [sub_resource type="Resource" id="DayConfig_24"]
 script = ExtResource("2_dayconfig")
 day_index = 24
 display_name = "Day 24"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.46
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.345
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.23
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.9083
+enemy_damage_multiplier = 1.9083
+gold_reward_multiplier = 1.2347
+spawn_count_multiplier = 1.7041
+starting_gold = 1234
 
 [sub_resource type="Resource" id="DayConfig_25"]
 script = ExtResource("2_dayconfig")
 day_index = 25
 display_name = "Day 25"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.48
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.36
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.24
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 1.9694
+enemy_damage_multiplier = 1.9694
+gold_reward_multiplier = 1.2449
+spawn_count_multiplier = 1.7347
+starting_gold = 1244
 
 [sub_resource type="Resource" id="DayConfig_26"]
 script = ExtResource("2_dayconfig")
 day_index = 26
 display_name = "Day 26"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.5
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.375
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.25
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 2.0306
+enemy_damage_multiplier = 2.0306
+gold_reward_multiplier = 1.2551
+spawn_count_multiplier = 1.7653
+starting_gold = 1255
 
 [sub_resource type="Resource" id="DayConfig_27"]
 script = ExtResource("2_dayconfig")
 day_index = 27
 display_name = "Day 27"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.52
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.39
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.26
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 2.0917
+enemy_damage_multiplier = 2.0917
+gold_reward_multiplier = 1.2653
+spawn_count_multiplier = 1.7959
+starting_gold = 1265
 
 [sub_resource type="Resource" id="DayConfig_28"]
 script = ExtResource("2_dayconfig")
 day_index = 28
 display_name = "Day 28"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.54
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.405
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.27
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "heartland_plains"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 2.1525
+enemy_damage_multiplier = 2.1525
+gold_reward_multiplier = 1.2755
+spawn_count_multiplier = 1.8265
+starting_gold = 1275
 
 [sub_resource type="Resource" id="DayConfig_29"]
 script = ExtResource("2_dayconfig")
 day_index = 29
 display_name = "Day 29"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.56
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.42
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.28
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 4
+enemy_hp_multiplier = 2.2128
+enemy_damage_multiplier = 2.2128
+gold_reward_multiplier = 1.2857
+spawn_count_multiplier = 1.8571
+starting_gold = 1285
 
 [sub_resource type="Resource" id="DayConfig_30"]
 script = ExtResource("2_dayconfig")
 day_index = 30
 display_name = "Day 30"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.58
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.435
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.29
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "iron_ridge"
 is_mini_boss_day = true
-; # TUNING: milestone mini-boss days
+is_mini_boss = true
 is_final_boss = false
-; # TUNING: final campaign boss
+boss_id = "orc_warlord"
+base_wave_count = 4
+enemy_hp_multiplier = 2.2724
+enemy_damage_multiplier = 2.2724
+gold_reward_multiplier = 1.2959
+spawn_count_multiplier = 1.8878
+starting_gold = 1295
 
 [sub_resource type="Resource" id="DayConfig_31"]
 script = ExtResource("2_dayconfig")
 day_index = 31
 display_name = "Day 31"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.6
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.45
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.3
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.3311
+enemy_damage_multiplier = 2.3311
+gold_reward_multiplier = 1.3061
+spawn_count_multiplier = 1.9184
+starting_gold = 1306
 
 [sub_resource type="Resource" id="DayConfig_32"]
 script = ExtResource("2_dayconfig")
 day_index = 32
 display_name = "Day 32"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.62
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.465
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.31
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.3886
+enemy_damage_multiplier = 2.3886
+gold_reward_multiplier = 1.3163
+spawn_count_multiplier = 1.949
+starting_gold = 1316
 
 [sub_resource type="Resource" id="DayConfig_33"]
 script = ExtResource("2_dayconfig")
 day_index = 33
 display_name = "Day 33"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.64
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.48
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.32
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.4448
+enemy_damage_multiplier = 2.4448
+gold_reward_multiplier = 1.3265
+spawn_count_multiplier = 1.9796
+starting_gold = 1326
 
 [sub_resource type="Resource" id="DayConfig_34"]
 script = ExtResource("2_dayconfig")
 day_index = 34
 display_name = "Day 34"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.66
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.495
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.33
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.4995
+enemy_damage_multiplier = 2.4995
+gold_reward_multiplier = 1.3367
+spawn_count_multiplier = 2.0102
+starting_gold = 1336
 
 [sub_resource type="Resource" id="DayConfig_35"]
 script = ExtResource("2_dayconfig")
 day_index = 35
 display_name = "Day 35"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.68
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.51
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.34
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.5525
+enemy_damage_multiplier = 2.5525
+gold_reward_multiplier = 1.3469
+spawn_count_multiplier = 2.0408
+starting_gold = 1346
 
 [sub_resource type="Resource" id="DayConfig_36"]
 script = ExtResource("2_dayconfig")
 day_index = 36
 display_name = "Day 36"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.7
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.525
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.35
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.6035
+enemy_damage_multiplier = 2.6035
+gold_reward_multiplier = 1.3571
+spawn_count_multiplier = 2.0714
+starting_gold = 1357
 
 [sub_resource type="Resource" id="DayConfig_37"]
 script = ExtResource("2_dayconfig")
 day_index = 37
 display_name = "Day 37"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.72
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.54
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.36
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.6524
+enemy_damage_multiplier = 2.6524
+gold_reward_multiplier = 1.3673
+spawn_count_multiplier = 2.102
+starting_gold = 1367
 
 [sub_resource type="Resource" id="DayConfig_38"]
 script = ExtResource("2_dayconfig")
 day_index = 38
 display_name = "Day 38"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.74
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.555
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.37
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.6989
+enemy_damage_multiplier = 2.6989
+gold_reward_multiplier = 1.3776
+spawn_count_multiplier = 2.1327
+starting_gold = 1377
 
 [sub_resource type="Resource" id="DayConfig_39"]
 script = ExtResource("2_dayconfig")
 day_index = 39
 display_name = "Day 39"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.76
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.57
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.38
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "ashen_swamp"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.7429
+enemy_damage_multiplier = 2.7429
+gold_reward_multiplier = 1.3878
+spawn_count_multiplier = 2.1633
+starting_gold = 1387
 
 [sub_resource type="Resource" id="DayConfig_40"]
 script = ExtResource("2_dayconfig")
 day_index = 40
 display_name = "Day 40"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.78
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.585
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.39
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "ashen_swamp"
 is_mini_boss_day = true
-; # TUNING: milestone mini-boss days
+is_mini_boss = true
 is_final_boss = false
-; # TUNING: final campaign boss
+boss_id = "plague_cult_miniboss"
+base_wave_count = 5
+enemy_hp_multiplier = 2.7841
+enemy_damage_multiplier = 2.7841
+gold_reward_multiplier = 1.398
+spawn_count_multiplier = 2.1939
+starting_gold = 1397
 
 [sub_resource type="Resource" id="DayConfig_41"]
 script = ExtResource("2_dayconfig")
 day_index = 41
 display_name = "Day 41"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.8
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.6
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.4
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.8224
+enemy_damage_multiplier = 2.8224
+gold_reward_multiplier = 1.4082
+spawn_count_multiplier = 2.2245
+starting_gold = 1408
 
 [sub_resource type="Resource" id="DayConfig_42"]
 script = ExtResource("2_dayconfig")
 day_index = 42
 display_name = "Day 42"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.82
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.615
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.41
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.8575
+enemy_damage_multiplier = 2.8575
+gold_reward_multiplier = 1.4184
+spawn_count_multiplier = 2.2551
+starting_gold = 1418
 
 [sub_resource type="Resource" id="DayConfig_43"]
 script = ExtResource("2_dayconfig")
 day_index = 43
 display_name = "Day 43"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.84
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.63
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.42
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.8892
+enemy_damage_multiplier = 2.8892
+gold_reward_multiplier = 1.4286
+spawn_count_multiplier = 2.2857
+starting_gold = 1428
 
 [sub_resource type="Resource" id="DayConfig_44"]
 script = ExtResource("2_dayconfig")
 day_index = 44
 display_name = "Day 44"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.86
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.645
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.43
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.9174
+enemy_damage_multiplier = 2.9174
+gold_reward_multiplier = 1.4388
+spawn_count_multiplier = 2.3163
+starting_gold = 1438
 
 [sub_resource type="Resource" id="DayConfig_45"]
 script = ExtResource("2_dayconfig")
 day_index = 45
 display_name = "Day 45"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.88
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.66
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.44
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.9418
+enemy_damage_multiplier = 2.9418
+gold_reward_multiplier = 1.449
+spawn_count_multiplier = 2.3469
+starting_gold = 1448
 
 [sub_resource type="Resource" id="DayConfig_46"]
 script = ExtResource("2_dayconfig")
 day_index = 46
 display_name = "Day 46"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.9
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.675
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.45
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "iron_ridge"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.9622
+enemy_damage_multiplier = 2.9622
+gold_reward_multiplier = 1.4592
+spawn_count_multiplier = 2.3776
+starting_gold = 1459
 
 [sub_resource type="Resource" id="DayConfig_47"]
 script = ExtResource("2_dayconfig")
 day_index = 47
 display_name = "Day 47"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.92
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.69
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.46
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "outer_city"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.9784
+enemy_damage_multiplier = 2.9784
+gold_reward_multiplier = 1.4694
+spawn_count_multiplier = 2.4082
+starting_gold = 1469
 
 [sub_resource type="Resource" id="DayConfig_48"]
 script = ExtResource("2_dayconfig")
 day_index = 48
 display_name = "Day 48"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.94
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.705
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.47
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "outer_city"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.9903
+enemy_damage_multiplier = 2.9903
+gold_reward_multiplier = 1.4796
+spawn_count_multiplier = 2.4388
+starting_gold = 1479
 
 [sub_resource type="Resource" id="DayConfig_49"]
 script = ExtResource("2_dayconfig")
 day_index = 49
 display_name = "Day 49"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.96
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.72
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.48
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "PLAGUE_CULT"
+territory_id = "outer_city"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = false
-; # TUNING: final campaign boss
+base_wave_count = 5
+enemy_hp_multiplier = 2.9975
+enemy_damage_multiplier = 2.9975
+gold_reward_multiplier = 1.4898
+spawn_count_multiplier = 2.4694
+starting_gold = 1489
 
 [sub_resource type="Resource" id="DayConfig_50"]
 script = ExtResource("2_dayconfig")
 day_index = 50
 mission_index = 5
-faction_id = "PLAGUE_CULT"
-boss_id = "final_boss"
 display_name = "Day 50"
-; # PLACEHOLDER: replace with final day name
 description = "Placeholder briefing."
-; # PLACEHOLDER: replace with briefing copy
-base_wave_count = 5
-; # TUNING: wave count ramp — PLACEHOLDER
-enemy_hp_multiplier = 1.98
-; # TUNING: HP scaling — PLACEHOLDER
-enemy_damage_multiplier = 1.735
-; # TUNING: damage scaling — PLACEHOLDER
-gold_reward_multiplier = 1.49
-; # TUNING: reward scaling — PLACEHOLDER
+faction_id = "ORC_RAIDERS"
+territory_id = "outer_city"
 is_mini_boss_day = false
-; # TUNING: milestone mini-boss days
+is_mini_boss = false
 is_final_boss = true
-; # TUNING: final campaign boss
+boss_id = "final_boss"
+base_wave_count = 5
+enemy_hp_multiplier = 3.0
+enemy_damage_multiplier = 3.0
+gold_reward_multiplier = 1.5
+spawn_count_multiplier = 2.5
+starting_gold = 1500
 
 [resource]
 script = ExtResource("1_campaignconfig")

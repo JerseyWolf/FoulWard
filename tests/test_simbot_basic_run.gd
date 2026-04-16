@@ -1,9 +1,16 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_simbot_basic_run.gd
 # GdUnit4 test suite for a basic SimBot headless run (Phase 2).
 
 class_name TestSimBotBasicRun
 extends GdUnitTestSuite
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+	CampaignManager.set_active_campaign_config_for_test(CampaignManager.DEFAULT_SHORT_CAMPAIGN)
+	CampaignManager.current_day = 1
+	GameManager.game_state = Types.GameState.MAIN_MENU
+
 
 func test_simbot_can_run_and_place_buildings() -> void:
 	# Arrange

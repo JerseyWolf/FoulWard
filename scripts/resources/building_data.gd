@@ -196,6 +196,11 @@ extends Resource
 @export var campaign_unlock_day: int = 0
 @export var tags: PackedStringArray = PackedStringArray()
 
+## Hit points for destructible buildings. 0 = indestructible (backward-compat default).
+@export var max_hp: int = 0
+## When true, enemies with prefer_building_targets may attack this building.
+@export var can_be_targeted_by_enemies: bool = false
+
 # ─── CONTENT AUTHORING (Prompt 50) — tower band, roles, extended summoner/aura/healer/upgrade fields ───
 
 ## Tower content band: "SMALL", "MEDIUM", "LARGE" (distinct from [member footprint_size_class]).

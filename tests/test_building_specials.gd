@@ -1,7 +1,18 @@
-## TODO: add before_test() isolation — see testing SKILL
 ## Headless tests for Archer Barracks pulse buff and Shield Generator tower shield (Audit 6 §1.3).
 class_name TestBuildingSpecials
 extends GdUnitTestSuite
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+	BuildPhaseManager.set_build_phase_active(true)
+
+
+func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
+	await get_tree().process_frame
 
 
 func test_archer_barracks_pulse_adds_strike_bonus() -> void:

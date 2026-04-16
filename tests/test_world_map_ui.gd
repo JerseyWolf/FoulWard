@@ -1,4 +1,3 @@
-## TODO: add before_test() isolation — see testing SKILL
 ## test_world_map_ui.gd
 ## WorldMap presenter reacts to territory_state_changed.
 
@@ -9,6 +8,17 @@ extends GdUnitTestSuite
 # 1) Start new game, win day 1, open Between Mission → World Map tab; Heartland shows (Held).
 # 2) Lose a mission on a new run; territory for that day shows (Lost) and bonuses drop in next win.
 # 3) Advance several days in a 50-day campaign build and confirm day label and territory bands.
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
+
+
+func after_test() -> void:
+	for child: Node in get_children():
+		if is_instance_valid(child) and not child is Timer:
+			child.queue_free()
+	await get_tree().process_frame
+
 
 func test_world_map_updates_ownership_visual_on_state_change() -> void:
 	var scene: PackedScene = load("res://ui/world_map.tscn") as PackedScene

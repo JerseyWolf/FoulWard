@@ -1,0 +1,358 @@
+=======================================================
+FOUL WARD — 3D ART PIPELINE STRATEGY SUMMARY
+=======================================================
+
+OVERVIEW
+--------
+Goal: Generate production-quality 3D models for all Foul Ward 
+characters, enemies, and buildings using AI tools, get them 
+rigged, animated, and imported into Godot 4.
+
+The pipeline has 5 stages:
+1. Reference Sheet Generation (2D image AI)
+2. 3D Model Generation (Rodin / Hyper3D)
+3. Rigging & Skinning
+4. Animation
+5. Godot Import & Wiring
+
+=======================================================
+STAGE 1 — REFERENCE SHEET GENERATION
+=======================================================
+
+PURPOSE
+-------
+Before generating any 3D model, create a 2D turnaround 
+reference sheet for every unit. This locks your design 
+decisions (silhouette, proportions, color palette, armor 
+coverage) and feeds Rodin's Image-to-3D mode, which 
+produces dramatically better results than text-only 
+generation.
+
+TOOLS (in order of preference)
+-------------------------------
+1. CharacterGen (charactergen.app) — PURPOSE BUILT for 
+   game dev turnaround sheets. Generates front/side/back 
+   from a single text prompt. Mobile-friendly web UI. 
+   Use this first.
+
+2. Midjourney V7 — Best raw artistic quality. Use 
+   --cref [image] (Character Reference flag) to lock 
+   a design across multiple generations once you have 
+   a base image. Good for iteration after CharacterGen 
+   gives you a base.
+
+3. FLUX.1 Kontext — Best cross-unit consistency. Feed 
+   it reference images and it keeps new units visually 
+   coherent with the existing roster. Use when generating 
+   unit #10+ to ensure they still feel like the same game.
+
+4. Ideogram 3.0 — Strong combined Character Reference 
+   + Style Reference locking. Alternative to Midjourney.
+
+5. This chat (GPT-4o Image) — Fast concept sketching, 
+   good for quick first looks before committing to a 
+   design direction.
+
+WORKFLOW PER UNIT
+-----------------
+Step 1: Write text prompt (see prompt templates below)
+Step 2: Generate in CharacterGen → get front/side/back sheet
+Step 3: If result needs iteration → bring into Midjourney 
+        with --cref referencing the CharacterGen output
+Step 4: Save final approved sheet as:
+        [unitname]_reference_sheet.png
+Step 5: Feed this image into Rodin Image-to-3D mode
+
+WHAT A REFERENCE SHEET MUST SHOW
+---------------------------------
+- Front view (most important)
+- Right side view (silhouette thickness, weapon profile)
+- Back view (cloaks, quivers, backpack details)
+- 1-2 detail callouts (face close-up, key prop)
+- Color swatches strip at bottom (3-5 colors labeled: 
+  skin, armor, weapon, cloth, accent)
+- FLAT white/grey background — no environment, no shadows
+- Neutral T-pose or A-pose for all characters with limbs
+
+MASTER STYLE FOOTER
+-------------------
+Add this VERBATIM to the end of every image generation prompt.
+Never change the wording — consistency lives in this block.
+
+  Art style: semi-realistic low-poly game character, 
+  slightly exaggerated proportions (large hands, broad 
+  shoulders, readable silhouette at small scale), 
+  dark humor fantasy tone (Warhammer Fantasy meets 
+  Terry Pratchett), warm desaturated earth tones, 
+  stylized PBR materials, baked ambient occlusion. 
+  White background, character turnaround sheet, 
+  front/side/back views, no cast shadows, T-pose.
+
+FACTION COLOR ANCHORS
+---------------------
+Add one of these lines before the master footer for 
+faction-specific color consistency:
+
+  ORC RAIDERS:
+  Faction palette: dark green skin, rust iron armor, 
+  cracked leather, tribal bone trim, warm earth tones.
+
+  PLAGUE CULT:
+  Faction palette: rot brown-grey flesh, tattered burial 
+  cloth, sickly yellow-green infection glow, rusted dark iron.
+
+  ALLIES / PLAYER CHARACTERS:
+  Faction palette: worn practical armor, warm leather browns, 
+  tarnished iron, heroic but scruffy aesthetic.
+
+PRIORITY ORDER (who to do first)
+---------------------------------
+1. Florence, Arnulf, Sybil (player-facing every session)
+2. All mini-bosses + Archrot final boss (key dramatic moments)
+3. Orc Warboss, Herald of Worms (named enemies)
+4. All basic enemy grunts (6 existing types)
+5. Generic mercenaries, buildings (lowest — Rodin handles 
+   geometric buildings well from text alone)
+
+=======================================================
+STAGE 2 — 3D MODEL GENERATION (RODIN)
+=======================================================
+
+TOOL: Hyper3D Rodin (hyper3d.ai)
+MODE: Image-to-3D (always — not text-only)
+INPUT: The approved reference sheet from Stage 1
+
+RODIN SETTINGS TO USE
+---------------------
+- Enable T-pose / A-pose toggle for all characters 
+  (makes them immediately riggable)
+- Generate 4 variants per prompt, pick best
+- Target polygon count: 5,000–15,000 tris per character
+  (appropriate for isometric game units viewed small)
+- Export format: GLB (Godot-native, no conversion needed)
+- Request: "no background, isolated model, 
+  game-ready topology"
+
+CONSISTENCY TIPS FOR RODIN
+--------------------------
+- Always feed an image, never use text-only mode for 
+  characters
+- Add to every Rodin generation note:
+  "scale reference: adult human male 1.8m, 
+   low-poly game asset, isometric tower defense, 
+   GLB export, T-pose"
+- Bosses: generate at higher detail budget, they appear 
+  once and are worth the credits
+- Buildings: geometric enough that text-only works fine;
+  describe "cubic hex-tile footprint approximately 3x3m"
+
+WHAT TO DO WHEN RESULT IS "CLOSE BUT NOT RIGHT"
+------------------------------------------------
+- Silhouette wrong → go back to Stage 1, revise reference
+- Too cartoony → add "less stylized, more gritty realism" 
+  to the Rodin note
+- Too realistic → add "simplified geometry, stylized 
+  low-poly, fewer polygons"
+- Wrong proportions → add "larger head, shorter legs, 
+  broader shoulders" corrections to the image prompt first
+
+=======================================================
+STAGE 3 — RIGGING
+=======================================================
+
+TOOL OPTIONS (in order of speed)
+---------------------------------
+1. Mixamo (mixamo.com, FREE) — Upload GLB/FBX, 
+   auto-rigs humanoid characters in 2 minutes. 
+   Best for: Florence, Arnulf, Sybil, mercenaries, 
+   humanoid enemies (Orc Grunt, Plague Zombie, etc.)
+   Limitation: humanoids only, no creature rigs.
+
+2. Blender Auto-Rig Pro (paid addon, ~$40) — 
+   Best for non-humanoid creatures (Bat Swarm, 
+   Thornling, Ratkin, Bog Lurker). More control 
+   than Mixamo. Requires desktop Blender session.
+
+3. AccuRIG by Reallusion (free) — Alternative to 
+   Mixamo, handles slightly more varied body types.
+
+WORKFLOW
+--------
+Step 1: Export Rodin model as GLB
+Step 2: Open in Blender, check topology and scale
+Step 3: Upload to Mixamo (humanoids) or rig manually 
+        (creatures) — place rig markers on joints
+Step 4: Download rigged FBX from Mixamo
+Step 5: Import rigged FBX back into Blender, 
+        convert to GLB for Godot
+
+NAMING CONVENTION FOR BONES
+----------------------------
+Use Godot-compatible bone names from the start:
+Hips, Spine, Spine1, Spine2, Neck, Head,
+LeftUpperArm, LeftLowerArm, LeftHand,
+RightUpperArm, RightLowerArm, RightHand,
+LeftUpperLeg, LeftLowerLeg, LeftFoot,
+RightUpperLeg, RightLowerLeg, RightFoot
+
+=======================================================
+STAGE 4 — ANIMATION
+=======================================================
+
+REQUIRED ANIMATIONS PER CHARACTER TYPE
+---------------------------------------
+ENEMIES (all types):
+  - idle (2-4 second loop)
+  - walk / run (cycle)
+  - attack (0.5-1s, with clear impact frame)
+  - hit_react (short flinch)
+  - death (1-2s, falls to ground)
+  - spawn (optional, rising/appearing)
+
+ALLIES (Arnulf + mercenaries):
+  - idle
+  - run
+  - attack_melee (swing)
+  - hit_react
+  - death
+  - downed (collapses, lying pose)
+  - recovering (gets up)
+  - drunk_idle (swaying variation) — Arnulf only
+
+FLORENCE / SYBIL (stationary, Tower-based):
+  - idle
+  - shoot (arm raise + release)
+  - hit_react (Tower shakes)
+  - cast_spell
+  - victory
+  - defeat
+
+BUILDINGS:
+  - idle (static or very subtle ambient motion)
+  - active (firing/working state, looping)
+  - destroyed (collapse, one-shot)
+
+TOOL OPTIONS FOR ANIMATION
+---------------------------
+1. Mixamo animations library (FREE) — 
+   Thousands of pre-made humanoid animations, 
+   downloadable as FBX. Best for: walk, run, attack, 
+   idle, death for all humanoid units. Retarget 
+   to your rig in Blender.
+
+2. Cascadeur (free tier available) — 
+   AI-assisted keyframe animation. Good for 
+   creature animations Mixamo can't provide and 
+   for polishing auto-generated results.
+
+3. Blender NLA Editor — 
+   Manual keyframe animation for non-humanoids, 
+   buildings, and anything Mixamo can't handle. 
+   Also used to combine and trim Mixamo clips.
+
+4. AccuMotion / DeepMotion — 
+   Video-to-animation tools. Record yourself doing 
+   a motion on phone camera → generates animation 
+   clip. Fast for unique actions.
+
+RETARGETING MIXAMO ANIMATIONS TO CUSTOM RIGS
+--------------------------------------------
+In Blender:
+1. Import Mixamo FBX animation
+2. Import your character GLB (with rig)
+3. Use "Bake Action" to retarget pose bone by bone
+   or use the free Rokoko Retargeting addon
+4. Export as GLB with animations embedded
+
+=======================================================
+STAGE 5 — GODOT IMPORT & WIRING
+=======================================================
+
+IMPORT SETTINGS (Godot 4)
+--------------------------
+- Import as: GLB scene
+- Skeleton: detect automatically
+- Animation: import all clips
+- Compression: lossless for characters (they're small)
+- LOD: not needed at this scale
+
+FILE STRUCTURE IN PROJECT
+--------------------------
+res://art/
+  characters/
+    arnulf/
+      arnulf.glb
+      arnulf_reference_sheet.png
+    florence/
+    sybil/
+  enemies/
+    orc_grunt/
+    orc_brute/
+    goblin_firebug/
+    plague_zombie/
+    bat_swarm/
+    orc_archer/
+  bosses/
+    gorefang_warlord/
+    herald_of_worms/
+    archrot_incarnate/
+  buildings/
+    arrow_tower/
+    fire_brazier/
+    magic_obelisk/
+    [etc]
+  generated/  ← Blender placeholder GLBs (existing system)
+
+WIRING TO EXISTING CODE
+-----------------------
+The project already has ArtPlaceholderHelper.gd which 
+resolves meshes at runtime. When a production GLB is 
+placed at the correct path, it automatically takes 
+priority over the generated placeholder. No code changes 
+needed — just drop files in the right folder.
+
+AnimationPlayer node in each scene plays clips by name.
+Existing state machines reference animation names as strings:
+  EnemyBase → calls "walk", "attack", "death"
+  AllyBase → calls "idle", "run", "attack_melee", "downed"
+  Arnulf → calls "idle", "run", "attack_melee", 
+           "downed", "recovering", "drunk_idle"
+
+Match your AnimationPlayer clip names EXACTLY to these 
+strings when importing. No code changes needed.
+
+=======================================================
+5 EXAMPLE IMAGE GENERATION PROMPTS (reference sheets)
+=======================================================
+
+--- PROMPT 1: Arnulf ---
+Character design turnaround sheet, front view, right side 
+view, back view, isolated on white background.
+Arnulf: burly middle-aged human warrior, 1.9m tall, 
+slightly exaggerated proportions. Disheveled dirty blond 
+hair with grey streaks, red-nosed bloated face of a heavy 
+drinker, permanent five o'clock shadow. Worn plate armor 
+missing left pauldron (replaced by leather strap and 
+buckle), chainmail visible at joints, one knee cop 
+cracked. Battered iron shovel strapped across back as 
+primary weapon. Hip flask tucked into belt at left side, 
+visible and prominent. Proud slightly unsteady wide-stance 
+combat pose. Color swatches strip at bottom: tarnished 
+iron, worn leather brown, dirty blond, flushed skin.
+Art style: semi-realistic low-poly game character, 
+slightly exaggerated proportions (large hands, broad 
+shoulders, readable silhouette at small scale), dark humor 
+fantasy tone (Warhammer Fantasy meets Terry Pratchett), 
+warm desaturated earth tones, stylized PBR materials, 
+baked ambient occlusion. White background, character 
+turnaround sheet, front/side/back views, 
+no cast shadows, T-pose.
+
+--- PROMPT 2: Orc Grunt ---
+Character design turnaround sheet, front view, right side 
+view, back view, isolated on white background.
+Orc Grunt: stocky green-skinned orc soldier, 1.85m, 
+broad shoulders, large fists, hunched aggressive forward 
+stance. Crude dented iron helmet with two small cheek 
+plates, patchwork leather pauldrons with visible stitching, 
+linen wrapping on 

@@ -1,7 +1,7 @@
 # Signal Table — Foul Ward SignalBus
 
 **Source of truth:** `autoloads/signal_bus.gd`  
-**Count:** 65 `signal` declarations (verified 2026-03-31).
+**Count:** 67 `signal` declarations (verified 2026-04-14 against `autoloads/signal_bus.gd`).
 
 This table mirrors the file order and parameter types in code. When in doubt, read `signal_bus.gd` directly.
 
@@ -111,6 +111,13 @@ This table mirrors the file order and parameter types in code. When in doubt, re
 | `day_won` | `day_index: int` |
 | `day_failed` | `day_index: int` |
 | `campaign_completed` | `campaign_id: String` |
+
+## Dialogue
+
+| Signal | Parameters |
+|---|---|
+| `dialogue_line_started` | `entry_id: String, character_id: String` |
+| `dialogue_line_finished` | `entry_id: String, character_id: String` |
 
 ## Build mode
 

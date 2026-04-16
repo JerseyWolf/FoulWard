@@ -54,8 +54,10 @@ var _synthetic_boss_attack_day: DayConfig = null
 
 func _ready() -> void:
 	print("[GameManager] _ready: initial state=%s" % Types.GameState.keys()[game_state])
-	SignalBus.all_waves_cleared.connect(_on_all_waves_cleared)
-	SignalBus.tower_destroyed.connect(_on_tower_destroyed)
+	if not SignalBus.all_waves_cleared.is_connected(_on_all_waves_cleared):
+		SignalBus.all_waves_cleared.connect(_on_all_waves_cleared)
+	if not SignalBus.tower_destroyed.is_connected(_on_tower_destroyed):
+		SignalBus.tower_destroyed.connect(_on_tower_destroyed)
 	# Autoload order: CampaignManager before GameManager — connect second so day increments first on mission_won.
 	_connect_mission_won_transition_to_hub()
 	var shop: Node = get_node_or_null("/root/Main/Managers/ShopManager")
@@ -64,7 +66,8 @@ func _ready() -> void:
 		shop.initialize_tower(tower)
 	print("[GameManager] _ready: ShopManager wired to Tower")
 	reload_territory_map_from_active_campaign()
-	SignalBus.boss_killed.connect(_on_boss_killed)
+	if not SignalBus.boss_killed.is_connected(_on_boss_killed):
+		SignalBus.boss_killed.connect(_on_boss_killed)
 	_sync_held_territories_from_map()
 	if SaveManager.has_method("save_current_state"):
 		var save_cb: Callable = func(_mission_number: int) -> void:

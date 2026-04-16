@@ -36,3 +36,5 @@ is_summoner = false
 summon_squad_size = 2
 balance_status = "BASELINE"
 
+max_hp = 300
+can_be_targeted_by_enemies = true

@@ -1,9 +1,12 @@
-## TODO: add before_test() isolation — see testing SKILL
 # test_faction_data.gd
 # GdUnit4: FactionData .tres integrity and campaign day → faction validation.
 
 class_name TestFactionData
 extends GdUnitTestSuite
+
+
+func before_test() -> void:
+	EconomyManager.reset_to_defaults()
 
 
 func test_faction_data_roster_enemy_types_are_valid() -> void:
