@@ -68,7 +68,7 @@ compatibility: Godot 4.4 GDScript. Foul Ward project only.
 
 ## Ring Structure
 
-- 24 slots across 3 rings
+- 42 slots across 3 rings
 - Ring 1 (inner): slots 0–5
 - Ring 2 (middle): slots 6–13
 - Ring 3 (outer): slots 14–23

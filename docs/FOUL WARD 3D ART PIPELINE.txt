@@ -217,7 +217,7 @@ ALLIES (Arnulf + mercenaries):
   - death
   - downed (collapses, lying pose)
   - recovering (gets up)
-  - drunk_idle (swaying variation) — Arnulf only
+  # drunk_idle removed — Arnulf drunkenness system cut (see AGENTS.md Formally Cut Features)
 
 FLORENCE / SYBIL (stationary, Tower-based):
   - idle
@@ -315,8 +315,8 @@ AnimationPlayer node in each scene plays clips by name.
 Existing state machines reference animation names as strings:
   EnemyBase → calls "walk", "attack", "death"
   AllyBase → calls "idle", "run", "attack_melee", "downed"
-  Arnulf → calls "idle", "run", "attack_melee", 
-           "downed", "recovering", "drunk_idle"
+  Arnulf → calls "idle", "run", "attack_melee", "downed", "recovering"
+           # drunk_idle removed — drunkenness system cut
 
 Match your AnimationPlayer clip names EXACTLY to these 
 strings when importing. No code changes needed.

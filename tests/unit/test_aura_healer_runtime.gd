@@ -5,6 +5,7 @@ const _BuildingScene: PackedScene = preload("res://scenes/buildings/building_bas
 
 
 func before_test() -> void:
+	monitor_signals(SignalBus, false)
 	EconomyManager.reset_to_defaults()
 	AuraManager.clear_all_emitters_for_tests()
 

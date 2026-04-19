@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "ENCHANTER_GENERIC_02"
+character_id = "ENCHANTER"
+text = "I touched a cursed gemstone once. Lost three days. Gained an appreciation for silence."
+priority = 1
+once_only = false
+chain_next_id = ""
+conditions = []
+is_combat_line = false

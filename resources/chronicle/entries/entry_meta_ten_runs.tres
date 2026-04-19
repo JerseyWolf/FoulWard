@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChronicleEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/chronicle_entry_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entry_id = "entry_meta_ten_runs"
+display_name = "Decathlon"
+description = "Complete ten campaigns."
+tracking_signal = "campaign_completed"
+tracking_field = ""
+target_count = 10
+reward_type = 0
+reward_id = "perk_wave_reward_gold_5"

@@ -1,6 +1,6 @@
-## HexGrid — Manages 24 hex-shaped building slots; handles placement, selling, upgrading, and between-mission persistence.
+## HexGrid — Manages 42 hex-shaped building slots; handles placement, selling, upgrading, and between-mission persistence.
 # scenes/hex_grid/hex_grid.gd
-# HexGrid – manages 24 hex-shaped building slots in three concentric rings.
+# HexGrid – manages 42 hex-shaped building slots in three concentric rings.
 # Handles placement, selling, upgrading, and between-mission persistence.
 # All resource transactions flow through EconomyManager.
 # All lock checks flow through ResearchManager (nullable for unit tests).
@@ -25,9 +25,9 @@ const RING1_COUNT: int = 6
 const RING1_RADIUS: float = 6.0
 const RING2_COUNT: int = 12
 const RING2_RADIUS: float = 12.0
-const RING3_COUNT: int = 6
-const RING3_RADIUS: float = 18.0
-const TOTAL_SLOTS: int = 24
+const RING3_COUNT: int = 24
+const RING3_RADIUS: float = 24.0
+const TOTAL_SLOTS: int = 42
 
 ## Max horizontal distance from a click (XZ) to a slot center to count as "that slot".
 const SLOT_PICK_MAX_DISTANCE: float = 4.0
@@ -44,9 +44,8 @@ const BuildingScene: PackedScene = preload("res://scenes/buildings/building_base
 ## Which hex is targeted for the next build (driven by BuildMenu). -1 = none.
 var _build_highlight_slot: int = -1
 
-## Visual ring rotation (build phase only); does not change slot indices.
-var rotation_offset_degrees: float = 0.0
-const ROTATION_STEP_DEG: float = 15.0
+## Per-ring visual rotation (radians); does not change slot indices. Indices 0..2 = rings 1..3.
+var _ring_offsets: Array[float] = [0.0, 0.0, 0.0]
 
 # ---------------------------------------------------------------------------
 # Private state
@@ -126,7 +125,9 @@ func has_any_damaged_building() -> bool:
 		var building: BuildingBase = slot["building"] as BuildingBase
 		if not is_instance_valid(building):
 			continue
-		var hc: HealthComponent = building.get_node_or_null("HealthComponent") as HealthComponent
+		var hc: HealthComponent = building.health_component as HealthComponent
+		if hc == null:
+			hc = building.get_node_or_null("HealthComponent") as HealthComponent
 		if hc == null:
 			continue
 		if not hc.is_alive():
@@ -145,7 +146,9 @@ func repair_first_damaged_building() -> bool:
 		var building: BuildingBase = slot["building"] as BuildingBase
 		if not is_instance_valid(building):
 			continue
-		var hc: HealthComponent = building.get_node_or_null("HealthComponent") as HealthComponent
+		var hc: HealthComponent = building.health_component as HealthComponent
+		if hc == null:
+			hc = building.get_node_or_null("HealthComponent") as HealthComponent
 		if hc == null:
 			continue
 		if not hc.is_alive():
@@ -291,20 +294,54 @@ func _register_combat_stats_building(building: BuildingBase, building_data: Buil
 	)
 
 
-func rotate_ring(delta_steps: int) -> void:
-	if not BuildPhaseManager.is_build_phase:
-		push_warning("HexGrid.rotate_ring: attempted outside build phase")
+# Ring position formula adapted from Red Blob Games (redblobgames.com/grids/hexagons/)
+# via romlok/godot-gdhexgrid (github.com/romlok/godot-gdhexgrid)
+func rotate_ring(ring_index: int, angle_rad: float) -> void:
+	var state: Types.GameState = GameManager.get_game_state()
+	var allow_rotate: bool = (
+			BuildPhaseManager.is_build_phase
+			or state == Types.GameState.RING_ROTATE
+	)
+	if not allow_rotate:
+		push_warning("HexGrid.rotate_ring: attempted outside build phase / ring rotate screen")
 		return
-	rotation_offset_degrees += float(delta_steps) * ROTATION_STEP_DEG
-	rotation_offset_degrees = fposmod(rotation_offset_degrees, 360.0)
+	if ring_index < 0 or ring_index >= 3:
+		push_warning("HexGrid.rotate_ring: invalid ring_index %d" % ring_index)
+		return
+	_ring_offsets[ring_index] += angle_rad
 	_rebuild_slot_positions()
+	SignalBus.ring_rotated.emit(ring_index, _ring_offsets[ring_index])
+
+
+## Applies ring rotation geometry only (no SignalBus). Used by ring rotation SubViewport preview.
+func apply_ring_rotation_silent(ring_index: int, angle_rad: float) -> void:
+	if ring_index < 0 or ring_index >= 3:
+		return
+	_ring_offsets[ring_index] += angle_rad
+	_rebuild_slot_positions()
+
+
+func get_ring_offset_radians(ring_index: int) -> float:
+	if ring_index < 0 or ring_index >= _ring_offsets.size():
+		return 0.0
+	return _ring_offsets[ring_index]
 
 
 func _rebuild_slot_positions() -> void:
 	var new_positions: Array[Vector3] = []
-	new_positions.append_array(_compute_ring_positions(RING1_COUNT, RING1_RADIUS, rotation_offset_degrees))
-	new_positions.append_array(_compute_ring_positions(RING2_COUNT, RING2_RADIUS, rotation_offset_degrees))
-	new_positions.append_array(_compute_ring_positions(RING3_COUNT, RING3_RADIUS, 30.0 + rotation_offset_degrees))
+	new_positions.append_array(
+			_compute_ring_positions(RING1_COUNT, RING1_RADIUS, rad_to_deg(_ring_offsets[0]))
+	)
+	new_positions.append_array(
+			_compute_ring_positions(RING2_COUNT, RING2_RADIUS, rad_to_deg(_ring_offsets[1]))
+	)
+	new_positions.append_array(
+			_compute_ring_positions(
+					RING3_COUNT,
+					RING3_RADIUS,
+					30.0 + rad_to_deg(_ring_offsets[2])
+			)
+	)
 	if new_positions.size() != TOTAL_SLOTS:
 		push_error("HexGrid._rebuild_slot_positions: position count mismatch")
 		return
@@ -313,6 +350,11 @@ func _rebuild_slot_positions() -> void:
 		var node: Area3D = get_node_or_null("HexSlot_%02d" % i) as Area3D
 		if node != null:
 			node.global_position = new_positions[i]
+		var slot: Dictionary = _slots[i]
+		if bool(slot.get("is_occupied", false)):
+			var building: BuildingBase = slot.get("building") as BuildingBase
+			if is_instance_valid(building):
+				building.global_position = new_positions[i]
 
 
 func _activate_building_obstacle(building: BuildingBase) -> void:
@@ -484,7 +526,9 @@ func get_lowest_hp_pct_building() -> BuildingBase:
 		var b: BuildingBase = slot["building"] as BuildingBase
 		if not is_instance_valid(b):
 			continue
-		var hc: HealthComponent = b.get_node_or_null("HealthComponent") as HealthComponent
+		var hc: HealthComponent = b.health_component as HealthComponent
+		if hc == null:
+			hc = b.get_node_or_null("HealthComponent") as HealthComponent
 		if hc == null or not hc.is_alive():
 			continue
 		var pct: float = float(hc.current_hp) / float(hc.max_hp)
@@ -554,7 +598,7 @@ func get_nearest_slot_index(world_pos: Vector3) -> int:
 	return -1
 
 
-## Maps a world position to a logical hex key; [member Vector2i.x] is the slot index (0..23), [member Vector2i.y] is unused (0).
+## Maps a world position to a logical hex key; [member Vector2i.x] is the slot index (0..41), [member Vector2i.y] is unused (0).
 func world_to_hex(world_pos: Vector3) -> Vector2i:
 	var best_i: int = -1
 	var best_d: float = INF
@@ -714,7 +758,7 @@ func _is_valid_index(slot_index: int) -> bool:
 	return slot_index >= 0 and slot_index < TOTAL_SLOTS
 
 
-## Ring index 0 = inner (6 slots), 1 = middle (12), 2 = outer (6).
+## Ring index 0 = inner (6 slots), 1 = middle (12), 2 = outer (24).
 func _ring_index_for_slot(slot_index: int) -> int:
 	if slot_index < RING1_COUNT:
 		return 0

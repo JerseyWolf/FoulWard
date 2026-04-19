@@ -77,7 +77,11 @@ func try_apply_enchantment(weapon_slot: Types.WeaponSlot, slot_type: String, enc
 	var eff_gold: int = gold_cost
 	if gold_cost > 0:
 		eff_gold = int(
-			ceilf(float(gold_cost) * GameManager.get_aggregate_enchanting_cost_multiplier())
+			ceilf(
+				float(gold_cost)
+				* GameManager.get_aggregate_enchanting_cost_multiplier()
+				* ChronicleManager.get_chronicle_enchanting_cost_multiplier()
+			)
 		)
 		if eff_gold < 1:
 			eff_gold = 1

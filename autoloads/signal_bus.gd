@@ -76,6 +76,10 @@ signal resource_changed(resource_type: Types.ResourceType, new_amount: int)
 signal territory_state_changed(territory_id: String)
 @warning_ignore("unused_signal")
 signal world_map_updated()
+@warning_ignore("unused_signal")
+signal territory_tier_cleared(territory_id: String, tier: int)
+@warning_ignore("unused_signal")
+signal territory_selected_for_replay(territory_id: String)
 
 # === TERRAIN (battlefield zones, navmesh) ===
 @warning_ignore("unused_signal")
@@ -147,6 +151,9 @@ signal campaign_completed(campaign_id: String)
 signal dialogue_line_started(entry_id: String, character_id: String)
 @warning_ignore("unused_signal")
 signal dialogue_line_finished(entry_id: String, character_id: String)
+## Emitted by DialogueManager when a combat banner line is selected (after request_combat_line).
+@warning_ignore("unused_signal")
+signal combat_dialogue_requested(entry: DialogueEntry)
 
 # === BUILD MODE ===
 @warning_ignore("unused_signal")
@@ -198,3 +205,22 @@ signal mercenary_offer_generated(ally_id: String)
 signal mercenary_recruited(ally_id: String)
 @warning_ignore("unused_signal")
 signal ally_roster_changed()
+
+# === SYBIL PASSIVE ===
+# Perplexity spec lists `sybil_passive_selected` before `sybil_passives_offered`.
+@warning_ignore("unused_signal")
+signal sybil_passive_selected(passive_id: String)
+@warning_ignore("unused_signal")
+signal sybil_passives_offered(passive_ids: Array)
+
+# === HEX GRID (ring rotation) ===
+@warning_ignore("unused_signal")
+signal ring_rotated(ring_index: int, angle_rad: float)
+
+# === CHRONICLE (meta-progression) ===
+@warning_ignore("unused_signal")
+signal chronicle_entry_completed(entry_id: String)
+@warning_ignore("unused_signal")
+signal chronicle_perk_activated(perk_id: String)
+@warning_ignore("unused_signal")
+signal chronicle_progress_updated(entry_id: String, current: int, target: int)

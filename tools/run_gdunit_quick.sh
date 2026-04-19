@@ -47,6 +47,7 @@ fi
 # test_enemy_pathfinding, test_simulation_api, scene-heavy combat tests — run full suite for those.
 QUICK_SUITES=(
 	"res://tests/test_economy_manager.gd"
+	"res://tests/test_chronicle_manager.gd"
 	"res://tests/test_damage_calculator.gd"
 	"res://tests/test_health_component.gd"
 	"res://tests/test_art_placeholders.gd"
@@ -60,9 +61,15 @@ QUICK_SUITES=(
 	"res://tests/test_game_manager.gd"
 	"res://tests/test_research_manager.gd"
 	"res://tests/test_shop_manager.gd"
+	"res://tests/test_shop_rotation.gd"
 	"res://tests/test_consumables.gd"
 	"res://tests/test_enchantment_manager.gd"
+	"res://tests/test_sybil_passive_manager.gd"
+	"res://tests/test_ring_rotation.gd"
+	"res://tests/test_hex_grid.gd"
 	"res://tests/test_territory_economy_bonuses.gd"
+	"res://tests/test_campaign_config.gd"
+	"res://tests/test_difficulty_tier_system.gd"
 	"res://tests/test_campaign_territory_mapping.gd"
 	"res://tests/test_campaign_territory_updates.gd"
 	"res://tests/test_mercenary_offers.gd"
@@ -76,6 +83,8 @@ QUICK_SUITES=(
 	"res://tests/test_simbot_logging.gd"
 	"res://tests/test_simbot_safety.gd"
 	"res://tests/test_dialogue_manager.gd"
+	"res://tests/test_dialogue_content.gd"
+	"res://tests/test_combat_dialogue.gd"
 	"res://tests/test_relationship_manager.gd"
 	"res://tests/test_florence.gd"
 	"res://tests/test_spell_manager.gd"
@@ -92,6 +101,8 @@ QUICK_SUITES=(
 	"res://tests/unit/test_economy_mission_integration.gd"
 	"res://tests/unit/test_aura_healer_runtime.gd"
 	"res://tests/unit/test_simbot_balance_integration.gd"
+	"res://tests/unit/test_rigged_visual_wiring_session07.gd"
+	"res://tests/unit/test_validate_art_assets_session07.gd"
 )
 
 gdunit_args=()
@@ -117,6 +128,12 @@ set +e
 } > "$log_file" 2>&1
 gdunit_exit_code=$?
 set -e
+
+# Post-exit segfault/abort from Godot .NET teardown — treat like warning pass (mirrors run_gdunit.sh).
+if [[ $gdunit_exit_code -eq 139 ]] || [[ $gdunit_exit_code -eq 134 ]]; then
+	echo "run_gdunit_quick.sh: note: post-exit crash suppressed (known Godot .NET teardown issue)" >&2
+	gdunit_exit_code=101
+fi
 
 {
 	echo "=== run_gdunit_quick.sh summary (last $summary_lines lines of full log) ==="

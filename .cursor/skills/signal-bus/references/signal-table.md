@@ -1,7 +1,7 @@
 # Signal Table — Foul Ward SignalBus
 
 **Source of truth:** `autoloads/signal_bus.gd`  
-**Count:** 67 `signal` declarations (verified 2026-04-14 against `autoloads/signal_bus.gd`).
+**Count:** 77 `signal` declarations (verified 2026-04-18 against `autoloads/signal_bus.gd`).
 
 This table mirrors the file order and parameter types in code. When in doubt, read `signal_bus.gd` directly.
 
@@ -63,6 +63,8 @@ This table mirrors the file order and parameter types in code. When in doubt, re
 |---|---|
 | `territory_state_changed` | `territory_id: String` |
 | `world_map_updated` | *(none)* |
+| `territory_tier_cleared` | `territory_id: String, tier: int` |
+| `territory_selected_for_replay` | `territory_id: String` |
 
 ## Terrain / nav
 
@@ -118,6 +120,7 @@ This table mirrors the file order and parameter types in code. When in doubt, re
 |---|---|
 | `dialogue_line_started` | `entry_id: String, character_id: String` |
 | `dialogue_line_finished` | `entry_id: String, character_id: String` |
+| `combat_dialogue_requested` | `entry: DialogueEntry` |
 
 ## Build mode
 
@@ -158,3 +161,30 @@ This table mirrors the file order and parameter types in code. When in doubt, re
 | `mercenary_offer_generated` | `ally_id: String` |
 | `mercenary_recruited` | `ally_id: String` |
 | `ally_roster_changed` | *(none)* |
+
+## Sybil passives
+
+| Signal | Parameters |
+|---|---|
+| `sybil_passive_selected` | `passive_id: String` |
+| `sybil_passives_offered` | `passive_ids: Array` |
+
+## Hex grid
+
+| Signal | Parameters |
+|---|---|
+| `ring_rotated` | `ring_index: int, angle_rad: float` |
+
+## Chronicle (meta-progression)
+
+| Signal | Parameters |
+|---|---|
+| `chronicle_entry_completed` | `entry_id: String` |
+| `chronicle_perk_activated` | `perk_id: String` |
+| `chronicle_progress_updated` | `entry_id: String, current: int, target: int` |
+
+## Settings
+
+| Signal | Parameters |
+|---|---|
+| `graphics_quality_changed` | `quality: int` |

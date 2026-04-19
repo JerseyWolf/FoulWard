@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ChroniclePerkData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/chronicle_perk_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+perk_id = "perk_gold_per_kill_2pct"
+display_name = "+2% Gold per Kill"
+description = "Bonus gold from enemy kills based on base kill reward."
+effect_type = 4
+effect_value = 0.02

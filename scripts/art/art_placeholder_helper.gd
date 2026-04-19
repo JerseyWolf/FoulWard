@@ -381,6 +381,14 @@ static func _get_ally_token(ally_id: StringName) -> String:
 	match ally_id:
 		"arnulf":
 			return "arnulf"
+		"archer":
+			return "archer"
+		"knight":
+			return "knight"
+		"swordsman":
+			return "swordsman"
+		"barbarian":
+			return "barbarian"
 		_:
 			return String(ally_id).to_lower()
 

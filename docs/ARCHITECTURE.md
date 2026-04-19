@@ -10,7 +10,7 @@ Registered in `project.godot` in this exact order (game singletons first; MCP ed
 
 | #  | Script Path                              | Autoload Name      | Purpose                                  |
 |----|------------------------------------------|--------------------|------------------------------------------|
-| 1  | `res://autoloads/signal_bus.gd`          | `SignalBus`        | Central signal registry (**67** signals as of **2026-04-14**, no logic) |
+| 1  | `res://autoloads/signal_bus.gd`          | `SignalBus`        | Central signal registry (**77** signals as of **2026-04-18**, no logic) |
 | 2  | `res://scripts/nav_mesh_manager.gd`      | `NavMeshManager`   | Registers `NavigationRegion3D`, queues rebakes |
 | 3  | `res://autoloads/DamageCalculator.cs`    | `DamageCalculator` | Stateless damage multiplier lookups (C#) |
 | 4  | `res://autoloads/aura_manager.gd`       | `AuraManager`      | Aura towers + enemy aura emitters        |
@@ -23,13 +23,17 @@ Registered in `project.godot` in this exact order (game singletons first; MCP ed
 | 11 | `res://autoloads/ally_manager.gd`       | `AllyManager`      | Summoner-building squads                 |
 | 12 | `res://autoloads/combat_stats_tracker.gd` | `CombatStatsTracker` | SimBot / balance CSV output          |
 | 13 | `res://autoloads/save_manager.gd`        | `SaveManager`      | Rolling autosaves (no `class_name`)      |
-| 14 | `res://autoloads/dialogue_manager.gd`    | `DialogueManager`  | Hub dialogue from `res://resources/dialogue/**` |
-| 15 | `res://autoloads/auto_test_driver.gd`   | `AutoTestDriver`   | Headless `--autotest` / SimBot driver    |
-| 16 | *(UID — GDAI extension)*                 | `GDAIMCPRuntime`   | Editor MCP bridge                        |
-| 17 | `res://autoloads/enchantment_manager.gd` | `EnchantmentManager` | Weapon enchantment slots             |
-| 18 | `res://addons/godot_mcp/mcp_screenshot_service.gd` | `MCPScreenshot` | Godot MCP Pro helper (editor)   |
-| 19 | `res://addons/godot_mcp/mcp_input_service.gd` | `MCPInputService` | Godot MCP Pro helper (editor)   |
-| 20 | `res://addons/godot_mcp/mcp_game_inspector_service.gd` | `MCPGameInspector` | Godot MCP Pro helper (editor) |
+| 14 | `res://autoloads/sybil_passive_manager.gd` | `SybilPassiveManager` | Sybil passive `.tres` load, offers, modifiers |
+| 15 | `res://autoloads/chronicle_manager.gd`   | `ChronicleManager` | Meta achievements + perks (`user://chronicle.json`) |
+| 16 | `res://autoloads/dialogue_manager.gd`    | `DialogueManager`  | Hub + combat dialogue from `res://resources/dialogue/**` |
+| 17 | `res://autoloads/auto_test_driver.gd`   | `AutoTestDriver`   | Headless `--autotest` / SimBot driver    |
+| 18 | *(UID — GDAI extension)*                 | `GDAIMCPRuntime`   | Editor MCP bridge                        |
+| 19 | `res://autoloads/enchantment_manager.gd` | `EnchantmentManager` | Weapon enchantment slots             |
+| 20 | `res://addons/godot_mcp/mcp_screenshot_service.gd` | `MCPScreenshot` | Godot MCP Pro helper (editor)   |
+| 21 | `res://addons/godot_mcp/mcp_input_service.gd` | `MCPInputService` | Godot MCP Pro helper (editor)   |
+| 22 | `res://addons/godot_mcp/mcp_game_inspector_service.gd` | `MCPGameInspector` | Godot MCP Pro helper (editor) |
+
+**Core game autoloads:** 19 entries (rows 1–19 above). **`project.godot`** lists **22** autoload lines total — the three **MCP** helpers (rows 20–22) are editor tooling, not part of the gameplay singleton chain in `AGENTS.md`.
 
 `Types` is a `class_name` script at `res://scripts/types.gd` — NOT an autoload.
 It provides enums and constants via `Types.GameState`, `Types.DamageType`, etc.
@@ -71,7 +75,7 @@ Main (Node3D)                                  [main.tscn — script: main_root.
 │   │   └── AttackShape (CollisionShape3D)     [Small sphere, mask = layer 2]
 │   └── ArnulfLabel (Label3D)                  ["ARNULF" text]
 │
-├── HexGrid (Node3D)                          [hex_grid.tscn — 24-slot build grid, 3 rings]
+├── HexGrid (Node3D)                          [hex_grid.tscn — 42-slot build grid, 3 rings]
 │   ├── HexSlot_00 (Area3D)                   [One per slot — collision layer 7 bit mask “HexSlots”]
 │   │   ├── SlotCollision (CollisionShape3D)
 │   │   └── SlotMesh (MeshInstance3D)          [Hex outline, visible only in build mode]
@@ -523,7 +527,7 @@ BetweenMissionScreen ("NEXT MISSION" button):
               Each slot: { index: int, axial: Vector2i, world_pos: Vector3,
                            building: BuildingBase or null, is_occupied: bool }
 
-[Layout]      24 slots in 3 rings around tower center (Vector3.ZERO):
+[Layout]      42 slots in 3 rings around tower center (Vector3.ZERO):
               Ring 1 (inner): 6 slots at distance ~6 units, 60° apart
               Ring 2 (outer): 12 slots at distance ~12 units, 30° apart
               Ring 3 (extended): 6 slots at distance ~18 units, 60° apart (offset)

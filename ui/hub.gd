@@ -32,8 +32,8 @@ func _set_ui_manager(ui_manager: Node) -> void:
 
 
 func _initialize_characters() -> void:
-	# TODO(ART): Hub characters use ColorRect placeholders in character_base_2d — swap to 512×512
-	# portrait Texture2D per CharacterData when commissioned (see FUTURE_3D_MODELS_PLAN.md §6).
+	# Production wiring: portrait 2D art (512×512 Texture2D per CharacterData), not GLB.
+	# No RiggedVisualWiring here — swap ColorRect placeholders when assets are commissioned.
 	if _characters_container == null:
 		return
 

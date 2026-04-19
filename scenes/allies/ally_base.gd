@@ -203,8 +203,8 @@ func _apply_ally_data_to_shapes() -> void:
 
 
 func _apply_debug_color_from_data() -> void:
-	# TODO(ART): Apply ArtPlaceholderHelper.get_ally_mesh(ally_id) here when generic allies use
-	# res://art/generated/allies/<ally_id>.glb; keep debug_color as fallback until then.
+	# Production wiring: asset = RiggedVisualWiring.ally_rigged_glb_path(ally_id)
+	# → res://art/generated/allies/<ally_id>.glb; keep debug_color as fallback until assets land.
 	if ally_data == null or ally_mesh == null:
 		return
 	var c: Variant = _ally_data_get("debug_color", Color.WHITE)

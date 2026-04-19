@@ -32,6 +32,15 @@ var _arnulf_current_state: Types.ArnulfState = Types.ArnulfState.IDLE
 var _spell_cast_count: int = 0
 var _last_spell_cast_id: String = ""
 
+## Per-mission combat dialogue state (reset on mission_started).
+var _combat_kills_this_mission: int = 0
+var _combat_wave_number: int = 0
+var _combat_boss_seen: bool = false
+var _combat_first_blood: bool = false
+var _combat_florence_damaged: bool = false
+## entry_id → true — combat lines shown this mission (request_combat_line dedup).
+var _seen_combat_lines: Dictionary = {}
+
 var _rng := RandomNumberGenerator.new() # TUNING
 
 ## Test-only: incremented when CampaignManager starts a campaign day (non–endless mode).
@@ -149,10 +158,27 @@ func _connect_signals() -> void:
 		SignalBus.arnulf_state_changed.connect(_on_arnulf_state_changed)
 	if not SignalBus.spell_cast.is_connected(_on_spell_cast):
 		SignalBus.spell_cast.connect(_on_spell_cast)
+	if not SignalBus.enemy_killed.is_connected(_on_combat_enemy_killed):
+		SignalBus.enemy_killed.connect(_on_combat_enemy_killed)
+	if not SignalBus.wave_started.is_connected(_on_combat_wave_started):
+		SignalBus.wave_started.connect(_on_combat_wave_started)
+	if not SignalBus.florence_damaged.is_connected(_on_combat_florence_damaged):
+		SignalBus.florence_damaged.connect(_on_combat_florence_damaged)
+	if not SignalBus.boss_spawned.is_connected(_on_combat_boss_spawned):
+		SignalBus.boss_spawned.connect(_on_combat_boss_spawned)
+
+
+## Peek-only: eligible hub line without emitting dialogue_line_started (e.g. Talk button visibility).
+func peek_entry_for_character(character_id: String, tags: Array[String] = []) -> DialogueEntry:
+	return _request_entry_for_character(character_id, tags, false)
 
 
 ## Returns the highest-priority eligible DialogueEntry for the given character and tags.
 func request_entry_for_character(character_id: String, tags: Array[String] = []) -> DialogueEntry:
+	return _request_entry_for_character(character_id, tags, true)
+
+
+func _request_entry_for_character(character_id: String, tags: Array[String], emit_started_signal: bool) -> DialogueEntry:
 	if not entries_by_character.has(character_id):
 		return null
 
@@ -160,9 +186,12 @@ func request_entry_for_character(character_id: String, tags: Array[String] = [])
 	if not active_chain_id.is_empty():
 		if entries_by_id.has(active_chain_id):
 			var chain_entry: DialogueEntry = entries_by_id[active_chain_id] as DialogueEntry
-			if not (chain_entry.once_only and played_once_only.get(chain_entry.entry_id, false)):
+			if chain_entry.is_combat_line:
+				active_chains_by_character.erase(character_id)
+			elif not (chain_entry.once_only and played_once_only.get(chain_entry.entry_id, false)):
 				if _entry_matches_tags(chain_entry, tags) and _evaluate_conditions(chain_entry):
-					_emit_started(chain_entry)
+					if emit_started_signal:
+						_emit_started(chain_entry)
 					return chain_entry
 			active_chains_by_character.erase(character_id)
 			# Active chain exists but is blocked by once-only or fails conditions;
@@ -175,6 +204,8 @@ func request_entry_for_character(character_id: String, tags: Array[String] = [])
 	var candidates: Array[DialogueEntry] = []
 	for entry_variant: Variant in source_list:
 		var entry: DialogueEntry = entry_variant as DialogueEntry
+		if entry.is_combat_line:
+			continue
 		if entry.once_only and played_once_only.get(entry.entry_id, false):
 			continue
 		if not (_entry_matches_tags(entry, tags) and _evaluate_conditions(entry)):
@@ -195,12 +226,33 @@ func request_entry_for_character(character_id: String, tags: Array[String] = [])
 
 	var index := 0
 	if best_candidates.size() > 1:
-		# SOURCE: Hades-style priority bucket selection (external analysis videos/articles).
-		index = _rng.randi_range(0, best_candidates.size() - 1)
+		if emit_started_signal:
+			# SOURCE: Hades-style priority bucket selection (external analysis videos/articles).
+			index = _rng.randi_range(0, best_candidates.size() - 1)
 
 	var chosen: DialogueEntry = best_candidates[index]
-	_emit_started(chosen)
+	if emit_started_signal:
+		_emit_started(chosen)
 	return chosen
+
+
+## Highest-priority eligible combat banner line; marks seen and emits combat_dialogue_requested.
+func request_combat_line() -> DialogueEntry:
+	var best: DialogueEntry = null
+	for entry_variant: Variant in entries_by_id.values():
+		var entry: DialogueEntry = entry_variant as DialogueEntry
+		if not entry.is_combat_line:
+			continue
+		if _seen_combat_lines.has(entry.entry_id):
+			continue
+		if not _evaluate_conditions(entry):
+			continue
+		if best == null or entry.priority > best.priority:
+			best = entry
+	if best != null:
+		_seen_combat_lines[best.entry_id] = true
+		SignalBus.combat_dialogue_requested.emit(best)
+	return best
 
 
 ## Returns the DialogueEntry with the given entry_id, or null if not found.
@@ -287,6 +339,16 @@ func _evaluate_relationship_tier_condition(cond: DialogueCondition) -> bool:
 
 func _resolve_state_value(key: String) -> Variant:
 	match key:
+		"wave_number_gte":
+			return _combat_wave_number
+		"kills_this_mission_gte":
+			return _combat_kills_this_mission
+		"boss_active":
+			return _combat_boss_seen
+		"first_blood":
+			return _combat_first_blood
+		"florence_damaged":
+			return _combat_florence_damaged
 		"current_mission_number":
 			return current_mission_number
 		"mission_won_count":
@@ -448,6 +510,33 @@ func _on_game_state_changed(_old_state: Types.GameState, new_state: Types.GameSt
 
 func _on_mission_started(mission_number: int) -> void:
 	current_mission_number = mission_number
+	_combat_kills_this_mission = 0
+	_combat_wave_number = 0
+	_combat_boss_seen = false
+	_combat_first_blood = false
+	_combat_florence_damaged = false
+	_seen_combat_lines.clear()
+
+
+func _on_combat_enemy_killed(_enemy_type: Types.EnemyType, _position: Vector3, _gold_reward: int) -> void:
+	_combat_kills_this_mission += 1
+	_combat_first_blood = true
+	request_combat_line()
+
+
+func _on_combat_wave_started(wave_number: int, _enemy_count: int) -> void:
+	_combat_wave_number = wave_number
+	request_combat_line()
+
+
+func _on_combat_florence_damaged(_amount: int, _source_enemy_id: String) -> void:
+	_combat_florence_damaged = true
+	request_combat_line()
+
+
+func _on_combat_boss_spawned(_boss_id: String) -> void:
+	_combat_boss_seen = true
+	request_combat_line()
 
 
 func _on_mission_won(_mission_number: int) -> void:

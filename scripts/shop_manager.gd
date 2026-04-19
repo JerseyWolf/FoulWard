@@ -10,6 +10,8 @@ class_name ShopManager
 extends Node
 
 const CONSUMABLE_STACK_CAP: int = 20
+const DAILY_ITEMS_MIN: int = 4
+const DAILY_ITEMS_MAX: int = 6
 
 # ---------------------------------------------------------------------------
 # Exports
@@ -138,6 +140,77 @@ func get_available_items() -> Array[ShopItemData]:
 	return shop_catalog.duplicate()
 
 
+## Daily shop rotation: 4–6 items, deterministic per `day_index`, isolated RNG (seed = day_index).
+func get_daily_items(day_index: int) -> Array[ShopItemData]:
+	var rng: RandomNumberGenerator = _get_rng_for_day(day_index)
+
+	var pool: Array[ShopItemData] = []
+	for item: ShopItemData in shop_catalog:
+		if item.category == "consumable" and get_stack_count(item.item_id) >= CONSUMABLE_STACK_CAP:
+			continue
+		pool.append(item)
+
+	var consumables: Array[ShopItemData] = []
+	var equipment: Array[ShopItemData] = []
+	for item: ShopItemData in pool:
+		match item.category:
+			"consumable":
+				consumables.append(item)
+			"equipment":
+				equipment.append(item)
+			"voucher":
+				pass
+			_:
+				pass
+
+	if consumables.is_empty() or equipment.is_empty():
+		push_warning("ShopManager.get_daily_items: consumable or equipment bucket is empty")
+		return []
+
+	var result: Array[ShopItemData] = []
+	var remaining: Array[ShopItemData] = pool.duplicate()
+
+	var picked_c: ShopItemData = _pick_weighted(consumables, rng)
+	result.append(picked_c)
+	remaining.erase(picked_c)
+
+	var picked_e: ShopItemData = _pick_weighted(equipment, rng)
+	result.append(picked_e)
+	remaining.erase(picked_e)
+
+	var total: int = DAILY_ITEMS_MIN + rng.randi_range(0, DAILY_ITEMS_MAX - DAILY_ITEMS_MIN)
+	while result.size() < total and not remaining.is_empty():
+		var next: ShopItemData = _pick_weighted(remaining, rng)
+		result.append(next)
+		remaining.erase(next)
+
+	return result
+
+
+func _get_rng_for_day(day_index: int) -> RandomNumberGenerator:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = day_index as int
+	return rng
+
+
+func _pick_weighted(items: Array[ShopItemData], rng: RandomNumberGenerator) -> ShopItemData:
+	if items.is_empty():
+		push_warning("ShopManager._pick_weighted: empty items array")
+		return ShopItemData.new()
+	var total_weight: float = 0.0
+	for item: ShopItemData in items:
+		total_weight += item.rarity_weight
+	if total_weight <= 0.0:
+		return items[items.size() - 1]
+	var roll: float = rng.randf() * total_weight
+	var running: float = 0.0
+	for item: ShopItemData in items:
+		running += item.rarity_weight
+		if roll <= running:
+			return item
+	return items[items.size() - 1]
+
+
 ## Returns true if the item exists and the player can currently afford it.
 func can_purchase(item_id: String) -> bool:
 	var item: ShopItemData = _find_item(item_id)
@@ -151,7 +224,7 @@ func can_purchase(item_id: String) -> bool:
 			if hex == null:
 				return false
 			return hex.has_any_damaged_building()
-		"arrow_tower_placed":
+		"arrow_tower_placed", "arrow_tower_voucher_2":
 			if hex == null:
 				return false
 			return hex.has_empty_slot() and hex.is_building_available(Types.BuildingType.ARROW_TOWER)
@@ -214,6 +287,22 @@ func _apply_consumable_effect(item_id: String) -> void:
 					if dur <= 0.0:
 						dur = 1.0
 					tower.add_spell_shield(float(item_data.value), dur)
+			"fire_oil":
+				var wum: Node = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
+				if wum != null and wum.has_method("add_fire_oil_charges"):
+					wum.add_fire_oil_charges(item_data.value)
+				else:
+					push_warning(
+						"ShopManager._apply_consumable_effect: fire_oil — WeaponUpgradeManager or add_fire_oil_charges missing"
+					)
+			"emergency_repair":
+				var tower_er: Node = get_node_or_null("/root/Main/Tower")
+				if tower_er != null and tower_er.has_method("heal_percent_max_hp"):
+					tower_er.heal_percent_max_hp(float(item_data.value) / 100.0)
+				else:
+					push_warning(
+						"ShopManager._apply_consumable_effect: emergency_repair — Tower or heal_percent_max_hp missing"
+					)
 			_:
 				push_warning("ShopManager._apply_consumable_effect: unknown effect tag '%s'" % tag)
 
@@ -250,9 +339,14 @@ func _apply_effect(item_id: String) -> bool:
 			if hex == null:
 				push_error("ShopManager: building_repair — HexGrid missing")
 				return false
-			if not hex.repair_first_damaged_building():
-				push_error("ShopManager: building_repair — no damaged building (unexpected)")
+			var target: BuildingBase = hex.get_lowest_hp_pct_building()
+			if target == null:
 				return false
+			var hc: HealthComponent = target.get_node_or_null("HealthComponent") as HealthComponent
+			if hc == null:
+				return false
+			var heal_amount: int = maxi(1, int(float(hc.max_hp) * 0.5))
+			hc.heal(heal_amount)
 			return true
 
 		"mana_draught":
@@ -263,6 +357,57 @@ func _apply_effect(item_id: String) -> bool:
 			return true
 
 		"arrow_tower_placed":
+			_arrow_tower_shop_pending = true
+			return true
+
+		"building_material_pack":
+			var bmp: ShopItemData = _find_item(item_id)
+			if bmp == null:
+				return false
+			EconomyManager.add_building_material(bmp.value)
+			return true
+
+		"research_boost":
+			var rb: ShopItemData = _find_item(item_id)
+			if rb == null:
+				return false
+			EconomyManager.add_research_material(rb.value)
+			return true
+
+		"tower_armor_plate":
+			var tap: ShopItemData = _find_item(item_id)
+			if tap == null:
+				return false
+			var tower_armor: Node = get_node_or_null("/root/Main/Tower")
+			if tower_armor != null and tower_armor.has_method("add_max_hp_bonus"):
+				tower_armor.add_max_hp_bonus(tap.value)
+			else:
+				push_warning("ShopManager._apply_effect: tower_armor_plate — Tower or add_max_hp_bonus missing")
+			return true
+
+		"scout_report":
+			var wm: Node = get_node_or_null("/root/Main/Managers/WaveManager")
+			if wm != null and wm.has_method("reveal_next_wave_composition"):
+				wm.reveal_next_wave_composition()
+			else:
+				push_warning(
+					"ShopManager._apply_effect: scout_report — WaveManager or reveal_next_wave_composition missing"
+				)
+			return true
+
+		"mercenary_discount":
+			var md: ShopItemData = _find_item(item_id)
+			if md == null:
+				return false
+			if CampaignManager.has_method("set_next_mercenary_discount"):
+				CampaignManager.set_next_mercenary_discount(float(md.value) / 100.0)
+			else:
+				push_warning(
+					"ShopManager._apply_effect: mercenary_discount — set_next_mercenary_discount missing"
+				)
+			return true
+
+		"arrow_tower_voucher_2":
 			_arrow_tower_shop_pending = true
 			return true
 

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_data.gd" id="1_shopitemdata"]
+
+[resource]
+script = ExtResource("1_shopitemdata")
+item_id = "shield_charm"
+display_name = "Shield Charm"
+gold_cost = 110
+material_cost = 0
+description = "Spell shield at mission start."
+category = "consumable"
+rarity_weight = 0.7
+effect_tags = Array[String](["shield"])
+duration = 10.0
+value = 80

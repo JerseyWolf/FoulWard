@@ -1,0 +1,14 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_data.gd" id="1_shopitemdata"]
+
+[resource]
+script = ExtResource("1_shopitemdata")
+item_id = "mercenary_discount"
+display_name = "Mercenary Discount"
+gold_cost = 40
+material_cost = 0
+description = "Discount on next mercenary hire."
+category = "equipment"
+rarity_weight = 0.9
+value = 20

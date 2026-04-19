@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SybilPassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sybil_passive_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+passive_id = "passive_root_memory"
+display_name = "Root Memory"
+description = "The tithe-roots remember every coin that fed the soil—yield rises where famine stalked."
+icon_id = ""
+category = "utility"
+effect_type = "resource_income_pct"
+effect_value = 0.25
+is_unlocked = true

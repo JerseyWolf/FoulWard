@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "WEAPONS_ENGINEER_GENERIC_02"
+character_id = "WEAPONS_ENGINEER"
+text = "I've improved your weapon again. By which I mean I've undone the damage you've done to it."
+priority = 1
+once_only = false
+chain_next_id = ""
+conditions = []
+is_combat_line = false

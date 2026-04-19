@@ -16,8 +16,10 @@ func _make_item(item_id: String, gold: int, material: int = 0) -> ShopItemData:
 	item.material_cost = material
 	item.description = "Test item %s" % item_id
 	if item_id == "mana_draught":
-		item.item_type = "consumable"
+		item.category = "consumable"
 		item.effect_tags = ["mana_restore"]
+	elif item_id == "tower_repair":
+		item.category = "equipment"
 	return item
 
 
@@ -64,12 +66,6 @@ func test_purchase_item_returns_false_for_unknown_id() -> void:
 
 
 func test_purchase_item_emits_shop_item_purchased() -> void:
-	var monitor := monitor_signals(SignalBus, false)
-	_shop_manager.purchase_item("mana_draught")
-	await assert_signal(monitor).is_emitted("shop_item_purchased", ["mana_draught"])
-
-
-func test_purchase_item_emits_correct_item_id() -> void:
 	var monitor := monitor_signals(SignalBus, false)
 	_shop_manager.purchase_item("mana_draught")
 	await assert_signal(monitor).is_emitted("shop_item_purchased", ["mana_draught"])

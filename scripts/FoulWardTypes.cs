@@ -27,6 +27,9 @@ public static class FoulWardTypes
 		GameWon = 8,
 		GameOver = 9,
 		Endless = 10,
+		PassiveSelect = 11,
+		/// <summary>Ring rotation pre-combat screen.</summary>
+		RingRotate = 12,
 	}
 
 	/// <summary>C# mirror of Types.DamageType from res://scripts/types.gd. Integer values are identical.</summary>
@@ -357,5 +360,36 @@ public static class FoulWardTypes
 		Medium = 1,
 		High = 2,
 		Custom = 3,
+	}
+
+	/// <summary>C# mirror of Types.ChronicleRewardType from res://scripts/types.gd.</summary>
+	public enum ChronicleRewardType
+	{
+		Perk = 0,
+		Cosmetic = 1,
+		Title = 2,
+	}
+
+	/// <summary>C# mirror of Types.ChroniclePerkEffectType from res://scripts/types.gd.</summary>
+	public enum ChroniclePerkEffectType
+	{
+		StartingGold = 0,
+		StartingMana = 1,
+		SellRefundPct = 2,
+		ResearchCostPct = 3,
+		GoldPerKillPct = 4,
+		BuildingMaterialStart = 5,
+		EnchantingCostPct = 6,
+		WaveRewardGold = 7,
+		XpGainPct = 8,
+		CosmeticSkin = 9,
+	}
+
+	/// <summary>C# mirror of Types.DifficultyTier from res://scripts/types.gd.</summary>
+	public enum DifficultyTier
+	{
+		Normal = 0,
+		Veteran = 1,
+		Nightmare = 2,
 	}
 }

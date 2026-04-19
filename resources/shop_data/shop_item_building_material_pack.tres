@@ -1,0 +1,14 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_data.gd" id="1_shopitemdata"]
+
+[resource]
+script = ExtResource("1_shopitemdata")
+item_id = "building_material_pack"
+display_name = "Building Material Pack"
+gold_cost = 60
+material_cost = 0
+description = "Grants building material."
+category = "equipment"
+rarity_weight = 1.0
+value = 10

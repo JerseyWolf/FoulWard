@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SybilPassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sybil_passive_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+passive_id = "passive_still_water"
+display_name = "Still Water"
+description = "The body becomes a quiet cistern—bruises close, breath steadies, the ward holds."
+icon_id = ""
+category = "defense"
+effect_type = "max_hp_pct"
+effect_value = 0.2
+is_unlocked = true

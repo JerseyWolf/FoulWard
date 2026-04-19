@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ChroniclePerkData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/chronicle_perk_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+perk_id = "perk_starting_gold_50"
+display_name = "+50 Starting Gold"
+description = "Begin each mission with 50 extra gold."
+effect_type = 0
+effect_value = 50.0

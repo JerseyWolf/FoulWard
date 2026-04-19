@@ -264,19 +264,27 @@ func test_reset_to_defaults_after_spending_gold_restores_correctly() -> void:
 # ════════════════════════════════════════════
 
 func test_enemy_killed_signal_awards_gold_reward() -> void:
+	ChronicleManager.reset_for_test()
+	EconomyManager.reset_to_defaults()
 	SignalBus.enemy_killed.emit(Types.EnemyType.ORC_GRUNT, Vector3.ZERO, 15)
 	assert_int(EconomyManager.get_gold()).is_equal(1015)
 
 func test_enemy_killed_signal_awards_exact_gold_amount() -> void:
+	ChronicleManager.reset_for_test()
+	EconomyManager.reset_to_defaults()
 	SignalBus.enemy_killed.emit(Types.EnemyType.ORC_BRUTE, Vector3.ZERO, 30)
 	assert_int(EconomyManager.get_gold()).is_equal(1030)
 
 func test_enemy_killed_signal_accumulates_across_multiple_kills() -> void:
+	ChronicleManager.reset_for_test()
+	EconomyManager.reset_to_defaults()
 	SignalBus.enemy_killed.emit(Types.EnemyType.ORC_GRUNT, Vector3.ZERO, 10)
 	SignalBus.enemy_killed.emit(Types.EnemyType.BAT_SWARM, Vector3.ZERO, 5)
 	assert_int(EconomyManager.get_gold()).is_equal(1015)
 
 func test_enemy_killed_emits_resource_changed() -> void:
+	ChronicleManager.reset_for_test()
+	EconomyManager.reset_to_defaults()
 	var monitor := monitor_signals(SignalBus, false)
 	SignalBus.enemy_killed.emit(Types.EnemyType.ORC_GRUNT, Vector3.ZERO, 10)
 	await assert_signal(monitor).is_emitted(

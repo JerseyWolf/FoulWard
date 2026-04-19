@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SybilPassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sybil_passive_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+passive_id = "passive_iron_vow"
+display_name = "Iron Vow"
+description = "A pact sealed in cold iron—each syllable of flame finds the marrow of the foe."
+icon_id = ""
+category = "offense"
+effect_type = "spell_damage_pct"
+effect_value = 0.15
+is_unlocked = true

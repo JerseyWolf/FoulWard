@@ -7,7 +7,7 @@ extends GdUnitTestSuite
 
 func test_day_config_has_valid_territory_id() -> void:
 	var campaign: CampaignConfig = load(
-		"res://resources/campaign_main_50days.tres"
+		"res://resources/campaigns/campaign_main_50_days.tres"
 	) as CampaignConfig
 	assert_object(campaign).is_not_null()
 

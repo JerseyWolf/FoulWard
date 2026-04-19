@@ -131,7 +131,8 @@ func _ready() -> void:
 	SignalBus.enemy_killed.connect(_on_enemy_killed)
 	SignalBus.game_state_changed.connect(_on_game_state_changed)
 
-	# TODO(ART): Add attack/death clips; drive from ArnulfState when production assets land.
+	# Production wiring: asset = RiggedVisualWiring.ALLY_ARNULF_GLB → "res://art/generated/allies/arnulf.glb"
+	# Add attack/death clips; drive from ArnulfState when production assets land.
 	if _visual_slot != null:
 		_arnulf_anim_player = RiggedVisualWiring.mount_glb_scene(
 			_visual_slot, RiggedVisualWiring.ALLY_ARNULF_GLB

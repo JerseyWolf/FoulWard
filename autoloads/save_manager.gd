@@ -6,6 +6,8 @@ extends Node
 
 const MAX_SLOTS: int = 5
 const SAVES_ROOT: String = "user://saves"
+## Mirrors [member HexGrid.TOTAL_SLOTS] for save migration / slot-index guards (no scene dependency).
+const HEX_GRID_SLOT_COUNT: int = 42
 
 var current_attempt_id: String = ""
 
@@ -94,9 +96,12 @@ func _shift_slots(attempt_dir: String) -> void:
 				push_error("SaveManager._shift_slots: rename failed %s" % str(err))
 
 
+## Building HP is mission-ephemeral. HealthComponent.current_hp is not persisted.
+## Buildings re-instantiate at full HP each day (via HexGrid.clear_all_buildings()).
 func _build_save_payload() -> Dictionary:
 	return {
-		"version": 1,
+		"version": 2,
+		"save_version": 2,
 		"attempt_id": current_attempt_id,
 		"campaign": CampaignManager.get_save_data(),
 		"game": GameManager.get_save_data(),
@@ -104,6 +109,7 @@ func _build_save_payload() -> Dictionary:
 		"research": _get_research_save(),
 		"shop": _get_shop_save(),
 		"enchantments": EnchantmentManager.get_save_data(),
+		"sybil": SybilPassiveManager.get_save_data(),
 	}
 
 
@@ -185,7 +191,27 @@ func _find_attempt_dir_with_slot(slot_index: int) -> String:
 	return best_dir
 
 
+func _get_payload_version(payload: Dictionary) -> int:
+	var v: Variant = payload.get("version", null)
+	if v != null:
+		return int(v)
+	return int(payload.get("save_version", 1))
+
+
+func _migrate_payload_v1_to_v2_in_place(payload: Dictionary) -> void:
+	## v1 hex grid had 24 slots (ring 3 had 6). v2 has 42 slots (ring 3 has 24).
+	## Current save payloads do not serialize per-slot buildings or ring offsets; indices 24–41 are implicitly empty.
+	push_warning(
+		"SaveManager: migrating save from version 1 to 2 (hex grid expanded 24→42 slots; new ring-3 slots default to empty)."
+	)
+	payload["version"] = 2
+	payload["save_version"] = 2
+
+
 func _apply_save_payload(d: Dictionary) -> void:
+	var _save_ver: int = _get_payload_version(d)
+	if _save_ver < 2:
+		_migrate_payload_v1_to_v2_in_place(d)
 	var camp: Variant = d.get("campaign", {})
 	if camp is Dictionary:
 		CampaignManager.restore_from_save(camp as Dictionary)
@@ -208,6 +234,9 @@ func _apply_save_payload(d: Dictionary) -> void:
 	var ench: Variant = d.get("enchantments", {})
 	if ench is Dictionary:
 		EnchantmentManager.restore_from_save(ench as Dictionary)
+	var sybil: Variant = d.get("sybil", {})
+	if sybil is Dictionary:
+		SybilPassiveManager.restore_from_save_data(sybil as Dictionary)
 
 
 func _discard_newer_slots(attempt_dir: String, loaded_slot_index: int) -> void:
@@ -255,6 +284,11 @@ func has_resumable_attempt() -> bool:
 		entry = root.get_next()
 	root.list_dir_end()
 	return false
+
+
+## Returns true if [param slot_index] is valid for the hex grid (0..HEX_GRID_SLOT_COUNT - 1).
+func is_hex_slot_index_in_save_range(slot_index: int) -> bool:
+	return slot_index >= 0 and slot_index < HEX_GRID_SLOT_COUNT
 
 
 ## Test helper: removes all attempt_* folders under user://saves (headless tests only).

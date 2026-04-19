@@ -463,7 +463,7 @@ extends Resource
 
 ## 5. SIGNAL BUS — COMPLETE SIGNAL REGISTRY
 
-All signals below live on the `SignalBus` autoload (`res://autoloads/signal_bus.gd`). **67** typed `signal` declarations as of **2026-04-14** — the only place cross-system signals are declared. No logic or state on SignalBus. When you add or remove a signal, re-count lines matching `^signal ` in that file and update the same total everywhere (see `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*).
+All signals below live on the `SignalBus` autoload (`res://autoloads/signal_bus.gd`). **77** typed `signal` declarations as of **2026-04-18** — the only place cross-system signals are declared. No logic or state on SignalBus. When you add or remove a signal, re-count lines matching `^signal ` in that file and update the same total everywhere (see `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*).
 
 Grouped reference (matches `docs/FOUL_WARD_MASTER_DOC.md` §24):
 

@@ -43,7 +43,8 @@ func _apply_boss_stats() -> void:
 
 
 func _configure_visuals() -> void:
-	# TODO(ART): Production boss — phase / ability clips on same AnimationPlayer as placeholders.
+	# Production wiring: asset = RiggedVisualWiring.boss_rigged_glb_path(boss_id)
+	# → res://art/generated/bosses/<boss_id>.glb; phase/ability clips on same AnimationPlayer.
 	if boss_data == null:
 		return
 	var slot: Node3D = get_node_or_null("BossVisual") as Node3D

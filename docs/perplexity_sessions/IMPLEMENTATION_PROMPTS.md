@@ -23,35 +23,910 @@ Each numbered section below is a **ready-to-paste prompt** for a separate Cursor
 
 | Chat Type | Recommended Model |
 |---|---|
-| Enum + signal + small edits (4A, 6A, 8A) | Sonnet 4.6 |
+| Enum + signal + small edits (2A, 4A, 6A, 8A) | Sonnet 4.6 |
 | Manager/autoload implementation (6B, 7B, 8B) | Opus 4.6 |
-| UI scene creation (4B, 7C, 8C) | Sonnet 4.6 |
+| UI scene creation (2B, 4B, 7C, 8C) | Sonnet 4.6 |
+| Data-heavy .tres authoring (1A, 3C) | Opus 4.6 |
+| Destruction / enemy logic (3B) | Opus 4.6 |
 | Art pipeline reports (5A) | Sonnet 4.6 |
 | Dialogue content (9A) | Sonnet 4.6 |
-| Tests (test-heavy chats) | Sonnet 4.6 |
+| Tests (test-heavy chats: 1B, 3C, 5C, 6C, 7C, 8C, 9C, 10B) | Sonnet 4.6 |
 | Reconciliation (11A) | Opus 4.6 |
 
-### Already Completed (from prior conversation)
+### Baseline State (before GROUP 1)
 
-- **GROUP 1 (S01):** Campaign content — DayConfig field + 50-day table + tests
-- **GROUP 2 (S10):** Graphics quality — enum/signal/SettingsManager + UI + tests
-- **GROUP 3 (S09):** Building HP — data fields, HealthComponent, destruction flow, HP bar, .tres updates
+- SignalBus signals: **67**
+- Autoloads: **17** (per AGENTS.md Init order)
+- GdUnit4 tests: **612** across 75 test files
+- GameState last value: `ENDLESS = 10`
+- HexGrid `TOTAL_SLOTS` = 24
+- No `GraphicsQuality`, `DifficultyTier`, `ChronicleRewardType`, or `ChroniclePerkEffectType` enums
+- No `starting_gold` on DayConfig, no `max_hp` on BuildingData, no `highest_cleared_tier` on TerritoryData
+- `graphics_quality` is a `String` in SettingsManager, not an enum
 
-### Current Cumulative State (after Groups 1-3)
+### Note on Groups 1-3 Prior Work
 
-- SignalBus signals: **68** (67 baseline + 1 `graphics_quality_changed`)
-- Autoloads: **17** (unchanged from baseline)
-- `GraphicsQuality` enum added to `types.gd` and `FoulWardTypes.cs`
-- `DayConfig.starting_gold` field added
-- `BuildingData.max_hp` and `can_be_targeted_by_enemies` fields added
-- `EnemyData.prefer_building_targets` and `building_detection_radius` fields added
-- `building_destroyed` signal activated (was already declared)
-- `HealthComponent` integration in `BuildingBase`
-- `DestructionEffect` scene + script created
-- `BuildingHpBar` scene + script created
-- `HexGrid.clear_slot_on_destruction()` + `get_lowest_hp_pct_building()` added
-- Enemy building-targeting logic added to `enemy_base.gd`
-- MEDIUM buildings: max_hp=300, LARGE buildings: max_hp=650
+Groups 1-3 were **partially implemented in an earlier agent session** before the prompt package was produced. Run the prompts below in their own chats as if from scratch — the agents should:
+1. Detect work already on disk and diff it against the spec
+2. Complete anything missing
+3. Fix anything that deviates
+4. Run tests and verify the cumulative state
+
+If a file is already correct, the agent should confirm it and move on. This is the standard agent behaviour for any re-run.
+
+---
+---
+
+## GROUP 1: S01 — 50-Day Campaign Content (2 chats)
+
+---
+
+### CHAT 1A — DayConfig field + 50-day table
+
+```
+@AGENTS.md @.cursor/skills/campaign-and-progression/SKILL.md @.cursor/skills/add-new-entity/SKILL.md
+
+You are implementing the 50-day campaign content for Foul Ward.
+
+CUMULATIVE STATE:
+- SignalBus: 67 signals (unchanged this chat)
+- 17 autoloads (unchanged)
+- No new signals, no new enums, no new autoloads this session
+
+TASK OVERVIEW:
+Add a starting_gold field to DayConfig, then replace all 50 DayConfig sub-resources in the campaign .tres with the full authored table.
+
+Sources of truth:
+- Per-day table with faction, territory, mini-boss, boss_id, wave count, and all multipliers is in docs/perplexity_sessions/MASTER_PERPLEXITY_OUTPUT.txt, Session 1 (lines ~73-127).
+- Sample sub-resource blocks for days 1, 10, 25, 40, 50 are in the same file (lines ~130-222).
+
+---
+
+STEP 1 — Add starting_gold field to DayConfig
+File: scripts/resources/day_config.gd
+
+Add field after spawn_count_multiplier:
+  ## TUNING: gold player starts this mission with. Linear 1000→1500 over 50 days.
+  ## NOTE: if MissionEconomyData.starting_gold exists, defer to that, remove this.
+  @export var starting_gold: int = 1000
+
+Constraints:
+- Static typing. No magic numbers.
+- Do NOT modify any other field or method.
+- Do NOT change class_name, extends, or any existing field.
+
+Verify: field appears in Godot inspector on a DayConfig resource.
+
+---
+
+STEP 2 — Replace all 50 DayConfig sub-resources
+File: resources/campaigns/campaign_main_50_days.tres
+
+Replace every [sub_resource type="Resource" id="DayConfig_N"] block (days 1-50) with values from the Session 1 table.
+
+Rules:
+- Every DayConfig block MUST include all fields shown in the sample blocks (Session 1, lines ~130-222).
+- display_name = "Day N" (N = day_index).
+- description = "Placeholder briefing."
+- is_mini_boss = same value as is_mini_boss_day (both fields must match).
+- boss_id = "" when no boss, exact string from table when boss present.
+- Float values: 4 decimal places max.
+- Keep ext_resource declarations and [resource] footer unchanged.
+- Keep existing id format: id="DayConfig_N".
+
+Mini-boss / final-boss days (from table):
+- Day 10: is_mini_boss_day=true, boss_id="orc_warlord"
+- Day 20: is_mini_boss_day=true, boss_id="plague_cult_miniboss"
+- Day 30: is_mini_boss_day=true, boss_id="orc_warlord"
+- Day 40: is_mini_boss_day=true, boss_id="plague_cult_miniboss"
+- Day 50: is_mini_boss_day=false, is_final_boss=true, boss_id="final_boss"
+
+Scaling formulas (for spot-checking):
+  t = (day_index - 1) / 49.0
+  enemy_hp_multiplier = enemy_damage_multiplier = 1.0 + 2.0 * smoothstep(t)   (smoothstep = t*t*(3-2t))
+  gold_reward_multiplier = 1.0 + 0.5 * t
+  spawn_count_multiplier = 1.0 + 1.5 * t
+  starting_gold = 1000 + floor((day-1) * 500 / 49)
+  base_wave_count = 3 for days 1-10, 4 for days 11-30, 5 for days 31-50
+
+Faction rotation rule: from day 11 onward, no single faction may run >5 consecutive days. Days 1-10 all use DEFAULT_MIXED by design.
+
+---
+
+VERIFICATION:
+- Godot editor loads the campaign .tres without errors
+- ./tools/run_gdunit_quick.sh passes (existing tests only — new tests come in Chat 1B)
+```
+
+---
+
+### CHAT 1B — Tests + doc sync
+
+```
+@AGENTS.md @.cursor/skills/testing/SKILL.md @.cursor/skills/campaign-and-progression/SKILL.md
+
+You are writing validation tests for the 50-day campaign content.
+
+PREREQUISITE: Chat 1A changes must be present (DayConfig.starting_gold field + updated campaign_main_50_days.tres).
+
+CUMULATIVE STATE:
+- SignalBus: 67 signals (unchanged)
+- 17 autoloads (unchanged)
+
+---
+
+STEP 1 — Test suite
+Create tests/test_campaign_config.gd (GdUnit4, extends GdUnitTestSuite):
+
+Load the campaign resource once in before_test() / via const:
+  const CAMPAIGN_PATH: String = "res://resources/campaigns/campaign_main_50_days.tres"
+  var _days: Array  # 50 DayConfig resources
+
+Tests to implement:
+
+  test_campaign_loads_successfully
+    → resource not null, _days.size() == 50
+
+  test_all_days_have_faction_id
+    → for every day, faction_id != ""
+
+  test_all_days_have_territory_id
+    → for every day, territory_id != ""
+
+  test_mini_boss_days
+    → days 10, 20, 30, 40 (array index 9, 19, 29, 39) have is_mini_boss_day == true
+    → all other days have is_mini_boss_day == false
+    → is_mini_boss == is_mini_boss_day for every day
+
+  test_boss_ids
+    → day 10 boss_id == "orc_warlord"
+    → day 20 boss_id == "plague_cult_miniboss"
+    → day 30 boss_id == "orc_warlord"
+    → day 40 boss_id == "plague_cult_miniboss"
+    → day 50 boss_id == "final_boss"
+    → days without a boss have boss_id == ""
+
+  test_final_boss_day
+    → day 50 is_final_boss == true
+    → all other days is_final_boss == false
+
+  test_wave_counts
+    → days 1-10: base_wave_count == 3
+    → days 11-30: base_wave_count == 4
+    → days 31-50: base_wave_count == 5
+
+  test_multiplier_endpoints
+    → day 1:  enemy_hp_multiplier ≈ 1.0,  gold_reward_multiplier ≈ 1.0,  spawn_count_multiplier ≈ 1.0
+    → day 50: enemy_hp_multiplier ≈ 3.0,  gold_reward_multiplier ≈ 1.5,  spawn_count_multiplier ≈ 2.5
+    (use an epsilon-based float comparison, e.g. 1e-3)
+
+  test_starting_gold_range
+    → day 1 starting_gold == 1000
+    → day 50 starting_gold == 1500
+
+  test_starting_gold_monotonic
+    → for i in 1..49: starting_gold[i] >= starting_gold[i-1]
+
+  test_no_faction_run_exceeds_5
+    → Iterate from day 11 (array index 10) to day 50
+    → Track current faction run length
+    → Assert max run ≤ 5
+    → (Days 1-10 intentionally use DEFAULT_MIXED for 10 consecutive days — exclude from this check.)
+
+---
+
+STEP 2 — Doc sync
+Update test count in:
+  - AGENTS.md: "612 GdUnit4 tests" → new number
+  - docs/FOUL_WARD_MASTER_DOC.md §1 if it tracks test count
+  - docs/PERPLEXITY_RECONCILIATION_TRACKER.md "Test Count — Cumulative Log" G1 row: fill in Actual
+
+---
+
+VERIFICATION:
+- ./tools/run_gdunit_quick.sh passes OR the new test suite runs directly via Godot binary if the quick runner uses an allowlist
+- All ~10 new tests pass
+- Signal count unchanged (67)
+```
+
+---
+---
+
+## GROUP 2: S10 — Graphics Quality Wiring (2 chats)
+
+---
+
+### CHAT 2A — Enum + Signal + SettingsManager core
+
+```
+@AGENTS.md @.cursor/skills/signal-bus/SKILL.md @.cursor/skills/godot-conventions/SKILL.md
+
+You are implementing the Graphics Quality wiring for Foul Ward.
+
+CUMULATIVE STATE:
+- SignalBus: 67 signals. After this chat: 68.
+- 17 autoloads (unchanged)
+- No GraphicsQuality enum yet
+- SettingsManager.graphics_quality is currently a String — will become an enum
+
+---
+
+STEP 1 — GraphicsQuality enum + C# mirror
+In scripts/types.gd, append at end:
+  ## Rendering quality preset for SettingsManager.
+  enum GraphicsQuality {
+      LOW = 0,
+      MEDIUM = 1,
+      HIGH = 2,
+      CUSTOM = 3,
+  }
+
+In scripts/FoulWardTypes.cs, mirror:
+  public enum GraphicsQuality { Low = 0, Medium = 1, High = 2, Custom = 3 }
+
+Search codebase for pre-existing GraphicsQuality references — note any found, do not fix in this chat.
+
+Run: dotnet build FoulWard.csproj
+
+---
+
+STEP 2 — SignalBus: graphics_quality_changed
+File: autoloads/signal_bus.gd
+
+Add (with @warning_ignore("unused_signal")):
+  ## Emitted when graphics quality preset changes.
+  signal graphics_quality_changed(quality: int)
+
+Signal count: 67 → 68.
+
+---
+
+STEP 3 — SettingsManager rewrite
+File: autoloads/settings_manager.gd (autoload, no class_name)
+
+Add constants at top:
+  const SHADOW_RES_OFF: int = 0
+  const SHADOW_RES_MEDIUM: int = 2048
+  const SHADOW_RES_HIGH: int = 4096
+
+Change graphics_quality field type from String to Types.GraphicsQuality.
+Default: Types.GraphicsQuality.MEDIUM.
+
+Add per-toggle fields (Custom preset):
+  var shadows_enabled: bool = true
+  var msaa_enabled: bool = false
+  var ssao_enabled: bool = false
+  var glow_enabled: bool = true
+
+Add private helpers:
+
+  func _find_world_environment() -> WorldEnvironment:
+      ## THEORYCRAFT: no WorldEnvironment node in repo at S10; path assumed.
+      return get_node_or_null("/root/Main/WorldEnvironment") as WorldEnvironment
+
+  func _apply_quality_preset(quality: Types.GraphicsQuality) -> void:
+      if get_viewport() == null or not is_inside_tree():
+          return
+      match quality:
+          Types.GraphicsQuality.LOW:
+              # Shadows off: set atlas size to 0 AND zero directional light angular distance
+              # (workaround for Godot Proposals #6612 — atlas size=0 alone unreliable)
+              RenderingServer.directional_shadow_atlas_set_size(SHADOW_RES_OFF, false)
+              get_viewport().positional_shadow_atlas_size = SHADOW_RES_OFF
+              for light in get_tree().get_nodes_in_group("directional_lights"):
+                  if light is DirectionalLight3D:
+                      (light as DirectionalLight3D).light_angular_distance = 0.0
+              get_viewport().msaa_3d = Viewport.MSAA_DISABLED
+              var we: WorldEnvironment = _find_world_environment()
+              if we != null and we.environment != null:
+                  we.environment.ssao_enabled = false
+                  we.environment.sdfgi_enabled = false
+                  we.environment.glow_enabled = false
+                  we.environment.volumetric_fog_enabled = false
+          Types.GraphicsQuality.MEDIUM:
+              RenderingServer.directional_shadow_atlas_set_size(SHADOW_RES_MEDIUM, true)
+              get_viewport().positional_shadow_atlas_size = SHADOW_RES_MEDIUM
+              for light in get_tree().get_nodes_in_group("directional_lights"):
+                  if light is DirectionalLight3D:
+                      (light as DirectionalLight3D).light_angular_distance = 0.5
+              get_viewport().msaa_3d = Viewport.MSAA_2X
+              var we: WorldEnvironment = _find_world_environment()
+              if we != null and we.environment != null:
+                  we.environment.ssao_enabled = false
+                  we.environment.sdfgi_enabled = false
+                  we.environment.glow_enabled = true
+                  we.environment.volumetric_fog_enabled = false
+          Types.GraphicsQuality.HIGH:
+              RenderingServer.directional_shadow_atlas_set_size(SHADOW_RES_HIGH, true)
+              get_viewport().positional_shadow_atlas_size = SHADOW_RES_HIGH
+              for light in get_tree().get_nodes_in_group("directional_lights"):
+                  if light is DirectionalLight3D:
+                      (light as DirectionalLight3D).light_angular_distance = 0.5
+              get_viewport().msaa_3d = Viewport.MSAA_4X
+              var we: WorldEnvironment = _find_world_environment()
+              if we != null and we.environment != null:
+                  we.environment.ssao_enabled = true
+                  we.environment.sdfgi_enabled = false
+                  we.environment.glow_enabled = true
+                  we.environment.volumetric_fog_enabled = true
+          Types.GraphicsQuality.CUSTOM:
+              _apply_custom_toggles()
+
+  func _apply_custom_toggles() -> void:
+      if get_viewport() == null or not is_inside_tree():
+          return
+      get_viewport().msaa_3d = Viewport.MSAA_2X if msaa_enabled else Viewport.MSAA_DISABLED
+      var shadow_res: int = SHADOW_RES_MEDIUM if shadows_enabled else SHADOW_RES_OFF
+      RenderingServer.directional_shadow_atlas_set_size(shadow_res, shadows_enabled)
+      get_viewport().positional_shadow_atlas_size = shadow_res
+      var we: WorldEnvironment = _find_world_environment()
+      if we != null and we.environment != null:
+          we.environment.ssao_enabled = ssao_enabled
+          we.environment.glow_enabled = glow_enabled
+
+Update set_graphics_quality():
+  func set_graphics_quality(quality: Types.GraphicsQuality) -> void:
+      graphics_quality = quality
+      _apply_quality_preset(quality)
+      SignalBus.graphics_quality_changed.emit(int(quality))
+      save_settings()
+
+Update load_settings(): load quality as int, cast to enum. Load all 4 toggle bools from [graphics] section with defaults. Call _apply_quality_preset(graphics_quality) at end.
+
+Update save_settings(): save int(graphics_quality) and the 4 toggle bools under [graphics].
+
+Update _ready() default assignment: Types.GraphicsQuality.MEDIUM (not string).
+
+CRITICAL: all render-touching code must be guarded by the headless check:
+  if get_viewport() == null or not is_inside_tree():
+      return
+
+---
+
+VERIFICATION:
+- dotnet build passes
+- ./tools/run_gdunit_quick.sh passes
+- Signal count = 68 in signal_bus.gd
+```
+
+---
+
+### CHAT 2B — Settings screen UI + tests
+
+```
+@AGENTS.md @.cursor/skills/testing/SKILL.md
+
+You are implementing the settings screen UI and tests for the Graphics Quality feature.
+
+CUMULATIVE STATE:
+- SignalBus: 68 signals
+- 17 autoloads
+- GraphicsQuality enum, graphics_quality_changed signal, SettingsManager core all done (Chat 2A)
+
+---
+
+STEP 1 — Scene changes
+File: scenes/ui/settings_screen.tscn
+
+Under the existing QualityOption node, add a VBoxContainer:
+  Name: CustomTogglesContainer
+  unique_name_in_owner: true
+  visible: false
+  layout_mode: 2
+
+Inside, add 4 HBoxContainer children (each with a Label + CheckBox, each CheckBox unique_name_in_owner=true):
+  ShadowsRow → Label "Shadows" + ShadowsCheck
+  MsaaRow    → Label "MSAA"    + MsaaCheck
+  SsaoRow    → Label "SSAO"    + SsaoCheck
+  GlowRow    → Label "Glow"    + GlowCheck
+
+---
+
+STEP 2 — Settings screen script
+File: scripts/ui/settings_screen.gd
+
+Add @onready vars:
+  @onready var _custom_toggles: VBoxContainer = %CustomTogglesContainer
+  @onready var _shadows_check: CheckBox = %ShadowsCheck
+  @onready var _msaa_check: CheckBox = %MsaaCheck
+  @onready var _ssao_check: CheckBox = %SsaoCheck
+  @onready var _glow_check: CheckBox = %GlowCheck
+
+Update _populate_from_settings():
+  - Add "Custom" as 4th item in the quality OptionButton (after High)
+  - Map SettingsManager.graphics_quality enum → index (LOW=0, MEDIUM=1, HIGH=2, CUSTOM=3)
+  - Populate checkbox states via set_pressed_no_signal() from SettingsManager
+  - _custom_toggles.visible = (SettingsManager.graphics_quality == Types.GraphicsQuality.CUSTOM)
+
+Update _on_quality_selected(index: int):
+  - Map index → Types.GraphicsQuality enum value
+  - Call SettingsManager.set_graphics_quality(enum_value)
+  - Show/hide _custom_toggles based on whether CUSTOM was selected
+
+Add toggle handlers (connect .toggled signal in _ready()):
+  _on_shadows_toggled(pressed), _on_msaa_toggled(pressed), _on_ssao_toggled(pressed), _on_glow_toggled(pressed)
+Each handler: set SettingsManager.<toggle>_enabled = pressed, then call SettingsManager.set_graphics_quality(Types.GraphicsQuality.CUSTOM).
+
+Use .toggled (not .value_changed) for CheckBox.
+
+---
+
+STEP 3 — Tests
+Create tests/test_settings_graphics.gd (GdUnit4):
+
+  test_enum_low_value    → Types.GraphicsQuality.LOW == 0
+  test_enum_medium_value → Types.GraphicsQuality.MEDIUM == 1
+  test_enum_high_value   → Types.GraphicsQuality.HIGH == 2
+  test_enum_custom_value → Types.GraphicsQuality.CUSTOM == 3
+
+  test_set_graphics_quality_stores_enum
+    → set_graphics_quality(LOW); assert graphics_quality == LOW
+
+  test_set_graphics_quality_emits_signal
+    → Use Array[int] = [-1] to capture value (GDScript closures capture arrays by reference)
+    → Connect SignalBus.graphics_quality_changed to a callable that writes received[0]
+    → set_graphics_quality(HIGH)
+    → assert received[0] == int(HIGH)
+    → disconnect in after_test
+
+  test_load_settings_applies_preset_headless
+    → save HIGH, change in memory to LOW, load, assert graphics_quality == HIGH
+
+  test_custom_preset_preserves_toggles
+    → set toggles to known values, save, dirty state, load, assert toggles restored
+
+  test_apply_quality_preset_headless_no_crash
+    → Call _apply_quality_preset() for all 4 enum values in headless; no crash
+
+  after_test
+    → Reset SettingsManager to MEDIUM + default toggles
+
+---
+
+STEP 4 — Doc sync
+Update in all tracked locations:
+  - Signal count: 67 → 68 (AGENTS.md, docs/FOUL_WARD_MASTER_DOC.md §3.1 and §24, docs/CONVENTIONS.md, docs/ARCHITECTURE.md, docs/INDEX_SHORT.md, docs/INDEX_FULL.md, .cursor/skills/signal-bus/references/signal-table.md, .cursor/skills/signal-bus/SKILL.md)
+  - Add Types.GraphicsQuality to §5 enum table in FOUL_WARD_MASTER_DOC.md
+  - Add graphics_quality_changed to §24 under a Settings subsection
+  - Add TBD item in §33: WorldEnvironment path is theorycrafted
+  - Update PERPLEXITY_RECONCILIATION_TRACKER.md G2 row
+
+---
+
+VERIFICATION:
+- ./tools/run_gdunit_quick.sh passes
+- All ~9 new tests pass
+- Signal count 68 visible in all tracked docs
+```
+
+---
+---
+
+## GROUP 3: S09 — Building HP & Destruction System (3 chats)
+
+---
+
+### CHAT 3A — Data fields + HealthComponent
+
+```
+@AGENTS.md @.cursor/skills/building-system/SKILL.md @.cursor/skills/enemy-system/SKILL.md
+
+You are implementing the data layer and HealthComponent wiring for the Building HP & Destruction system in Foul Ward.
+
+CUMULATIVE STATE:
+- SignalBus: 68 signals (no new signals this session — activates existing building_destroyed)
+- 17 autoloads (unchanged)
+
+---
+
+STEP 1 — Extend BuildingData
+File: scripts/resources/building_data.gd
+
+Add two exported fields:
+  ## Hit points for destructible buildings. 0 = indestructible (backward-compat default).
+  @export var max_hp: int = 0
+  ## When true, enemies with prefer_building_targets may attack this building.
+  @export var can_be_targeted_by_enemies: bool = false
+
+Fields only. No logic. No other changes.
+
+---
+
+STEP 2 — Extend EnemyData
+File: scripts/resources/enemy_data.gd
+
+Add two exported fields:
+  ## When true, enemy scans for targetable buildings in detection radius before pathing to tower.
+  @export var prefer_building_targets: bool = false
+  ## Scan radius for targetable buildings (separate from attack_range).
+  @export var building_detection_radius: float = 8.0
+
+Fields only. Confirm defaults don't break existing enemy .tres files.
+
+---
+
+STEP 3 — HealthComponent conditional init in BuildingBase
+File: scenes/buildings/building_base.gd
+
+Context: BuildingBase may already have an @onready health_component reference for Tower/EnemyBase reuse. For buildings, HealthComponent must be ADDED DYNAMICALLY only when BuildingData.max_hp > 0.
+
+Add method:
+  func _setup_health_component() -> void:
+      if _building_data == null or _building_data.max_hp <= 0:
+          return
+      if health_component != null and is_instance_valid(health_component):
+          # Already set up (e.g. editor-placed node); just configure
+          health_component.max_hp = _building_data.max_hp
+          health_component.current_hp = _building_data.max_hp
+          if not health_component.health_depleted.is_connected(_on_health_depleted):
+              health_component.health_depleted.connect(_on_health_depleted)
+          return
+      var hc: HealthComponent = HealthComponent.new()
+      hc.max_hp = _building_data.max_hp
+      hc.current_hp = _building_data.max_hp
+      add_child(hc)
+      health_component = hc
+      hc.health_depleted.connect(_on_health_depleted)
+
+Add stub (full logic in Chat 3B):
+  func _on_health_depleted() -> void:
+      pass
+
+Call _setup_health_component() at the END of initialize() (after _apply_data_stats or equivalent).
+
+Use is_instance_valid() guards. Static typing everywhere.
+
+---
+
+VERIFICATION:
+- ./tools/run_gdunit_quick.sh passes
+- dotnet build not required (no .cs changes)
+- BuildingData + EnemyData .tres files load without errors
+```
+
+---
+
+### CHAT 3B — Destruction flow + Enemy targeting + HP bar
+
+```
+@AGENTS.md @.cursor/skills/building-system/SKILL.md @.cursor/skills/enemy-system/SKILL.md @.cursor/skills/scene-tree-and-physics/SKILL.md
+
+You are wiring up the destruction pipeline, enemy building-targeting, and building HP bar for Foul Ward.
+
+PREREQUISITE: Chat 3A changes must exist.
+
+CUMULATIVE STATE:
+- SignalBus: 68 signals. No new signals this chat — activates existing building_destroyed signal.
+- 17 autoloads (unchanged)
+
+---
+
+STEP 1 — DestructionEffect scene + script
+Create scenes/buildings/destruction_effect.tscn:
+  Root: Node3D (name: DestructionEffect)
+  Script: scenes/buildings/destruction_effect.gd
+
+Create scenes/buildings/destruction_effect.gd:
+  class_name DestructionEffect
+  extends Node3D
+
+  const SHRINK_DURATION: float = 0.5
+
+  func play(world_pos: Vector3, _source_mesh: Mesh = null) -> void:
+      global_position = world_pos
+      var tw: Tween = create_tween()
+      tw.tween_property(self, "scale", Vector3.ZERO, SHRINK_DURATION)
+      tw.tween_callback(queue_free)
+
+---
+
+STEP 2 — BuildingBase destruction flow
+File: scenes/buildings/building_base.gd
+
+Implement _on_health_depleted():
+  func _on_health_depleted() -> void:
+      if slot_id >= 0:
+          SignalBus.building_destroyed.emit(slot_id)
+      if _building_data != null and _building_data.is_summoner:
+          AllyManager.despawn_squad(placed_instance_id)
+      if _building_data != null and _building_data.is_aura:
+          AuraManager.deregister_aura(placed_instance_id)
+      _spawn_destruction_effect()
+      var hex: Node = get_node_or_null("/root/Main/HexGrid")
+      if hex != null and hex.has_method("clear_slot_on_destruction"):
+          hex.clear_slot_on_destruction(slot_id)
+      else:
+          push_warning("BuildingBase._on_health_depleted: HexGrid not found")
+          _disable_collision_and_obstacle()  # or whatever existing helper is named
+          queue_free()
+
+Add helper:
+  func _spawn_destruction_effect() -> void:
+      var fx_container: Node = get_node_or_null("/root/Main/FX")
+      if fx_container == null:
+          fx_container = get_parent()
+      if fx_container == null:
+          return
+      var effect_scene: PackedScene = load("res://scenes/buildings/destruction_effect.tscn") as PackedScene
+      if effect_scene == null or not effect_scene.can_instantiate():
+          return
+      var fx: Node3D = effect_scene.instantiate() as Node3D
+      if fx == null:
+          return
+      fx_container.add_child(fx)
+      fx.global_position = global_position
+      if fx.has_method("play"):
+          var mesh_ref: Mesh = null
+          if is_instance_valid(mesh) and mesh.mesh != null:
+              mesh_ref = mesh.mesh
+          fx.call("play", global_position, mesh_ref)
+
+---
+
+STEP 3 — HexGrid helpers
+File: scenes/hex_grid/hex_grid.gd
+
+Add clear_slot_on_destruction(slot_index: int) -> void:
+  - Validate slot_index, push_warning on invalid or unoccupied
+  - Get slot dict, remove building from "buildings" group, call _disable_building_obstacle(), queue_free() the building
+  - Set slot["building"] = null, slot["is_occupied"] = false
+
+Add _disable_building_obstacle(building: BuildingBase) -> void (helper):
+  - Get NavigationObstacle3D child, set_deferred("enabled", false)
+  - Get collision CollisionShape3D child, set_deferred("disabled", true)
+
+---
+
+STEP 4 — Enemy building-targeting
+File: scenes/enemies/enemy_base.gd
+
+IMPORTANT: Verify exact method/var names for enemy attack logic BEFORE editing. Specifically confirm the method name used for effective damage — earlier attempts used a wrong name. The correct method is _get_effective_damage_int() (returns int), NOT _get_effective_damage().
+
+Add state var:
+  var _current_building_target: BuildingBase = null
+
+Add private methods:
+  func _try_building_target_attack(delta: float) -> bool:
+      if _enemy_data == null or not _enemy_data.prefer_building_targets:
+          return false
+      _current_building_target = _find_building_target()
+      if not is_instance_valid(_current_building_target):
+          _current_building_target = null
+          return false
+      _attack_building(_current_building_target, delta)
+      return true
+
+  func _find_building_target() -> BuildingBase:
+      var ed: EnemyData = _enemy_data
+      if ed == null or not ed.prefer_building_targets:
+          return null
+      var tree: SceneTree = get_tree()
+      if tree == null:
+          return null
+      var best: BuildingBase = null
+      var best_dist: float = INF
+      var radius: float = ed.building_detection_radius
+      for node: Node in tree.get_nodes_in_group("buildings"):
+          var b: BuildingBase = node as BuildingBase
+          if b == null or not is_instance_valid(b):
+              continue
+          var bd: BuildingData = b.get_building_data()
+          if bd == null or not bd.can_be_targeted_by_enemies:
+              continue
+          var hc: HealthComponent = b.get_node_or_null("HealthComponent") as HealthComponent
+          if hc == null or not hc.is_alive():
+              continue
+          var d: float = global_position.distance_to(b.global_position)
+          if d > radius:
+              continue
+          if d < best_dist:
+              best_dist = d
+              best = b
+      return best
+
+  func _attack_building(target: BuildingBase, delta: float) -> void:
+      if not is_instance_valid(target):
+          _current_building_target = null
+          return
+      var hc: HealthComponent = target.get_node_or_null("HealthComponent") as HealthComponent
+      if hc == null or not hc.is_alive():
+          _current_building_target = null
+          return
+      _is_attacking = true
+      velocity = Vector3.ZERO
+      _attack_timer += delta
+      if _attack_timer >= _enemy_data.attack_cooldown:
+          _attack_timer = 0.0
+          hc.take_damage(_get_effective_damage_int())   # not _get_effective_damage()
+
+Hook into existing _physics_process_ground (or equivalent combat tick), AFTER the existing saboteur check, BEFORE the normal tower-path navigation:
+  if _try_building_target_attack(delta):
+      _sync_locomotion_animation()
+      return
+
+---
+
+STEP 5 — BuildingHpBar scene + script
+Create scenes/ui/building_hp_bar.tscn:
+  Node3D (root)
+  ├── SubViewport (transparent_bg=true, size=Vector2i(128, 16), render_target_update_mode=4)
+  │   └── HpBar: ProgressBar (offset_right=128, offset_bottom=16, max_value=100, value=100, show_percentage=false)
+  └── Sprite3D (pixel_size=0.005, billboard=1, position=Vector3(0, 2.5, 0))
+
+Create scenes/ui/building_hp_bar.gd:
+  class_name BuildingHpBar
+  extends Node3D
+
+  @onready var _hp_bar: ProgressBar = $SubViewport/HpBar
+  @onready var _sprite: Sprite3D = $Sprite3D
+
+  func setup(health_comp: HealthComponent) -> void:
+      if health_comp == null:
+          push_warning("BuildingHpBar.setup: null HealthComponent")
+          return
+      _hp_bar.max_value = health_comp.max_hp
+      _hp_bar.value = health_comp.current_hp
+      if not health_comp.health_changed.is_connected(_on_health_changed):
+          health_comp.health_changed.connect(_on_health_changed)
+      visible = false
+
+  func _on_health_changed(current_hp: int, max_hp: int) -> void:
+      _hp_bar.max_value = max_hp
+      _hp_bar.value = current_hp
+      visible = current_hp < max_hp
+
+Wire into BuildingBase._setup_health_component() — after add_child(hc), instantiate the HP bar scene as a child of the building and call hp_bar.setup(hc).
+
+---
+
+VERIFICATION:
+- ./tools/run_gdunit_quick.sh passes — IMPORTANT: check for Parse Errors in the log; if enemy_base.gd fails to parse, confirm _get_effective_damage_int() is the method name used (not _get_effective_damage)
+- No crash when a building takes damage in-game
+```
+
+---
+
+### CHAT 3C — .tres updates + shop item + tests
+
+```
+@AGENTS.md @.cursor/skills/testing/SKILL.md @.cursor/skills/building-system/SKILL.md @.cursor/skills/economy-system/SKILL.md
+
+You are setting per-size HP values, adding the building_repair shop item, and writing tests for the Building HP system.
+
+PREREQUISITE: Chats 3A + 3B must be complete.
+
+CUMULATIVE STATE:
+- SignalBus: 68 signals (unchanged)
+- 17 autoloads (unchanged)
+
+---
+
+STEP 1 — Set max_hp on MEDIUM building .tres files
+Path: resources/building_data/
+
+Target: every .tres where size_class == "MEDIUM" (BuildingSizeClass enum value 4).
+Enumerate and print the list first for review.
+
+For each MEDIUM building .tres, append:
+  max_hp = 300
+  can_be_targeted_by_enemies = true
+
+Do NOT touch SMALL/LARGE/SINGLE_SLOT/DOUBLE_WIDE/TRIPLE_CLUSTER files.
+Do NOT change any other field.
+
+---
+
+STEP 2 — Set max_hp on LARGE building .tres files
+Target: every .tres where size_class == "LARGE" (enum value 5).
+
+For each LARGE building .tres, append:
+  max_hp = 650
+  can_be_targeted_by_enemies = true
+
+Do NOT touch non-LARGE files.
+
+---
+
+STEP 3 — building_repair shop item
+
+Step 3a: Create resources/shop_items/building_repair.tres (mirror tower_repair fields):
+  item_id = "building_repair"
+  display_name = "Building Repair"
+  gold_cost = same as tower_repair
+  effect_type / handler_key = "building_repair"
+
+Step 3b: Add HexGrid query method
+File: scenes/hex_grid/hex_grid.gd
+
+  ## Returns building with lowest HP percentage among alive buildings with HealthComponent.
+  ## Returns null if none found or all at full HP.
+  func get_lowest_hp_pct_building() -> BuildingBase:
+      var best: BuildingBase = null
+      var best_pct: float = 1.0
+      for slot: Dictionary in _slots:
+          if not slot["is_occupied"]:
+              continue
+          var b: BuildingBase = slot["building"] as BuildingBase
+          if not is_instance_valid(b):
+              continue
+          var hc: HealthComponent = b.get_node_or_null("HealthComponent") as HealthComponent
+          if hc == null or not hc.is_alive():
+              continue
+          var pct: float = float(hc.current_hp) / float(hc.max_hp)
+          if pct < best_pct:
+              best_pct = pct
+              best = b
+      return best
+
+Step 3c: Handle in shop_manager.gd
+In purchase_item() / effect dispatch, add "building_repair" case:
+  - Get /root/Main/HexGrid, guard null
+  - Call hex.get_lowest_hp_pct_building(); return false if null
+  - Get its HealthComponent; return false if null
+  - heal_amount = maxi(1, int(float(hc.max_hp) * 0.5))
+  - hc.heal(heal_amount); return true
+
+Also add can_purchase() guard: return false for "building_repair" if get_lowest_hp_pct_building() returns null.
+
+---
+
+STEP 4 — Mission-scoped HP persistence audit
+File: autoloads/save_manager.gd
+
+Audit: confirm save payload does NOT serialize building HP. Buildings re-instantiate at full HP each mission (via HexGrid.clear_all_buildings()). If any building HP is being serialized, remove it.
+
+Add architecture comment: "Building HP is mission-ephemeral. HealthComponent.current_hp is not persisted. Buildings re-instantiate at full HP each day."
+
+---
+
+STEP 5 — Tests
+
+Create tests/test_building_health_component.gd (GdUnit4):
+  test_no_health_component_when_max_hp_zero
+  test_health_component_added_when_max_hp_positive
+  test_health_component_initialized_with_correct_max_hp
+  test_building_destroyed_signal_emitted_on_depletion
+  test_hex_slot_cleared_on_destruction
+  test_building_freed_on_destruction
+  test_summoner_despawn_called_on_destruction
+  test_aura_deregistered_on_destruction
+  test_hp_bar_hidden_at_full_health
+  test_hp_bar_visible_after_damage
+  test_hp_bar_value_matches_current_hp
+  test_building_hp_not_in_save_payload
+  test_building_hp_resets_on_new_mission
+
+Create tests/test_enemy_building_targeting.gd:
+  test_enemy_ignores_buildings_when_flag_false
+  test_enemy_finds_building_when_flag_true
+  test_enemy_ignores_non_targetable_building
+  test_enemy_ignores_dead_building
+  test_enemy_ignores_building_outside_radius
+
+Create tests/test_building_repair.gd:
+  test_repair_targets_lowest_hp_pct_not_lowest_absolute
+    (A: 400/300=75%, B: 200/160=80%, C: 100/60=60% → returns C)
+  test_repair_restores_50_pct
+  test_repair_blocked_when_no_damaged_building
+  test_repair_ignores_indestructible_buildings
+
+---
+
+STEP 6 — Doc sync
+Update PERPLEXITY_RECONCILIATION_TRACKER.md:
+  - G3 signals added: 0 (activates existing building_destroyed)
+  - G3 test count actual
+Add new files to docs/INDEX_SHORT.md and docs/INDEX_FULL.md.
+
+---
+
+VERIFICATION:
+- ./tools/run_gdunit_quick.sh passes
+- All new tests pass
+- Signal count unchanged (68)
+- MEDIUM buildings all show max_hp=300 in inspector
+- LARGE buildings all show max_hp=650 in inspector
+```
 
 ---
 ---
@@ -347,51 +1222,7 @@ VERIFICATION:
 
 ---
 
-### CHAT 5C — TODO(ART) Resolution + Tests + Docs
-
-```
-@AGENTS.md @.cursor/skills/testing/SKILL.md @docs/SESSION_07_REPORT_02_GLB_PATHS.md @docs/SESSION_07_REPORT_03_WIRING.md
-
-You are resolving TODO(ART) markers and writing tests for the art pipeline changes.
-
-PREREQUISITE: Reports and code from Chats 5A + 5B must exist.
-
-STEP 1 — Replace 5 TODO(ART) markers
-Replace each with production-wiring comment (NOT implementation, just the comment):
-  scenes/allies/ally_base.gd — asset = ally_rigged_glb_path(ally_id)
-  scenes/arnulf/arnulf.gd — asset = "res://art/generated/allies/arnulf.glb"
-  scenes/tower/tower.gd — asset = tower_glb_path()
-  scenes/bosses/boss_base.gd — asset = boss_rigged_glb_path(boss_id)
-  ui/hub.gd — portrait 2D art, not GLB
-
-NOTE: Verify exact line numbers — they may have shifted from the spec. Search for TODO(ART) in each file.
-
-STEP 2 — Remove drunk_idle from pipeline docs
-Find all "drunk_idle" in docs/FOUL WARD 3D ART PIPELINE.txt and FUTURE_3D_MODELS_PLAN.md — delete those lines, add removal notice.
-
-STEP 3 — Tests
-Create tests/test_rigged_visual_wiring_session07.gd (GdUnit4, 9 methods):
-  test_all_30_enemy_types_return_non_empty_path
-  test_enemy_paths_use_correct_prefix
-  test_ally_known_ids_return_paths (arnulf, archer, knight, swordsman, barbarian)
-  test_ally_unknown_id_returns_empty
-  test_building_all_36_types_return_paths
-  test_building_paths_use_correct_prefix
-  test_tower_glb_path_correct
-  test_anim_constants_no_drunk_idle
-  test_anim_constants_all_present (all 17 ANIM_ constants)
-
-Create tests/test_validate_art_assets_session07.gd (GdUnit4, ~10 methods):
-  test_infer_category_enemies, allies, bosses, buildings, tower, unknown
-  test_required_clips_enemy_count (5), ally_count (7), misc_empty
-  test_check_glb_no_anim_player_returns_missing_all
-
-VERIFICATION:
-- ./tools/run_gdunit_quick.sh passes
-- All ~19 new tests pass
-```
-
----
+check 
 ---
 
 ## GROUP 6: S02 — Sybil Passive System (3 chats)

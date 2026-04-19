@@ -97,7 +97,7 @@ func test_gold_awarded_on_enemy_killed() -> void:
 
 ## Signal count in documentation (maintenance)
 
-The **exact** number of top-level `signal` declarations in `autoloads/signal_bus.gd` is repeated in prose so standing orders, the master doc, indexes, and this skill stay aligned. **Baseline: 67 (verified 2026-04-14).** Prefer re-counting `^signal ` in that file over guessing.
+The **exact** number of top-level `signal` declarations in `autoloads/signal_bus.gd` is repeated in prose so standing orders, the master doc, indexes, and this skill stay aligned. **Baseline: 77 (verified 2026-04-18).** Prefer re-counting `^signal ` in that file over guessing.
 
 **Whenever you add or remove a `signal` in `signal_bus.gd`, update the total and the “as of” date in every place below** (same session as the code change):
 

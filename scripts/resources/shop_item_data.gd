@@ -15,9 +15,12 @@ extends Resource
 @export var material_cost: int = 0
 ## Effect description shown in the shop UI tooltip.
 @export var description: String = ""
-## Category: use `"consumable"` for stack-based battle-start items.
-@export var item_type: String = ""
+## Category: `"consumable"` | `"equipment"` | `"voucher"`.
+@export var category: String = ""
+## Weight for daily shop rotation weighted picks (higher = more likely).
+@export var rarity_weight: float = 1.0
 ## Tags consumed by ShopManager when applying consumable effects (e.g. `"mana_restore"`).
+## Named `effect_tags` (not `tags`) — matches G10 shop rotation spec wording in implementation prompts.
 @export var effect_tags: Array[String] = []
 ## For timed effects; `0` means instant / not used.
 @export var duration: float = 0.0

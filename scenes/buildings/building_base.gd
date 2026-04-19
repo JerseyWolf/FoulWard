@@ -692,11 +692,18 @@ func _setup_health_component() -> void:
 			health_component.health_depleted.connect(_on_health_depleted)
 		return
 	var hc: HealthComponent = HealthComponent.new()
+	hc.name = "HealthComponent"
 	hc.max_hp = _building_data.max_hp
 	hc.current_hp = _building_data.max_hp
 	add_child(hc)
 	health_component = hc
 	hc.health_depleted.connect(_on_health_depleted)
+	var hp_bar_scene: PackedScene = load("res://scenes/ui/building_hp_bar.tscn") as PackedScene
+	if hp_bar_scene != null and hp_bar_scene.can_instantiate():
+		var hp_bar: BuildingHpBar = hp_bar_scene.instantiate() as BuildingHpBar
+		if hp_bar != null:
+			add_child(hp_bar)
+			hp_bar.setup(hc)
 
 
 func _on_health_depleted() -> void:

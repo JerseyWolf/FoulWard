@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChronicleEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/chronicle_entry_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entry_id = "entry_economy_gold_10000"
+display_name = "Magnate"
+description = "Earn 10000 total gold from mission gains."
+tracking_signal = "gold_earned"
+tracking_field = ""
+target_count = 10000
+reward_type = 0
+reward_id = "perk_research_cost_5pct"

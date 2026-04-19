@@ -234,3 +234,8 @@ func _get_cumulative_bonus(weapon_slot: Types.WeaponSlot, field: String) -> floa
 		if i < arr.size() and arr[i] != null:
 			total += float(arr[i].get(field))
 	return total
+
+
+## POST-MVP: shop fire_oil_flask adds crossbow oil charges.
+func add_fire_oil_charges(amount: int) -> void:
+	push_warning("WeaponUpgradeManager.add_fire_oil_charges: not yet fully implemented (amount=%d)" % amount)

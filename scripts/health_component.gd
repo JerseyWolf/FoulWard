@@ -18,7 +18,9 @@ signal health_changed(current_hp: int, max_hp: int)
 signal health_depleted()
 
 func _ready() -> void:
-	current_hp = max_hp
+	## Do not overwrite HP set by the owner before add_child() (damaged buildings, tests).
+	if current_hp <= 0 or current_hp > max_hp:
+		current_hp = max_hp
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 

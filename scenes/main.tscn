@@ -19,6 +19,7 @@
 [ext_resource type="PackedScene" path="res://ui/between_mission_screen.tscn" id="12_bms"]
 [ext_resource type="PackedScene" path="res://ui/hub.tscn" id="40_hub"]
 [ext_resource type="PackedScene" path="res://ui/dialogue_panel.tscn" id="41_dialogue_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/combat_dialogue_banner.tscn" id="41_combat_banner"]
 [ext_resource type="PackedScene" path="res://ui/main_menu.tscn" id="13_mainmenu"]
 [ext_resource type="Script" uid="uid://du1u75tff1c5l" path="res://ui/end_screen.gd" id="14_endscreen"]
 [ext_resource type="Script" uid="uid://ct0jcmhqil53d" path="res://scripts/resources/spell_data.gd" id="15_kmb1v"]
@@ -32,7 +33,20 @@
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_mana_draught.tres" id="23_qkpxi"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_building_repair.tres" id="30_br"]
 [ext_resource type="Resource" path="res://resources/shop_data/shop_item_arrow_tower.tres" id="31_at"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_building_material_pack.tres" id="g10_bmp"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_research_boost.tres" id="g10_rb"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_tower_armor_plate.tres" id="g10_tap"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_fire_oil_flask.tres" id="g10_fof"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_scout_report.tres" id="g10_sr"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_mercenary_discount.tres" id="g10_md"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_emergency_repair.tres" id="g10_er"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_shield_charm.tres" id="g10_sc"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_gold_cache.tres" id="g10_gc"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_arrow_tower_voucher_2.tres" id="g10_at2"]
+[ext_resource type="Resource" path="res://resources/shop_data/shop_item_mana_elixir.tres" id="g10_me"]
 [ext_resource type="Script" path="res://ui/mission_briefing.gd" id="24_missionbrief"]
+[ext_resource type="PackedScene" path="res://scenes/ui/passive_select_screen.tscn" id="passive_select_screen"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ring_rotation_screen.tscn" id="ring_rotation_screen"]
 [ext_resource type="Script" path="res://scripts/main_root.gd" id="32_mainroot"]
 [ext_resource type="Script" path="res://scripts/weapon_upgrade_manager.gd" id="33_wum"]
 [ext_resource type="Resource" path="res://resources/weapon_level_data/crossbow_level_1.tres" id="34_cb1"]
@@ -229,7 +243,7 @@ dev_unlock_anti_air_only = false
 
 [node name="ShopManager" type="Node" parent="Managers" unique_id=587576636]
 script = ExtResource("7_shopmanager")
-shop_catalog = Array[ExtResource("21_fv21b")]([ExtResource("22_tel4y"), ExtResource("23_qkpxi"), ExtResource("30_br"), ExtResource("31_at")])
+shop_catalog = Array[ExtResource("21_fv21b")]([ExtResource("22_tel4y"), ExtResource("23_qkpxi"), ExtResource("30_br"), ExtResource("31_at"), ExtResource("g10_bmp"), ExtResource("g10_rb"), ExtResource("g10_tap"), ExtResource("g10_fof"), ExtResource("g10_sr"), ExtResource("g10_md"), ExtResource("g10_er"), ExtResource("g10_sc"), ExtResource("g10_gc"), ExtResource("g10_at2"), ExtResource("g10_me")])
 
 [node name="WeaponUpgradeManager" type="Node" parent="Managers"]
 script = ExtResource("33_wum")
@@ -264,6 +278,14 @@ layout_mode = 3
 anchors_preset = 15
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="CombatDialogueBanner" parent="UI/UIManager" instance=ExtResource("41_combat_banner")]
+layout_mode = 3
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 96.0
+grow_horizontal = 2
+mouse_filter = 2
 
 
 [node name="HUD" parent="UI" unique_id=2074136346 instance=ExtResource("10_hud")]
@@ -336,6 +358,18 @@ offset_bottom = 120.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "BEGIN"
+
+[node name="PassiveSelectScreen" parent="UI" instance=ExtResource("passive_select_screen")]
+layout_mode = 3
+anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RingRotationScreen" parent="UI" instance=ExtResource("ring_rotation_screen")]
+layout_mode = 3
+anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="EndScreen" type="Control" parent="UI" unique_id=1075513404]
 visible = false

@@ -88,6 +88,10 @@ for (( g=0; g<PARALLEL_COUNT; g++ )); do
 			"${gdunit_args[@]}" \
 			> "$group_log" 2>&1
 		ec=$?
+		# Post-exit segfault/abort from Godot .NET teardown — mirror run_gdunit.sh (log may omit Overall Summary).
+		if [[ "$ec" -eq 139 ]] || [[ "$ec" -eq 134 ]]; then
+			ec=101
+		fi
 		echo "$ec" > "$log_dir/exit_${g}.txt"
 		exit 0
 	) &
@@ -103,7 +107,8 @@ end_time=$(date +%s)
 elapsed=$((end_time - start_time))
 
 strip_ansi() {
-	sed 's/\x1b\[[0-9;]*m//g'
+	# Strip SGR + truecolor (38;2;r;g;b) so grep -P can read digits from Overall Summary.
+	sed 's/\x1b\[[0-9;:]*m//g'
 }
 
 any_real_fail=0
@@ -127,10 +132,10 @@ for (( g=0; g<PARALLEL_COUNT; g++ )); do
 		exit_code=$(cat "$exit_file")
 	fi
 
-	clean_log=$(cat "$group_log" | strip_ansi)
-	cases=$(echo "$clean_log" | grep -oP 'Overall Summary:\s+\K\d+' || echo "0")
-	failures=$(echo "$clean_log" | grep -oP '\d+ failures' | tail -1 | grep -oP '^\d+' || echo "0")
-	orphans=$(echo "$clean_log" | grep -oP '\d+ orphans' | tail -1 | grep -oP '^\d+' || echo "0")
+	# Read stats from stripped log via file pipe (avoids bash pipe+large-string quirks).
+	cases=$(strip_ansi < "$group_log" | grep -oP 'Overall Summary:\s+\K\d+' | tail -1 || echo "0")
+	failures=$(strip_ansi < "$group_log" | grep -oP '\d+ failures' | tail -1 | grep -oP '^\d+' || echo "0")
+	orphans=$(strip_ansi < "$group_log" | grep -oP '\d+ orphans' | tail -1 | grep -oP '^\d+' || echo "0")
 
 	total_cases=$((total_cases + cases))
 	total_failures=$((total_failures + failures))
@@ -142,7 +147,8 @@ for (( g=0; g<PARALLEL_COUNT; g++ )); do
 
 	if [[ "$exit_code" -ne 0 && "$exit_code" -ne 101 ]]; then
 		if [[ "$exit_code" -eq 100 ]]; then
-			if echo "$clean_log" | grep -q "0 failures"; then
+			# Do not pipe huge clean_log — pipe can fail to match; raw log still contains "0 failures".
+			if grep -q "0 failures" "$group_log" 2>/dev/null; then
 				:
 			else
 				any_real_fail=1

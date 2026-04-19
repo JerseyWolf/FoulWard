@@ -7,6 +7,9 @@ class_name TestFlorence
 extends GdUnitTestSuite
 
 func before_test() -> void:
+	## Prevent GdUnit from auto_freeing the SignalBus autoload when other suites monitor it.
+	monitor_signals(SignalBus, false)
+	SaveManager.start_new_attempt()
 	Engine.time_scale = 1.0
 	GameManager.game_state = Types.GameState.MAIN_MENU
 	GameManager.current_mission = 1

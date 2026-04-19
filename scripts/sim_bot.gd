@@ -256,6 +256,8 @@ func _is_mission_bot_active_state(state: Types.GameState) -> bool:
 	## Mission-phase states where bot actions are allowed (includes briefing/build/waves).
 	return (
 			state == Types.GameState.MISSION_BRIEFING
+			or state == Types.GameState.PASSIVE_SELECT
+			or state == Types.GameState.RING_ROTATE
 			or state == Types.GameState.COMBAT
 			or state == Types.GameState.WAVE_COUNTDOWN
 			or state == Types.GameState.BUILD_MODE

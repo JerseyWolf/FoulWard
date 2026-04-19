@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SybilPassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sybil_passive_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+passive_id = "passive_cold_margin"
+display_name = "Cold Margin"
+description = "Between heartbeats she steals a breath of time—spells return ere the bell tolls twice."
+icon_id = ""
+category = "offense"
+effect_type = "cooldown_pct"
+effect_value = 0.15
+is_unlocked = true

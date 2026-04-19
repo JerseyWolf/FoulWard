@@ -9,10 +9,18 @@
 
 ## Changelog
 
+Rows that cite historical SignalBus totals (e.g. **67**, **72**, **73**, **76**) are **intentional snapshots** from the day that feature landed; the current canonical total is **77** (see `AGENTS.md` and `autoloads/signal_bus.gd`).
+
 | Date | Author | Summary |
 |------|--------|---------|
+| 2026-04-18 | Cursor agent | Group 11 reconciliation: `Types.DifficultyTier` + `DifficultyTierData` + `resources/difficulty/tier_*.tres`; `TerritoryData` tier/star fields; `GameManager` `_load_tier_data`, `set_active_tier` / `get_active_tier`, `_apply_tier_to_day_config`, `_handle_tier_cleared`, save payload `territories` tier keys; tests `test_difficulty_tier_system.gd` (17); GdUnit harness: `monitor_signals(SignalBus, false)` in tier + building HP tests. Signal count **77** unchanged. |
+| 2026-04-18 | Cursor agent | Group 9 (S05) hub dialogue content (30 `.tres` × 6 NPCs), `DialogueEntry.is_combat_line`, combat condition keys + `request_combat_line`, SignalBus `combat_dialogue_requested` (**77** signals), `CombatDialogueBanner` under `UI/UIManager`, hub `TalkButton` visibility via `peek_entry_for_character`; tests +12 (`test_dialogue_content.gd`, `test_combat_dialogue.gd`); `run_gdunit_quick.sh` allowlist. |
+| 2026-04-18 | Cursor agent | Group 8 Chronicle meta-progression: `ChronicleManager` autoload **#15**, `ChronicleEntryData` / `ChroniclePerkData`, `resources/chronicle/**/*.tres`, SignalBus `chronicle_*` (**76** signals), `chronicle_screen.tscn`, main menu Chronicle; tests +11 (`test_chronicle_manager.gd`); `ring_rotation_screen.gd` `@onready` path fix. |
+| 2026-04-18 | Cursor agent | Group 7 ring rotation: HexGrid **42** slots (ring 3 expanded), per-ring `rotate_ring(ring_index, angle_rad)`, `RING_ROTATE` game state, SignalBus `ring_rotated` (**73** signals), `ring_rotation_screen.tscn`, save payload `version` **2** + `SaveManager.is_hex_slot_index_in_save_range`; tests +13 (`test_ring_rotation.gd`). |
+| 2026-04-18 | Cursor agent | Sybil passive system: `SybilPassiveManager` autoload #14, `PASSIVE_SELECT` game state, `resources/passive_data/*.tres`, SignalBus `sybil_passives_offered` / `sybil_passive_selected` (**72** signals); tests +11 (`test_sybil_passive_manager.gd`); save key `sybil`. |
 | 2026-04-14 | Cursor agent | SignalBus **67** typed signals (as of this date) — same total in `AGENTS.md`, §3.1, §24, `CONVENTIONS.md`, `ARCHITECTURE.md`, indexes, `.cursor/skills/signal-bus/` (see skill § *Signal count in documentation*). |
-| 2026-04-14 | Cursor agent | Batch verification doc sync: dialogue line signals on SignalBus (§3.14, §24 Dialogue); `AllyRole` four values / TANK removed (§5); test baseline 612 GdUnit4 (§1, §23); main campaign path `res://resources/campaign_main_50days.tres`. |
+| 2026-04-18 | Cursor agent | G1 S01: campaign content tests +11 (`test_campaign_config.gd`); test total 623; reconciliation tracker G1 row filled. |
+| 2026-04-14 | Cursor agent | Batch verification doc sync: dialogue line signals on SignalBus (§3.14, §24 Dialogue); `AllyRole` four values / TANK removed (§5); test baseline 612 GdUnit4 (§1, §23); main campaign path `res://resources/campaigns/campaign_main_50_days.tres` (canonical; legacy duplicate removed 2026-04-19). |
 | 2026-04-14 | mcp-purge | Moved godot-mcp-pro and gdai-mcp-godot above repo root to ../foulward-mcp-servers/. |
 | 2026-04-14 | Cursor agent | §2.4 C# Integration; §3.3 DamageCalculator (C#); §30.15 C# `class_name` vs autoloads; §34 `FoulWard.csproj` + `CREDITS.md`. |
 | 2026-03-31 | Cursor agent | §1.1 Cursor/MCP toolchain (minimal consolidation); §23 headless automation vs GdUnit clarified. |
@@ -69,7 +77,7 @@
 | **Genre** | Real-time tower defense, stationary perspective (player IS the tower, aims manually with mouse) |
 | **Inspiration** | TAUR |
 | **Campaign structure** | 50-day main campaign. Each day = one mission. Missions have a build phase then wave combat. |
-| **Test count** | 612 GdUnit4 tests (full parallel suite baseline; run `./tools/run_gdunit.sh` for sequential) |
+| **Test count** | 650 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-18; see `docs/PROMPT_75_IMPLEMENTATION.md` for failures) |
 
 ### Primary Files of Record
 
@@ -134,12 +142,11 @@ Cursor loads MCP servers from **`.cursor/mcp.json`**. There is no separate “au
 - **Drunkenness system: FORMALLY CUT.** See [Section 31](#31-formally-cut-features--never-implement).
 
 #### Sybil
-**STATUS: EXISTS IN CODE (spell management); PASSIVE SYSTEM PLANNED**
+**STATUS: EXISTS IN CODE (spell management + passive selection)**
 
 - Role: Spell researcher / spell support.
 - Manages the spell system via `SpellManager` (see [Section 7](#7-spells)).
-
-**PLANNED — Sybil Passive Selection System** (not yet in code).
+- **Passive selection:** `SybilPassiveManager` loads `res://resources/passive_data/*.tres` (`SybilPassiveData`). After mission briefing, `GameManager.enter_passive_select()` enters `Types.GameState.PASSIVE_SELECT`; the player chooses one offered passive; `SpellManager` applies modifiers via `SybilPassiveManager.get_modifier(effect_type)`.
 
 #### Florence (Hub Role)
 - Male plague doctor (see [Section 2.1](#21-player-character-florence)).
@@ -190,7 +197,7 @@ All registered in `project.godot`. **Init order matters** — do not change with
 
 ### 3.1 SignalBus (`res://autoloads/signal_bus.gd`) — Init #1
 
-Central typed signal hub. **67** typed `signal` declarations as of **2026-04-14** (re-count `^signal ` in this file when changed). **No logic, no state. Never add logic here.**
+Central typed signal hub. **77** typed `signal` declarations as of **2026-04-18** (re-count `^signal ` in this file when changed). **No logic, no state. Never add logic here.**
 
 All signals are declared only — no methods, no variables besides signals. See [Section 24](#24-signal-bus-reference) for the full signal table.
 
@@ -416,15 +423,42 @@ Rolling autosaves to `user://saves/attempt_*/slot_*.json`. 5 slots. No `class_na
 | `has_resumable_attempt() -> bool` | bool | True if any attempt has at least one save |
 | `clear_all_saves_for_test() -> void` | void | Test helper: removes all attempt dirs |
 
-**Save payload structure:** `{version, attempt_id, campaign: {}, game: {}, relationship: {}, research: {}, shop: {}, enchantments: {}}`.
+**Save payload structure:** `{version, attempt_id, campaign: {}, game: {}, relationship: {}, research: {}, shop: {}, enchantments: {}, sybil: {}}`.
 
-### 3.14 DialogueManager (`res://autoloads/dialogue_manager.gd`) — Init #14
+### 3.14 SybilPassiveManager (`res://autoloads/sybil_passive_manager.gd`) — Init #14
 
-Loads `DialogueEntry` `.tres` from `res://resources/dialogue/**`. Priority, AND conditions, once-only, `chain_next_id`.
+Loads `SybilPassiveData` resources from `res://resources/passive_data/`. Offers a random subset each mission (`OFFER_COUNT` = 4); emits `SignalBus.sybil_passives_offered`. `select_passive(passive_id)` sets the active passive and emits `sybil_passive_selected`. `get_modifier(effect_type)` returns the active passive's `effect_value` when types match.
 
 | Signature | Returns | Usage |
 |-----------|---------|-------|
-| `request_entry_for_character(character_id: String, tags: Array[String] = []) -> DialogueEntry` | DialogueEntry | Highest-priority eligible entry (chains have priority) |
+| `get_offered_passives() -> Array` | Array | Picks unlocked passives; emits `sybil_passives_offered` |
+| `select_passive(passive_id: String) -> void` | void | Sets active passive |
+| `get_modifier(effect_type: String) -> float` | float | Modifier for `SpellManager` / future systems |
+| `get_save_data() -> Dictionary` | Dictionary | `active_passive_id` for SaveManager |
+| `restore_from_save_data(data: Dictionary) -> void` | void | Restores without duplicate selection signal |
+
+### 3.15 ChronicleManager (`res://autoloads/chronicle_manager.gd`) — Init #15
+
+Meta-progression achievements and perks. Loads `ChronicleEntryData` from `res://resources/chronicle/entries/` and `ChroniclePerkData` from `res://resources/chronicle/perks/`; persists progress to `user://chronicle.json`. Listens on SignalBus for `enemy_killed`, `mission_won`, `building_placed`, `boss_killed`, `campaign_completed`, `resource_changed` (gold earned delta), and `research_unlocked` (mapped to research-completed entries). Emits `chronicle_entry_completed`, `chronicle_perk_activated`, `chronicle_progress_updated`. `apply_perks_at_mission_start()` runs after mission economy is applied (from `GameManager._begin_mission_wave_sequence`). Percentage perks stack via `get_chronicle_research_cost_multiplier()`, `get_chronicle_enchanting_cost_multiplier()`, `get_chronicle_gold_per_kill_percent_bonus()`, `get_chronicle_wave_reward_gold_flat()` consumed by `ResearchManager`, `EnchantmentManager`, `EconomyManager`.
+
+| Signature | Returns | Usage |
+|-----------|---------|-------|
+| `apply_perks_at_mission_start() -> void` | void | Applies starting gold/mana/material and sell-refund multiplier from unlocked perks |
+| `save_progress() -> void` / `load_progress() -> void` | void | JSON persistence |
+| `reset_for_test() -> void` | void | Clears progress and active perks (tests) |
+| `get_entry_ids_sorted() -> PackedStringArray` | PackedStringArray | UI: ordered entry ids |
+| `get_entry_state(entry_id: String) -> Dictionary` | Dictionary | `{data, progress, completed, seen_boss_ids}` |
+| `get_perk_display_name(perk_id: String) -> String` | String | UI label for a perk id |
+
+### 3.16 DialogueManager (`res://autoloads/dialogue_manager.gd`) — Init #16
+
+Loads `DialogueEntry` `.tres` from `res://resources/dialogue/**`. Priority, AND conditions, once-only, `chain_next_id`. Hub selection skips `is_combat_line`; combat lines use `request_combat_line()` (per-mission dedup via `_seen_combat_lines`). **Combat line filenames (canonical on disk):** under `res://resources/dialogue/combat/` — e.g. `combat_first_blood.tres`, `combat_wave_2.tres`, `combat_wave_3.tres`, `combat_wave_5.tres`, `combat_kill_10.tres`, `combat_kill_50.tres`, `combat_florence_hit.tres`, `combat_florence_hit_2.tres`, `combat_boss_appears.tres`, `combat_boss_killed.tres` (Perplexity examples used different wave/kill numbers; tests and content use this set).
+
+| Signature | Returns | Usage |
+|-----------|---------|-------|
+| `peek_entry_for_character(character_id: String, tags: Array[String] = []) -> DialogueEntry` | DialogueEntry | Same selection as `request_entry_for_character` but does **not** emit `dialogue_line_started` (Talk button visibility) |
+| `request_entry_for_character(character_id: String, tags: Array[String] = []) -> DialogueEntry` | DialogueEntry | Highest-priority eligible hub entry (chains have priority) |
+| `request_combat_line() -> DialogueEntry` | DialogueEntry | Highest-priority eligible combat line; emits `SignalBus.combat_dialogue_requested` |
 | `get_entry_by_id(entry_id: String) -> DialogueEntry` | DialogueEntry | Direct lookup |
 | `mark_entry_played(entry_id: String) -> void` | void | Marks once_only as played; activates chain |
 | `notify_dialogue_finished(entry_id: String, character_id: String) -> void` | void | Emits `SignalBus.dialogue_line_finished`; clears chain |
@@ -435,19 +469,19 @@ Loads `DialogueEntry` `.tres` from `res://resources/dialogue/**`. Priority, AND 
 | `get_arnulf_state_tracked() -> Types.ArnulfState` | ArnulfState | Arnulf state for conditions |
 | `get_spell_cast_count_tracked() -> int` | int | Spell cast counter |
 
-**Dialogue signals (SignalBus):** `dialogue_line_started(entry_id: String, character_id: String)` and `dialogue_line_finished(entry_id: String, character_id: String)` are **declared on `SignalBus`** (see [Section 24](#24-signal-bus-reference), Dialogue subsection). `DialogueManager` emits them via `SignalBus.dialogue_line_started.emit(...)` / `SignalBus.dialogue_line_finished.emit(...)` — they are not local signals on DialogueManager.
+**Dialogue signals (SignalBus):** `dialogue_line_started`, `dialogue_line_finished`, and **`combat_dialogue_requested(entry: DialogueEntry)`** are **declared on `SignalBus`** (see [Section 24](#24-signal-bus-reference), Dialogue subsection). `DialogueManager` emits hub line events via `SignalBus.dialogue_line_started.emit(...)` / `SignalBus.dialogue_line_finished.emit(...)` and combat selection via `SignalBus.combat_dialogue_requested.emit(...)` — they are not local signals on DialogueManager.
 
-**Condition keys:** `current_mission_number`, `mission_won_count`, `gold_amount`, `sybil_research_unlocked_any`, `arnulf_research_unlocked_any`, `research_unlocked_<id>`, `shop_item_purchased_<id>`, `arnulf_is_downed`, `florence.*`, `campaign.*`.
+**Condition keys:** `current_mission_number`, `mission_won_count`, `gold_amount`, `sybil_research_unlocked_any`, `arnulf_research_unlocked_any`, `research_unlocked_<id>`, `shop_item_purchased_<id>`, `arnulf_is_downed`, `florence.*`, `campaign.*`, combat: `first_blood`, `wave_number_gte`, `kills_this_mission_gte`, `boss_active`, `florence_damaged`.
 
-### 3.15 AutoTestDriver (`res://autoloads/auto_test_driver.gd`) — Init #15
+### 3.17 AutoTestDriver (`res://autoloads/auto_test_driver.gd`) — Init #17
 
 Headless smoke-test driver. Active on `--autotest`, `--simbot_profile`, or `--simbot_balance_sweep`.
 
-### 3.16 GDAIMCPRuntime — Init #16
+### 3.18 GDAIMCPRuntime — Init #18
 
 GDAI MCP GDExtension bridge (editor only). Cursor agents reach it via the **`gdai-mcp-godot`** MCP server when Godot is running; see [§1.1](#11-cursor-mcp-and-agent-toolchain).
 
-### 3.17 EnchantmentManager (`res://autoloads/enchantment_manager.gd`) — Init #17
+### 3.19 EnchantmentManager (`res://autoloads/enchantment_manager.gd`) — Init #19
 
 Per-weapon enchantment slots (elemental, power).
 
@@ -535,6 +569,7 @@ Path: `/root/Main/Managers/ShopManager`
 |-----------|---------|-------|
 | `purchase_item(item_id: String) -> bool` | bool | Checks affordability, applies effect, emits signal |
 | `get_available_items() -> Array[ShopItemData]` | Array | Copy of shop catalog |
+| `get_daily_items(day_index: int) -> Array[ShopItemData]` | Array | Daily rotation: 4–6 items, RNG seeded by `day_index`; excludes capped consumables; guarantees ≥1 consumable + ≥1 equipment |
 | `can_purchase(item_id: String) -> bool` | bool | Exists + affordable + preconditions |
 | `add_consumable(item_id: String, amount: int = 1) -> void` | void | Adds to consumable stack (cap 20) |
 | `consume(item_id: String) -> bool` | bool | Decrements stack; false if empty |
@@ -575,6 +610,7 @@ All enums defined in `res://scripts/types.gd`. Accessed as `Types.EnumName.VALUE
 | GAME_WON | 8 |
 | GAME_OVER | 9 |
 | ENDLESS | 10 |
+| PASSIVE_SELECT | 11 |
 
 ### DamageType
 | Name | Value |
@@ -772,7 +808,7 @@ All enums defined in `res://scripts/types.gd`. Accessed as `Types.EnumName.VALUE
 
 ### Other Enums (stable, rarely referenced directly)
 
-`AllyRole` (0–3: `MELEE_FRONTLINE`, `RANGED_SUPPORT`, `ANTI_AIR`, `SPELL_SUPPORT` — `TANK` was removed), `StrategyProfile` (0–4), `BuildingBaseMesh` (0–3), `BuildingTopMesh` (0–6), `DayAdvanceReason` (0–2), `UnitSize` (0–3), `AllyAiMode` (0–4), `AuraModifierKind` (0–2), `AuraModifierOp` (0–1), `AuraCategory` (0–3), `AuraStat` (0–5), `MissionBalanceStatus` (0–3).
+`AllyRole` (0–3: `MELEE_FRONTLINE`, `RANGED_SUPPORT`, `ANTI_AIR`, `SPELL_SUPPORT` — `TANK` was removed), `StrategyProfile` (0–4), `BuildingBaseMesh` (0–3), `BuildingTopMesh` (0–6), `DayAdvanceReason` (0–2), `UnitSize` (0–3), `AllyAiMode` (0–4), `AuraModifierKind` (0–2), `AuraModifierOp` (0–1), `AuraCategory` (0–3), `AuraStat` (0–5), `MissionBalanceStatus` (0–3), `GraphicsQuality` (0–3: `LOW`, `MEDIUM`, `HIGH`, `CUSTOM`).
 
 **Non-existent enum: `Types.SpellType` / `Types.SpellID` — do NOT use or assume.**
 
@@ -782,9 +818,9 @@ All enums defined in `res://scripts/types.gd`. Accessed as `Types.EnumName.VALUE
 
 **STATUS: EXISTS IN CODE** — Defined in `res://scripts/types.gd` as `Types.GameState` (see [Section 5](#5-typesgd--full-enum-to-integer-mapping)).
 
-**Transition graph:** `MAIN_MENU → MISSION_BRIEFING → COMBAT ↔ BUILD_MODE → WAVE_COUNTDOWN → (COMBAT loop) → MISSION_WON/MISSION_FAILED → BETWEEN_MISSIONS → MISSION_BRIEFING...`
+**Transition graph:** `MAIN_MENU → MISSION_BRIEFING → PASSIVE_SELECT → COMBAT ↔ BUILD_MODE → WAVE_COUNTDOWN → (COMBAT loop) → MISSION_WON/MISSION_FAILED → BETWEEN_MISSIONS → MISSION_BRIEFING...`
 
-**PLANNED states:** `RING_ROTATE` (pre-battle ring rotation), `PASSIVE_SELECT` (Sybil passives).
+**PLANNED states:** `RING_ROTATE` (pre-battle ring rotation).
 
 ---
 
@@ -898,7 +934,7 @@ See the research manager API in [Section 4.3](#43-researchmanager).
 ## 13. Campaign and Progression
 
 ### Day/Wave Structure
-- 50 days main campaign (`res://resources/campaign_main_50days.tres` — `GameManager` loads this path; a duplicate packaged variant may exist under `res://resources/campaigns/`), 5 days short (`campaign_short_5days.tres`).
+- 50 days main campaign (`res://resources/campaigns/campaign_main_50_days.tres` — `GameManager.MAIN_CAMPAIGN_CONFIG_PATH`), 5 days short (`campaign_short_5days.tres`).
 - Each mission = 5 waves (`WAVES_PER_MISSION`).
 - After Day 50 final boss: loop continues until player wins or tower destroyed.
 
@@ -912,9 +948,7 @@ See the research manager API in [Section 4.3](#43-researchmanager).
 
 ## 14. Meta-Progression: The Chronicle of Foul Ward
 
-**DOES NOT EXIST IN CODE. CONFIRMED ADDED TO DESIGN. Must be implemented.**
-
-See implementation spec: `ChronicleData`, `ChroniclePerkData`, achievement triggers via SignalBus.
+**EXISTS IN CODE:** `ChronicleManager` autoload (Init #15), resources `ChronicleData` / `ChronicleEntryData` / `ChroniclePerkData`, data under `res://resources/chronicle/`, UI `scenes/ui/chronicle_screen.tscn`, main menu **Chronicle** button. SignalBus: `chronicle_entry_completed`, `chronicle_perk_activated`, `chronicle_progress_updated`. Types: `Types.ChronicleRewardType`, `Types.ChroniclePerkEffectType` (mirrored in `FoulWardTypes.cs`).
 
 ---
 
@@ -999,14 +1033,14 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 
 **Headless automation (not GdUnit):** `AutoTestDriver` activates when the project is run with CLI user args such as `--autotest`, `--simbot_profile=…`, or `--simbot_balance_sweep` (see `autoloads/auto_test_driver.gd`). That path boots the real game flow and drives `SimBot`, so **economy, waves, and combat stats behave like a mission** — useful for sweeps and integration-style balance checks. It is **not** a substitute for **GdUnit** unit/integration tests (`./tools/run_gdunit*.sh`), which assert specific APIs and run without full interactive mission requirements.
 
-- **612 GdUnit4 tests** (full suite; exact per-runner totals may vary slightly with GdUnit statistics aggregation).
+- **650 GdUnit4 test cases** (parallel runner aggregate, 2026-04-18; repo-root **`AGENTS.md`**; sequential `./tools/run_gdunit.sh` may exit early with engine segfault — prefer parallel totals for “cases run”).
 - Quick: `./tools/run_gdunit_quick.sh`, Unit (~65s): `./tools/run_gdunit_unit.sh`, Parallel (~2m45s): `./tools/run_gdunit_parallel.sh`, Sequential: `./tools/run_gdunit.sh`.
 
 ---
 
 ## 24. Signal Bus Reference
 
-**STATUS: EXISTS IN CODE** — **67** signals declared in `res://autoloads/signal_bus.gd` as of **2026-04-14** (includes dialogue line signals under the `=== DIALOGUE ===` block). Keep the hero-line total in sync across repo docs — see `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*.
+**STATUS: EXISTS IN CODE** — **77** signals declared in `res://autoloads/signal_bus.gd` as of **2026-04-18** (includes dialogue line signals and `combat_dialogue_requested` under the `=== DIALOGUE ===` block). Keep the hero-line total in sync across repo docs — see `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*.
 
 ### Combat
 
@@ -1119,8 +1153,9 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 |--------|-----------|
 | `dialogue_line_started` | `entry_id: String, character_id: String` |
 | `dialogue_line_finished` | `entry_id: String, character_id: String` |
+| `combat_dialogue_requested` | `entry: DialogueEntry` |
 
-Declared on `SignalBus`; emitted by `DialogueManager` when a line starts / when `notify_dialogue_finished` runs. UI (e.g. `UIManager`) connects to `SignalBus`, not to DialogueManager local signals.
+Declared on `SignalBus`; `dialogue_line_*` emitted by `DialogueManager` when a hub line starts / when `notify_dialogue_finished` runs. `combat_dialogue_requested` emitted when `request_combat_line()` selects a combat banner line. UI (e.g. `UIManager`, `CombatDialogueBanner`) connects to `SignalBus`, not to DialogueManager local signals.
 
 ### Build Mode
 
@@ -1159,6 +1194,14 @@ Declared on `SignalBus`; emitted by `DialogueManager` when a line starts / when 
 | `mercenary_offer_generated` | `ally_id: String` |
 | `mercenary_recruited` | `ally_id: String` |
 | `ally_roster_changed` | (none) |
+
+### Settings
+
+| Signal | Parameters |
+|--------|-----------|
+| `graphics_quality_changed` | `quality: int` |
+
+Emitted by `SettingsManager.set_graphics_quality()`. Payload is `int(Types.GraphicsQuality)`. UI connects to this to refresh quality indicators.
 
 ---
 
@@ -1523,7 +1566,7 @@ These rules apply to **every** future Cursor session. See also repo-root **`AGEN
 - [ ] Move feature from "planned" to "exists" (or vice versa if cut).
 - [ ] Add correct field names to [Section 32](#32-field-name-discipline--correct-vs-wrong-names).
 - [ ] Add new signals to [Section 24](#24-signal-bus-reference).
-- [ ] If the number of `signal` lines in `signal_bus.gd` changed, update the **67** (or new total) and **as-of date** in every file listed in `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*.
+- [ ] If the number of `signal` lines in `signal_bus.gd` changed, update the **exact total** and **as-of date** in every file listed in `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*.
 - [ ] Add a changelog entry at the top.
 - [ ] Update `docs/INDEX_SHORT.md` and `docs/INDEX_FULL.md`.
 
@@ -1785,8 +1828,8 @@ public partial class DamageCalculator : Node
 
 | Feature | Status | Cross-Reference |
 |---------|--------|----------------|
-| Chronicle / meta-progression system | Planned | [Section 14](#14-meta-progression-the-chronicle-of-foul-ward) |
-| Ring rotation UI | Planned | [Section 8](#8-buildings) |
+| Chronicle / meta-progression system | Exists | [Section 14](#14-meta-progression-the-chronicle-of-foul-ward) |
+| Ring rotation UI | Exists | [Section 8](#8-buildings) |
 | Sybil passive selection | Planned | [Section 2.2](#22-ai-companions) |
 | Star difficulty system | Planned | [Section 13](#13-campaign-and-progression) |
 | Leaderboards | Optional future | [Section 13](#13-campaign-and-progression) |
@@ -1808,6 +1851,7 @@ public partial class DamageCalculator : Node
 | Shop rotation count | How many items shown per day? | Designer |
 | Leaderboard backend | LootLocker, Supabase, or custom? | Developer |
 | Star difficulty multipliers | Exact HP/damage/gold multipliers for Veteran and Nightmare | Designer/playtester |
+| WorldEnvironment path | `_find_world_environment()` in `SettingsManager` assumes `/root/Main/WorldEnvironment` — no `WorldEnvironment` node confirmed in repo at S10; adjust path once node is added to scene | Developer |
 
 ---
  

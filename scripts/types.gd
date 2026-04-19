@@ -18,6 +18,10 @@ enum GameState {
 	GAME_OVER,
 	## Between-mission hub while in Endless Run (same UI as BETWEEN_MISSIONS; no campaign cap).
 	ENDLESS,
+	## Sybil passive selection screen, shown once per mission before combat.
+	PASSIVE_SELECT,
+	## Ring rotation pre-combat screen; entered after PASSIVE_SELECT, exits to COMBAT.
+	RING_ROTATE,
 }
 
 enum DamageType {
@@ -339,6 +343,30 @@ enum GraphicsQuality {
 	MEDIUM = 1,
 	HIGH = 2,
 	CUSTOM = 3,
+}
+
+## Reward category for a Chronicle entry completion.
+enum ChronicleRewardType { PERK = 0, COSMETIC = 1, TITLE = 2 }
+
+## Effect applied by an unlocked Chronicle perk (meta-progression).
+enum ChroniclePerkEffectType {
+	STARTING_GOLD = 0,
+	STARTING_MANA = 1,
+	SELL_REFUND_PCT = 2,
+	RESEARCH_COST_PCT = 3,
+	GOLD_PER_KILL_PCT = 4,
+	BUILDING_MATERIAL_START = 5,
+	ENCHANTING_COST_PCT = 6,
+	WAVE_REWARD_GOLD = 7,
+	XP_GAIN_PCT = 8,
+	COSMETIC_SKIN = 9,
+}
+
+## Replay difficulty tier for per-territory star system.
+enum DifficultyTier {
+	NORMAL = 0,
+	VETERAN = 1,
+	NIGHTMARE = 2,
 }
 
 # ASSUMPTION: Types uses enums + static helpers as a shared registry across systems.

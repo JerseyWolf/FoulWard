@@ -17,6 +17,8 @@ extends Control
 )
 @onready var _main_menu: Control = get_node_or_null("/root/Main/UI/MainMenu")
 @onready var _mission_briefing: Control = get_node_or_null("/root/Main/UI/MissionBriefing")
+@onready var _passive_select_screen: Control = get_node_or_null("/root/Main/UI/PassiveSelectScreen")
+@onready var _ring_rotation_screen: Control = get_node_or_null("/root/Main/UI/RingRotationScreen")
 @onready var _end_screen: Control = get_node_or_null("/root/Main/UI/EndScreen")
 
 @onready var _hub: Control = get_node_or_null("/root/Main/UI/Hub") as Control
@@ -136,6 +138,10 @@ func _apply_state(state: Types.GameState) -> void:
 		_main_menu.hide()
 	if is_instance_valid(_mission_briefing):
 		_mission_briefing.hide()
+	if is_instance_valid(_passive_select_screen):
+		_passive_select_screen.hide()
+	if is_instance_valid(_ring_rotation_screen):
+		_ring_rotation_screen.hide()
 	if is_instance_valid(_end_screen):
 		_end_screen.hide()
 
@@ -147,6 +153,14 @@ func _apply_state(state: Types.GameState) -> void:
 		Types.GameState.MISSION_BRIEFING:
 			if is_instance_valid(_mission_briefing):
 				_mission_briefing.show()
+
+		Types.GameState.PASSIVE_SELECT:
+			if is_instance_valid(_passive_select_screen):
+				_passive_select_screen.show()
+
+		Types.GameState.RING_ROTATE:
+			if is_instance_valid(_ring_rotation_screen):
+				_ring_rotation_screen.show()
 
 		Types.GameState.COMBAT, \
 		Types.GameState.WAVE_COUNTDOWN:

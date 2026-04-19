@@ -66,6 +66,15 @@ extends Resource
 ## POST-MVP: multiplier on weapon upgrade gold costs.
 @export var bonus_weapon_upgrade_cost_multiplier: float = 1.0
 
+## Highest replay difficulty tier cleared for this territory (star progression).
+@export var highest_cleared_tier: Types.DifficultyTier = Types.DifficultyTier.NORMAL
+## Star count (0–3) from tier clears; used by world map UI.
+@export var star_count: int = 0
+## Chronicle / meta id granted on first veteran clear (optional).
+@export var veteran_perk_id: String = ""
+## Title id granted on nightmare clear (optional).
+@export var nightmare_title_id: String = ""
+
 
 ## Returns true if this territory should currently contribute bonuses.
 ## MVP: controlled and not permanently lost.

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChronicleEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/chronicle_entry_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entry_id = "entry_combat_slayer_1000"
+display_name = "Mass Slayer"
+description = "Kill 1000 enemies."
+tracking_signal = "enemy_killed"
+tracking_field = ""
+target_count = 1000
+reward_type = 0
+reward_id = "perk_sell_refund_2pct"

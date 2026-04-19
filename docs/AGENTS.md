@@ -21,7 +21,7 @@ Canonical standing orders live in **`AGENTS.md`** (repo root; symlinked as `.cur
 ## Code conventions
 
 - **C#:** **PascalCase** methods and public API; GDScript callers see **snake_case** via the marshaller — **do not** add hand-written wrapper scripts for naming alone.
-- **Interop:** signals stay centralized in **`autoloads/signal_bus.gd`**. Dialogue line events (`dialogue_line_started` / `dialogue_line_finished`) are declared there, not on DialogueManager — see root **`AGENTS.md`** Known Gotchas #8. **Signal count:** **67** typed declarations as of **2026-04-14**; when you add or remove a `signal`, update every file listed in `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*.
+- **Interop:** signals stay centralized in **`autoloads/signal_bus.gd`**. Dialogue line events (`dialogue_line_started` / `dialogue_line_finished`) are declared there, not on DialogueManager — see root **`AGENTS.md`** Known Gotchas #8. **Signal count:** **77** typed declarations as of **2026-04-18**; when you add or remove a `signal`, update every file listed in `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*. **Test count (parallel aggregate):** **650** GdUnit cases as of **2026-04-18** (see **`docs/PROMPT_75_IMPLEMENTATION.md`**).
 
 ---
 

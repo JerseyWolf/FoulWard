@@ -21,7 +21,7 @@ const FlorenceDataType = preload("res://scripts/florence_data.gd")
 
 ## Optional reference path for the main 50-day campaign asset (documentation / tools).
 ## ASSUMPTION: Runtime loads territory map from CampaignManager.campaign_config.territory_map_resource_path.
-const MAIN_CAMPAIGN_CONFIG_PATH: String = "res://resources/campaign_main_50days.tres"
+const MAIN_CAMPAIGN_CONFIG_PATH: String = "res://resources/campaigns/campaign_main_50_days.tres"
 
 var _active_allies: Array = []
 var _ally_base_scene: PackedScene = preload("res://scenes/allies/ally_base.tscn")
@@ -52,6 +52,11 @@ var held_territory_ids: Array[String] = []
 ## Runtime-only day config when current_day exceeds CampaignConfig.day_configs (boss repeat days).
 var _synthetic_boss_attack_day: DayConfig = null
 
+## Replay difficulty tier for the active mission (world map selection / tests).
+var _active_tier: Types.DifficultyTier = Types.DifficultyTier.NORMAL
+## Loaded DifficultyTierData keyed by int(Types.DifficultyTier).
+var _tier_data: Dictionary = {}
+
 func _ready() -> void:
 	print("[GameManager] _ready: initial state=%s" % Types.GameState.keys()[game_state])
 	if not SignalBus.all_waves_cleared.is_connected(_on_all_waves_cleared):
@@ -66,6 +71,7 @@ func _ready() -> void:
 		shop.initialize_tower(tower)
 	print("[GameManager] _ready: ShopManager wired to Tower")
 	reload_territory_map_from_active_campaign()
+	_load_tier_data()
 	if not SignalBus.boss_killed.is_connected(_on_boss_killed):
 		SignalBus.boss_killed.connect(_on_boss_killed)
 	_sync_held_territories_from_map()
@@ -123,6 +129,7 @@ func start_new_game() -> void:
 	current_wave = 0
 	EconomyManager.reset_to_defaults()
 	EnchantmentManager.reset_to_defaults()
+	SybilPassiveManager.clear_passive()
 	# Ensure research unlock state is reset for a new run.
 	# In dev mode, ResearchManager can choose to unlock all nodes to make
 	# content reachable for testing (e.g., tower availability).
@@ -146,6 +153,7 @@ func start_new_game() -> void:
 	CampaignManager.start_new_campaign()
 	reload_territory_map_from_active_campaign()
 	_sync_held_territories_from_map()
+	_active_tier = Types.DifficultyTier.NORMAL
 
 ## Delegates to CampaignManager to begin the next day in the campaign.
 func start_next_mission() -> void:
@@ -158,6 +166,55 @@ func start_wave_countdown() -> void:
 	if game_state != Types.GameState.MISSION_BRIEFING:
 		push_warning("start_wave_countdown called from invalid state: %s" % Types.GameState.keys()[game_state])
 		return
+	_begin_mission_from_briefing()
+
+
+## After mission briefing, opens Sybil passive selection before combat.
+func enter_passive_select() -> void:
+	if game_state != Types.GameState.MISSION_BRIEFING:
+		push_warning(
+				"GameManager.enter_passive_select: expected MISSION_BRIEFING, got %s"
+				% Types.GameState.keys()[game_state]
+		)
+		return
+	_transition_to(Types.GameState.PASSIVE_SELECT)
+	SybilPassiveManager.get_offered_passives()
+
+
+## Continues into combat after the player selects a passive (or skips UI in tests).
+func exit_passive_select() -> void:
+	if game_state != Types.GameState.PASSIVE_SELECT:
+		push_warning(
+				"GameManager.exit_passive_select: expected PASSIVE_SELECT, got %s"
+				% Types.GameState.keys()[game_state]
+		)
+		return
+	enter_ring_rotate()
+
+
+## Transitions from PASSIVE_SELECT to RING_ROTATE pre-combat screen.
+func enter_ring_rotate() -> void:
+	if game_state != Types.GameState.PASSIVE_SELECT:
+		push_warning(
+				"GameManager.enter_ring_rotate: expected PASSIVE_SELECT, got %s"
+				% Types.GameState.keys()[game_state]
+		)
+		return
+	_transition_to(Types.GameState.RING_ROTATE)
+
+
+## Confirms ring layout and begins combat. Called by RingRotationScreen ConfirmButton.
+func exit_ring_rotate() -> void:
+	if game_state != Types.GameState.RING_ROTATE:
+		push_warning(
+				"GameManager.exit_ring_rotate: expected RING_ROTATE, got %s"
+				% Types.GameState.keys()[game_state]
+		)
+		return
+	_begin_mission_from_briefing()
+
+
+func _begin_mission_from_briefing() -> void:
 	_transition_to(Types.GameState.COMBAT)
 	BuildPhaseManager.set_build_phase_active(false)
 	SignalBus.mission_started.emit(current_mission)
@@ -347,6 +404,70 @@ func get_all_territories() -> Array[TerritoryData]:
 	if territory_map == null:
 		return []
 	return territory_map.get_all_territories()
+
+
+## Sets the replay difficulty tier for the upcoming mission (world map / tests).
+func set_active_tier(tier: Types.DifficultyTier) -> void:
+	_active_tier = tier
+
+
+## Current replay difficulty tier for mission tuning.
+func get_active_tier() -> Types.DifficultyTier:
+	return _active_tier
+
+
+func _load_tier_data() -> void:
+	_tier_data.clear()
+	var paths: Dictionary = {
+		int(Types.DifficultyTier.NORMAL): "res://resources/difficulty/tier_normal.tres",
+		int(Types.DifficultyTier.VETERAN): "res://resources/difficulty/tier_veteran.tres",
+		int(Types.DifficultyTier.NIGHTMARE): "res://resources/difficulty/tier_nightmare.tres",
+	}
+	for tier_key: int in paths:
+		var res: Resource = load(paths[tier_key] as String)
+		if res is DifficultyTierData:
+			_tier_data[tier_key] = res
+
+
+## Applies active tier multipliers to a copy of [param source] DayConfig (never mutates [param source]).
+func _apply_tier_to_day_config(source: DayConfig) -> DayConfig:
+	if source == null:
+		return null
+	if _active_tier == Types.DifficultyTier.NORMAL:
+		return source
+	var td: DifficultyTierData = _tier_data.get(int(_active_tier)) as DifficultyTierData
+	if td == null:
+		push_warning("GameManager._apply_tier_to_day_config: missing tier data for tier %s" % int(_active_tier))
+		return source.duplicate()
+	var copy: DayConfig = source.duplicate()
+	copy.enemy_hp_multiplier = source.enemy_hp_multiplier * td.enemy_hp_multiplier
+	copy.enemy_damage_multiplier = source.enemy_damage_multiplier * td.enemy_damage_multiplier
+	copy.gold_reward_multiplier = source.gold_reward_multiplier * td.gold_reward_multiplier
+	copy.spawn_count_multiplier = source.spawn_count_multiplier * td.spawn_count_multiplier
+	return copy
+
+
+## Updates territory star/tier progression after all waves cleared on a successful mission.
+func _handle_tier_cleared(day_config: DayConfig) -> void:
+	if day_config == null or day_config.territory_id.strip_edges() == "":
+		return
+	if territory_map == null:
+		return
+	var territory: TerritoryData = territory_map.get_territory_by_id(day_config.territory_id)
+	if territory == null:
+		return
+	if _active_tier <= territory.highest_cleared_tier:
+		return
+	territory.highest_cleared_tier = _active_tier
+	## Star count = tier ordinal + 1 (NORMAL→1, VETERAN→2, NIGHTMARE→3). First territory clear uses max(1, new_stars).
+	var new_stars: int = int(_active_tier) + 1
+	if territory.star_count == 0:
+		territory.star_count = maxi(1, new_stars)
+	else:
+		territory.star_count = new_stars
+	SignalBus.territory_tier_cleared.emit(territory.territory_id, int(_active_tier))
+	SignalBus.territory_state_changed.emit(territory.territory_id)
+	SignalBus.world_map_updated.emit()
 
 
 ## Reloads TerritoryMapData from CampaignManager.campaign_config.territory_map_resource_path.
@@ -607,11 +728,13 @@ func _begin_mission_wave_sequence() -> void:
 		return
 	print("[GameManager] _begin_mission_wave_sequence: mission=%d" % current_mission)
 	wave_manager.ensure_boss_registry_loaded()
-	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
+	var raw_day_cfg: DayConfig = CampaignManager.get_current_day_config()
+	var day_cfg: DayConfig = _apply_tier_to_day_config(raw_day_cfg)
 	if day_cfg != null and day_cfg.mission_economy != null:
 		EconomyManager.apply_mission_economy(day_cfg.mission_economy)
 	else:
 		EconomyManager.reset_for_mission()
+	ChronicleManager.apply_perks_at_mission_start()
 	_update_final_boss_tracking_from_day(day_cfg)
 	wave_manager.reset_for_new_mission()
 	# Apply day config after reset — reset clears per-day tuning (waves, faction, multipliers).
@@ -636,6 +759,7 @@ func _on_all_waves_cleared() -> void:
 	print("[GameManager] all_waves_cleared: awarding mission=%d resources" % current_mission)
 	var day_cfg: DayConfig = CampaignManager.get_current_day_config()
 	apply_day_result_to_territory(day_cfg, true)
+	_handle_tier_cleared(day_cfg)
 
 	var base_gold_reward: int = 50 * current_mission
 	var modifiers: Dictionary = get_current_territory_gold_modifiers()
@@ -852,7 +976,24 @@ func get_save_data() -> Dictionary:
 		"final_boss_day_index": final_boss_day_index,
 		"final_boss_active": final_boss_active,
 		"current_boss_threat_territory_id": current_boss_threat_territory_id,
+		"territories": _get_territory_tier_save_dict(),
 	}
+
+
+func _get_territory_tier_save_dict() -> Dictionary:
+	var out: Dictionary = {}
+	if territory_map == null:
+		return out
+	for t: TerritoryData in territory_map.get_all_territories():
+		if t == null or t.territory_id.strip_edges() == "":
+			continue
+		out[t.territory_id] = {
+			"highest_cleared_tier": int(t.highest_cleared_tier),
+			"star_count": t.star_count,
+			"veteran_perk_id": t.veteran_perk_id,
+			"nightmare_title_id": t.nightmare_title_id,
+		}
+	return out
 
 
 ## Restores state from a previously saved Dictionary snapshot.
@@ -896,6 +1037,26 @@ func restore_from_save(data: Dictionary) -> void:
 		florence_data.has_seen_first_boss = bool(fdd.get("has_seen_first_boss", florence_data.has_seen_first_boss))
 		florence_data.update_day_threshold_flags(current_day)
 	SignalBus.florence_state_changed.emit()
+	_restore_territory_tier_from_save(data)
+
+
+func _restore_territory_tier_from_save(data: Dictionary) -> void:
+	if not data.has("territories"):
+		return
+	if territory_map == null:
+		return
+	var td: Dictionary = data.get("territories", {}) as Dictionary
+	for territory_id: Variant in td:
+		var tid: String = str(territory_id)
+		var entry: Dictionary = td.get(territory_id, {}) as Dictionary
+		var territory: TerritoryData = territory_map.get_territory_by_id(tid)
+		if territory == null:
+			continue
+		var ht: int = int(entry.get("highest_cleared_tier", 0))
+		territory.highest_cleared_tier = ht as Types.DifficultyTier
+		territory.star_count = int(entry.get("star_count", 0))
+		territory.veteran_perk_id = str(entry.get("veteran_perk_id", ""))
+		territory.nightmare_title_id = str(entry.get("nightmare_title_id", ""))
 
 
 ## Restores the set of held territory IDs from a saved snapshot.

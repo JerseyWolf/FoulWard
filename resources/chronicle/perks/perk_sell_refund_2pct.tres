@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ChroniclePerkData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/chronicle_perk_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+perk_id = "perk_sell_refund_2pct"
+display_name = "+2% Sell Refund"
+description = "Increases sell refund fraction."
+effect_type = 2
+effect_value = 0.02

@@ -12,7 +12,7 @@ func _make_mana_item() -> ShopItemData:
 	item.item_id = "mana_draught"
 	item.display_name = "Mana Draught"
 	item.gold_cost = 20
-	item.item_type = "consumable"
+	item.category = "consumable"
 	item.effect_tags = ["mana_restore"]
 	item.value = 0
 	return item

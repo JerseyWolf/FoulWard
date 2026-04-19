@@ -1,0 +1,24 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_condition.gd" id="2_cond"]
+
+[sub_resource type="Resource" id="c1"]
+script = ExtResource("2_cond")
+key = "wave_number_gte"
+comparison = ">="
+value = 2
+condition_type = ""
+character_id = ""
+required_tier = ""
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "COMBAT_WAVE_2"
+character_id = "WEAPONS_ENGINEER"
+text = "Second wave incoming. Weapon is holding. Barely."
+priority = 85
+once_only = true
+chain_next_id = ""
+conditions = [SubResource("c1")]
+is_combat_line = true

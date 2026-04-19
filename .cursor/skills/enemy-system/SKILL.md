@@ -92,7 +92,7 @@ TRUE damage type bypasses the matrix entirely — always 1.0 multiplier.
 | `ORC_RAIDERS` | Orc-heavy physical damage enemies |
 | `PLAGUE_CULT` | Undead + poison enemies |
 
-**Empty `faction_id`:** `resources/campaign_main_50days.tres` DayConfigs use `faction_id = ""`. `CampaignManager.validate_day_configs` resolves empty to `"DEFAULT_MIXED"` when validating.
+**Empty `faction_id`:** legacy DayConfigs may use `faction_id = ""`. `CampaignManager.validate_day_configs` resolves empty to `"DEFAULT_MIXED"` when validating. Canonical 50-day asset: `res://resources/campaigns/campaign_main_50_days.tres`.
 
 ---
 

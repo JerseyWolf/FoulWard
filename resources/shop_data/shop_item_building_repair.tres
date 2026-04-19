@@ -6,6 +6,8 @@
 script = ExtResource("1_shopitemdata")
 item_id = "building_repair"
 display_name = "Building Repair Kit"
-gold_cost = 30
+gold_cost = 50
 material_cost = 0
-description = "Restore one building to full HP"
+description = "Restores 50% of max HP to the building with the lowest HP percentage."
+category = "equipment"
+rarity_weight = 1.0

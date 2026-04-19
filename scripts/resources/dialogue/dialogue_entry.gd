@@ -18,3 +18,5 @@ extends Resource
 @export var chain_next_id: String = ""
 ## Array of DialogueCondition resources; all must pass for this entry to be eligible.
 @export var conditions: Array[DialogueCondition] = []
+## True for mid-combat banner lines (filtered by DialogueManager.request_combat_line).
+@export var is_combat_line: bool = false

@@ -30,6 +30,12 @@ func _reset_dialogue_manager_runtime_state() -> void:
 	DialogueManager._arnulf_current_state = Types.ArnulfState.IDLE
 	DialogueManager._spell_cast_count = 0
 	DialogueManager._last_spell_cast_id = ""
+	DialogueManager._combat_kills_this_mission = 0
+	DialogueManager._combat_wave_number = 0
+	DialogueManager._combat_boss_seen = false
+	DialogueManager._combat_first_blood = false
+	DialogueManager._combat_florence_damaged = false
+	DialogueManager._seen_combat_lines.clear()
 
 
 func _register_entries(entries: Array[DialogueEntry]) -> void:
@@ -194,13 +200,13 @@ func test_chain_next_not_used_when_conditions_fail() -> void:
 	assert_str(second.entry_id).is_equal("GENERIC2")
 
 
-func test_get_line_for_character_returns_placeholder_todo_text() -> void:
+func test_get_line_for_character_returns_sybil_hub_line() -> void:
 	_reset_dialogue_manager_runtime_state()
 	DialogueManager.current_mission_number = 2
 	DialogueManager.current_gamestate = Types.GameState.BETWEEN_MISSIONS
 	var entry: DialogueEntry = DialogueManager.request_entry_for_character("SPELL_RESEARCHER")
 	if entry != null:
-		assert_str(entry.text).contains("TODO")
+		assert_str(entry.text).is_not_empty()
 
 
 func test_dialoguemanager_loads_entries_from_dialogue_resources_folder() -> void:

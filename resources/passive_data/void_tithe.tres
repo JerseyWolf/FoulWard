@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SybilPassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sybil_passive_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+passive_id = "passive_void_tithe"
+display_name = "Void Tithe"
+description = "What the veil takes in tithe, the well returns in silver threads of breathless power."
+icon_id = ""
+category = "utility"
+effect_type = "mana_regen_pct"
+effect_value = 0.2
+is_unlocked = true

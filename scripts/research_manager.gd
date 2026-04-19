@@ -196,7 +196,11 @@ func _find_node(node_id: String) -> ResearchNodeData:
 
 func _effective_research_cost(node_data: ResearchNodeData) -> int:
 	var eff_cost: int = int(
-		ceilf(float(node_data.research_cost) * GameManager.get_aggregate_research_cost_multiplier())
+		ceilf(
+			float(node_data.research_cost)
+			* GameManager.get_aggregate_research_cost_multiplier()
+			* ChronicleManager.get_chronicle_research_cost_multiplier()
+		)
 	)
 	if eff_cost < 1:
 		eff_cost = 1

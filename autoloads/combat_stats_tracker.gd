@@ -223,7 +223,7 @@ func record_projectile_damage(
 		)
 
 
-## Maps HexGrid slot index (0..23) to ring tier 1..3.
+## Maps HexGrid slot index (0..41) to ring tier 1..3.
 static func slot_index_to_ring(slot_index: int) -> int:
 	if slot_index < 0:
 		return -1
@@ -231,7 +231,7 @@ static func slot_index_to_ring(slot_index: int) -> int:
 		return 1
 	if slot_index < 18:
 		return 2
-	if slot_index < 24:
+	if slot_index < 42:
 		return 3
 	return -1
 

@@ -14,4 +14,4 @@ func _on_mission_started(mission_number: int) -> void:
 func _on_begin_pressed() -> void:
 	if GameManager.get_game_state() != Types.GameState.MISSION_BRIEFING:
 		return
-	GameManager.start_wave_countdown()
+	GameManager.enter_passive_select()

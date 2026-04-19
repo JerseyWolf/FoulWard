@@ -1,0 +1,28 @@
+[gd_scene load_steps=2 format=3 uid="uid://chronicle_row_fw"]
+
+[ext_resource type="Script" path="res://scripts/ui/achievement_row_entry.gd" id="1_row"]
+
+[node name="AchievementRowEntry" type="HBoxContainer"]
+custom_minimum_size = Vector2(0, 36)
+theme_override_constants/separation = 12
+script = ExtResource("1_row")
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Name"
+clip_text = true
+
+[node name="ProgressBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(180, 24)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 1.0
+show_percentage = false
+
+[node name="RewardLabel" type="Label" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Reward"
+horizontal_alignment = 2
+clip_text = true

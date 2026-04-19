@@ -855,3 +855,10 @@ func _apply_offers_from_dict(data: Dictionary) -> void:
 	if not is_endless_mode:
 		generate_offers_for_day(current_day)
 	SignalBus.ally_roster_changed.emit()
+
+
+## POST-MVP: shop mercenary_discount applies to next mercenary purchase (fraction 0.0–1.0).
+func set_next_mercenary_discount(fraction: float) -> void:
+	push_warning(
+		"CampaignManager.set_next_mercenary_discount: not yet fully implemented (fraction=%f)" % fraction
+	)

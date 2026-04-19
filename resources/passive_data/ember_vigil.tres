@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SybilPassiveData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sybil_passive_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+passive_id = "passive_ember_vigil"
+display_name = "Ember Vigil"
+description = "She keeps a guttering coal of will at the bedside of the dying ward—enough to fuel one more working."
+icon_id = ""
+category = "utility"
+effect_type = "max_mana_flat"
+effect_value = 20.0
+is_unlocked = true

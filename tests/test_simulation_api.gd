@@ -265,7 +265,7 @@ func test_spell_manager_cast_spell_insufficient_mana_returns_false() -> void:
 func test_hex_grid_get_empty_slots_returns_array() -> void:
 	var result: Variant = _hex_grid.get_empty_slots()
 	assert_bool(result is Array).is_true()
-	assert_int((result as Array).size()).is_equal(24)
+	assert_int((result as Array).size()).is_equal(42)
 
 
 func test_hex_grid_place_building_returns_bool() -> void:

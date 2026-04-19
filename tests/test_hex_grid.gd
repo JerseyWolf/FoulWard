@@ -11,7 +11,7 @@ var _main_stub: Node = null
 
 func _create_hex_grid() -> HexGrid:
 	var grid: HexGrid = HexGrid.new()
-	for i: int in range(24):
+	for i: int in range(42):
 		var slot: Area3D = Area3D.new()
 		slot.name = "HexSlot_%02d" % i
 		var col: CollisionShape3D = CollisionShape3D.new()
@@ -91,12 +91,12 @@ func _ensure_main_projectile_container_stub() -> void:
 # Slot initialisation tests
 # ---------------------------------------------------------------------------
 
-func test_initialize_creates_24_slots() -> void:
+func test_initialize_creates_42_slots() -> void:
 	_hex_grid = _create_hex_grid()
 	_hex_grid.building_data_registry = _make_building_data_registry()
 	add_child(_hex_grid)
 	await get_tree().process_frame
-	assert_int(_hex_grid.get_empty_slots().size()).is_equal(24)
+	assert_int(_hex_grid.get_empty_slots().size()).is_equal(42)
 
 
 func test_all_slots_start_unoccupied() -> void:
@@ -104,7 +104,7 @@ func test_all_slots_start_unoccupied() -> void:
 	_hex_grid.building_data_registry = _make_building_data_registry()
 	add_child(_hex_grid)
 	await get_tree().process_frame
-	for i: int in range(24):
+	for i: int in range(42):
 		var slot_data: Dictionary = _hex_grid.get_slot_data(i)
 		assert_bool(slot_data["is_occupied"]).is_false()
 
@@ -136,10 +136,10 @@ func test_slot_ring3_at_correct_radius() -> void:
 	_hex_grid.building_data_registry = _make_building_data_registry()
 	add_child(_hex_grid)
 	await get_tree().process_frame
-	for i: int in range(18, 24):
+	for i: int in range(18, 42):
 		var pos: Vector3 = _hex_grid.get_slot_position(i)
 		var dist: float = Vector3.ZERO.distance_to(pos)
-		assert_float(dist).is_equal_approx(18.0, 0.01)
+		assert_float(dist).is_equal_approx(24.0, 0.01)
 
 
 func test_all_slot_positions_at_y_zero() -> void:
@@ -147,7 +147,7 @@ func test_all_slot_positions_at_y_zero() -> void:
 	_hex_grid.building_data_registry = _make_building_data_registry()
 	add_child(_hex_grid)
 	await get_tree().process_frame
-	for i: int in range(24):
+	for i: int in range(42):
 		var pos: Vector3 = _hex_grid.get_slot_position(i)
 		assert_float(pos.y).is_equal_approx(0.0, 0.001)
 
@@ -229,7 +229,7 @@ func test_sell_invalid_index_fails() -> void:
 	add_child(_hex_grid)
 	await get_tree().process_frame
 	assert_bool(_hex_grid.sell_building(-1)).is_false()
-	assert_bool(_hex_grid.sell_building(24)).is_false()
+	assert_bool(_hex_grid.sell_building(42)).is_false()
 
 
 func test_sell_building_full_refund_arithmetic() -> void:
@@ -355,12 +355,12 @@ func test_upgrade_emits_building_upgraded() -> void:
 # State query tests
 # ---------------------------------------------------------------------------
 
-func test_get_empty_slots_returns_all_24_initially() -> void:
+func test_get_empty_slots_returns_all_42_initially() -> void:
 	_hex_grid = _create_hex_grid()
 	_hex_grid.building_data_registry = _make_building_data_registry()
 	add_child(_hex_grid)
 	await get_tree().process_frame
-	assert_int(_hex_grid.get_empty_slots().size()).is_equal(24)
+	assert_int(_hex_grid.get_empty_slots().size()).is_equal(42)
 
 
 func test_get_all_occupied_slots_returns_empty_initially() -> void:
@@ -377,7 +377,7 @@ func test_is_valid_index_bounds() -> void:
 	add_child(_hex_grid)
 	await get_tree().process_frame
 	assert_bool(_hex_grid._is_valid_index(-1)).is_false()
-	assert_bool(_hex_grid._is_valid_index(24)).is_false()
+	assert_bool(_hex_grid._is_valid_index(42)).is_false()
 	assert_bool(_hex_grid._is_valid_index(0)).is_true()
-	assert_bool(_hex_grid._is_valid_index(23)).is_true()
+	assert_bool(_hex_grid._is_valid_index(41)).is_true()
 

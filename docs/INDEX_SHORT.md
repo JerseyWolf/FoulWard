@@ -24,14 +24,14 @@ AGENT STANDING ORDERS & CURSOR SKILLS (read `AGENTS.md` first)
 `.cursor/skills/signal-bus/SKILL.md` — Declaring, emitting, connecting cross-system signals (`autoloads/signal_bus.gd`, payload typing).
 `.cursor/skills/spell-and-research-system/SKILL.md` — Spells, mana, research, enchantments, weapon upgrades (`SpellManager`, `ResearchManager`, `EnchantmentManager`, `WeaponUpgradeManager`).
 `.cursor/skills/testing/SKILL.md` — GdUnit4, SimBot, headless runs, test isolation (`AutoTestDriver`, `tools/run_gdunit*.sh`).
-`.cursor/skills/signal-bus/references/signal-table.md` — Full typed signal table for all **67** SignalBus signals (as of **2026-04-14**), organised by category (includes `dialogue_line_started` / `dialogue_line_finished`; source of truth: `autoloads/signal_bus.gd`)
+`.cursor/skills/signal-bus/references/signal-table.md` — Full typed signal table for all **77** SignalBus signals (as of **2026-04-18**), organised by category (includes `dialogue_line_started` / `dialogue_line_finished` / `combat_dialogue_requested`; source of truth: `autoloads/signal_bus.gd`)
 `.cursor/skills/enemy-system/references/enemy-types.md` — EnemyType (30), ArmorType, EnemyBodyType, DamageType enum tables with integer values
 `.cursor/skills/building-system/references/building-types.md` — BuildingType (36) and BuildingSizeClass enum tables with integer values
 `.cursor/skills/campaign-and-progression/references/game-manager-api.md` — Full GameManager public method table (30+ methods) and key constants
 
 AUTOLOADS (registered in project.godot, in init order)
 Autoload Name	Path	What it does
-SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. Prompt 10: boss_spawned, boss_killed, campaign_boss_attempted. Prompt 11 (research UI): research_node_unlocked, research_points_changed. Prompt 11 (allies): ally_downed, ally_recovered, ally_killed, ally_state_changed (POST-MVP). Prompt 07: ally_spawned(ally_id, building_instance_id), ally_died, ally_squad_wiped. Prompt 12: mercenary_offer_generated, mercenary_recruited, ally_roster_changed. Prompt 33: enemy_entered_terrain_zone, enemy_exited_terrain_zone, terrain_prop_destroyed, nav_mesh_rebake_requested. **2026-04-14:** `dialogue_line_started` / `dialogue_line_finished` declared here (DialogueManager emits via SignalBus only). No logic, no state.
+SignalBus	res://autoloads/signal_bus.gd	Central hub for ALL cross-system typed signals. Prompt 10: boss_spawned, boss_killed, campaign_boss_attempted. Prompt 11 (research UI): research_node_unlocked, research_points_changed. Prompt 11 (allies): ally_downed, ally_recovered, ally_killed, ally_state_changed (POST-MVP). Prompt 07: ally_spawned(ally_id, building_instance_id), ally_died, ally_squad_wiped. Prompt 12: mercenary_offer_generated, mercenary_recruited, ally_roster_changed. Prompt 33: enemy_entered_terrain_zone, enemy_exited_terrain_zone, terrain_prop_destroyed, nav_mesh_rebake_requested. **2026-04-14:** `dialogue_line_started` / `dialogue_line_finished` declared here (DialogueManager emits via SignalBus only). Group 9: `combat_dialogue_requested(entry)`. No logic, no state.
 NavMeshManager	res://scripts/nav_mesh_manager.gd	Prompt 33: registers `NavigationRegion3D`, queues `bake_navigation_mesh` on `nav_mesh_rebake_requested` (rebake queue pattern). Autoload only (no `class_name`).
 DamageCalculator (C#)	res://autoloads/DamageCalculator.cs	C# static damage type/armor type matrix lookup. Replaces damage_calculator.gd.
 SavePayload	res://autoloads/SavePayload.cs	C# RefCounted typed container mirroring SaveManager's save payload structure. Includes System.Text.Json helpers.
@@ -44,8 +44,26 @@ GameManager	res://autoloads/game_manager.gd	Owns game state, mission index, wave
 BuildPhaseManager	res://autoloads/build_phase_manager.gd	Prompt 49 + 11 + I-D: `is_build_phase` + `assert_build_phase`; `SignalBus.build_phase_started`/`combat_phase_started`; `set_build_phase_active` (wired from `GameManager` mission start + build mode).
 AllyManager	res://autoloads/ally_manager.gd	Prompt 07: summoner `BuildingData` → spawn `AllyBase` squad from paths; `_squads` by `placed_instance_id`; `spawn_squad`/`despawn_squad`; connects `ally_died` → SignalBus. After BuildPhaseManager in `project.godot`.
 CombatStatsTracker	res://autoloads/combat_stats_tracker.gd	Prompt 34 + 48–49 + 07 + 51: `begin_mission`/`begin_run`/`register_building`/`flush_to_disk`/`end_run` → `user://simbot/runs/{mission_id}_{timestamp}/` or `{mission_id}_{loadout}_{timestamp}/` (wave_summary, building_summary, optional event_log); `run_label` column; String `placed_instance_id` rows; `ally_deaths` column; SignalBus + `ProjectileBase` hook; `SimBot` `begin_mission` + `flush_to_disk` + `run_batch` `debug_batch`. Loads after AllyManager in `project.godot`.
+combat_dialogue_banner.gd	res://scripts/ui/combat_dialogue_banner.gd	Group 9: timed combat quip banner; connects `SignalBus.combat_dialogue_requested`.
+combat_dialogue_banner.tscn	res://scenes/ui/combat_dialogue_banner.tscn	Instanced under `Main/UI/UIManager` in `main.tscn`.
 SaveManager	res://autoloads/save_manager.gd	Audit 6: rolling autosaves `user://saves/attempt_*/slot_*.json`; autoload singleton only (no `class_name`).
-DialogueManager	res://autoloads/dialogue_manager.gd	Prompt 13: loads `DialogueEntry` `.tres` under `res://resources/dialogue/**`; priority, AND conditions, once-only, chain_next_id; **emits** `dialogue_line_started` / `dialogue_line_finished` **through SignalBus** (not local signals). ResearchManager heuristics for `sybil_research_unlocked_any` (`spell` in node_id) and `arnulf_research_unlocked_any` (`arnulf` in node_id). Prompt 28: runtime tracking for gold/research/shop/Arnulf/spell conditions (`get_tracked_gold()`, etc.). See `docs/archived/PROMPT_13_IMPLEMENTATION.md`.
+SybilPassiveManager	res://autoloads/sybil_passive_manager.gd	Loads `res://resources/passive_data/*.tres`, offers random passives, applies modifiers; save key `sybil`.
+ChronicleManager	res://autoloads/chronicle_manager.gd	Meta-progression achievements + perks; loads `res://resources/chronicle/entries|perks/`; `user://chronicle.json`; SignalBus `chronicle_*`; `apply_perks_at_mission_start` after mission economy.
+ChronicleData	res://scripts/resources/chronicle_data.gd	`class_name` optional container for chronicle entries + perks.
+ChronicleEntryData	res://scripts/resources/chronicle_entry_data.gd	`class_name` achievement definition (tracking_signal, target_count, reward_id).
+ChroniclePerkData	res://scripts/resources/chronicle_perk_data.gd	`class_name` perk effect (`Types.ChroniclePerkEffectType`).
+SybilPassiveData	res://scripts/resources/sybil_passive_data.gd	`class_name` resource: passive_id, effect_type, effect_value, category.
+PassiveSelectScreen	res://scenes/ui/passive_select_screen.tscn	UI: Sybil passive pick after briefing (`Types.GameState.PASSIVE_SELECT`).
+passive_select_screen.gd	res://scripts/ui/passive_select_screen.gd	Logic: offered passives from SybilPassiveManager; select → `exit_passive_select`.
+RingRotationScreen	res://scenes/ui/ring_rotation_screen.tscn	UI: per-ring rotation before combat (`Types.GameState.RING_ROTATE`); SubViewport mirrors main HexGrid via `HexGridPreview` + `apply_ring_rotation_silent`.
+tier_selection_popup.tscn	res://scenes/ui/world_map/tier_selection_popup.tscn	World map: Normal / Veteran / Nightmare replay tier picker.
+tier_selection_popup.gd	res://scripts/ui/tier_selection_popup.gd	Listens to `SignalBus.territory_selected_for_replay`; gates Nightmare until Veteran cleared.
+territory_node_ui.gd	res://scripts/ui/territory_node_ui.gd	Per-territory hub control; stars + `territory_selected_for_replay` on press.
+ChronicleScreen	res://scenes/ui/chronicle_screen.tscn	UI: Chronicle achievement list (main menu).
+chronicle_screen.gd	res://scripts/ui/chronicle_screen.gd	Chronicle overlay logic; listens to `chronicle_progress_updated` / `chronicle_entry_completed`.
+achievement_row_entry.tscn	res://scenes/ui/achievement_row_entry.tscn	UI: single chronicle row (name, progress bar, reward).
+achievement_row_entry.gd	res://scripts/ui/achievement_row_entry.gd	Row `setup(entry_data, progress, completed)`.
+DialogueManager	res://autoloads/dialogue_manager.gd	Prompt 13: loads `DialogueEntry` `.tres` under `res://resources/dialogue/**`; priority, AND conditions, once-only, chain_next_id; **emits** `dialogue_line_started` / `dialogue_line_finished` **through SignalBus** (not local signals). Group 9: `peek_entry_for_character` (no line_started emit), `request_combat_line`, per-mission combat condition keys (`first_blood`, `wave_number_gte`, …), `combat_dialogue_requested` when a combat line is selected. ResearchManager heuristics for `sybil_research_unlocked_any` (`spell` in node_id) and `arnulf_research_unlocked_any` (`arnulf` in node_id). Prompt 28: runtime tracking for gold/research/shop/Arnulf/spell conditions (`get_tracked_gold()`, etc.). See `docs/archived/PROMPT_13_IMPLEMENTATION.md`.
 AutoTestDriver	res://autoloads/auto_test_driver.gd	Headless smoke-test driver. Active when `--autotest` or `--simbot_profile` or `--simbot_balance_sweep` (Prompt 51) is present.
 GDAIMCPRuntime	(uid plugin autoload in project.godot)	GDAI MCP GDExtension bridge — editor HTTP API for MCP when `addons/gdai-mcp-plugin-godot` is enabled.
 EnchantmentManager	res://autoloads/enchantment_manager.gd	Phase 4: per-weapon enchantment slots (elemental/power); Tower + BetweenMissionScreen integration.
@@ -65,14 +83,18 @@ WaveComposer	res://scripts/wave_composer.gd	`class_name` `RefCounted`; `compose_
 SpawnQueueRow	res://scripts/spawn_queue_row.gd	Prompt 36: legacy `RefCounted` row; Prompt 43: `MissionSpawnRouting` uses `Dictionary` with same keys.
 SpellManager	res://scripts/spell_manager.gd	Owns mana pool, spell cooldowns. Multi-spell registry + `cast_selected_spell` / hotkeys (Audit 6); effects include shockwave, slow_field, arcane_beam, tower_shield.
 ResearchManager	res://scripts/research_manager.gd	Prompt 11: `can_unlock`, `get_research_points`, `add_research_points`, `show_research_panel_for`, `_unlock_building_for_node` (clears `BuildingData.is_locked` on `hex_grid` group); still spends `EconomyManager` research material. Gates locked buildings.
-ShopManager	res://scripts/shop_manager.gd	Processes shop purchases. Applies mission-start consumable effects.
+ShopManager	res://scripts/shop_manager.gd	Processes shop purchases; `get_daily_items(day_index)` rotation (4–6 items, RNG seed = day); mission-start consumable effects.
 InputManager	res://scripts/input_manager.gd	Translates mouse/keyboard input into public method calls on managers.
 SimBot	res://scripts/sim_bot.gd (+ alias `res://scripts/simbot.gd`)	Headless automated simulation bot. Audit 4: `get_log()` → Dictionary; `run_single` / `run_batch` CSV under `user://simbot/logs/`. Prompt 16 Phase 2: `StrategyProfile` resources. Prompt 51: `run_balance_sweep` + loadout presets (`scripts/simbot/simbot_loadouts.gd`).
 SimBot loadouts	res://scripts/simbot/simbot_loadouts.gd	Prompt 51: `LOADOUTS` presets (`balanced`, `summoner_heavy`, `artillery_air`) + `get_loadout()` for balance sweeps.
 tools/simbot_balance_report.py	res://tools/simbot_balance_report.py	Prompt 51: aggregates `building_summary.csv` under a root dir; writes `tools/output/simbot_balance_report.md` + `simbot_balance_status.csv` (median thresholds 1.35 / 0.65, gold floor 200).
 tools/apply_balance_status.gd	res://tools/apply_balance_status.gd	Prompt 51: `EditorScript` `BalanceStatusApplier` — applies `simbot_balance_status.csv` → `BuildingData.balance_status` on `res://resources/building_data/*.tres`.
 ArtPlaceholderHelper	res://scripts/art/art_placeholder_helper.gd	Stateless utility resolving placeholder meshes, materials, and icons from res://art based on Types enums and string IDs. Handles caching, fallbacks, and generated-asset priority. Prompt 32: `get_building_kit_mesh()` + `res://art/generated/kit/*.glb` (box fallback).
-RiggedVisualWiring	res://scripts/art/rigged_visual_wiring.gd	Prompt 31: GLB path map (enemies/bosses/Arnulf), mount/clear visual slots, locomotion idle/walk on `AnimationPlayer` (clips `idle`/`walk`/`death`).
+RiggedVisualWiring	res://scripts/art/rigged_visual_wiring.gd	Prompt 31: GLB path map (enemies/bosses/Arnulf), mount/clear visual slots, locomotion idle/walk on `AnimationPlayer`. Chat 5B: all 30 enemy paths, ally/building/tower GLB path methods, 14 ANIM_ constants.
+tools/validate_art_assets.gd	res://tools/validate_art_assets.gd	Chat 5B: `@tool EditorScript` — report-only preflight; scans `res://art/` GLBs via `DirAccess`, checks required animation clips per category, prints summary. Run via Tools → Execute Script.
+SESSION_07_REPORT_01_ANIM_TABLE	docs/SESSION_07_REPORT_01_ANIM_TABLE.md	Perplexity Group 5 (Chat 5A): animation clip name table by entity category; generated from `rigged_visual_wiring.gd` + validators.
+SESSION_07_REPORT_02_GLB_PATHS	docs/SESSION_07_REPORT_02_GLB_PATHS.md	Group 5: GLB path table, hub portrait paths, missing-entry list; art pipeline reference.
+SESSION_07_REPORT_03_WIRING	docs/SESSION_07_REPORT_03_WIRING.md	Group 5: wiring checklist; links to REPORT_01/02.
 PlaceholderIconGenerator	res://tools/generate_placeholder_icons.gd	Prompt 24: `class_name PlaceholderIconGenerator` — 64×64 PNG placeholders (editor Project menu or `run_generate_placeholder_icons.gd`).
 fw_placeholder_icons	res://addons/fw_placeholder_icons/plugin.cfg	Prompt 24: EditorPlugin — Project → Generate Placeholder Icons.
 tools/generate_placeholder_glbs_blender.py	res://tools/generate_placeholder_glbs_blender.py	Blender 4.x headless: Rigify/blockout GLBs → `res://art/generated/{enemies,allies,buildings,bosses,misc}/`; writes `art/generated/generation_log.json`. Requires system numpy for glTF exporter.
@@ -86,7 +108,7 @@ Class Name	Script Path	Scene Path	What it does
 Tower	res://scenes/tower/tower.gd	res://scenes/tower/tower.tscn	Player's stationary avatar. Fires crossbow + rapid missile.
 Arnulf	res://scenes/arnulf/arnulf.gd	res://scenes/arnulf/arnulf.tscn	AI melee companion. State machine: IDLE/PATROL/CHASE/ATTACK/DOWNED/RECOVERING. Prompt 11: emits generic `ally_*` with id `arnulf` + `ALLY_ID_ARNULF`. Prompt 31: `ArnulfVisual` + `allies/arnulf.glb`, locomotion anims.
 AllyBase	res://scenes/allies/ally_base.gd	res://scenes/allies/ally_base.tscn	Prompt 11 + Audit 6: DOWNED/RECOVERING when `uses_downed_recovering`; `can_target_flying` / `preferred_targeting` (CLOSEST, LOWEST_HP, …); `SignalBus.ally_spawned(ally_id, building_instance_id)` / ally_downed / ally_recovered / ally_killed. Prompt 07: `patrol_anchor`, `owning_building_instance_id`, local `ally_died`, `HexGrid` soft-blocker register near anchor.
-HexGrid	res://scenes/hex_grid/hex_grid.gd	res://scenes/hex_grid/hex_grid.tscn	24-slot ring grid. Manages building placement, sell, upgrade. Prompt 11: `add_to_group("hex_grid")` for research unlock mutations. Prompt 37 + 47: `register_purchase` receipt, `initialize_with_economy`, sell via `get_sell_refund`, upgrade spends + `apply_upgrade`/`record_upgrade_cost` (legacy). Prompt 07: `soft_blocker_count` per slot, `world_to_hex`/`register_soft_blocker`/`unregister_soft_blocker`/`has_soft_blocker`; sell calls `AllyManager.despawn_squad`.
+HexGrid	res://scenes/hex_grid/hex_grid.gd	res://scenes/hex_grid/hex_grid.tscn	42-slot hex grid (3 rings). Manages building placement, sell, upgrade. Prompt 11: `add_to_group("hex_grid")` for research unlock mutations. Prompt 37 + 47: `register_purchase` receipt, `initialize_with_economy`, sell via `get_sell_refund`, upgrade spends + `apply_upgrade`/`record_upgrade_cost` (legacy). Prompt 07: `soft_blocker_count` per slot, `world_to_hex`/`register_soft_blocker`/`unregister_soft_blocker`/`has_soft_blocker`; sell calls `AllyManager.despawn_squad`.
 BuildingBase	res://scenes/buildings/building_base.gd	res://scenes/buildings/building_base.tscn	Base class for all 8 building types. Auto-targets and fires. Prompt 32: kit → `BuildingKitAssembly`. Prompt 37 + 41–42 + 47: `paid_*`/`total_invested_*`, `initialize_with_economy`, `get_upgrade_cost`/`get_sell_refund` Dictionary, `can_upgrade`/`apply_upgrade` (chain + invested totals), placement `slot_id`/`ring_index`/`placed_instance_id` (string), projectile `PackedScene` resolve. Prompt 08: `AuraManager` aura damage + healer `Timer`/`receive_heal`. Prompt 07: `is_summoner` → `AllyManager.spawn_squad`, mortal/recurring respawn `Timer`, `_exit_tree` cleanup. Prompt 44: `_find_target` → `EnemyData.matches_tower_air_ground_filter`. Prompt 09: `set_disabled` + `_disabled` skips `_combat_process` (Orc Saboteur).
 EnemyBase	res://scenes/enemies/enemy_base.gd	res://scenes/enemies/enemy_base.tscn	Base class for all 6 enemy types. Nav, attack, die, reward. Prompt 08: `AuraManager.get_enemy_speed_modifier` (periodic refresh). Prompt 31: `EnemyVisual` mounts rigged GLB per `EnemyType` (bat: placeholder mesh), idle/walk anims. Prompt 33: terrain zone speed multiplier (min of overlapping zones). Prompt 09: `special_tags` behaviours (`ShieldComponent`, charge/dash, enemy auras, on_death_spawn, saboteur `set_disabled`, anti-air ranged, regen).
 TerrainGrassland	—	res://scenes/terrain/terrain_grassland.tscn	Prompt 33: default battle ground + `NavRegion` (`terrain_navigation_region.gd`).
@@ -107,7 +129,7 @@ BetweenMissionScreen	res://ui/between_mission_screen.gd	res://ui/between_mission
 WorldMap	res://ui/world_map.gd	res://ui/world_map.tscn	Territory list + details (read-only; GameManager state).
 MainMenu	res://ui/main_menu.gd	res://ui/main_menu.tscn	Title screen. Start, Settings → `settings_screen.tscn` overlay, Quit.
 SettingsScreen	res://scripts/ui/settings_screen.gd	res://scenes/ui/settings_screen.tscn	Prompt 24: audio sliders, graphics quality, keybind remap, Back.
-MissionBriefing	res://ui/mission_briefing.gd	(Control node in main.tscn)	Shows mission number. BEGIN button → GameManager.start_wave_countdown.
+MissionBriefing	res://ui/mission_briefing.gd	(Control node in main.tscn)	Shows mission number. BEGIN button → GameManager.enter_passive_select.
 EndScreen	res://ui/end_screen.gd	(Control node in main.tscn)	Final screen for win/lose. Restart and Quit buttons.
 CUSTOM RESOURCE TYPES (script classes, not .tres files)
 Class Name	Script Path	Fields summary
@@ -117,8 +139,9 @@ BuildingData	res://scripts/resources/building_data.gd	building_type, building_id
 WeaponData	res://scripts/resources/weapon_data.gd	weapon_slot, display_name, damage, projectile_speed, reload_time, burst_count, burst_interval, can_target_flying, assist_angle_degrees, assist_max_distance, base_miss_chance, max_miss_angle_degrees
 SpellData	res://scripts/resources/spell_data.gd	spell_id, display_name, mana_cost, cooldown, damage, radius, damage_type, hits_flying
 ResearchNodeData	res://scripts/resources/research_node_data.gd	node_id, display_name, research_cost, prerequisite_ids[], description
-ShopItemData	res://scripts/resources/shop_item_data.gd	item_id, display_name, gold_cost, material_cost, description
-TerritoryData	res://scripts/resources/territory_data.gd	territory_id, terrain_type (`Types.TerrainType`), ownership, default_faction_id (POST-MVP), is_secured, has_boss_threat, bonus_flat_gold_end_of_day, bonus_percent_gold_end_of_day, POST-MVP bonus hooks
+ShopItemData	res://scripts/resources/shop_item_data.gd	item_id, display_name, gold_cost, material_cost, description, category (consumable/equipment/voucher), rarity_weight, effect_tags, value, duration
+TerritoryData	res://scripts/resources/territory_data.gd	territory_id, terrain_type (`Types.TerrainType`), ownership, default_faction_id (POST-MVP), is_secured, has_boss_threat, bonus_flat_gold_end_of_day, bonus_percent_gold_end_of_day, POST-MVP bonus hooks; G4: `highest_cleared_tier`, `star_count`, `veteran_perk_id`, `nightmare_title_id`
+DifficultyTierData	res://scripts/resources/difficulty_tier_data.gd	`class_name`; `Types.DifficultyTier` + enemy_hp/damage/gold_reward/spawn multipliers (replay star tiers)
 TerritoryMapData	res://scripts/resources/territory_map_data.gd	territories: Array[TerritoryData], get_territory_by_id, has_territory
 FactionRosterEntry	res://scripts/resources/faction_roster_entry.gd	enemy_type, base_weight, min_wave_index, max_wave_index, tier
 FactionData	res://scripts/resources/faction_data.gd	faction_id, display_name, description, roster[], mini_boss_ids (BossData.boss_id strings), mini_boss_wave_hints, roster_tier, difficulty_offset; get_entries_for_wave, get_effective_weight_for_wave; BUILTIN_FACTION_RESOURCE_PATHS
@@ -144,7 +167,7 @@ DialogueCondition	res://scripts/resources/dialogue/dialogue_condition.gd	key, co
 RelationshipTierConfig	res://scripts/resources/relationship_tier_config.gd	Prompt 22: `tiers` Array[Dictionary] `{ name, min_affinity }` ascending; shared tier names for `RelationshipManager.get_tier`.
 CharacterRelationshipData	res://scripts/resources/character_relationship_data.gd	Prompt 22: `character_id`, `starting_affinity`, `display_name` — one `.tres` per character under `res://resources/character_relationship/`.
 RelationshipEventData	res://scripts/resources/relationship_event_data.gd	Prompt 22: `signal_name` (SignalBus), `character_deltas` Dictionary id → float.
-DialogueEntry	res://scripts/resources/dialogue/dialogue_entry.gd	entry_id, character_id, text, priority, once_only, chain_next_id, conditions[]
+DialogueEntry	res://scripts/resources/dialogue/dialogue_entry.gd	entry_id, character_id, text, priority, once_only, chain_next_id, conditions[], is_combat_line (Group 9 combat banners)
 CharacterData	res://scripts/resources/character_data.gd	data resource for a single between-mission hub character (id, display_name, HubRole, dialogue tags, 2D placement).
 CharacterCatalog	res://scripts/resources/character_catalog.gd	resource holding the hub character set loaded by `Hub2DHub`.
 RESOURCE FILES (.tres — actual data)
@@ -206,7 +229,7 @@ res://resources/spell_data/shockwave.tres	SpellData	Shockwave AoE, 50 mana, 60s 
 res://resources/research_data/base_structures_tree.tres	ResearchNodeData	6 nodes: unlock_ballista, unlock_antiair, arrow_tower_dmg, unlock_shield_gen, fire_brazier_range, unlock_archer_barracks
 res://resources/shop_data/shop_catalog.tres	ShopItemData[]	4 items: tower_repair, building_repair, arrow_tower (voucher), mana_draught
 res://resources/territories/main_campaign_territories.tres	TerritoryMapData	Five placeholder territories for main campaign
-res://resources/campaign_main_50days.tres	CampaignConfig	50 linear days + territory_map_resource_path (Prompt 8 canonical)
+res://resources/campaigns/campaign_main_50_days.tres	CampaignConfig	50 linear days + territory_map_resource_path (canonical; `GameManager.MAIN_CAMPAIGN_CONFIG_PATH`)
 res://resources/campaigns/campaign_short_5_days.tres	CampaignConfig	Default MVP 5-day short campaign (mission_index 1–5)
 Faction data
 File	faction_id	Notes
@@ -242,11 +265,15 @@ test_simbot_logging.gd	Prompt 16 Phase 2: `run_batch()` CSV header + append beha
 test_simbot_determinism.gd	Prompt 16 Phase 2: determinism for a fixed seed
 test_simbot_safety.gd	Prompt 16 Phase 2: safety check (no `res://ui/` references)
 test_dialogue_manager.gd	Prompt 13: DialogueManager conditions, priority, once-only, chain fallback, resource load
+test_dialogue_content.gd	Group 9: hub `.tres` entry_id / chain / GENERIC repeatability / combat `is_combat_line`
+test_combat_dialogue.gd	Group 9: `request_combat_line`, combat state, `combat_dialogue_requested` headless emit
 test_art_placeholders.gd	Prompt 17: ArtPlaceholderHelper placeholder mesh/material resolution, generated-asset priority, scene wiring, and cache/fallback behavior
 tests/unit/test_building_kit.gd	Prompt 32: `get_building_kit_mesh` Node3D + two children, accent on top surface 0, GLB→BoxMesh fallback, BuildingData kit fields
 tests/unit/test_terrain.gd	Prompt 33: TerrainZone signals, EnemyBase terrain multiplier, NavMeshManager queue, `TerritoryData.terrain_type`
 tests/unit/test_td_resource_helpers.gd	Prompt 39: `get_range`/`get_identity`, spawn `enemy_id` authoring validation, routing path→lane warning
 tests/unit/test_content_invariants.gd	Prompt 50: parametric `BuildingData`/`EnemyData` `.tres` invariants + enum size coverage (36 buildings, 30 enemies)
+tests/unit/test_rigged_visual_wiring_session07.gd	Prompt 70 (Chat 5C): RiggedVisualWiring path helpers — all 30 enemies, 36 buildings, ally known/unknown ids, tower path, 17 ANIM_ constants, no drunk_idle
+tests/unit/test_validate_art_assets_session07.gd	Prompt 70 (Chat 5C): validate_art_assets.gd spec — _infer_category (6 variants), _get_required_clips counts, no-anim-player missing-all logic
 tests/support/counting_navigation_region.gd	Prompt 33: test double counting `bake_navigation_mesh` calls
 test_character_hub.gd	Prompt 14: CharacterData/Catalog loading, Hub click focus behavior, DialoguePanel display + chaining, and UIManager hub open/close integration.
 testeconomymanager.gd	gold/material add/spend/reset, signal emission, transactions
@@ -273,7 +300,8 @@ testcampaignterritorymapping.gd	50-day DayConfig → territory_id validity
 testcampaignterritoryupdates.gd	apply_day_result_to_territory + SignalBus
 testterritoryeconomybonuses.gd	Gold modifier aggregation
 testworldmapui.gd	WorldMap button labels on territory_state_changed
-testhexgrid.gd	24 slots, place/sell/upgrade, resource deduction, signals
+testhexgrid.gd	42 slots, place/sell/upgrade, resource deduction, signals
+test_ring_rotation.gd	42-slot counts, rotate_ring + ring_rotated, RING_ROTATE state, save v1 load + slot-index guard
 testbuildingbase.gd	Combat loop, targeting, fire rate, upgrade stats
 testprojectilesystem.gd	Init paths, travel, collision, damage matrix, immunity, miss
 testsimulationapi.gd	All manager public methods callable without UI
@@ -281,6 +309,7 @@ testenemypathfinding.gd	EnemyBase nav, attack, health_depleted → gold signal
 test_boss_day_flow.gd	Prompt 21: Boss day progression, territory secure on mini-boss kill
 test_campaign_autoload_and_day_flow.gd	Prompt 21: Autoload registration order, campaign start/day progression
 test_consumables.gd	Prompt 25: Consumable stacking, effect_tags handling, mission-start application
+test_shop_rotation.gd	Group 10: `get_daily_items` rotation + SimBot `difficulty_target` on strategy profiles
 test_endless_mode.gd	Prompt 23: Endless run start, wave scaling past day 50, hub suppression
 test_enemy_dot_system.gd	Prompt 6: DoT burn/poison stacking, tick damage, duration, cleanup
 test_florence.gd	Prompt 15: Florence meta-state counters, day advance priority, dialogue conditions
@@ -289,6 +318,8 @@ test_relationship_manager_tiers.gd	Prompt 28: Tier boundary values, multi-signal
 test_save_manager.gd	Prompt 25: Save/load round-trip, slot management, payload structure
 test_save_manager_slots.gd	Prompt 28: Slot rotation after max saves, attempt directory isolation, RelationshipManager JSON round-trip (timed `start_new_attempt()` for distinct attempt IDs)
 test_settings_manager.gd	Prompt 24: Volume set/get, keybind remap, config file persistence
+test_sybil_passive_manager.gd	Sybil passive load/offer/modifier/save tests (`SybilPassiveManager`)
+test_chronicle_manager.gd	Chronicle entries/perks, progress, save/load, signals (`ChronicleManager`)
 test_simbot_handlers.gd	Prompt 25: SimBot signal handlers, wave/mission counters, metrics
 test_tower_enchantments.gd	Prompt 4: Tower enchantment composition, projectile damage/type override
 test_weapon_structural.gd	Audit 6: WeaponLevelData structural fields validation
@@ -459,3 +490,19 @@ LATEST CHANGES (2026-03-24)
   - `HexGrid` placement now calls `_activate_building_obstacle(...)` hook.
   - Added pathing integration scenarios in `res://tests/test_enemy_pathfinding.gd`.
   - Added building collision/obstacle scene assertion in `res://tests/test_building_base.gd`.
+- Building HP & Destruction system (Chat 3A/3B/3C):
+  - `BuildingData.max_hp` / `BuildingData.can_be_targeted_by_enemies` — destructible building data fields.
+  - `EnemyData.prefer_building_targets` / `EnemyData.building_detection_radius` — enemy building-targeting data fields.
+  - `BuildingBase._setup_health_component()` — conditionally adds `HealthComponent` + `BuildingHpBar` when `max_hp > 0`.
+  - `BuildingBase._on_health_depleted()` — emits `SignalBus.building_destroyed`, despawns summons/aura, calls `HexGrid.clear_slot_on_destruction`.
+  - `scenes/buildings/destruction_effect.tscn` + `scenes/buildings/destruction_effect.gd` — shrink-and-free visual effect (`DestructionEffect`).
+  - `scenes/ui/building_hp_bar.tscn` + `scenes/ui/building_hp_bar.gd` — billboard HP bar driven by `HealthComponent.health_changed` (`BuildingHpBar`).
+  - `HexGrid.clear_slot_on_destruction(slot_index)` — clears slot, disables obstacle, frees building node.
+  - `HexGrid.get_lowest_hp_pct_building()` — returns building with lowest HP percentage among alive destructible buildings.
+  - `EnemyBase._try_building_target_attack` / `_find_building_target` / `_attack_building` — enemy building-targeting loop.
+  - `ShopManager._apply_effect("building_repair")` — heals 50 % of max HP on the lowest-HP-pct building via `get_lowest_hp_pct_building()`.
+  - MEDIUM .tres files: `max_hp = 300`, `can_be_targeted_by_enemies = true` (13 buildings).
+  - LARGE .tres files: `max_hp = 650`, `can_be_targeted_by_enemies = true` (6 buildings).
+  - `resources/shop_data/shop_item_building_repair.tres` — building repair shop item.
+  - `autoloads/save_manager.gd` — architecture comment: building HP is mission-ephemeral and not persisted.
+  - Added tests: `res://tests/test_building_health_component.gd`, `res://tests/test_enemy_building_targeting.gd`, `res://tests/test_building_repair.gd`.

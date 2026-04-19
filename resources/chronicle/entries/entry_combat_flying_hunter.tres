@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChronicleEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/chronicle_entry_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entry_id = "entry_combat_flying_hunter"
+display_name = "Flying Hunter"
+description = "Kill 50 flying enemies."
+tracking_signal = "enemy_killed"
+tracking_field = "flying_only"
+target_count = 50
+reward_type = 0
+reward_id = "perk_research_cost_5pct"

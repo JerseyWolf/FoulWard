@@ -6,6 +6,8 @@
 script = ExtResource("1_shopitemdata")
 item_id = "arrow_tower_placed"
 display_name = "Arrow Tower (placed)"
-gold_cost = 40
-material_cost = 2
+gold_cost = 80
+material_cost = 0
 description = "Auto-place an Arrow Tower on the first empty hex next mission"
+category = "voucher"
+rarity_weight = 1.0

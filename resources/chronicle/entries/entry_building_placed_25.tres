@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChronicleEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/chronicle_entry_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entry_id = "entry_building_placed_25"
+display_name = "Architect"
+description = "Place 25 buildings across missions."
+tracking_signal = "building_placed"
+tracking_field = ""
+target_count = 25
+reward_type = 0
+reward_id = "perk_building_material_start_5"

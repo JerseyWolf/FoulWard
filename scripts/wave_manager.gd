@@ -884,3 +884,8 @@ func _on_game_state_changed(
 		if _countdown_paused:
 			_countdown_paused = false
 		return
+
+
+## POST-MVP: shop scout_report reveals next wave composition in UI.
+func reveal_next_wave_composition() -> void:
+	push_warning("WaveManager.reveal_next_wave_composition: not yet fully implemented")

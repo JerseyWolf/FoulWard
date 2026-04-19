@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "MERCENARY_COMMANDER_GENERIC_01"
+character_id = "MERCENARY_COMMANDER"
+text = "War's just commerce with worse margins."
+priority = 1
+once_only = false
+chain_next_id = ""
+conditions = []
+is_combat_line = false

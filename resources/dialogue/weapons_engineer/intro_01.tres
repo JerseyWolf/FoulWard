@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "WEAPONS_ENGINEER_INTRO_01"
+character_id = "WEAPONS_ENGINEER"
+text = "Calibrated to three decimal places. Your weapon. Not you — you're not calibrated at all."
+priority = 100
+once_only = true
+chain_next_id = "WEAPONS_ENGINEER_INTRO_02"
+conditions = []
+is_combat_line = false

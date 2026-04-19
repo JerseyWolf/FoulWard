@@ -1,5 +1,5 @@
 # Foul Ward — Agent Standing Orders
-Last updated: 2026-04-14 (doc sync: SignalBus dialogue signals, **67** signal-count parity across docs, test baseline)
+Last updated: 2026-04-19 (Perplexity audit fix; parallel GdUnit **665** test cases, **77** signals)
 
 > Read this file FIRST in every Cursor session, before opening any other file.
 > This file is the always-loaded foundation. It points to skills for detail.
@@ -11,16 +11,16 @@ Last updated: 2026-04-14 (doc sync: SignalBus dialogue signals, **67** signal-co
 Godot 4.4 GDScript real-time tower defense (inspired by TAUR).
 Player IS Florence — a stationary tower aimed manually with the mouse.
 50-day main campaign. Each day = one mission (build phase → wave combat).
-612 GdUnit4 tests. 17 autoloads. 36 building types. 30 enemy types. **67** SignalBus signals (verified **2026-04-14** against `^signal ` lines in `autoloads/signal_bus.gd`).
+665 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-19; see `docs/PROMPT_76_IMPLEMENTATION.md`). 19 autoloads (core chain). 36 building types. 30 enemy types. **77** SignalBus signals (verified **2026-04-19** against `^signal ` lines in `autoloads/signal_bus.gd`).
 When you add or remove a SignalBus signal, bump that total and update every location listed under **Signal count in documentation** in `.cursor/skills/signal-bus/SKILL.md`.
 Two weapons: Crossbow (CROSSBOW slot) and Rapid Missile (RAPID_MISSILE slot).
-AI ally Arnulf (melee), Sybil (spell support). Hex grid: 24 slots across 3 rings.
+AI ally Arnulf (melee), Sybil (spell support). Hex grid: 42 slots across 3 rings.
 
 ---
 
 ## Architecture
 
-17 autoloads init in strict order (SignalBus first, EnchantmentManager last).
+19 autoloads init in strict order (SignalBus first, EnchantmentManager last).
 6 scene-bound managers live under `/root/Main/Managers/` — not autoloads.
 All data is resource-driven (.tres files). No magic numbers in .gd scripts.
 All cross-system events go through SignalBus — no direct calls between autoloads.
@@ -41,10 +41,12 @@ SimBot / AutoTestDriver enables headless simulation without UI nodes.
 11. AllyManager (`autoloads/ally_manager.gd`)
 12. CombatStatsTracker (`autoloads/combat_stats_tracker.gd`)
 13. SaveManager (`autoloads/save_manager.gd`)
-14. DialogueManager (`autoloads/dialogue_manager.gd`)
-15. AutoTestDriver (`autoloads/auto_test_driver.gd`)
-16. GDAIMCPRuntime — editor only
-17. EnchantmentManager (`autoloads/enchantment_manager.gd`)
+14. SybilPassiveManager (`autoloads/sybil_passive_manager.gd`)
+15. ChronicleManager (`autoloads/chronicle_manager.gd`)
+16. DialogueManager (`autoloads/dialogue_manager.gd`)
+17. AutoTestDriver (`autoloads/auto_test_driver.gd`)
+18. GDAIMCPRuntime — editor only
+19. EnchantmentManager (`autoloads/enchantment_manager.gd`)
 
 **Dialogue line events:** `dialogue_line_started` and `dialogue_line_finished` are **declared on `SignalBus`** (`autoloads/signal_bus.gd`). `DialogueManager` emits them via `SignalBus` only — they are not local signals on DialogueManager. UI and tests connect to `SignalBus`.
 

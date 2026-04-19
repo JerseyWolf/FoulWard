@@ -75,7 +75,9 @@ func _physics_process(delta: float) -> void:
 
 func _on_enemy_killed(_enemy_type: Types.EnemyType, _position: Vector3, gold_reward: int) -> void:
 	var bonus: int = GameManager.get_aggregate_flat_gold_per_kill()
-	var total: int = gold_reward + bonus
+	var pct: float = ChronicleManager.get_chronicle_gold_per_kill_percent_bonus()
+	var extra: int = int(round(float(gold_reward) * pct))
+	var total: int = gold_reward + bonus + extra
 	if total > 0:
 		add_gold(total)
 
@@ -315,6 +317,7 @@ func grant_wave_clear_reward(wave: int, econ: MissionEconomyData) -> Vector2i:
 	var gm: int = get_wave_reward_material(wave, econ)
 	if econ != null and wave >= 1:
 		gg += maxi(0, econ.passive_gold_per_wave)
+	gg += ChronicleManager.get_chronicle_wave_reward_gold_flat()
 	if gg > 0:
 		add_gold(gg)
 	if gm > 0:

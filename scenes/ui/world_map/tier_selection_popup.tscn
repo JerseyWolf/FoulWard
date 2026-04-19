@@ -1,0 +1,87 @@
+[gd_scene load_steps=2 format=3 uid="uid://tier_selection_popup_fw"]
+
+[ext_resource type="Script" path="res://scripts/ui/tier_selection_popup.gd" id="1_tsp"]
+
+[node name="TierSelectionPopup" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_tsp")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -140.0
+offset_right = 160.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 12.0
+offset_right = 100.0
+offset_bottom = 40.0
+grow_horizontal = 2
+text = "Choose Difficulty"
+horizontal_alignment = 1
+
+[node name="NormalButton" type="Button" parent="Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 52.0
+offset_right = 100.0
+offset_bottom = 84.0
+grow_horizontal = 2
+text = "Normal"
+
+[node name="VeteranButton" type="Button" parent="Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 96.0
+offset_right = 100.0
+offset_bottom = 128.0
+grow_horizontal = 2
+text = "Veteran"
+
+[node name="NightmareButton" type="Button" parent="Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 140.0
+offset_right = 100.0
+offset_bottom = 172.0
+grow_horizontal = 2
+text = "Nightmare"
+
+[node name="CloseButton" type="Button" parent="Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -60.0
+offset_top = 196.0
+offset_right = 60.0
+offset_bottom = 228.0
+grow_horizontal = 2
+text = "Cancel"

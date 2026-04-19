@@ -64,18 +64,20 @@ func _physics_process(delta: float) -> void:
 func _tick_mana_regen(delta: float) -> void:
 	# Pattern: snapshot old int → apply regen → compare new int → emit only on change.
 	# Avoids emitting mana_changed 60×/sec when regen is sub-integer per frame.
-	if _current_mana_float >= float(max_mana):
+	var cap: int = get_max_mana()
+	if _current_mana_float >= float(cap):
 		return
 
+	var regen_mult: float = 1.0 + SybilPassiveManager.get_modifier("mana_regen_pct")
 	_current_mana_float = minf(
-		_current_mana_float + mana_regen_rate * delta,
-		float(max_mana)
+		_current_mana_float + mana_regen_rate * regen_mult * delta,
+		float(cap)
 	)
 
 	var new_int: int = int(_current_mana_float)
 	if new_int != _current_mana:
 		_current_mana = new_int
-		SignalBus.mana_changed.emit(_current_mana, max_mana)
+		SignalBus.mana_changed.emit(_current_mana, cap)
 
 
 func _tick_cooldowns(delta: float) -> void:
@@ -98,22 +100,23 @@ func cast_spell(spell_id: String) -> bool:
 		push_warning("SpellManager: cast_spell() unknown spell_id '%s'." % spell_id)
 		return false
 
-	if _current_mana < spell_data.mana_cost:
+	var effective_cost: int = _get_effective_mana_cost(spell_data)
+	if _current_mana < effective_cost:
 		return false
 
 	if _cooldown_remaining.has(spell_id):
 		return false
 
 	# Deduct mana — sync float accumulator to prevent regen overshooting.
-	_current_mana -= spell_data.mana_cost
+	_current_mana -= effective_cost
 	_current_mana_float = float(_current_mana)
 
-	_cooldown_remaining[spell_id] = spell_data.cooldown
+	_cooldown_remaining[spell_id] = _get_effective_cooldown(spell_data)
 
 	_apply_spell_effect(spell_data)
 
 	SignalBus.spell_cast.emit(spell_id)
-	SignalBus.mana_changed.emit(_current_mana, max_mana)
+	SignalBus.mana_changed.emit(_current_mana, get_max_mana())
 	return true
 
 
@@ -123,7 +126,8 @@ func get_current_mana() -> int:
 
 ## Returns the maximum mana capacity.
 func get_max_mana() -> int:
-	return max_mana
+	var flat_bonus: float = SybilPassiveManager.get_modifier("max_mana_flat")
+	return max_mana + int(round(flat_bonus))
 
 ## Returns remaining cooldown seconds (0.0 if ready or unknown).
 func get_cooldown_remaining(spell_id: String) -> float:
@@ -134,14 +138,16 @@ func is_spell_ready(spell_id: String) -> bool:
 	var spell_data: SpellData = _get_spell_data(spell_id)
 	if spell_data == null:
 		return false
-	return _current_mana >= spell_data.mana_cost \
+	var eff_cost: int = _get_effective_mana_cost(spell_data)
+	return _current_mana >= eff_cost \
 		and not _cooldown_remaining.has(spell_id)
 
 ## Sets mana to full (used by Mana Draught shop item).
 func set_mana_to_full() -> void:
-	_current_mana = max_mana
-	_current_mana_float = float(max_mana)
-	SignalBus.mana_changed.emit(_current_mana, max_mana)
+	var cap: int = get_max_mana()
+	_current_mana = cap
+	_current_mana_float = float(cap)
+	SignalBus.mana_changed.emit(_current_mana, cap)
 
 
 ## Adds mana, capped at max. If amount <= 0, restores to full (consumable full-restore semantics).
@@ -149,25 +155,27 @@ func restore_mana(amount: int) -> void:
 	if amount <= 0:
 		set_mana_to_full()
 		return
-	var new_int: int = mini(_current_mana + amount, max_mana)
+	var cap2: int = get_max_mana()
+	var new_int: int = mini(_current_mana + amount, cap2)
 	_current_mana = new_int
 	_current_mana_float = float(new_int)
-	SignalBus.mana_changed.emit(_current_mana, max_mana)
+	SignalBus.mana_changed.emit(_current_mana, cap2)
 
 ## Resets mana to 0 and clears all cooldowns.
 func reset_to_defaults() -> void:
 	_current_mana = 0
 	_current_mana_float = 0.0
 	_cooldown_remaining.clear()
-	SignalBus.mana_changed.emit(0, max_mana)
+	SignalBus.mana_changed.emit(0, get_max_mana())
 
 
 ## Save/load: set mana without triggering mission-start logic.
 func set_mana_for_save_restore(mana: int) -> void:
-	var clamped: int = clampi(mana, 0, max_mana)
+	var cap3: int = get_max_mana()
+	var clamped: int = clampi(mana, 0, cap3)
 	_current_mana = clamped
 	_current_mana_float = float(clamped)
-	SignalBus.mana_changed.emit(_current_mana, max_mana)
+	SignalBus.mana_changed.emit(_current_mana, cap3)
 
 # ---------------------------------------------------------------------------
 # PRIVATE — SPELL LOOKUP & EFFECTS
@@ -178,6 +186,18 @@ func _get_spell_data(spell_id: String) -> SpellData:
 		if spell_data.spell_id == spell_id:
 			return spell_data
 	return null
+
+
+func _get_effective_mana_cost(spell_data: SpellData) -> int:
+	var raw: float = float(spell_data.mana_cost) * (1.0 - SybilPassiveManager.get_modifier("mana_cost_pct"))
+	var c: int = int(round(raw))
+	if spell_data.mana_cost > 0:
+		return maxi(1, c)
+	return 0
+
+
+func _get_effective_cooldown(spell_data: SpellData) -> float:
+	return spell_data.cooldown * (1.0 - SybilPassiveManager.get_modifier("cooldown_pct"))
 
 
 func _apply_spell_effect(spell_data: SpellData) -> void:
@@ -216,7 +236,8 @@ func _apply_shockwave(spell_data: SpellData) -> void:
 			continue
 
 		# Single path: EnemyBase.take_damage applies immunities + armor matrix.
-		enemy.take_damage(spell_data.damage, spell_data.damage_type)
+		var dmg: float = spell_data.damage * (1.0 + SybilPassiveManager.get_modifier("spell_damage_pct"))
+		enemy.take_damage(dmg, spell_data.damage_type)
 
 
 func _apply_slow_field(spell_data: SpellData) -> void:
@@ -263,7 +284,8 @@ func _apply_arcane_beam(spell_data: SpellData) -> void:
 		var dist_sq: float = _distance_point_to_segment_squared(p, start, end)
 		if dist_sq > half_w * half_w:
 			continue
-		enemy.take_damage(spell_data.damage, spell_data.damage_type)
+		var beam_dmg: float = spell_data.damage * (1.0 + SybilPassiveManager.get_modifier("spell_damage_pct"))
+		enemy.take_damage(beam_dmg, spell_data.damage_type)
 
 
 func _distance_point_to_segment_squared(p: Vector3, a: Vector3, b: Vector3) -> float:

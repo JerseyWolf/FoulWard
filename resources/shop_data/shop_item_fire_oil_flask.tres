@@ -1,0 +1,15 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_data.gd" id="1_shopitemdata"]
+
+[resource]
+script = ExtResource("1_shopitemdata")
+item_id = "fire_oil_flask"
+display_name = "Fire Oil Flask"
+gold_cost = 70
+material_cost = 0
+description = "Fire oil charges for the crossbow."
+category = "consumable"
+rarity_weight = 1.0
+effect_tags = Array[String](["fire_oil"])
+value = 5

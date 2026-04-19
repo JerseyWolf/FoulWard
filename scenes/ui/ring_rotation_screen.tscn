@@ -1,0 +1,107 @@
+[gd_scene load_steps=2 format=3 uid="uid://ringrotationscreen01"]
+
+[ext_resource type="Script" path="res://scripts/ui/ring_rotation_screen.gd" id="1_script"]
+
+[node name="RingRotationScreen" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_script")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Rotate Rings"
+horizontal_alignment = 1
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="Panel/VBoxContainer/SubViewportContainer"]
+handle_input_locally = false
+size = Vector2i(800, 200)
+render_target_update_mode = 4
+
+[node name="RingControlsPanel" type="VBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Ring1Row" type="HBoxContainer" parent="Panel/VBoxContainer/RingControlsPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/RingControlsPanel/Ring1Row"]
+layout_mode = 2
+text = "Ring 1"
+size_flags_horizontal = 3
+
+[node name="Ring1LeftBtn" type="Button" parent="Panel/VBoxContainer/RingControlsPanel/Ring1Row"]
+layout_mode = 2
+text = "<"
+
+[node name="Ring1RightBtn" type="Button" parent="Panel/VBoxContainer/RingControlsPanel/Ring1Row"]
+layout_mode = 2
+text = ">"
+
+[node name="Ring2Row" type="HBoxContainer" parent="Panel/VBoxContainer/RingControlsPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/RingControlsPanel/Ring2Row"]
+layout_mode = 2
+text = "Ring 2"
+size_flags_horizontal = 3
+
+[node name="Ring2LeftBtn" type="Button" parent="Panel/VBoxContainer/RingControlsPanel/Ring2Row"]
+layout_mode = 2
+text = "<"
+
+[node name="Ring2RightBtn" type="Button" parent="Panel/VBoxContainer/RingControlsPanel/Ring2Row"]
+layout_mode = 2
+text = ">"
+
+[node name="Ring3Row" type="HBoxContainer" parent="Panel/VBoxContainer/RingControlsPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/RingControlsPanel/Ring3Row"]
+layout_mode = 2
+text = "Ring 3"
+size_flags_horizontal = 3
+
+[node name="Ring3LeftBtn" type="Button" parent="Panel/VBoxContainer/RingControlsPanel/Ring3Row"]
+layout_mode = 2
+text = "<"
+
+[node name="Ring3RightBtn" type="Button" parent="Panel/VBoxContainer/RingControlsPanel/Ring3Row"]
+layout_mode = 2
+text = ">"
+
+[node name="ConfirmButton" type="Button" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "Confirm Layout"

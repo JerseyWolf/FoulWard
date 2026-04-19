@@ -95,6 +95,7 @@ func test_get_wave_reward_queries_are_pure_and_flat() -> void:
 
 
 func test_grant_wave_clear_reward_adds_currency() -> void:
+	ChronicleManager.reset_for_test()
 	EconomyManager.reset_to_defaults()
 	var me: MissionEconomyData = MissionEconomyData.new()
 	me.wave_clear_bonus_gold = 10

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChronicleEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/chronicle_entry_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entry_id = "entry_campaign_day_25"
+display_name = "Veteran"
+description = "Win 25 missions."
+tracking_signal = "mission_won"
+tracking_field = ""
+target_count = 25
+reward_type = 0
+reward_id = "perk_gold_per_kill_2pct"

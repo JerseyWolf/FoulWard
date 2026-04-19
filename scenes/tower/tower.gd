@@ -79,9 +79,8 @@ func _ready() -> void:
 	_weapon_upgrade_manager = get_node_or_null("/root/Main/Managers/WeaponUpgradeManager")
 	_shot_rng.randomize()
 
-	# TODO(ART): Replace tower MeshInstance3D with res://art/generated/misc/tower_core.glb or
-	# production tower mesh; tower is static (no AnimationPlayer).
-	# Art pipeline placeholder assignment.
+	# Production wiring: asset = RiggedVisualWiring.tower_glb_path()
+	# → "res://art/characters/florence/florence.glb"; tower is static (no AnimationPlayer).
 	var tower_mesh_node: MeshInstance3D = get_node_or_null("TowerMesh") as MeshInstance3D
 	if tower_mesh_node != null:
 		var _mesh: Mesh = ArtPlaceholderHelper.get_tower_mesh()
@@ -195,6 +194,16 @@ func get_spell_shield_duration_remaining() -> float:
 ## Restores tower HP to maximum. Called by ShopManager (Tower Repair Kit).
 func repair_to_full() -> void:
 	_health_component.reset_to_max()
+
+
+## POST-MVP: permanent max HP bonus from shop (tower_armor_plate).
+func add_max_hp_bonus(amount: int) -> void:
+	push_warning("Tower.add_max_hp_bonus: not yet fully implemented (amount=%d)" % amount)
+
+
+## POST-MVP: heal tower by a fraction of max HP (emergency_repair consumable).
+func heal_percent_max_hp(fraction: float) -> void:
+	push_warning("Tower.heal_percent_max_hp: not yet fully implemented (fraction=%f)" % fraction)
 
 
 ## Returns current HP integer.

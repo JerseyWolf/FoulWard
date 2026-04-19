@@ -111,6 +111,7 @@ func test_flat_gold_per_kill_applied_when_territory_controlled() -> void:
 
 
 func test_research_cost_multiplier_applied_when_territory_controlled() -> void:
+	ChronicleManager.reset_for_test()
 	var heart: TerritoryData = _load_main_map_and_heart()
 	heart.is_controlled_by_player = true
 	heart.is_permanently_lost = false
@@ -146,6 +147,7 @@ func test_research_cost_multiplier_applied_when_territory_controlled() -> void:
 
 
 func test_enchanting_cost_multiplier_applied_when_territory_controlled() -> void:
+	ChronicleManager.reset_for_test()
 	var heart: TerritoryData = _load_main_map_and_heart()
 	heart.is_controlled_by_player = true
 	heart.is_permanently_lost = false

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/dialogue/dialogue_entry.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = "COMPANION_MELEE_GENERIC_01"
+character_id = "COMPANION_MELEE"
+text = "I had a good shovel once. Buried three men with it. Miss that shovel."
+priority = 1
+once_only = false
+chain_next_id = ""
+conditions = []
+is_combat_line = false

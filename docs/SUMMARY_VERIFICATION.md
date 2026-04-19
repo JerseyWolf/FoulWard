@@ -207,7 +207,7 @@
 |--------|------------------------|--------|--------|
 | Player & Tower | GameState enum; tower input; aim/miss | Mixed | See Q1.1, Q3 |
 | Signal Bus | Wave/building/research signals | Mostly TRUE | Q2.4 partial |
-| Hex & Buildings | 24 slots; rotate_ring; no `get_tower_type_count` | Mixed | Q4 |
+| Hex & Buildings | 42 slots; per-ring rotate_ring; no `get_tower_type_count` | Mixed | Q4 |
 | Economy | Three currencies | TRUE | Q5 |
 | Enemy & Faction Data | 30/36 enums; factions; bosses | TRUE | Q6, Q10 |
 | Wave | DayConfig-driven; composer | PARTIAL | Q7 |

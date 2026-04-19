@@ -18,8 +18,12 @@ var _days: Array[DayConfig]
 
 func before() -> void:
 	_campaign = load(CAMPAIGN_PATH) as CampaignConfig
+	if _campaign != null:
+		_days = _campaign.day_configs
+
+
+func test_campaign_loads_successfully() -> void:
 	assert_object(_campaign).is_not_null()
-	_days = _campaign.day_configs
 	assert_int(_days.size()).is_equal(TOTAL_DAYS)
 
 
@@ -35,6 +39,7 @@ func test_all_days_have_territory_id() -> void:
 
 func test_mini_boss_days() -> void:
 	for dc: DayConfig in _days:
+		assert_bool(dc.is_mini_boss).is_equal(dc.is_mini_boss_day)
 		if dc.day_index in MINI_BOSS_DAYS:
 			assert_bool(dc.is_mini_boss_day).is_true()
 			assert_bool(dc.is_mini_boss).is_true()

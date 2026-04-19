@@ -1,4 +1,4 @@
-[gd_resource type="Resource" format=3]
+[gd_resource type="Resource" load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/shop_item_data.gd" id="1_shopitemdata"]
 
@@ -9,6 +9,18 @@ display_name = "Tower Repair Kit"
 gold_cost = 50
 material_cost = 0
 description = "Restore tower to full HP"
+category = "equipment"
+rarity_weight = 1.0
+
+[sub_resource type="Resource" id="ShopItem_building_repair"]
+script = ExtResource("1_shopitemdata")
+item_id = "building_repair"
+display_name = "Building Repair Kit"
+gold_cost = 40
+material_cost = 0
+description = "Restore one building to full HP"
+category = "equipment"
+rarity_weight = 1.0
 
 [sub_resource type="Resource" id="ShopItem_mana_draught"]
 script = ExtResource("1_shopitemdata")
@@ -17,11 +29,147 @@ display_name = "Mana Draught"
 gold_cost = 20
 material_cost = 0
 description = "Start next mission at full mana"
-item_type = "consumable"
+category = "consumable"
+rarity_weight = 1.0
 effect_tags = Array[String](["mana_restore"])
 duration = 0.0
 cooldown = 0.0
 value = 0
 
-[resource]
+[sub_resource type="Resource" id="ShopItem_arrow_tower_placed"]
+script = ExtResource("1_shopitemdata")
+item_id = "arrow_tower_placed"
+display_name = "Arrow Tower (placed)"
+gold_cost = 80
+material_cost = 0
+description = "Auto-place an Arrow Tower on the first empty hex next mission"
+category = "voucher"
+rarity_weight = 1.0
 
+[sub_resource type="Resource" id="ShopItem_building_material_pack"]
+script = ExtResource("1_shopitemdata")
+item_id = "building_material_pack"
+display_name = "Building Material Pack"
+gold_cost = 60
+material_cost = 0
+description = "Grants building material."
+category = "equipment"
+rarity_weight = 1.0
+value = 10
+
+[sub_resource type="Resource" id="ShopItem_research_boost"]
+script = ExtResource("1_shopitemdata")
+item_id = "research_boost"
+display_name = "Research Boost"
+gold_cost = 80
+material_cost = 0
+description = "Grants research material."
+category = "equipment"
+rarity_weight = 0.8
+value = 3
+
+[sub_resource type="Resource" id="ShopItem_tower_armor_plate"]
+script = ExtResource("1_shopitemdata")
+item_id = "tower_armor_plate"
+display_name = "Tower Armor Plate"
+gold_cost = 100
+material_cost = 0
+description = "Increases tower max HP."
+category = "equipment"
+rarity_weight = 0.7
+value = 50
+
+[sub_resource type="Resource" id="ShopItem_fire_oil_flask"]
+script = ExtResource("1_shopitemdata")
+item_id = "fire_oil_flask"
+display_name = "Fire Oil Flask"
+gold_cost = 70
+material_cost = 0
+description = "Fire oil charges for the crossbow."
+category = "consumable"
+rarity_weight = 1.0
+effect_tags = Array[String](["fire_oil"])
+value = 5
+
+[sub_resource type="Resource" id="ShopItem_scout_report"]
+script = ExtResource("1_shopitemdata")
+item_id = "scout_report"
+display_name = "Scout Report"
+gold_cost = 50
+material_cost = 0
+description = "Reveal next wave composition."
+category = "equipment"
+rarity_weight = 1.1
+value = 0
+
+[sub_resource type="Resource" id="ShopItem_mercenary_discount"]
+script = ExtResource("1_shopitemdata")
+item_id = "mercenary_discount"
+display_name = "Mercenary Discount"
+gold_cost = 40
+material_cost = 0
+description = "Discount on next mercenary hire."
+category = "equipment"
+rarity_weight = 0.9
+value = 20
+
+[sub_resource type="Resource" id="ShopItem_emergency_repair"]
+script = ExtResource("1_shopitemdata")
+item_id = "emergency_repair"
+display_name = "Emergency Repair"
+gold_cost = 90
+material_cost = 0
+description = "Heal tower by percent of max HP at mission start."
+category = "consumable"
+rarity_weight = 0.9
+effect_tags = Array[String](["emergency_repair"])
+value = 25
+
+[sub_resource type="Resource" id="ShopItem_shield_charm"]
+script = ExtResource("1_shopitemdata")
+item_id = "shield_charm"
+display_name = "Shield Charm"
+gold_cost = 110
+material_cost = 0
+description = "Spell shield at mission start."
+category = "consumable"
+rarity_weight = 0.7
+effect_tags = Array[String](["shield"])
+duration = 10.0
+value = 80
+
+[sub_resource type="Resource" id="ShopItem_gold_cache"]
+script = ExtResource("1_shopitemdata")
+item_id = "gold_cache"
+display_name = "Gold Cache"
+gold_cost = 30
+material_cost = 0
+description = "Bonus gold at mission start."
+category = "consumable"
+rarity_weight = 1.2
+effect_tags = Array[String](["gold_bonus"])
+value = 75
+
+[sub_resource type="Resource" id="ShopItem_arrow_tower_voucher_2"]
+script = ExtResource("1_shopitemdata")
+item_id = "arrow_tower_voucher_2"
+display_name = "Arrow Tower Voucher II"
+gold_cost = 120
+material_cost = 0
+description = "Place an Arrow Tower next mission."
+category = "voucher"
+rarity_weight = 0.6
+
+[sub_resource type="Resource" id="ShopItem_mana_elixir"]
+script = ExtResource("1_shopitemdata")
+item_id = "mana_elixir"
+display_name = "Mana Elixir"
+gold_cost = 55
+material_cost = 0
+description = "Restore mana at mission start."
+category = "consumable"
+rarity_weight = 1.0
+effect_tags = Array[String](["mana_restore"])
+value = 50
+
+[resource]
