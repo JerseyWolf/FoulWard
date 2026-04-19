@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # After `hf download black-forest-labs/FLUX.1-dev --local-dir ~/ComfyUI/models/checkpoints/flux1-dev`,
-# ComfyUI expects UNET / CLIP / VAE under models/{unet,clip,vae}. This script adds symlinks
-# so `workflows/turnaround_flux.json` (UNETLoader + DualCLIPLoader + VAELoader) resolves paths.
+# ComfyUI expects UNET / VAE under models/{unet,vae}. DualCLIPLoader must use **single-file**
+# text encoders (not diffusers shards). Download into models/clip/:
+#   hf download comfyanonymous/flux_text_encoders clip_l.safetensors t5xxl_fp8_e4m3fn.safetensors --local-dir ~/ComfyUI/models/clip/
+# Workflows reference clip_l.safetensors + t5xxl_fp8_e4m3fn.safetensors.
 #
 # Usage:  ./setup_comfyui_flux_symlinks.sh
 # Optional: FOULWARD_COMFYUI_HOME=/path/to/ComfyUI
@@ -24,10 +26,8 @@ ln -sf "../checkpoints/flux1-dev/transformer/diffusion_pytorch_model-00002-of-00
 ln -sf "../checkpoints/flux1-dev/transformer/diffusion_pytorch_model-00003-of-00003.safetensors" .
 ln -sf "../checkpoints/flux1-dev/transformer/diffusion_pytorch_model.safetensors.index.json" .
 
-cd "${ROOT}/models/clip"
-ln -sf "../checkpoints/flux1-dev/text_encoder/model.safetensors" flux_clip_l.safetensors
-ln -sf "../checkpoints/flux1-dev/text_encoder_2/model-00001-of-00002.safetensors" flux_t5_1.safetensors
-ln -sf "../checkpoints/flux1-dev/text_encoder_2/model-00002-of-00002.safetensors" flux_t5_2.safetensors
+# Do not symlink split T5 shards from flux1-dev/checkpoints — ComfyUI needs full encoders (see header).
+mkdir -p "${ROOT}/models/clip"
 
 cd "${ROOT}/models/vae"
 ln -sf "../checkpoints/flux1-dev/ae.safetensors" flux_ae.safetensors

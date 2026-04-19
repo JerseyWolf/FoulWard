@@ -21,7 +21,7 @@ const ENEMY_REQUIRED_CLIPS: PackedStringArray = PackedStringArray([
 	"idle", "walk", "death", "hit_react",
 ])
 const ALLY_REQUIRED_CLIPS: PackedStringArray = PackedStringArray([
-	"idle", "walk", "death", "attack_melee",
+	"idle", "run", "death", "attack_melee",
 ])
 const BUILDING_REQUIRED_CLIPS: PackedStringArray = PackedStringArray([
 	"idle", "active",

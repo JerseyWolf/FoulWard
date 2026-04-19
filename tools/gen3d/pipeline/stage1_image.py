@@ -11,13 +11,16 @@ import time
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import requests
+from PIL import Image
 
+# Per-faction ceilings (validated); build_workflow_with_loras caps workflow JSON to these maxima.
 LORA_STRENGTHS: dict[str, dict[str, float]] = {
-    "orc_raiders": {"turnaround": 0.8, "baroque": 0.7, "velvet": 0.6},
-    "plague_cult": {"turnaround": 0.8, "baroque": 0.8, "velvet": 0.5},
-    "allies": {"turnaround": 0.8, "baroque": 0.5, "velvet": 0.7},
-    "buildings": {"turnaround": 0.5, "baroque": 0.6, "velvet": 0.4},
+    "orc_raiders": {"turnaround": 0.4, "baroque": 0.5, "velvet": 0.4},
+    "plague_cult": {"turnaround": 0.4, "baroque": 0.5, "velvet": 0.3},
+    "allies": {"turnaround": 0.4, "baroque": 0.3, "velvet": 0.4},
+    "buildings": {"turnaround": 0.3, "baroque": 0.4, "velvet": 0.2},
 }
 
 
@@ -71,16 +74,22 @@ def build_workflow_with_loras(
             "ComfyUI workflow has no CLIPTextEncode node. Export API JSON from ComfyUI "
             "and save as workflows/turnaround_flux.json (see workflows/README_COMFYUI.md)."
         )
-    # First positive prompt node (JSON key order: first CLIP encode = positive)
-    _nid, first_clip = clip_nodes[0]
-    inputs: dict[str, Any] = first_clip.setdefault("inputs", {})
-    ct_first: str = str(first_clip.get("class_type", ""))
-    if ct_first == "CLIPTextEncodeFlux" or ct_first.endswith("CLIPTextEncodeFlux"):
-        # FLUX: long prompt in T5; duplicate into CLIP-L for pipeline simplicity
-        inputs["clip_l"] = prompt
-        inputs["t5xxl"] = prompt
+    # Positive prompt: FLUX turnaround workflow uses node "7" (CLIPTextEncodeFlux).
+    n7: Any = workflow.get("7")
+    if isinstance(n7, dict) and str(n7.get("class_type", "")) == "CLIPTextEncodeFlux":
+        ins7: dict[str, Any] = n7.setdefault("inputs", {})
+        ins7["clip_l"] = prompt
+        ins7["t5xxl"] = prompt
     else:
-        inputs["text"] = prompt
+        # First positive prompt node (JSON key order: first CLIP encode = positive)
+        _nid, first_clip = clip_nodes[0]
+        inputs: dict[str, Any] = first_clip.setdefault("inputs", {})
+        ct_first: str = str(first_clip.get("class_type", ""))
+        if ct_first == "CLIPTextEncodeFlux" or ct_first.endswith("CLIPTextEncodeFlux"):
+            inputs["clip_l"] = prompt
+            inputs["t5xxl"] = prompt
+        else:
+            inputs["text"] = prompt
 
     # Randomize seeds across any node that exposes one (KSampler `seed`,
     # FLUX `RandomNoise` `noise_seed`, etc.).
@@ -97,29 +106,61 @@ def build_workflow_with_loras(
             nin["noise_seed"] = new_seed
 
     loras: list[tuple[str, dict[str, Any]]] = _iter_lora_loader_nodes(workflow)
-    for i, (_lid, lnode) in enumerate(loras[:3]):
-        if i >= len(keys):
+    # When workflow JSON pins all three LoRAs to 0.0 (NaN / black-PNG isolation), do not
+    # apply per-faction strengths — would undo the workaround in turnaround_flux.json.
+    all_lora_zero: bool = True
+    for _lid, lnode in loras[:3]:
+        lin0: dict[str, Any] = lnode.get("inputs", {})
+        if not isinstance(lin0, dict):
+            all_lora_zero = False
             break
-        lin: dict[str, Any] = lnode.setdefault("inputs", {})
-        s: float = strengths[keys[i]]
-        if "strength_model" in lin or "strength_clip" in lin:
-            lin["strength_model"] = s
-            lin["strength_clip"] = s
+        sm0: float = float(lin0.get("strength_model", -1.0))
+        sc0: float = float(lin0.get("strength_clip", -1.0))
+        if sm0 != 0.0 or sc0 != 0.0:
+            all_lora_zero = False
+            break
+    if not all_lora_zero:
+        for i, (_lid, lnode) in enumerate(loras[:3]):
+            if i >= len(keys):
+                break
+            lin: dict[str, Any] = lnode.setdefault("inputs", {})
+            s = strengths[keys[i]]
+            if "strength_model" not in lin and "strength_clip" not in lin:
+                continue
+            cur_m: float = float(lin.get("strength_model", 0.0))
+            cur_c: float = float(lin.get("strength_clip", 0.0))
+            if cur_m == 0.0 and cur_c == 0.0:
+                continue
+            # Cap at faction maximum (validated); never exceed LORA_STRENGTHS for this slot.
+            lin["strength_model"] = min(cur_m, s)
+            lin["strength_clip"] = min(cur_c, s)
 
     return workflow
 
 
 def _first_output_image_path(history_entry: dict[str, Any]) -> tuple[str, str] | None:
-    """Return (node_id, filename) for first image in history outputs."""
+    """Return (node_id, filename) for ComfyUI history outputs.
+
+    Prefer node 101 (upscaled 2048x2048 ``foulward_turnaround_hires_*``) when present.
+    """
     outputs: dict[str, Any] = history_entry.get("outputs", {})
+    preferred_id: str = "101"
+    if preferred_id in outputs:
+        out101: Any = outputs[preferred_id]
+        if isinstance(out101, dict):
+            images101: list[Any] | None = out101.get("images")
+            if images101 and isinstance(images101, list) and len(images101) > 0:
+                img0: Any = images101[0]
+                if isinstance(img0, dict) and "filename" in img0:
+                    return (preferred_id, str(img0["filename"]))
     for node_id, out in outputs.items():
         if not isinstance(out, dict):
             continue
         images: list[Any] | None = out.get("images")
         if images and isinstance(images, list) and len(images) > 0:
-            img0: Any = images[0]
-            if isinstance(img0, dict) and "filename" in img0:
-                return (str(node_id), str(img0["filename"]))
+            img1: Any = images[0]
+            if isinstance(img1, dict) and "filename" in img1:
+                return (str(node_id), str(img1["filename"]))
     return None
 
 
@@ -193,6 +234,15 @@ def generate_reference_sheet(
         if not src.is_file():
             raise FileNotFoundError(f"ComfyUI reported output {filename} but file not found under {comfyui_output_dir}")
         shutil.copy2(src, out_file)
+        img = Image.open(out_file).convert("RGB")
+        arr: np.ndarray = np.array(img)
+        black_ratio: float = float((arr < 10).all(axis=2).mean())
+        if black_ratio > 0.95:
+            raise RuntimeError(
+                f"Stage 1 produced a {black_ratio * 100:.0f}% black image. "
+                f"Likely NaN from VAEDecode. Check ComfyUI log for 'invalid value encountered in cast'. "
+                f"Current workaround: LoRAs are disabled — check workflow node 4/5/6 strengths."
+            )
         return str(out_file.resolve())
 
     raise TimeoutError("ComfyUI did not finish within 1 hour.")

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
+#
+# NOTE: ComfyUI HTTP stage and local torch usage expect the same Python stack as your
+# working ComfyUI install (torch+cu124). Do not use base miniconda Python 3.13 alone.
+# Prefer: ``$FOULWARD_PYTHON foulward_gen.py ...`` (FOULWARD_PYTHON is set in ~/.bashrc).
+#
 """
 Foul Ward — automatic 3D asset generator (local tools).
 
@@ -7,7 +12,7 @@ Usage (``foulward_gen.py`` lives in ``tools/gen3d/``; repo root is two levels ab
 
   cd tools/gen3d
   # Optional: put export HF_TOKEN=hf_... and Mixamo vars in ~/.foulward_secrets (see launch.sh)
-  python foulward_gen.py "orc grunt" orc_raiders enemy
+  $FOULWARD_PYTHON foulward_gen.py "orc grunt" orc_raiders enemy
 
 Stages: 2D reference → 3D mesh → rig → animate → copy into Godot art/generated/.
 """
@@ -72,10 +77,22 @@ ANIM_CLIPS_ALLY: list[str] = ["idle", "run", "attack_melee", "hit_react", "death
 ANIM_CLIPS_BUILDING: list[str] = ["idle", "active", "destroyed"]
 ANIM_CLIPS_BOSS: list[str] = ["idle", "walk", "attack", "hit_react", "death"]
 
+PERSONAL_NAMES: set[str] = {"arnulf", "florence", "sybil"}
+
+
+def canonical_slug(unit_name: str) -> str:
+    """Single-token slug for named heroes (e.g. 'Florence the ...' -> ``florence``)."""
+    parts: list[str] = unit_name.lower().strip().split()
+    if len(parts) == 0:
+        return "unnamed"
+    if parts[0] in PERSONAL_NAMES:
+        return parts[0]
+    return "_".join(parts)
+
 
 def get_output_dir(unit_name: str, asset_type: str) -> str:
     """Flat layout: art/generated/<category>/<slug>.glb (matches generation_log / rigged_visual_wiring)."""
-    slug: str = unit_name.lower().replace(" ", "_")
+    slug: str = canonical_slug(unit_name)
     folder_map: dict[str, str] = {
         "enemy": f"{GODOT_ROOT}/art/generated/enemies",
         "ally": f"{GODOT_ROOT}/art/generated/allies",
@@ -104,7 +121,7 @@ def run_pipeline(unit_name: str, faction: str, asset_type: str = "enemy") -> Non
     }.get(asset_type, ANIM_CLIPS_ENEMY)
 
     output_dir: str = get_output_dir(unit_name, asset_type)
-    slug: str = unit_name.lower().replace(" ", "_")
+    slug: str = canonical_slug(unit_name)
     # Prefer the natural-language description from characters.md when available;
     # fall back to the bare slug so unknown units still generate something.
     description: str = get_unit_description(slug) or unit_name
@@ -129,7 +146,7 @@ def run_pipeline(unit_name: str, faction: str, asset_type: str = "enemy") -> Non
         img_path,
         out_path=f"/tmp/fw_{slug}_raw.glb",
         model_id=TRELLIS_MODEL,
-        _tri_budget=12000,
+        tri_budget=12000,
     )
     print(f"[2/5] Raw GLB: {glb_raw}")
 

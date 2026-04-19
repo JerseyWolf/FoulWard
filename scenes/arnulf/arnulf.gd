@@ -137,8 +137,9 @@ func _ready() -> void:
 		_arnulf_anim_player = RiggedVisualWiring.mount_glb_scene(
 			_visual_slot, RiggedVisualWiring.ALLY_ARNULF_GLB
 		)
-		if _arnulf_anim_player == null:
-			RiggedVisualWiring.clear_visual_slot(_visual_slot)
+		# Cube is last-resort only. An animationless rigged GLB still renders — do not clear the mesh
+		# when AnimationPlayer is missing (e.g. empty anim_library in gen3d stage 4).
+		if _visual_slot.get_child_count() == 0:
 			var mi: MeshInstance3D = MeshInstance3D.new()
 			mi.mesh = ArtPlaceholderHelper.get_ally_mesh("arnulf")
 			mi.material_override = ArtPlaceholderHelper.get_faction_material("allies")

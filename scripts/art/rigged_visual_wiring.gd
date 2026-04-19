@@ -265,7 +265,16 @@ static func update_locomotion_animation(
 ) -> StringName:
 	if animation_player == null:
 		return current_anim
-	var want: StringName = ANIM_WALK if horizontal_speed > LOC_VELOCITY_EPSILON else ANIM_IDLE
+	var want: StringName = ANIM_IDLE
+	if horizontal_speed > LOC_VELOCITY_EPSILON:
+		if animation_player.has_animation(ANIM_WALK):
+			want = ANIM_WALK
+		elif animation_player.has_animation(ANIM_RUN):
+			want = ANIM_RUN
+		else:
+			return current_anim
+	else:
+		want = ANIM_IDLE
 	if want == current_anim:
 		return current_anim
 	if not animation_player.has_animation(want):

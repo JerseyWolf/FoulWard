@@ -1,5 +1,25 @@
 # SKILL: gen3d — Automatic 3D asset generation (local pipeline)
 
+## Stage 1 Environment (Resolved — do not change)
+
+- ComfyUI: v0.19.3 at http://127.0.0.1:8188
+- Start command: `nohup $FOULWARD_PYTHON ~/ComfyUI/main.py --listen 127.0.0.1 --port 8188 > /tmp/comfyui.log 2>&1 &`
+- `FOULWARD_PYTHON`: `/home/jerzy-wolf/miniconda3/envs/trellis2/bin/python3`
+- UNET: `~/ComfyUI/models/unet/flux1-dev.safetensors` (23.80GB, `weight_dtype`: default)
+- CLIP: `~/ComfyUI/models/clip/clip_l.safetensors` (~246MB)
+- T5: `~/ComfyUI/models/clip/t5xxl_fp8_e4m3fn.safetensors` (~4.6GB)
+- VAE: `~/ComfyUI/models/vae/flux_ae.safetensors`
+- LoRA strengths validated: turnaround=0.4, baroque=0.5, velvet=0.4
+- Minimal test baseline: mean RGB (228.6, 201.9, 197.3), 0.0% black
+
+Invoke gen3d with: `$FOULWARD_PYTHON tools/gen3d/foulward_gen.py "Unit Name" faction asset_type`
+
+## Previously broken (fixed — do not revert)
+
+- Old `flux_t5_1` / `flux_t5_2` were sharded HF diffusers T5 (only shard 1 of 2 loaded) → "Long clip missing" → NaN → black PNG. Fixed by downloading `comfyanonymous/flux_text_encoders` `t5xxl_fp8_e4m3fn.safetensors`.
+- Old UNETLoader pointed at `diffusion_pytorch_model-00001-of-00003.safetensors` (shard 1 of 3) → NaN. Fixed by downloading single-file `flux1-dev.safetensors`.
+- ComfyUI must be started with **trellis2** conda env Python, not base miniconda Python 3.13.
+
 ## Purpose
 
 Load this skill when generating **placeholder or batch 3D assets** for Foul Ward: enemies, allies, bosses, buildings. The Python orchestrator lives in **`tools/gen3d/`** in this repo; it drives local tools on the developer machine (ComfyUI + FLUX.1 dev, TRELLIS.2, Blender, optional Mixamo automation). Output is **`.glb`** under `res://art/generated/...` with the same **flat naming** as existing placeholders (`rigged_visual_wiring.gd`, `FUTURE_3D_MODELS_PLAN.md`).

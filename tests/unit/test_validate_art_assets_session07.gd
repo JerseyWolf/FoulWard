@@ -15,7 +15,7 @@ var ENEMY_REQUIRED_CLIPS: PackedStringArray = PackedStringArray([
 	"idle", "walk", "death", "hit_react",
 ])
 var ALLY_REQUIRED_CLIPS: PackedStringArray = PackedStringArray([
-	"idle", "walk", "death", "attack_melee",
+	"idle", "run", "death", "attack_melee",
 ])
 var BUILDING_REQUIRED_CLIPS: PackedStringArray = PackedStringArray([
 	"idle", "active",
@@ -104,7 +104,7 @@ func test_required_clips_ally_count() -> void:
 	var clips: PackedStringArray = _get_required_clips("ally")
 	assert_int(clips.size()).is_equal(4)
 	assert_bool(clips.has("idle")).is_true()
-	assert_bool(clips.has("walk")).is_true()
+	assert_bool(clips.has("run")).is_true()
 	assert_bool(clips.has("death")).is_true()
 	assert_bool(clips.has("attack_melee")).is_true()
 

@@ -190,6 +190,13 @@ out_path = Path(r"{out_s}")
 out_path.parent.mkdir(parents=True, exist_ok=True)
 pipeline = Trellis2ImageTo3DPipeline.from_pretrained("{model_id}")
 pipeline.cuda()
+# BiRefNet (public rembg): HF may load Half weights while torchvision ToTensor() feeds float32 —
+# PyTorch then errors with "Input type (float) and bias type (Half)". Force float32 weights.
+if pipeline.rembg_model is not None and hasattr(pipeline.rembg_model, "model"):
+    try:
+        pipeline.rembg_model.model.float()
+    except Exception:
+        pass
 img = Image.open(r"{img_s}")
 mesh = pipeline.run(img)[0]
 mesh.simplify(16777216)
