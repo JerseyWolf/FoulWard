@@ -152,6 +152,7 @@ MCP verification after every session:
 | Allies, Arnulf, mercenaries | `.cursor/skills/ally-and-mercenary-system/` |
 | Mission flow, game loop, startup | `.cursor/skills/lifecycle-flows/` |
 | Save/load, dialogue, relationships | `.cursor/skills/save-and-dialogue/` |
+| 3D asset generation, local GLB pipeline (ComfyUI / TRELLIS / Blender) | `.cursor/skills/gen3d/` |
 
 ---
 

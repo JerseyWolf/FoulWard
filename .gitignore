@@ -30,6 +30,9 @@ tools/mcp-support/node_modules/
 # Local MCP secrets (never commit real tokens)
 .cursor/github-mcp.env
 
+# Cursor / local launch logs (not part of the game)
+.launch-logs/
+
 # Generated test / tool logs
 reports/
 tools/gdunit_out.txt
