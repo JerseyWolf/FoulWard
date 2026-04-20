@@ -39,15 +39,46 @@ Further discussion: [microsoft/TRELLIS.2#147](https://github.com/microsoft/TRELL
 
 ## Stage 2 TRELLIS Settings (validated)
 
-- **VRAM:** `foulward_gen.py` **stops ComfyUI on port 8188 after Stage 1** so TRELLIS can use the full GPU (ComfyUI + FLUX often holds ~15GB). To keep ComfyUI running: `export FOULWARD_GEN3D_KEEP_COMFYUI_AFTER_STAGE1=1` (Stage 2 may then **CUDA OOM** on a 24GB card).
-- Input: crop left-third of turnaround sheet (front view) → resize to 770px longest side
-- Do NOT feed full turnaround sheet or 4 separate views — TRELLIS.2 is single-image only
-- Do NOT use input >770px — quality degrades above this (model trained at 518px)
+- **VRAM:** After Stage 1, `foulward_gen.py` **always** stops ComfyUI (`pkill` + optional `/api/quit`) and **polls `nvidia-smi`** until used VRAM &lt; 12 GB (or timeout) before loading TRELLIS — FLUX.1-dev (~16+ GB resident) and TRELLIS.2-4B cannot coexist on 24 GB. To skip shutdown (only safe with a **small** image model, e.g. FLUX.1-schnell fp8): `export SKIP_COMFYUI_SHUTDOWN=1`.
+- **Stage 2 (multi-variant):** `generate_mesh_variants(n_variants=N)` runs TRELLIS N times with different random seeds and decimates each. Default `N_MESH_VARIANTS=5`. The user is prompted to pick one; batch runs auto-select candidate 1 (`AUTO_SELECT_CANDIDATE=1`). Candidates are stored in both `/tmp/fw_{slug}_candidates/` (ephemeral) and `art/gen3d_candidates/{slug}/` (permanent). `meta.json` sidecar tracks the selection.
+- **Stage 2b (decimation):** `decimate_glb` preserves UV/PBR textures. Strategy: Open3D QEM decimation (correctly targets face count even on non-manifold TRELLIS meshes), then scipy `cKDTree` nearest-vertex UV re-projection from the original high-res mesh. Output includes `TextureVisuals` + embedded `PBRMaterial` baseColorTexture. **Do NOT revert to plain Open3D decimation** — it stripped all UV data.
+- **Pre-decimation:** `o_voxel.postprocess.to_glb` runs with `decimation_target=100000` (env: `FOULWARD_TRELLIS_PREDECIMATE`, default 100000). This reduces the raw TRELLIS GLB from ~38 MB to ~4 MB before the `decimate_glb` step. Increase to 1000000 for maximum source detail.
+- **Seed:** `image_to_glb` accepts `seed: int | None`. `None` → random 32-bit seed. Seed is passed to TRELLIS and logged (`[TRELLIS] seed=...`). Same image + same seed → same geometry.
+- Input: crop left-third of turnaround sheet (front view) → pad square on white → resize to **768** px edge (A/B 2026-04-20; env ``FOULWARD_TRELLIS_INPUT_EDGE`` overrides default 768).
+- Prefer **single front panel** for clean humanoids; full multi-view sheets can score similar on edge-count proxies but often hallucinate extra bodies in the mesh.
+- Model is trained around ~518 px; 768 is the project default after A/B (was 770 community sweet spot).
 - sparse_structure steps: 500, **guidance_strength** 7.5 (TRELLIS.2 sampler API — not `cfg_strength`)
 - slat steps: 500, **guidance_strength** 3.0
 - texture_resolution: 2048 (``o_voxel.postprocess.to_glb`` → ``texture_size``)
 - nviews: 120 (community default for multiview texture quality; bake path is fixed in ``o_voxel``)
-- Expected GLB size for production unit: 1–5MB
+- Expected GLB size after decimation: ~10–20 MB (includes embedded 2048px WebP/PNG baseColorTexture); triangle count ~8k–12k (enemies/allies), 8k (buildings), ~20k (bosses)
+
+### Variant selection env vars
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `N_MESH_VARIANTS` | `5` | Number of TRELLIS runs per asset |
+| `AUTO_SELECT_CANDIDATE` | `0` (interactive) | `1` = auto-select candidate 1 without prompt (set by `generate_all.sh`) |
+| `FOULWARD_TRELLIS_PREDECIMATE` | `100000` | Pre-decimation target inside `o_voxel.to_glb` |
+
+### Re-selecting a variant after a batch run
+
+```bash
+cd tools/gen3d
+# Re-promote candidate 3 for orc_grunt and re-run stages 3–5:
+$FOULWARD_PYTHON promote_candidate.py orc_grunt 3
+```
+
+Candidates live at `art/gen3d_candidates/{slug}/candidate_{N}_decimated.glb`.
+`selected.glb` in the same dir is what stages 3–5 consume.
+
+### Skip-stage env vars (for promote_candidate.py / CI)
+
+| Variable | Meaning |
+|---|---|
+| `SKIP_STAGE1=1` | Skip ComfyUI image generation (use existing `/tmp/fw_{slug}_front_nobg.png`) |
+| `SKIP_STAGE2=1` | Skip TRELLIS mesh generation; requires `SELECTED_GLB=<path>` |
+| `SELECTED_GLB=<path>` | Absolute path to the already-decimated GLB to feed into stage 3 |
 
 Invoke gen3d with: `$FOULWARD_PYTHON tools/gen3d/foulward_gen.py "Unit Name" faction asset_type`
 
@@ -59,7 +90,7 @@ Invoke gen3d with: `$FOULWARD_PYTHON tools/gen3d/foulward_gen.py "Unit Name" fac
 
 ## Purpose
 
-Load this skill when generating **placeholder or batch 3D assets** for Foul Ward: enemies, allies, bosses, buildings. The Python orchestrator lives in **`tools/gen3d/`** in this repo; it drives local tools on the developer machine (ComfyUI + FLUX.1 dev, TRELLIS.2, Blender, optional Mixamo automation). Output is **`.glb`** under `res://art/generated/...` with the same **flat naming** as existing placeholders (`rigged_visual_wiring.gd`, `FUTURE_3D_MODELS_PLAN.md`).
+Load this skill when generating **placeholder or batch 3D assets** for Foul Ward: enemies, allies, bosses, buildings. The Python orchestrator lives in **`tools/gen3d/`** in this repo; it drives local tools on the developer machine (ComfyUI + FLUX.1 dev, TRELLIS.2, Blender, optional Mixamo automation). Output is **`.glb`** under `res://art/generated/...` with the same **flat naming** as existing placeholders (`rigged_visual_wiring.gd`, `docs/FUTURE_3D_MODELS_PLAN.md`).
 
 ## When to use
 
@@ -72,13 +103,13 @@ Load this skill when generating **placeholder or batch 3D assets** for Foul Ward
 
 | Item | Absolute path |
 |------|-----------------|
-| **Workplan (install steps)** | `/home/jerzy-wolf/workspace/foul-ward/FoulWard/docs/gen3d_workplan.md` |
+| **Install / workflows** | `tools/gen3d/workflows/README_COMFYUI.md` (ComfyUI + FLUX); this SKILL § Pipeline + How to run |
 | **Scripts (in-repo)** | `/home/jerzy-wolf/workspace/foul-ward/FoulWard/tools/gen3d/` |
 | **Per-unit description bank** | `/home/jerzy-wolf/workspace/foul-ward/FoulWard/tools/gen3d/pipeline/unit_descriptions.py` |
 | **Character manifest (source of descriptions)** | `/home/jerzy-wolf/.cursor/plans/characters.md` |
 | **Godot project** | `/home/jerzy-wolf/workspace/foul-ward/FoulWard` |
 | **Godot path resolver (per `entity_id`)** | `scripts/art/rigged_visual_wiring.gd` |
-| **Roster doc** | `FUTURE_3D_MODELS_PLAN.md` |
+| **Roster doc** | `docs/FUTURE_3D_MODELS_PLAN.md` |
 
 ## Pipeline (5 stages)
 
@@ -93,7 +124,7 @@ Load this skill when generating **placeholder or batch 3D assets** for Foul Ward
 
 ```bash
 cd /home/jerzy-wolf/workspace/foul-ward/FoulWard/tools/gen3d
-# Optional: ~/.foulward_secrets with export MIXAMO_* and export HF_TOKEN=hf_... (see docs/gen3d_workplan.md Part 2)
+# Optional: ~/.foulward_secrets with export MIXAMO_* and export HF_TOKEN=hf_... (see tools/gen3d/workflows/README_COMFYUI.md)
 python foulward_gen.py "UNIT NAME" FACTION ASSET_TYPE
 ```
 
@@ -223,6 +254,8 @@ Align Mixamo filenames in `tools/gen3d/anim_library/` with `ANIM_NAME_MAP` in `s
 | TRELLIS fails (DINOv3 / HF) | `HF_TOKEN` set; accept **DINOv3** on Hugging Face. Pin **`transformers==4.56.0`** in `trellis2` if you see **`DINOv3ViTModel` / `.layer`** errors (see **Pinned dependency versions** above). If **RMBG-2.0** is 403, keep **`FOULWARD_TRELLIS_PUBLIC_REMBG=1`** (default) so stage 2 uses public BiRefNet — see `tools/gen3d/workflows/README_COMFYUI.md`. |
 | Stage 2 **`cfg_strength`** / sampler API | Current TRELLIS expects **`guidance_strength`** in sampler params (not `cfg_strength`). |
 | Stage 2 **CUDA OOM** with ComfyUI up | Default: `foulward_gen.py` stops ComfyUI after Stage 1 to free VRAM; or stop ComfyUI manually before TRELLIS. |
+| **White mesh / untextured GLB** | Root cause was Open3D stripping UV on rebuild. Fixed (Prompt 86): `decimate_glb` now uses Open3D + cKDTree UV re-projection. If it recurs, run `_check_glb_has_texture(raw_glb)` on the TRELLIS output first. |
+| Decimated GLB white but raw is textured | Verify `pipeline/stage2_mesh.py` `decimate_glb` exports via `trimesh.Scene(geometry={...}).export(out, file_type="glb")` — not `mesh.export(out)` which loses materials. |
 | Mixamo fails (UI change / login) | Env vars set; bot may break — pipeline silently writes the unrigged GLB so the run still completes |
 | No animations | Populate `anim_library/` with Mixamo FBX files using the names in `ANIM_NAME_MAP` |
 | Godot doesn't pick up the GLB | `Project → Reload Current Project` or focus editor; ensure `rigged_visual_wiring.gd` maps the `entity_id` to the new path |
@@ -230,9 +263,9 @@ Align Mixamo filenames in `tools/gen3d/anim_library/` with `ANIM_NAME_MAP` in `s
 
 ## Quality
 
-**Placeholder-grade** for gameplay iteration. Production art follows the manual steps in `FUTURE_3D_MODELS_PLAN.md` and `FOUL WARD 3D ART PIPELINE.txt` (parent folder).
+**Placeholder-grade** for gameplay iteration. Production art follows the manual steps in `docs/FUTURE_3D_MODELS_PLAN.md`.
 
 ## Related docs (in repo)
 
-- [FUTURE_3D_MODELS_PLAN.md](../../../FUTURE_3D_MODELS_PLAN.md) — roster, `res://` paths, rig wiring
+- [docs/FUTURE_3D_MODELS_PLAN.md](../../../docs/FUTURE_3D_MODELS_PLAN.md) — roster, `res://` paths, rig wiring
 - `add-new-entity` skill — data-side checklist (`Types`, `SignalBus`, `*.tres`, indexes)

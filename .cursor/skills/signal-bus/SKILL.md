@@ -111,7 +111,7 @@ The **exact** number of top-level `signal` declarations in `autoloads/signal_bus
 | `docs/INDEX_FULL.md` | Bullet describing `signal-table.md` / registry intro |
 | `docs/archived/INDEX_MACHINE.md` | Only if you edit the archived machine index for other reasons — optional; banner may reference “see `signal_bus.gd`” |
 | `.cursor/skills/signal-bus/references/signal-table.md` | Header **Count:** line and verification date |
-| `docs/perplexity_sessions/**` | Any `PROMPT.md` / `CONTEXT_BRIEF.md` that states an explicit signal **count** (search `58+`, `60+`, or a stale integer) |
+| Historical Perplexity session prompts (removed from repo 2026-04-20) | If you recover one from **git history**, check any stated signal **count** against `grep -c '^signal ' autoloads/signal_bus.gd` |
 
 Then search the repo for stale phrasing (`58+ signal`, `60+ signal`, old integers like `65` in signal-count context) and fix stragglers.
 

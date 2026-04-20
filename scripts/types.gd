@@ -82,7 +82,7 @@ enum BuildingType {
 	CITADEL_AURA, # 35  LARGE, AURA, +20% damage + +10% fire rate to all buildings
 }
 
-## Modular building kit: base piece under `res://art/generated/kit/*.glb` (see FUTURE_3D_MODELS_PLAN.md §4).
+## Modular building kit: base piece under `res://art/generated/kit/*.glb` (see docs/FUTURE_3D_MODELS_PLAN.md §4).
 enum BuildingBaseMesh {
 	STONE_ROUND,
 	STONE_SQUARE,
@@ -90,7 +90,7 @@ enum BuildingBaseMesh {
 	RUINS_BASE,
 }
 
-## Modular building kit: top piece under `res://art/generated/kit/*.glb` (see FUTURE_3D_MODELS_PLAN.md §4).
+## Modular building kit: top piece under `res://art/generated/kit/*.glb` (see docs/FUTURE_3D_MODELS_PLAN.md §4).
 enum BuildingTopMesh {
 	ROOF_CONE,
 	ROOF_FLAT,
@@ -199,7 +199,7 @@ enum StrategyProfile {
 	BUILDING_FOCUS,
 }
 
-## Battle terrain preset for CampaignManager terrain scene selection (see FUTURE_3D_MODELS_PLAN.md §5).
+## Battle terrain preset for CampaignManager terrain scene selection (see docs/FUTURE_3D_MODELS_PLAN.md §5).
 enum TerrainType {
 	GRASSLAND,
 	FOREST,

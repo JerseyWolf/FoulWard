@@ -6,7 +6,7 @@
 //   https://docs.godotengine.org/en/4.4/tutorials/scripting/c_sharp/c_sharp_collections.html
 // Reference: Godot 4 cross-language scripting
 //   https://docs.godotengine.org/en/stable/tutorials/scripting/cross_language_scripting.html
-// Resolves: IMPROVEMENTS_TO_BE_DONE.md — "spawn_wave is 82 lines, extract roster loop"
+// Extracted roster loop from wave composition (historical refactor; see git blame).
 // Used in: WaveCompositionHelper.BuildRoster(), called from wave_manager.gd spawn_wave()
 
 using System;

@@ -160,7 +160,7 @@ func _bootstrap_starter_allies() -> void:
 
 
 func _load_terrain(territory: TerritoryData) -> void:
-	# TODO(TERRAIN): FOREST, RUINS, TUNDRA scenes pending — see FUTURE_3D_MODELS_PLAN.md §5.
+	# TODO(TERRAIN): FOREST, RUINS, TUNDRA scenes pending — see docs/FUTURE_3D_MODELS_PLAN.md §5.
 	var terrain_map: Dictionary = {
 		Types.TerrainType.GRASSLAND: _TERRAIN_GRASSLAND_SCENE,
 		Types.TerrainType.SWAMP: _TERRAIN_SWAMP_SCENE,

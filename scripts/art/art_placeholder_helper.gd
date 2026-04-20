@@ -41,7 +41,7 @@ const ART_ROOT_ICONS_ALLIES: String = "res://art/icons/allies/"
 # POST-MVP: Generated asset roots — checked before placeholders
 const ART_GEN_MESHES: String = "res://art/generated/meshes/"
 const ART_GEN_ICONS: String = "res://art/generated/icons/"
-## Modular building kit GLBs (`FUTURE_3D_MODELS_PLAN.md` §4).
+## Modular building kit GLBs (`docs/FUTURE_3D_MODELS_PLAN.md` §4).
 const ART_GEN_KIT: String = "res://art/generated/kit/"
 ## Vertical offset for the top kit slot (base sits at origin).
 const KIT_TOP_SLOT_Y: float = 1.0

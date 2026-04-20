@@ -79,7 +79,7 @@ Rows that cite historical SignalBus totals (e.g. **67**, **72**, **73**, **76**)
 | **Genre** | Real-time tower defense, stationary perspective (player IS the tower, aims manually with mouse) |
 | **Inspiration** | TAUR |
 | **Campaign structure** | 50-day main campaign. Each day = one mission. Missions have a build phase then wave combat. |
-| **Test count** | 665 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-19; see `docs/PROMPT_76_IMPLEMENTATION.md`) |
+| **Test count** | 665 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-19; see `docs/archived/prompts/PROMPT_76_IMPLEMENTATION.md`) |
 
 ### Primary Files of Record
 
@@ -90,7 +90,7 @@ Rows that cite historical SignalBus totals (e.g. **67**, **72**, **73**, **76**)
 | `AGENTS.md` (repo root) | Standing orders for every Cursor/LLM session — **read first** (MCP habits; expands on [§1.1](#11-cursor-mcp-and-agent-toolchain)) |
 | `docs/CONVENTIONS.md` | Naming, typing, and style law |
 | `docs/SUMMARY_VERIFICATION.md` | Three-part read-only audit results |
-| `docs/archived/OPUS_ALL_ACTIONS.md` | Archived consolidated snapshot + improvement backlog (historical) |
+| `docs/archived/prompts/` | Full `PROMPT_*_IMPLEMENTATION.md` session-log archive (10 newest logs live under `docs/` only) |
 
 ### 1.1 Cursor, MCP, and agent toolchain
 
@@ -1958,13 +1958,12 @@ public partial class DamageCalculator : Node
 | `docs/INDEX_SHORT.md` | Compact one-liner per file index |
 | `docs/INDEX_FULL.md` | Full public API reference |
 | `docs/SUMMARY_VERIFICATION.md` | Three-part read-only codebase audit results |
-| `docs/archived/OPUS_ALL_ACTIONS.md` | Archived consolidated snapshot + improvement backlog (historical) |
-| `docs/IMPROVEMENTS_TO_BE_DONE.md` | 78-issue backlog |
-| `FUTURE_3D_MODELS_PLAN.md` | Production 3D art roadmap |
-|| `../gen3d/foulward_gen.py` (outside repo) | Gen3D pipeline orchestrator — 5-stage ComfyUI/TRELLIS.2/Blender pipeline |
-|| `.cursor/skills/gen3d/SKILL.md` | Gen3D agent skill — install, add-character procedure, Cursor prompt template |
+| `docs/archived/prompts/` | Full `PROMPT_*_IMPLEMENTATION.md` session-log history (rolling window: 10 newest under `docs/`) |
+| `docs/FUTURE_3D_MODELS_PLAN.md` | Production 3D art roadmap |
+| `tools/gen3d/foulward_gen.py` | Gen3D pipeline orchestrator — 5-stage ComfyUI/TRELLIS.2/Blender pipeline |
+| `.cursor/skills/gen3d/SKILL.md` | Gen3D agent skill — install, add-character procedure, Cursor prompt template |
 | `.cursorrules` | Workspace rules for Cursor agent behavior |
 | `.cursor/rules/mcp-godot-workflow.mdc` | MCP server usage rules |
 | `FoulWard.csproj` | C# project file — `dotnet build` before GdUnit when `.cs` changes |
 | `CREDITS.md` (repo root) | Third-party / technique credits for C# modules |
-| `docs/PROMPT_[N]_IMPLEMENTATION.md` (new) · `docs/archived/PROMPT_*_IMPLEMENTATION.md` (history) | Per-session implementation logs |
+| `docs/PROMPT_[N]_IMPLEMENTATION.md` (10-file rolling window) · `docs/archived/prompts/PROMPT_*_IMPLEMENTATION.md` (full history) | Per-session implementation logs |

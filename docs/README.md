@@ -1,15 +1,16 @@
 # Foul Ward — `docs/` layout
 
-Quick map of **active** documentation. New session implementation logs go under **`docs/PROMPT_[N]_IMPLEMENTATION.md`**; older prompt logs and one-off artifacts live in **`docs/archived/`** (see repo-root **`AGENTS.md`**).
+Quick map of **active** documentation. New session logs go to **`docs/PROMPT_[N]_IMPLEMENTATION.md`** (next unused **N**); only the **10** newest `PROMPT_*` files stay here — older logs move to **`docs/archived/prompts/`** (see repo-root **`AGENTS.md`** rule 15).
+
+**GitHub landing:** repo-root **`README.md`** links **`HOW_IT_WORKS.md`**, **`INTERVIEW_CHEATSHEET.md`**, and **`AGENTS.md`**.
 
 ## Primary indexes (read these first)
 
 | File | Role |
 |------|------|
-| **`INDEX_SHORT.md`** | Compact map: autoloads, managers, scenes, resources, tests, known open issues. |
+| **`README.md`** (repo root) | Project one-liner, quick build/test, links to engineering narrative docs. |
+| **`INDEX_SHORT.md`** | Compact map: autoloads, managers, scenes, resources, tests. |
 | **`INDEX_FULL.md`** | Expanded API-style reference (signals, methods, resource fields). |
-
-**Archived (historical):** `docs/archived/INDEX_MACHINE.md`, `docs/archived/INDEX_TASKS.md` — machine-oriented matrices and index maintenance checklist from earlier workflow.
 
 ## Architecture and rules
 
@@ -18,8 +19,6 @@ Quick map of **active** documentation. New session implementation logs go under 
 | **`ARCHITECTURE.md`** | Scene tree, autoload order, system boundaries. |
 | **`CONVENTIONS.md`** | Naming, signals, typing, project habits. |
 | **`SYSTEMS_part1.md` … `part3.md`** | Deeper system notes (split for size). |
-
-**Archived (historical):** `docs/archived/PRE_GENERATION_SPECIFICATION.md`, `docs/archived/PRE_GENERATION_VERIFICATION.md` — dense signal/config snapshot and pre-flight checklist (may lag; live code wins).
 
 ## Design and product
 
@@ -35,19 +34,20 @@ Quick map of **active** documentation. New session implementation logs go under 
 |------|------|
 | **`UBUNTU_REPLAY_SETUP.md`** | Ubuntu-specific replay or tooling notes. |
 
-**Archived (historical):** `docs/archived/CURRENT_STATUS.md` (environment recreate), `docs/archived/FULL_PROJECT_SUMMARY.md` (contributor handoff), `docs/archived/PROBLEM_REPORT.md` (defect/test handoff snippets).
-
 ## Living reference
 
 | File | Role |
 |------|------|
 | **`FOUL_WARD_MASTER_DOC.md`** | Comprehensive LLM/human reference (APIs, flows, anti-patterns). |
 | **`SUMMARY_VERIFICATION.md`** | Read-only audit aggregate (three-part verification). |
+| **`FUTURE_3D_MODELS_PLAN.md`** | Production 3D art roadmap (placeholders → shipping assets). |
 
-## Audits and meta
+## Session logs and archive
 
-**Archived (historical):** `docs/archived/ALL_AUDITS.md`, `docs/archived/AUDIT_CONTEXT_SUMMARY.md`, plus consolidated snapshot `docs/archived/OPUS_ALL_ACTIONS.md`. Prefer **`SUMMARY_VERIFICATION.md`**, **`FOUL_WARD_MASTER_DOC.md`**, and root **`IMPROVEMENTS_TO_BE_DONE.md`** for current truth.
+| Path | Role |
+|------|------|
+| **`PROMPT_79_IMPLEMENTATION.md` … `PROMPT_88_IMPLEMENTATION.md`** (current range) | The **10** session logs kept under `docs/` (rolling window). |
+| **`archived/prompts/`** | All older `PROMPT_*_IMPLEMENTATION.md` files + `README.md` policy. |
+| **`archived/README.md`** | What the archive folder contains after the 2026-04-20 doc cleanup. |
 
-## Obsolete / archive
-
-Historical snapshots, prompt logs, and pre-audit artifacts live under **`docs/archived/`** and legacy **`docs/obsolete/`** (see **`obsolete/README.md`** where present). **`INDEX_SHORT.md`** and **`ARCHITECTURE.md`** describe the current repo.
+Large one-off exports (`REPO_DUMP_*`, scratch Perplexity trees, compliance batches) were **removed** from the tree in that cleanup; use **`git log`** / **`git show`** if you need the old text.

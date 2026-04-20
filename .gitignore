@@ -46,6 +46,9 @@ repo_dump_option_b_with_tests.txt
 # Generated docs dump exports for LLM context
 docs/DOCS_DUMP.md
 
+# Empty / transient local dirs (not game code)
+simbot_runs/
+
 # Godot C# build artifacts
 .mono/
 .godot/mono/

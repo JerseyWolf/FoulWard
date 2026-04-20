@@ -11,7 +11,7 @@ Last updated: 2026-04-19 (Perplexity audit fix; parallel GdUnit **665** test cas
 Godot 4.4 GDScript real-time tower defense (inspired by TAUR).
 Player IS Florence — a stationary tower aimed manually with the mouse.
 50-day main campaign. Each day = one mission (build phase → wave combat).
-665 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-19; see `docs/PROMPT_76_IMPLEMENTATION.md`). 19 autoloads (core chain). 36 building types. 30 enemy types. **77** SignalBus signals (verified **2026-04-19** against `^signal ` lines in `autoloads/signal_bus.gd`).
+665 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-19; see `docs/archived/prompts/PROMPT_76_IMPLEMENTATION.md`). 19 autoloads (core chain). 36 building types. 30 enemy types. **77** SignalBus signals (verified **2026-04-19** against `^signal ` lines in `autoloads/signal_bus.gd`).
 When you add or remove a SignalBus signal, bump that total and update every location listed under **Signal count in documentation** in `.cursor/skills/signal-bus/SKILL.md`.
 Two weapons: Crossbow (CROSSBOW slot) and Rapid Missile (RAPID_MISSILE slot).
 AI ally Arnulf (melee), Sybil (spell support). Hex grid: 42 slots across 3 rings.
@@ -103,7 +103,7 @@ MCP verification after every session:
 12. ALL node path lookups use `get_node_or_null()` with null guard
 13. `SaveManager.save_current_state()` auto-called on mission_won/failed — no extra save calls
 14. EVERY new .gd file → add to `docs/INDEX_SHORT.md` and `docs/INDEX_FULL.md`
-15. EVERY session → log to `docs/PROMPT_[N]_IMPLEMENTATION.md` (next unused N)
+15. EVERY session → log to `docs/PROMPT_[N]_IMPLEMENTATION.md` (next unused **N**). Keep only the **10** newest `docs/PROMPT_*_IMPLEMENTATION.md` files at repo root under `docs/`; when adding **N** would exceed 10 files there, `git mv` the **lowest-numbered** log to `docs/archived/prompts/` (same filename). Exception: duplicate session numbers (e.g. `PROMPT_1_IMPLEMENTATION_v2.md`) stay in `docs/archived/prompts/` only.
 16. EVERY new signal declared in `autoloads/signal_bus.gd`, past tense snake_case
 
 ---
@@ -167,6 +167,9 @@ MCP verification after every session:
 | `docs/INDEX_SHORT.md` | One-liner per file index |
 | `docs/INDEX_FULL.md` | Full public API reference |
 | `docs/SUMMARY_VERIFICATION.md` | Read-only audit results |
+| `README.md` (repo root) | GitHub landing; links `HOW_IT_WORKS.md` / `INTERVIEW_CHEATSHEET.md` |
+| `HOW_IT_WORKS.md` (repo root) | Engineering-scaffolding walkthrough (interviews) |
+| `docs/archived/prompts/` | Full `PROMPT_*` session-log history |
 
 ---
 
