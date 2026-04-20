@@ -3,10 +3,58 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+
+
+def _load_mixamo_credentials() -> tuple[str, str]:
+    """
+    Load Mixamo credentials from ``~/.foulward_secrets`` or environment variables.
+
+    Priority: environment variable → secrets file.
+    ``secrets_loader.load_foulward_secrets()`` is called at foulward_gen.py import
+    time and already populates ``os.environ``, so this is a belt-and-suspenders
+    guard that makes ``stage3_rig`` safe to use standalone.
+
+    Returns:
+        (email, password) — may be empty strings if not configured.
+
+    Raises:
+        RuntimeError: if neither environment variables nor the secrets file
+            provide both MIXAMO_EMAIL and MIXAMO_PASSWORD.
+    """
+    email: str = os.environ.get("MIXAMO_EMAIL", "").strip()
+    password: str = os.environ.get("MIXAMO_PASSWORD", "").strip()
+
+    if not email or not password:
+        secrets_path: Path = Path(
+            os.environ.get("FOULWARD_SECRETS_FILE", "~/.foulward_secrets")
+        ).expanduser().resolve()
+        if secrets_path.is_file():
+            for line in secrets_path.read_text(encoding="utf-8").splitlines():
+                stripped: str = line.strip()
+                if stripped.startswith("export "):
+                    stripped = stripped[7:].lstrip()
+                if "=" not in stripped or stripped.startswith("#"):
+                    continue
+                key, _, value = stripped.partition("=")
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key == "MIXAMO_EMAIL" and not email:
+                    email = value
+                elif key == "MIXAMO_PASSWORD" and not password:
+                    password = value
+
+    if not email or not password:
+        raise RuntimeError(
+            "Mixamo credentials not found. Add MIXAMO_EMAIL= and MIXAMO_PASSWORD= "
+            "to ~/.foulward_secrets or export them as environment variables."
+        )
+    print(f"[stage3_rig] Mixamo credentials loaded for: {email}")
+    return email, password
 
 
 def _blender_glb_to_fbx(glb_path: Path, fbx_path: Path) -> None:
@@ -58,11 +106,17 @@ bpy.ops.export_scene.gltf(
 def rig_model(
     glb_path: str,
     out_path: str,
-    mixamo_email: str,
-    mixamo_password: str,
+    mixamo_email: str = "",
+    mixamo_password: str = "",
     asset_type: str = "enemy",
 ) -> str:
-    """Rig humanoids via Mixamo when credentials set; buildings copy GLB unchanged."""
+    """
+    Rig humanoids via Mixamo when credentials are available; buildings copy GLB unchanged.
+
+    Credentials are loaded from ``~/.foulward_secrets`` or environment variables via
+    ``_load_mixamo_credentials()`` if the caller does not pass them. The caller-supplied
+    ``mixamo_email`` / ``mixamo_password`` args take precedence (backwards compatible).
+    """
     src: Path = Path(glb_path).resolve()
     dst: Path = Path(out_path).resolve()
     dst.parent.mkdir(parents=True, exist_ok=True)
@@ -71,9 +125,16 @@ def rig_model(
         shutil.copy2(src, dst)
         return str(dst)
 
+    # Caller may pass empty strings when foulward_gen reads from module-level vars
+    # before secrets_loader runs; fall back to _load_mixamo_credentials() silently.
     if not mixamo_email or not mixamo_password:
-        shutil.copy2(src, dst)
-        return str(dst)
+        try:
+            mixamo_email, mixamo_password = _load_mixamo_credentials()
+        except RuntimeError as exc:
+            print(f"[stage3_rig] {exc}")
+            print("[stage3_rig] Skipping Mixamo rig — copying unrigged GLB.")
+            shutil.copy2(src, dst)
+            return str(dst)
 
     with tempfile.TemporaryDirectory(prefix="fw_mixamo_") as tmp:
         tmp_path: Path = Path(tmp)

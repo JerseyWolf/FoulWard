@@ -87,8 +87,8 @@
         "6",
         1
       ],
-      "clip_l": "",
-      "t5xxl": "",
+      "clip_l": "multiple views, turnaround sheet, side view, back view, detailed engravings, surface patterns, fine texture, photorealistic, subsurface scattering, specular highlights, complex shading, busy background",
+      "t5xxl": "multiple views, turnaround sheet, side view, back view, detailed engravings, surface patterns, fine texture, photorealistic, subsurface scattering, specular highlights, complex shading, busy background",
       "guidance": 3.5
     }
   },

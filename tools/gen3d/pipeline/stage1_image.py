@@ -13,7 +13,7 @@ from typing import Any
 
 import numpy as np
 import requests
-from PIL import Image
+from PIL import Image, ImageFilter
 
 # Per-faction ceilings (validated); build_workflow_with_loras caps workflow JSON to these maxima.
 LORA_STRENGTHS: dict[str, dict[str, float]] = {
@@ -246,3 +246,59 @@ def generate_reference_sheet(
         return str(out_file.resolve())
 
     raise TimeoutError("ComfyUI did not finish within 1 hour.")
+
+
+def crop_front_view(sheet_path: str, out_path: str) -> str:
+    """
+    Crop the leftmost third of a front/side/back turnaround sheet.
+
+    ComfyUI / FLUX workflow produces a hires sheet (typically 2048² after upscale)
+    with three views laid out
+    horizontally left-to-right (front, side, back), each panel
+    approximately one third of the sheet width (e.g. ~682 px at 2048²).
+    This function extracts only the front view for TRELLIS input; see
+    ``docs/PROMPT_87_IMPLEMENTATION.md`` for the 2026-04-20 input-format A/B.
+
+    Args:
+        sheet_path: Path to the full turnaround sheet PNG.
+        out_path:   Where to save the cropped front-view PNG.
+
+    Returns:
+        out_path after saving.
+    """
+    img = Image.open(sheet_path)
+    w, h = img.size
+    # Front view is the leftmost third of the sheet
+    front = img.crop((0, 0, w // 3, h))
+    front.save(out_path)
+    return out_path
+
+
+def clean_alpha_for_trellis(image_path: str, out_path: str, threshold: int = 128) -> str:
+    """
+    Binarise the alpha channel of an RGBA image so every pixel is either
+    fully opaque (alpha=255) or fully transparent (alpha=0).
+    Semi-transparent fringe pixels from rembg cause TRELLIS to hallucinate
+    thin geometry sheets which explode into razor shards after decimation.
+
+    Args:
+        image_path: Path to RGBA PNG (rembg output).
+        out_path:   Where to save the cleaned RGBA PNG.
+        threshold:  Pixels with alpha >= threshold → 255, else → 0. Default 128.
+
+    Returns:
+        out_path after saving.
+    """
+    img: Image.Image = Image.open(image_path).convert("RGBA")
+    arr: np.ndarray = np.array(img, dtype=np.uint8)
+
+    # Hard alpha threshold
+    arr[:, :, 3] = np.where(arr[:, :, 3] >= threshold, 255, 0)
+
+    # Erode the mask by 1px (3x3 min filter) to reduce fringe artifacts at silhouette edges
+    mask: Image.Image = Image.fromarray(arr[:, :, 3], mode="L")
+    mask_eroded: Image.Image = mask.filter(ImageFilter.MinFilter(size=3))
+    arr[:, :, 3] = np.array(mask_eroded, dtype=np.uint8)
+
+    Image.fromarray(arr).save(out_path)
+    return out_path
