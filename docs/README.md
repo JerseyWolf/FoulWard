@@ -46,7 +46,7 @@ Quick map of **active** documentation. New session logs go to **`docs/PROMPT_[N]
 
 | Path | Role |
 |------|------|
-| **`PROMPT_79_IMPLEMENTATION.md` … `PROMPT_88_IMPLEMENTATION.md`** (current range) | The **10** session logs kept under `docs/` (rolling window). |
+| **`PROMPT_80_IMPLEMENTATION.md` … `PROMPT_89_IMPLEMENTATION.md`** (current range) | The **10** session logs kept under `docs/` (rolling window). |
 | **`archived/prompts/`** | All older `PROMPT_*_IMPLEMENTATION.md` files + `README.md` policy. |
 | **`archived/README.md`** | What the archive folder contains after the 2026-04-20 doc cleanup. |
 

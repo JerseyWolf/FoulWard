@@ -1,6 +1,6 @@
 # Historical session logs (`PROMPT_N_IMPLEMENTATION.md`)
 
-This folder holds **archived** Cursor/agent session write-ups. The **10 most recent** sessions live at repo root under `docs/` (after Prompt 88: `PROMPT_79` … `PROMPT_88`); older logs are moved here when a new session is logged.
+This folder holds **archived** Cursor/agent session write-ups. The **10 most recent** sessions live under `docs/` (as of Prompt 89: `PROMPT_80` … `PROMPT_89`); older logs are moved here when a new session is logged.
 
 ## Policy (rolling window)
 

@@ -13,7 +13,7 @@ Rows that cite historical SignalBus totals (e.g. **67**, **72**, **73**, **76**)
 
 | Date | Author | Summary |
 |------|--------|---------|
-| 2026-04-20 | Cursor agent | Doc sync for Prompts 77–83: gen3d pipeline added (`/home/jerzy-wolf/workspace/foul-ward/gen3d/`, ComfyUI/TRELLIS.2/Blender); GLB assets generated under `art/generated/`; `RING_ROTATE` game state promoted EXISTS; `DifficultyTier` system promoted EXISTS; `DifficultyTierData` resources confirmed; test count 665 (2026-04-19); Section 22 (Art Pipeline) rewritten for gen3d; Section 5 new enums added. |
+| 2026-04-20 | Cursor agent | Documentation sweep: `INDEX_SHORT` / `INDEX_FULL`, `HOW_IT_WORKS`, `INTERVIEW_CHEATSHEET`, `AGENTS.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, `SUMMARY_VERIFICATION.md`, `docs/README.md` — metrics and file-tree refs; gen3d canonical path **`res://tools/gen3d/`** (versioned); §22 art pipeline updated (no longer references an off-repo `gen3d/` tree); `art/gen3d_candidates/`, `art/gen3d_previews/`, `orc_berserker.glb` noted; rolling session logs **`PROMPT_80`…`PROMPT_89`** in `docs/`; `find … PROMPT_*_IMPLEMENTATION.md` → **90** files. |
 | 2026-04-19 | Cursor agent | Prompts 77–83: gen3d automated asset pipeline (`foulward_gen.py`, stages 1–5: ComfyUI FLUX → TRELLIS.2 mesh → Blender rig → Mixamo anim → Godot drop); `.cursor/skills/gen3d/SKILL.md`; ComfyUI LoRA workflow (`turnaround_flux.json`); TRELLIS.2 `transformers==4.56.0` pin; BiRefNet `.float()` workaround; `stage2_mesh.py` `guidance_strength` fix; orc_grunt.glb pipeline e2e pass. Signal count **77** unchanged; test count **665** (parallel, 2026-04-19). |
 | 2026-04-18 | Cursor agent | Group 11 reconciliation: `Types.DifficultyTier` + `DifficultyTierData` + `resources/difficulty/tier_*.tres`; `TerritoryData` tier/star fields; `GameManager` `_load_tier_data`, `set_active_tier` / `get_active_tier`, `_apply_tier_to_day_config`, `_handle_tier_cleared`, save payload `territories` tier keys; tests `test_difficulty_tier_system.gd` (17); GdUnit harness: `monitor_signals(SignalBus, false)` in tier + building HP tests. Signal count **77** unchanged. |
 | 2026-04-18 | Cursor agent | Group 9 (S05) hub dialogue content (30 `.tres` × 6 NPCs), `DialogueEntry.is_combat_line`, combat condition keys + `request_combat_line`, SignalBus `combat_dialogue_requested` (**77** signals), `CombatDialogueBanner` under `UI/UIManager`, hub `TalkButton` visibility via `peek_entry_for_character`; tests +12 (`test_dialogue_content.gd`, `test_combat_dialogue.gd`); `run_gdunit_quick.sh` allowlist. |
@@ -1061,20 +1061,22 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 
 ### Gen3D Automated Asset Pipeline
 
-**EXISTS** — outside the repo at `/home/jerzy-wolf/workspace/foul-ward/gen3d/` (not version-controlled). Orchestrated by `foulward_gen.py`; five stages:
+**EXISTS** — orchestration and Python stages are **in this repository** under `res://tools/gen3d/` (`foulward_gen.py`, `pipeline/stage1_image.py` … `stage5_drop.py`, `promote_candidate.py`, `generate_all.sh`, `workflows/`, `requirements.txt`). **Still external** (not vendored): a local ComfyUI install, a TRELLIS.2-capable Python environment, Blender, and Mixamo — see `.cursor/skills/gen3d/SKILL.md`.
 
 | Stage | Script | Tool | Purpose |
 |-------|--------|------|---------|
-| 1 | `pipeline/stage1_image.py` | ComfyUI + FLUX.1-dev + LoRAs | Generate turnaround-sheet reference PNGs |
-| 2 | `pipeline/stage2_mesh.py` | TRELLIS.2 (`trellis2` conda env) | PNG → 3D mesh → GLB |
-| 3 | `pipeline/stage3_rig.py` | Blender (headless) | Auto-rig GLB (Rigify / Auto-Rig Pro) |
-| 4 | `pipeline/stage4_anim.py` | Mixamo automation | Upload FBX → download animated FBX |
-| 5 | `pipeline/stage5_drop.py` | — | Drop final GLB to `res://art/generated/<category>/<slug>.glb` |
+| 1 | `tools/gen3d/pipeline/stage1_image.py` | ComfyUI + FLUX.1-dev + LoRAs | Generate turnaround-sheet reference PNGs |
+| 2 | `tools/gen3d/pipeline/stage2_mesh.py` | TRELLIS.2 (`trellis2` conda env) | PNG → 3D mesh → GLB |
+| 3 | `tools/gen3d/pipeline/stage3_rig.py` | Blender (headless) | Auto-rig GLB (Rigify / Auto-Rig Pro) |
+| 4 | `tools/gen3d/pipeline/stage4_anim.py` | Mixamo automation | Upload FBX → download animated FBX |
+| 5 | `tools/gen3d/pipeline/stage5_drop.py` | — | Drop final GLB to `res://art/generated/<category>/<slug>.glb` |
+
+**Intermediate / review paths (in repo):** `art/gen3d_candidates/{slug}/` (mesh variants, `selected.glb`, `meta.json`), `art/gen3d_previews/` (reference PNGs for batch units).
 
 **GLB output path (in repo):** `art/generated/{enemies,allies,buildings,bosses}/{slug}.glb` (flat, auto-imported by Godot).
 
-**Generated assets (as of 2026-04-19):**
-- Enemies: `orc_grunt.glb`, `orc_brute.glb`, `orc_archer.glb`, `bat_swarm.glb`, `goblin_firebug.glb`, `plague_zombie.glb`, `orc_warboss.glb`, `herald_of_worms.glb`
+**Generated assets (representative; as of 2026-04-20):**
+- Enemies: `orc_grunt.glb`, `orc_brute.glb`, `orc_berserker.glb`, `orc_archer.glb`, `bat_swarm.glb`, `goblin_firebug.glb`, `plague_zombie.glb`, `orc_warboss.glb`, `herald_of_worms.glb`
 - Allies: `arnulf.glb`, `arnulf_the_warrior.glb`, `florence_the_plague_doctor.glb`, `sybil_the_witch.glb`
 
 **Key env vars / tools:** `HF_TOKEN` (FLUX.1-dev gated), `MIXAMO_EMAIL`/`MIXAMO_PASSWORD`, `FOULWARD_GEN3D_WORKFLOW` (alternate ComfyUI workflow), `FOULWARD_GEN3D_STAGE2_MODE=input_file` (skip Stage 1). `tools/gen3d/setup_comfyui_flux_symlinks.sh` sets up ComfyUI model symlinks.

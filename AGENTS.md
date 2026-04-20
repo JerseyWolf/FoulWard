@@ -1,5 +1,5 @@
 # Foul Ward — Agent Standing Orders
-Last updated: 2026-04-19 (Perplexity audit fix; parallel GdUnit **665** test cases, **77** signals)
+Last updated: 2026-04-20 (doc sweep; parallel GdUnit **665** test cases, **77** signals)
 
 > Read this file FIRST in every Cursor session, before opening any other file.
 > This file is the always-loaded foundation. It points to skills for detail.
@@ -11,7 +11,7 @@ Last updated: 2026-04-19 (Perplexity audit fix; parallel GdUnit **665** test cas
 Godot 4.4 GDScript real-time tower defense (inspired by TAUR).
 Player IS Florence — a stationary tower aimed manually with the mouse.
 50-day main campaign. Each day = one mission (build phase → wave combat).
-665 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-19; see `docs/archived/prompts/PROMPT_76_IMPLEMENTATION.md`). 19 autoloads (core chain). 36 building types. 30 enemy types. **77** SignalBus signals (verified **2026-04-19** against `^signal ` lines in `autoloads/signal_bus.gd`).
+665 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-19; see `docs/archived/prompts/PROMPT_76_IMPLEMENTATION.md`). 19 autoloads (core chain). 36 building types. 30 enemy types. **77** SignalBus signals (verified **2026-04-20** against `^signal ` lines in `autoloads/signal_bus.gd`).
 When you add or remove a SignalBus signal, bump that total and update every location listed under **Signal count in documentation** in `.cursor/skills/signal-bus/SKILL.md`.
 Two weapons: Crossbow (CROSSBOW slot) and Rapid Missile (RAPID_MISSILE slot).
 AI ally Arnulf (melee), Sybil (spell support). Hex grid: 42 slots across 3 rings.

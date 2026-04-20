@@ -10,7 +10,7 @@ Registered in `project.godot` in this exact order (game singletons first; MCP ed
 
 | #  | Script Path                              | Autoload Name      | Purpose                                  |
 |----|------------------------------------------|--------------------|------------------------------------------|
-| 1  | `res://autoloads/signal_bus.gd`          | `SignalBus`        | Central signal registry (**77** signals as of **2026-04-18**, no logic) |
+| 1  | `res://autoloads/signal_bus.gd`          | `SignalBus`        | Central signal registry (**77** signals as of **2026-04-20**, no logic) |
 | 2  | `res://scripts/nav_mesh_manager.gd`      | `NavMeshManager`   | Registers `NavigationRegion3D`, queues rebakes |
 | 3  | `res://autoloads/DamageCalculator.cs`    | `DamageCalculator` | Stateless damage multiplier lookups (C#) |
 | 4  | `res://autoloads/aura_manager.gd`       | `AuraManager`      | Aura towers + enemy aura emitters        |

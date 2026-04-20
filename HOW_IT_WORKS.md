@@ -10,7 +10,7 @@
 > **Current metrics:** 19 core autoloads · 77 `SignalBus` signals · 665 GdUnit4
 > test cases (parallel aggregate) · 88 test files · 262 `.tres` resources ·
 > 36 building types · 30 enemy types · 14 Cursor skills · 6 MCP servers ·
-> 4 GdUnit4 runner tiers · **90** `PROMPT_*_IMPLEMENTATION.md` files on disk (numbered `PROMPT_0…87` plus `PROMPT_1_IMPLEMENTATION_v2.md`; **10** live in `docs/` as `PROMPT_79…88`); full history in `docs/archived/prompts/`.
+> 4 GdUnit4 runner tiers · **90** `PROMPT_*_IMPLEMENTATION.md` files (`find docs docs/archived/prompts -maxdepth 1 -name 'PROMPT_*_IMPLEMENTATION.md'` — numbers **`PROMPT_0`…`PROMPT_89`**); **10** live in `docs/` as **`PROMPT_80`…`PROMPT_89`**; **`PROMPT_1_IMPLEMENTATION_v2.md`** archived separately; full history in `docs/archived/prompts/`.
 
 ---
 
@@ -108,10 +108,7 @@ guardrails around it:
   lookup table (`.cursor/skills/signal-bus/references/signal-table.md`).
 - **262 `.tres` resource files** — every piece of gameplay tuning lives in a
   resource the game loads at runtime, not in GDScript constants.
-- **Session logs** (**90** `PROMPT_*_IMPLEMENTATION.md` files including
-  `PROMPT_1_IMPLEMENTATION_v2.md`): **10** most recent files under `docs/`,
-  full history under `docs/archived/prompts/` — each documents agent-driven
-  work, tests, and deviations.
+- **Session logs** — **90** `PROMPT_*_IMPLEMENTATION.md` files (`find …`; numbers **`PROMPT_0`…`PROMPT_89`**), plus **`PROMPT_1_IMPLEMENTATION_v2.md`** in the archive; **10** most recent under `docs/` (**`PROMPT_80`…`PROMPT_89`**), older logs in `docs/archived/prompts/`.
 - **1 incident** of the signal-count going stale in docs, caught and fixed
   (`docs/archived/prompts/PROMPT_77_IMPLEMENTATION.md`) by a skill rule that forces the writer to
   re-count `^signal ` in `signal_bus.gd` every time they touch a signal and
@@ -232,8 +229,7 @@ and covers:
 ### 2.4 Audit trail — `PROMPT_[N]_IMPLEMENTATION.md`
 
 Every meaningful session writes a file to `docs/PROMPT_[N]_IMPLEMENTATION.md`.
-The series runs from `PROMPT_0` through `PROMPT_87` as of this writing
-(88 logs). Each one contains:
+The series runs from `PROMPT_0` through `PROMPT_89` (**90** `PROMPT_*_IMPLEMENTATION.md` files as of **2026-04-20**). Each one contains:
 
 - **What was requested.**
 - **What was implemented** — every file created or modified.
@@ -1115,18 +1111,20 @@ it. None are estimates.
 | Core autoloads | **19** | `grep -c '^[A-Z].*=".*res://' project.godot` (minus the 3 MCP UI services) |
 | MCP helper autoloads | 3 | `addons/godot_mcp/*.gd` registered in `project.godot` |
 | `SignalBus` signals | **77** | `grep -c '^signal ' autoloads/signal_bus.gd` |
-| `.tres` resource files | **262** | `find resources -name '*.tres' | wc -l` |
+| `.tres` under `resources/` (gameplay data) | **262** | `find resources -name '*.tres' | wc -l` |
+| `.tres` repo-wide (incl. addons, examples) | **287** | `find . -name '*.tres' -not -path './.git/*' | wc -l` |
 | Building types | **36** | `find resources/building_data -maxdepth 1 -name '*.tres' | wc -l` |
 | Enemy types | **30** | `find resources/enemy_data -maxdepth 1 -name '*.tres' | wc -l` |
 | `.gd` scripts (game logic) | 74 | `find scripts -name '*.gd' | wc -l` |
 | Test files | **88** (72 root + 16 unit) | `ls tests/test_*.gd tests/unit/test_*.gd | wc -l` |
-| Test functions declared | 749 | `grep -c '^func test_' tests/test_*.gd tests/unit/test_*.gd` |
+| `func test_*` lines (all test suites) | **749** | `grep -rE '^\s*func test_' tests --include='*.gd' \| wc -l` (GdUnit **case** count **665** — runner aggregate; differs from raw `func` count) |
 | Parallel-runner test cases | **665** | `docs/archived/prompts/PROMPT_76_IMPLEMENTATION.md` (aggregate, 2026-04-19) |
 | Cursor skills | **14** | `ls .cursor/skills/ | wc -l` |
 | MCP servers | **6** | `.cursor/mcp.json` keys |
 | RAG ChromaDB collections | 4 | `COLLECTION_NAMES` in `new_rag_mpc/rag_mcp_server.py` |
 | GdUnit4 runner tiers | 4 (+2 helpers) | `tools/run_gdunit*.sh` |
-| Session log files | **90** (includes `PROMPT_1_IMPLEMENTATION_v2.md`) | `find docs docs/archived/prompts -maxdepth 1 -name 'PROMPT_*_IMPLEMENTATION.md' \| wc -l` |
+| `PROMPT_*_IMPLEMENTATION.md` session logs | **90** | `find docs docs/archived/prompts -maxdepth 1 -name 'PROMPT_*_IMPLEMENTATION.md' \| wc -l` |
+| `PROMPT_1_IMPLEMENTATION_v2.md` | **1** (archived; duplicate Prompt 1) | `docs/archived/prompts/` only |
 | Gen3d pipeline stages | 5 | `.cursor/skills/gen3d/SKILL.md` § Pipeline |
 | Hex slots across rings | 42 (in 3 rings) | `AGENTS.md` / `CampaignManager`  |
 | Parallel runner wall-clock | ~2 min 45 s | `reports/gdunit_parallel_run.summary.txt` |
@@ -1175,7 +1173,7 @@ If an interviewer asks "show me exactly where this lives":
 
 ### Audit
 
-- `docs/PROMPT_79_IMPLEMENTATION.md` … `PROMPT_88_IMPLEMENTATION.md` — **10**
+- `docs/PROMPT_80_IMPLEMENTATION.md` … `PROMPT_89_IMPLEMENTATION.md` — **10**
   most recent session logs (rolling window)
 - `docs/archived/prompts/PROMPT_*_IMPLEMENTATION.md` — full historical series
 - `docs/SUMMARY_VERIFICATION.md` — read-only audit aggregate

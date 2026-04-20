@@ -1,7 +1,7 @@
 # Foul Ward — Read-Only Codebase Verification Summary
 
 **Purpose:** Consolidated answers from a three-part read-only audit (no code changes during verification).  
-**Audit dates:** Findings reflect repository state as verified in-session (reference date **2026-03-31**).  
+**Audit dates:** Findings reflect repository state as verified in-session (reference date **2026-03-31**). **Partial refresh 2026-04-20:** HexGrid slot count (FILE 4 Q4.1) corrected to match code; other Q/A rows may still reflect the original audit unless individually updated.  
 **Method:** Files read from disk at `res://` paths; some counts verified via `grep`, `glob`, and `main.tscn`. Godot editor MCP `get_godot_errors` was **not** invoked; headless Godot was used once for a smoke check (see §Project health).
 
 **Uncertainties / limits:**
@@ -47,7 +47,7 @@
 
 | Question | Answer |
 |----------|--------|
-| **Q4.1** Slot count | **TRUE** — `TOTAL_SLOTS = 24`. |
+| **Q4.1** Slot count | **TRUE** — `HexGrid.TOTAL_SLOTS = 42` (three rings); re-verified **2026-04-20**. (Historical Prompt 1 answer of **24** is obsolete.) |
 | **Q4.2** `rotate_ring` | **PARTIAL** — Method is **`rotate_ring(delta_steps: int)`**. No `.gd` callers found besides definition/docs; no dedicated UI hook found. |
 | **Q4.3** `get_tower_type_count()` | **FALSE** — Not implemented on HexGrid. |
 | **Q4.4** `duplicate_cost_k` in this file | **FALSE** — Not in `hex_grid.gd` (see `EconomyManager` / `BuildingData`). |

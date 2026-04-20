@@ -25,7 +25,7 @@ that it could write code without the codebase collapsing:
   signals on a single bus, 262 `.tres` resource files (zero magic numbers
   in code) — so AI-introduced drift shows up on diff.
 
-**Result:** 665 passing tests, 77 signals, 90 prompt log files (10 newest in `docs/`, rest in `docs/archived/prompts/`) — all solo,
+**Result:** 665 passing tests, 77 signals, **90** `PROMPT_*_IMPLEMENTATION.md` files (**10** newest in `docs/` as **`PROMPT_80`…`PROMPT_89`**, rest in `docs/archived/prompts/`) — all solo,
 all grounded in retrieval instead of the model's priors.
 
 ---
@@ -44,7 +44,7 @@ all grounded in retrieval instead of the model's priors.
 | MCP servers wired into Cursor | **6** |
 | ChromaDB collections in the RAG | **4** |
 | GdUnit4 runner tiers | **4** (quick / unit / parallel / sequential baseline) |
-| Session logs | **88** (`PROMPT_0…87_IMPLEMENTATION.md`) |
+| Session logs | **90** (`find docs docs/archived/prompts -maxdepth 1 -name 'PROMPT_*_IMPLEMENTATION.md'`) — plus `PROMPT_1_IMPLEMENTATION_v2.md` in archive |
 | Parallel runner wall-clock | **~2 min 45 s** |
 | Quick runner wall-clock | **~30–45 s** |
 
