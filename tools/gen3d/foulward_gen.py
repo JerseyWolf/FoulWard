@@ -20,7 +20,9 @@ Stages: 2D reference → 3D mesh → rig → animate → copy into Godot art/gen
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
+import time
 from pathlib import Path
 
 # Ensure sibling package `pipeline` resolves when run as a script
@@ -90,6 +92,23 @@ def canonical_slug(unit_name: str) -> str:
     return "_".join(parts)
 
 
+def _maybe_stop_comfyui_after_stage1() -> None:
+    """ComfyUI often holds most of the GPU; TRELLIS.2 needs VRAM for Stage 2."""
+    raw: str = os.environ.get("FOULWARD_GEN3D_KEEP_COMFYUI_AFTER_STAGE1", "").strip().lower()
+    if raw in ("1", "true", "yes", "on"):
+        print(
+            "[gen3d] Keeping ComfyUI running (FOULWARD_GEN3D_KEEP_COMFYUI_AFTER_STAGE1=1) — "
+            "if Stage 2 OOMs, unset this and re-run, or stop ComfyUI manually before TRELLIS."
+        )
+        return
+    print("[gen3d] Stopping ComfyUI (port 8188) to free GPU for TRELLIS Stage 2...")
+    subprocess.run(
+        ["pkill", "-f", "main.py.*--port 8188"],
+        capture_output=True,
+    )
+    time.sleep(3)
+
+
 def get_output_dir(unit_name: str, asset_type: str) -> str:
     """Flat layout: art/generated/<category>/<slug>.glb (matches generation_log / rigged_visual_wiring)."""
     slug: str = canonical_slug(unit_name)
@@ -140,6 +159,7 @@ def run_pipeline(unit_name: str, faction: str, asset_type: str = "enemy") -> Non
         faction=faction,
     )
     print(f"[1/5] Reference sheet saved: {img_path}")
+    _maybe_stop_comfyui_after_stage1()
 
     # Stage 2 — image to 3D mesh
     glb_raw: str = image_to_glb(

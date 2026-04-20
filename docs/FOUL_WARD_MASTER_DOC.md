@@ -13,6 +13,8 @@ Rows that cite historical SignalBus totals (e.g. **67**, **72**, **73**, **76**)
 
 | Date | Author | Summary |
 |------|--------|---------|
+| 2026-04-20 | Cursor agent | Doc sync for Prompts 77–83: gen3d pipeline added (`/home/jerzy-wolf/workspace/foul-ward/gen3d/`, ComfyUI/TRELLIS.2/Blender); GLB assets generated under `art/generated/`; `RING_ROTATE` game state promoted EXISTS; `DifficultyTier` system promoted EXISTS; `DifficultyTierData` resources confirmed; test count 665 (2026-04-19); Section 22 (Art Pipeline) rewritten for gen3d; Section 5 new enums added. |
+| 2026-04-19 | Cursor agent | Prompts 77–83: gen3d automated asset pipeline (`foulward_gen.py`, stages 1–5: ComfyUI FLUX → TRELLIS.2 mesh → Blender rig → Mixamo anim → Godot drop); `.cursor/skills/gen3d/SKILL.md`; ComfyUI LoRA workflow (`turnaround_flux.json`); TRELLIS.2 `transformers==4.56.0` pin; BiRefNet `.float()` workaround; `stage2_mesh.py` `guidance_strength` fix; orc_grunt.glb pipeline e2e pass. Signal count **77** unchanged; test count **665** (parallel, 2026-04-19). |
 | 2026-04-18 | Cursor agent | Group 11 reconciliation: `Types.DifficultyTier` + `DifficultyTierData` + `resources/difficulty/tier_*.tres`; `TerritoryData` tier/star fields; `GameManager` `_load_tier_data`, `set_active_tier` / `get_active_tier`, `_apply_tier_to_day_config`, `_handle_tier_cleared`, save payload `territories` tier keys; tests `test_difficulty_tier_system.gd` (17); GdUnit harness: `monitor_signals(SignalBus, false)` in tier + building HP tests. Signal count **77** unchanged. |
 | 2026-04-18 | Cursor agent | Group 9 (S05) hub dialogue content (30 `.tres` × 6 NPCs), `DialogueEntry.is_combat_line`, combat condition keys + `request_combat_line`, SignalBus `combat_dialogue_requested` (**77** signals), `CombatDialogueBanner` under `UI/UIManager`, hub `TalkButton` visibility via `peek_entry_for_character`; tests +12 (`test_dialogue_content.gd`, `test_combat_dialogue.gd`); `run_gdunit_quick.sh` allowlist. |
 | 2026-04-18 | Cursor agent | Group 8 Chronicle meta-progression: `ChronicleManager` autoload **#15**, `ChronicleEntryData` / `ChroniclePerkData`, `resources/chronicle/**/*.tres`, SignalBus `chronicle_*` (**76** signals), `chronicle_screen.tscn`, main menu Chronicle; tests +11 (`test_chronicle_manager.gd`); `ring_rotation_screen.gd` `@onready` path fix. |
@@ -77,7 +79,7 @@ Rows that cite historical SignalBus totals (e.g. **67**, **72**, **73**, **76**)
 | **Genre** | Real-time tower defense, stationary perspective (player IS the tower, aims manually with mouse) |
 | **Inspiration** | TAUR |
 | **Campaign structure** | 50-day main campaign. Each day = one mission. Missions have a build phase then wave combat. |
-| **Test count** | 650 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-18; see `docs/PROMPT_75_IMPLEMENTATION.md` for failures) |
+| **Test count** | 665 GdUnit4 test cases (`./tools/run_gdunit_parallel.sh` aggregate, 2026-04-19; see `docs/PROMPT_76_IMPLEMENTATION.md`) |
 
 ### Primary Files of Record
 
@@ -197,7 +199,7 @@ All registered in `project.godot`. **Init order matters** — do not change with
 
 ### 3.1 SignalBus (`res://autoloads/signal_bus.gd`) — Init #1
 
-Central typed signal hub. **77** typed `signal` declarations as of **2026-04-18** (re-count `^signal ` in this file when changed). **No logic, no state. Never add logic here.**
+Central typed signal hub. **77** typed `signal` declarations as of **2026-04-20** (re-count `^signal ` in this file when changed). **No logic, no state. Never add logic here.**
 
 All signals are declared only — no methods, no variables besides signals. See [Section 24](#24-signal-bus-reference) for the full signal table.
 
@@ -611,6 +613,7 @@ All enums defined in `res://scripts/types.gd`. Accessed as `Types.EnumName.VALUE
 | GAME_OVER | 9 |
 | ENDLESS | 10 |
 | PASSIVE_SELECT | 11 |
+| RING_ROTATE | 12 |
 
 ### DamageType
 | Name | Value |
@@ -806,6 +809,40 @@ All enums defined in `res://scripts/types.gd`. Accessed as `Types.EnumName.VALUE
 | MEDIUM | 4 |
 | LARGE | 5 |
 
+### DifficultyTier
+**EXISTS IN CODE** — `resources/difficulty/tier_*.tres` + `GameManager.set_active_tier()` / `get_active_tier()`.
+
+| Name | Value |
+|------|-------|
+| NORMAL | 0 |
+| VETERAN | 1 |
+| NIGHTMARE | 2 |
+
+### ChronicleRewardType
+**EXISTS IN CODE** — used by `ChronicleEntryData`.
+
+| Name | Value |
+|------|-------|
+| PERK | 0 |
+| COSMETIC | 1 |
+| TITLE | 2 |
+
+### ChroniclePerkEffectType
+**EXISTS IN CODE** — used by `ChroniclePerkData`; consumed by `ChronicleManager.apply_perks_at_mission_start()`.
+
+| Name | Value |
+|------|-------|
+| STARTING_GOLD | 0 |
+| STARTING_MANA | 1 |
+| SELL_REFUND_PCT | 2 |
+| RESEARCH_COST_PCT | 3 |
+| GOLD_PER_KILL_PCT | 4 |
+| BUILDING_MATERIAL_START | 5 |
+| ENCHANTING_COST_PCT | 6 |
+| WAVE_REWARD_GOLD | 7 |
+| XP_GAIN_PCT | 8 |
+| COSMETIC_SKIN | 9 |
+
 ### Other Enums (stable, rarely referenced directly)
 
 `AllyRole` (0–3: `MELEE_FRONTLINE`, `RANGED_SUPPORT`, `ANTI_AIR`, `SPELL_SUPPORT` — `TANK` was removed), `StrategyProfile` (0–4), `BuildingBaseMesh` (0–3), `BuildingTopMesh` (0–6), `DayAdvanceReason` (0–2), `UnitSize` (0–3), `AllyAiMode` (0–4), `AuraModifierKind` (0–2), `AuraModifierOp` (0–1), `AuraCategory` (0–3), `AuraStat` (0–5), `MissionBalanceStatus` (0–3), `GraphicsQuality` (0–3: `LOW`, `MEDIUM`, `HIGH`, `CUSTOM`).
@@ -818,9 +855,9 @@ All enums defined in `res://scripts/types.gd`. Accessed as `Types.EnumName.VALUE
 
 **STATUS: EXISTS IN CODE** — Defined in `res://scripts/types.gd` as `Types.GameState` (see [Section 5](#5-typesgd--full-enum-to-integer-mapping)).
 
-**Transition graph:** `MAIN_MENU → MISSION_BRIEFING → PASSIVE_SELECT → COMBAT ↔ BUILD_MODE → WAVE_COUNTDOWN → (COMBAT loop) → MISSION_WON/MISSION_FAILED → BETWEEN_MISSIONS → MISSION_BRIEFING...`
+**Transition graph:** `MAIN_MENU → MISSION_BRIEFING → PASSIVE_SELECT → RING_ROTATE → COMBAT ↔ BUILD_MODE → WAVE_COUNTDOWN → (COMBAT loop) → MISSION_WON/MISSION_FAILED → BETWEEN_MISSIONS → MISSION_BRIEFING...`
 
-**PLANNED states:** `RING_ROTATE` (pre-battle ring rotation).
+**`RING_ROTATE` EXISTS IN CODE:** `GameManager.enter_ring_rotate()` / `exit_ring_rotate()` (called after PASSIVE_SELECT). UI scene: `scenes/ui/ring_rotation_screen.tscn`. `HexGrid` exposes `rotate_ring(ring_index: int, angle_rad: float) -> void`.
 
 ---
 
@@ -857,8 +894,7 @@ Key field names (use exact names — see [Section 32](#32-field-name-discipline-
 - `gold_cost` (not `build_gold_cost`), `target_priority`, `damage_type`, `building_id`
 
 ### Ring Rotation
-**EXISTS:** `rotate_ring()` in `BuildPhaseManager` / `HexGrid`.
-**PLANNED:** Pre-battle ring rotation UI.
+**EXISTS:** `rotate_ring(ring_index: int, angle_rad: float)` in `HexGrid` (42 slots, 3 rings). `RING_ROTATE` game state, `ring_rotation_screen.tscn`, save payload `version` **2** with `SaveManager.is_hex_slot_index_in_save_range`. `GameManager.enter_ring_rotate()` / `exit_ring_rotate()` handle the state transition. Tests: `test_ring_rotation.gd` (+13 cases).
 
 ---
 
@@ -942,7 +978,7 @@ See the research manager API in [Section 4.3](#43-researchmanager).
 **PARTIALLY EXISTS:** `CampaignManager.is_endless_mode`, `start_endless_run()`, synthetic day scaling.
 
 ### Star Difficulty System
-**DOES NOT EXIST IN CODE. ON ROADMAP.** Normal / Veteran / Nightmare per-map.
+**EXISTS IN CODE (backend; UI pending).** `Types.DifficultyTier` (NORMAL / VETERAN / NIGHTMARE), `DifficultyTierData` resource, `resources/difficulty/tier_normal.tres`, `tier_veteran.tres`, `tier_nightmare.tres`. `GameManager.set_active_tier()` / `get_active_tier()` / `_apply_tier_to_day_config()` / `_handle_tier_cleared()`. `TerritoryData` stores `highest_cleared_tier`. Tests: `test_difficulty_tier_system.gd` (17 cases). Per-map star selector UI is not yet wired.
 
 ---
 
@@ -1019,9 +1055,33 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 
 ## 22. Art Pipeline
 
-**PLACEHOLDER SYSTEM EXISTS; PRODUCTION ART PLANNED**
+**PLACEHOLDER SYSTEM EXISTS; AUTOMATED GLB PIPELINE EXISTS (local, off-repo)**
 
-`ArtPlaceholderHelper`, `RiggedVisualWiring`, `PlaceholderIconGenerator`. All combat/hub scenes marked `# TODO(ART)`.
+`ArtPlaceholderHelper`, `RiggedVisualWiring`, `PlaceholderIconGenerator`. All combat/hub scenes marked `# TODO(ART)` for final production art.
+
+### Gen3D Automated Asset Pipeline
+
+**EXISTS** — outside the repo at `/home/jerzy-wolf/workspace/foul-ward/gen3d/` (not version-controlled). Orchestrated by `foulward_gen.py`; five stages:
+
+| Stage | Script | Tool | Purpose |
+|-------|--------|------|---------|
+| 1 | `pipeline/stage1_image.py` | ComfyUI + FLUX.1-dev + LoRAs | Generate turnaround-sheet reference PNGs |
+| 2 | `pipeline/stage2_mesh.py` | TRELLIS.2 (`trellis2` conda env) | PNG → 3D mesh → GLB |
+| 3 | `pipeline/stage3_rig.py` | Blender (headless) | Auto-rig GLB (Rigify / Auto-Rig Pro) |
+| 4 | `pipeline/stage4_anim.py` | Mixamo automation | Upload FBX → download animated FBX |
+| 5 | `pipeline/stage5_drop.py` | — | Drop final GLB to `res://art/generated/<category>/<slug>.glb` |
+
+**GLB output path (in repo):** `art/generated/{enemies,allies,buildings,bosses}/{slug}.glb` (flat, auto-imported by Godot).
+
+**Generated assets (as of 2026-04-19):**
+- Enemies: `orc_grunt.glb`, `orc_brute.glb`, `orc_archer.glb`, `bat_swarm.glb`, `goblin_firebug.glb`, `plague_zombie.glb`, `orc_warboss.glb`, `herald_of_worms.glb`
+- Allies: `arnulf.glb`, `arnulf_the_warrior.glb`, `florence_the_plague_doctor.glb`, `sybil_the_witch.glb`
+
+**Key env vars / tools:** `HF_TOKEN` (FLUX.1-dev gated), `MIXAMO_EMAIL`/`MIXAMO_PASSWORD`, `FOULWARD_GEN3D_WORKFLOW` (alternate ComfyUI workflow), `FOULWARD_GEN3D_STAGE2_MODE=input_file` (skip Stage 1). `tools/gen3d/setup_comfyui_flux_symlinks.sh` sets up ComfyUI model symlinks.
+
+**TRELLIS.2 environment note:** Requires `transformers==4.56.0` (pin; 5.x breaks DINOv3). Requires `pipeline.rembg_model.model.float()` BiRefNet workaround.
+
+**Skill:** `.cursor/skills/gen3d/SKILL.md` — full install checklist, troubleshooting, new-character procedure, Cursor prompt template.
 
 ---
 
@@ -1033,14 +1093,14 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 
 **Headless automation (not GdUnit):** `AutoTestDriver` activates when the project is run with CLI user args such as `--autotest`, `--simbot_profile=…`, or `--simbot_balance_sweep` (see `autoloads/auto_test_driver.gd`). That path boots the real game flow and drives `SimBot`, so **economy, waves, and combat stats behave like a mission** — useful for sweeps and integration-style balance checks. It is **not** a substitute for **GdUnit** unit/integration tests (`./tools/run_gdunit*.sh`), which assert specific APIs and run without full interactive mission requirements.
 
-- **650 GdUnit4 test cases** (parallel runner aggregate, 2026-04-18; repo-root **`AGENTS.md`**; sequential `./tools/run_gdunit.sh` may exit early with engine segfault — prefer parallel totals for “cases run”).
+- **665 GdUnit4 test cases** (parallel runner aggregate, 2026-04-19; repo-root **`AGENTS.md`**; sequential `./tools/run_gdunit.sh` may exit early with engine segfault — prefer parallel totals for “cases run”).
 - Quick: `./tools/run_gdunit_quick.sh`, Unit (~65s): `./tools/run_gdunit_unit.sh`, Parallel (~2m45s): `./tools/run_gdunit_parallel.sh`, Sequential: `./tools/run_gdunit.sh`.
 
 ---
 
 ## 24. Signal Bus Reference
 
-**STATUS: EXISTS IN CODE** — **77** signals declared in `res://autoloads/signal_bus.gd` as of **2026-04-18** (includes dialogue line signals and `combat_dialogue_requested` under the `=== DIALOGUE ===` block). Keep the hero-line total in sync across repo docs — see `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*.
+**STATUS: EXISTS IN CODE** — **77** signals declared in `res://autoloads/signal_bus.gd` as of **2026-04-20** (verified by `grep -c '^signal '`). Keep the hero-line total in sync across repo docs — see `.cursor/skills/signal-bus/SKILL.md` § *Signal count in documentation*.
 
 ### Combat
 
@@ -1100,6 +1160,8 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 |--------|-----------|
 | `territory_state_changed` | `territory_id: String` |
 | `world_map_updated` | (none) |
+| `territory_tier_cleared` | `territory_id: String, tier: int` |
+| `territory_selected_for_replay` | `territory_id: String` |
 
 ### Terrain
 
@@ -1163,6 +1225,8 @@ Declared on `SignalBus`; `dialogue_line_*` emitted by `DialogueManager` when a h
 |--------|-----------|
 | `build_mode_entered` | (none) |
 | `build_mode_exited` | (none) |
+| `build_phase_started` | (none) |
+| `combat_phase_started` | (none) |
 
 ### Research
 
@@ -1194,6 +1258,33 @@ Declared on `SignalBus`; `dialogue_line_*` emitted by `DialogueManager` when a h
 | `mercenary_offer_generated` | `ally_id: String` |
 | `mercenary_recruited` | `ally_id: String` |
 | `ally_roster_changed` | (none) |
+
+### Sybil Passive
+
+| Signal | Parameters |
+|--------|-----------|
+| `sybil_passive_selected` | `passive_id: String` |
+| `sybil_passives_offered` | `passive_ids: Array` |
+
+Note: `sybil_passive_selected` is declared **before** `sybil_passives_offered` in `signal_bus.gd` (Perplexity spec parity). Both emitted by `SybilPassiveManager`.
+
+### Ring Rotation
+
+| Signal | Parameters |
+|--------|-----------|
+| `ring_rotated` | `ring_index: int, angle_rad: float` |
+
+Emitted by `HexGrid.rotate_ring()` when a ring is rotated. Consumed by ring rotation UI and save system.
+
+### Chronicle / Meta-Progression
+
+| Signal | Parameters |
+|--------|-----------|
+| `chronicle_entry_completed` | `entry_id: String` |
+| `chronicle_perk_activated` | `perk_id: String` |
+| `chronicle_progress_updated` | `entry_id: String, current: int, target: int` |
+
+Emitted by `ChronicleManager`. `chronicle_entry_completed` fires when a tracked goal threshold is crossed. `chronicle_perk_activated` fires when a perk from a completed entry is applied. `chronicle_progress_updated` fires on every tracked event to drive UI progress bars.
 
 ### Settings
 
@@ -1824,20 +1915,21 @@ public partial class DamageCalculator : Node
 |-------------|-------|
 | `Types.SpellType` / `Types.SpellID` | Do not exist in `types.gd` |
 
-### Features That Do Not Exist Yet
+### Feature Status Tracker
 
 | Feature | Status | Cross-Reference |
 |---------|--------|----------------|
-| Chronicle / meta-progression system | Exists | [Section 14](#14-meta-progression-the-chronicle-of-foul-ward) |
-| Ring rotation UI | Exists | [Section 8](#8-buildings) |
-| Sybil passive selection | Planned | [Section 2.2](#22-ai-companions) |
-| Star difficulty system | Planned | [Section 13](#13-campaign-and-progression) |
+| Chronicle / meta-progression system | **EXISTS** | [Section 14](#14-meta-progression-the-chronicle-of-foul-ward) |
+| Ring rotation (`RING_ROTATE` state + `ring_rotation_screen.tscn`) | **EXISTS** | [Section 8](#8-buildings), [Section 6](#6-game-states) |
+| Sybil passive selection (`SybilPassiveManager`, `passive_select_screen.tscn`) | **EXISTS (backend + screen)** | [Section 2.2](#22-ai-companions) |
+| Star difficulty system (backend: `DifficultyTier` + resources + GameManager) | Backend **EXISTS**; per-map selector UI pending | [Section 13](#13-campaign-and-progression) |
+| Mid-battle / combat dialogue (`CombatDialogueBanner`, `request_combat_line`) | **EXISTS** | [Section 17](#17-dialogue-system) |
+| Gen3D asset pipeline (ComfyUI/TRELLIS.2/Blender, off-repo at `../gen3d/`) | **EXISTS (off-repo)** | [Section 22](#22-art-pipeline) |
 | Leaderboards | Optional future | [Section 13](#13-campaign-and-progression) |
 | Shop inventory rotation | Deferred | [Section 19](#19-shop) |
-| Hand-drawn world map art | Art direction confirmed | [Section 16](#16-world-map) |
+| Hand-drawn world map art | Art direction confirmed; production pending | [Section 16](#16-world-map) |
 | Hub keeper portrait art | All `TODO(ART)` placeholders | [Section 15](#15-hub-screens) |
-| Any dialogue content | All 15 entries are `TODO` placeholders | [Section 17](#17-dialogue-system) |
-| Mid-battle dialogue | Planned | [Section 15](#15-hub-screens) |
+| Hub dialogue content | All entries are `TODO` placeholder text | [Section 17](#17-dialogue-system) |
 
 ---
 
@@ -1845,13 +1937,15 @@ public partial class DamageCalculator : Node
 
 | Item | Question | Who Decides |
 |------|----------|-------------|
-| Sybil passive selection | Single pick before mission OR all passives always active? | Designer |
-| Hub keeper dialogue trigger | Auto-triggers OR requires "Talk" button click? | Designer |
+| Sybil passive selection (resolved: single pick before mission) | Backend exists; screen exists. Confirm UX flow and apply modifiers in SpellManager. | Designer |
+| Hub keeper dialogue trigger | Auto-triggers on approach OR requires "Talk" button click? | Designer |
 | Chronicle perk strength | Cosmetic micro-buffs vs meaningful advantage? | Designer/playtester |
 | Shop rotation count | How many items shown per day? | Designer |
 | Leaderboard backend | LootLocker, Supabase, or custom? | Developer |
-| Star difficulty multipliers | Exact HP/damage/gold multipliers for Veteran and Nightmare | Designer/playtester |
-| WorldEnvironment path | `_find_world_environment()` in `SettingsManager` assumes `/root/Main/WorldEnvironment` — no `WorldEnvironment` node confirmed in repo at S10; adjust path once node is added to scene | Developer |
+| Star difficulty multipliers | Exact HP/damage/gold multipliers for Veteran and Nightmare; per-map selector UI not yet wired | Designer/playtester |
+| WorldEnvironment path | `_find_world_environment()` in `SettingsManager` assumes `/root/Main/WorldEnvironment` — no `WorldEnvironment` node confirmed in repo; adjust path once node is added to scene | Developer |
+| Gen3D Stage 3 (Mixamo rigging) | `MixamoBot` unavailable locally; Arnulf GLB has 0 animations. Need Mixamo credentials or alternative rigging solution. | Developer |
+| Gen3D ComfyUI Stage 1 black images | `turnaround_flux_no_loras.json` produces black output; investigate FLUX positive prompt wiring vs `CLIPTextEncodeFlux` node. | Developer |
 
 ---
  
@@ -1867,6 +1961,8 @@ public partial class DamageCalculator : Node
 | `docs/archived/OPUS_ALL_ACTIONS.md` | Archived consolidated snapshot + improvement backlog (historical) |
 | `docs/IMPROVEMENTS_TO_BE_DONE.md` | 78-issue backlog |
 | `FUTURE_3D_MODELS_PLAN.md` | Production 3D art roadmap |
+|| `../gen3d/foulward_gen.py` (outside repo) | Gen3D pipeline orchestrator — 5-stage ComfyUI/TRELLIS.2/Blender pipeline |
+|| `.cursor/skills/gen3d/SKILL.md` | Gen3D agent skill — install, add-character procedure, Cursor prompt template |
 | `.cursorrules` | Workspace rules for Cursor agent behavior |
 | `.cursor/rules/mcp-godot-workflow.mdc` | MCP server usage rules |
 | `FoulWard.csproj` | C# project file — `dotnet build` before GdUnit when `.cs` changes |

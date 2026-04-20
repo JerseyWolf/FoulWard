@@ -12,6 +12,43 @@
 - LoRA strengths validated: turnaround=0.4, baroque=0.5, velvet=0.4
 - Minimal test baseline: mean RGB (228.6, 201.9, 197.3), 0.0% black
 
+## Pinned dependency versions (Stage 2 / `trellis2` conda — do not upgrade without testing)
+
+- **transformers: 4.56.0** — `transformers` **5.5.x** breaks TRELLIS.2’s DINOv3 path: `AttributeError: 'DINOv3ViTModel' object has no attribute 'layer'`. **`transformers==4.46.3` is not usable** here: that release has no `DINOv3ViTModel` (`ImportError` on import). **4.56.0** matches the working downgrade in [microsoft/TRELLIS.2#147](https://github.com/microsoft/TRELLIS.2/issues/147). Install with full dependency resolution, e.g. `pip install "transformers==4.56.0" --force-reinstall` (avoid `--no-deps` unless you also align `tokenizers` / `huggingface-hub`).
+- **torch: 2.6.0+cu124**
+- **torchaudio: 2.6.0+cu124**
+- **timm: 1.0.26** (do not change without re-testing Stage 2)
+- **Python: 3.10** (`trellis2` conda env)
+
+### DINOv3 / transformers quick reference
+
+| Symptom | Fix |
+|--------|-----|
+| `'DINOv3ViTModel' object has no attribute 'layer'` | Pin **transformers 4.56.0** (you are likely on 5.5.x). |
+| `cannot import name 'DINOv3ViTModel' from 'transformers'` | Transformers too old; use **4.56.0**, not **4.46.3**. |
+
+Further discussion: [microsoft/TRELLIS.2#147](https://github.com/microsoft/TRELLIS.2/issues/147), [visualbruno/ComfyUI-Trellis2#144](https://github.com/visualbruno/ComfyUI-Trellis2/issues/144).
+
+## Stage 1 Image Generation Settings (validated)
+
+- Resolution: 1024×1024 (FLUX sharpness sweet spot — do NOT go higher, FLUX blurs above 1MP)
+- Steps: 28, cfg: 3.5, sampler: euler, scheduler: beta
+- LoRA strengths: turnaround=0.4, baroque=0.5 (orc)/0.3 (allies), velvet=0.4/0.3 (buildings)
+- Upscale pass: 4× NMKD-Superscale → lanczos down to 2048×2048 for reference sheet
+- Output node: 101 (`foulward_turnaround_hires_*.png` at 2048×2048)
+
+## Stage 2 TRELLIS Settings (validated)
+
+- **VRAM:** `foulward_gen.py` **stops ComfyUI on port 8188 after Stage 1** so TRELLIS can use the full GPU (ComfyUI + FLUX often holds ~15GB). To keep ComfyUI running: `export FOULWARD_GEN3D_KEEP_COMFYUI_AFTER_STAGE1=1` (Stage 2 may then **CUDA OOM** on a 24GB card).
+- Input: crop left-third of turnaround sheet (front view) → resize to 770px longest side
+- Do NOT feed full turnaround sheet or 4 separate views — TRELLIS.2 is single-image only
+- Do NOT use input >770px — quality degrades above this (model trained at 518px)
+- sparse_structure steps: 500, **guidance_strength** 7.5 (TRELLIS.2 sampler API — not `cfg_strength`)
+- slat steps: 500, **guidance_strength** 3.0
+- texture_resolution: 2048 (``o_voxel.postprocess.to_glb`` → ``texture_size``)
+- nviews: 120 (community default for multiview texture quality; bake path is fixed in ``o_voxel``)
+- Expected GLB size for production unit: 1–5MB
+
 Invoke gen3d with: `$FOULWARD_PYTHON tools/gen3d/foulward_gen.py "Unit Name" faction asset_type`
 
 ## Previously broken (fixed — do not revert)
@@ -183,7 +220,9 @@ Align Mixamo filenames in `tools/gen3d/anim_library/` with `ANIM_NAME_MAP` in `s
 |--------|--------|
 | ComfyUI dead | `curl http://127.0.0.1:8188/system_stats` |
 | Empty workflow error | Export API JSON to `turnaround_flux.json` (see `workflows/README_COMFYUI.md`) |
-| TRELLIS fails (DINOv3 / HF) | `HF_TOKEN` set; accept **DINOv3** on Hugging Face. If **RMBG-2.0** is 403, keep **`FOULWARD_TRELLIS_PUBLIC_REMBG=1`** (default) so stage 2 uses public BiRefNet — see `tools/gen3d/workflows/README_COMFYUI.md`. |
+| TRELLIS fails (DINOv3 / HF) | `HF_TOKEN` set; accept **DINOv3** on Hugging Face. Pin **`transformers==4.56.0`** in `trellis2` if you see **`DINOv3ViTModel` / `.layer`** errors (see **Pinned dependency versions** above). If **RMBG-2.0** is 403, keep **`FOULWARD_TRELLIS_PUBLIC_REMBG=1`** (default) so stage 2 uses public BiRefNet — see `tools/gen3d/workflows/README_COMFYUI.md`. |
+| Stage 2 **`cfg_strength`** / sampler API | Current TRELLIS expects **`guidance_strength`** in sampler params (not `cfg_strength`). |
+| Stage 2 **CUDA OOM** with ComfyUI up | Default: `foulward_gen.py` stops ComfyUI after Stage 1 to free VRAM; or stop ComfyUI manually before TRELLIS. |
 | Mixamo fails (UI change / login) | Env vars set; bot may break — pipeline silently writes the unrigged GLB so the run still completes |
 | No animations | Populate `anim_library/` with Mixamo FBX files using the names in `ANIM_NAME_MAP` |
 | Godot doesn't pick up the GLB | `Project → Reload Current Project` or focus editor; ensure `rigged_visual_wiring.gd` maps the `entity_id` to the new path |
