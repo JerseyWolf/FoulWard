@@ -33,6 +33,7 @@ Quick map of **active** documentation. New session logs go to **`docs/PROMPT_[N]
 | File | Role |
 |------|------|
 | **`UBUNTU_REPLAY_SETUP.md`** | Ubuntu-specific replay or tooling notes. |
+| **`GEN3D_LOCAL_ARTIFACTS.md`** | Gen3D + `art/generated/`, `art/gen3d_*` — local-only generated art (not committed; see `.gitignore`). |
 
 ## Living reference
 

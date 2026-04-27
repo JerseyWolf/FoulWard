@@ -87,8 +87,8 @@
         "6",
         1
       ],
-      "clip_l": "multiple views, turnaround sheet, side view, back view, detailed engravings, surface patterns, fine texture, photorealistic, subsurface scattering, specular highlights, complex shading, busy background",
-      "t5xxl": "multiple views, turnaround sheet, side view, back view, detailed engravings, surface patterns, fine texture, photorealistic, subsurface scattering, specular highlights, complex shading, busy background",
+      "clip_l": "multiple views, turnaround sheet, three views, three-quarter view, profile view, side view only, action pose, dynamic pose, detailed engravings, surface patterns, fine texture, surface detail, photorealistic, subsurface scattering, specular highlights, complex shading, reflections, metallic sheen, busy background, environment, ground, shadow, watermark, text, logo, border, frame, multiple characters, single view only, cropped, partial body, floating limbs",
+      "t5xxl": "multiple views, turnaround sheet, three views, three-quarter view, profile view, side view only, action pose, dynamic pose, detailed engravings, surface patterns, fine texture, surface detail, photorealistic, subsurface scattering, specular highlights, complex shading, reflections, metallic sheen, busy background, environment, ground, shadow, watermark, text, logo, border, frame, multiple characters, single view only, cropped, partial body, floating limbs",
       "guidance": 3.5
     }
   },

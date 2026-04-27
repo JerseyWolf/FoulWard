@@ -28,6 +28,21 @@ const LOC_VELOCITY_EPSILON: float = 0.12
 
 const ALLY_ARNULF_GLB: String = "res://art/generated/allies/arnulf.glb"
 
+## Maps entity_id → list of [weapon_slug, bone_name] pairs for weapon attachment.
+## Called after character GLB instantiation via attach_weapons().
+const WEAPON_ASSIGNMENTS: Dictionary = {
+	"arnulf":                [["weapon_iron_shovel",      "RightHand"]],
+	"florence":              [["weapon_crossbow",          "RightHand"]],
+	"sybil":                 [["weapon_stone_staff",       "RightHand"]],
+	"orc_grunt":             [["weapon_iron_cleaver",      "RightHand"]],
+	"orc_brute":             [["weapon_iron_maul",         "RightHand"]],
+	"orc_archer":            [["weapon_bone_recurve_bow",  "RightHand"]],
+	"orc_berserker":         [["weapon_dual_axes",         "RightHand"],
+	                          ["weapon_dual_axes",         "LeftHand"]],
+	"orc_shaman_boar_rider": [["weapon_skull_staff",       "RightHand"]],
+	"herald_of_worms":       [["weapon_skull_staff",       "RightHand"]],
+}
+
 
 static func clear_visual_slot(visual_slot: Node3D) -> void:
 	if visual_slot == null:
@@ -281,3 +296,16 @@ static func update_locomotion_animation(
 		return current_anim
 	animation_player.play(want, LOC_BLEND_SEC)
 	return want
+
+
+## Attach all weapons defined in WEAPON_ASSIGNMENTS for the given entity_id.
+## Call this after character GLB instantiation via mount_glb_scene().
+## Silently skips unknown entity_ids or missing weapon GLBs (push_warning inside WeaponAttachment).
+static func attach_weapons(entity_id: String, character_root: Node3D) -> void:
+	if not WEAPON_ASSIGNMENTS.has(entity_id):
+		return
+	var pairs: Array = WEAPON_ASSIGNMENTS[entity_id]
+	for pair: Array in pairs:
+		var weapon_slug: String = pair[0]
+		var bone_name: String = pair[1]
+		WeaponAttachment.attach(character_root, weapon_slug, bone_name)

@@ -1,9 +1,18 @@
 # SKILL: gen3d — Automatic 3D asset generation (local pipeline)
 
+## Local artifact root (norm — 2026-04-21)
+
+- **Bulk gen3d output** (reference PNG scratch, TRELLIS working dirs, A/B experiment GLBs, ComfyUI logs) must live under **`local/gen3d/`** at the repository root — **not** `/tmp/`.
+- That tree is listed in **`.gitignore`** and **`.cursorignore`** so it is **not committed to GitHub** and **not indexed by Cursor** (saves capacity and keeps AI context small).
+- **Policy doc:** `docs/GEN3D_LOCAL_ARTIFACTS.md`.
+- **`foulward_gen.py`** writes intermediates to **`local/gen3d/staging/`** (e.g. `fw_<slug>_ref.png`, `fw_<slug>_candidates/`, rig/final GLB scratch).
+- **Game drops and previews** (`art/generated/`, `art/gen3d_previews/`, `art/gen3d_candidates/`) are **local-only** — gitignored and cursorignored until production assets are frozen (see `docs/GEN3D_LOCAL_ARTIFACTS.md`). Only empty dirs + `.gitkeep` ship in the repo.
+- **A/B harness scripts (tracked):** `tools/gen3d/scripts/ab_test_batch.py`, `tools/gen3d/scripts/prepare_trellis_ab_variants.py` — outputs default to **`local/gen3d/ab_test/`**.
+
 ## Stage 1 Environment (Resolved — do not change)
 
 - ComfyUI: v0.19.3 at http://127.0.0.1:8188
-- Start command: `nohup $FOULWARD_PYTHON ~/ComfyUI/main.py --listen 127.0.0.1 --port 8188 > /tmp/comfyui.log 2>&1 &`
+- Start command (log under repo): append to `local/gen3d/logs/comfyui.log` — see `generate_all.sh` or: `mkdir -p local/gen3d/logs && nohup $FOULWARD_PYTHON ~/ComfyUI/main.py --listen 127.0.0.1 --port 8188 >> local/gen3d/logs/comfyui.log 2>&1 &`
 - `FOULWARD_PYTHON`: `/home/jerzy-wolf/miniconda3/envs/trellis2/bin/python3`
 - UNET: `~/ComfyUI/models/unet/flux1-dev.safetensors` (23.80GB, `weight_dtype`: default)
 - CLIP: `~/ComfyUI/models/clip/clip_l.safetensors` (~246MB)
@@ -40,7 +49,7 @@ Further discussion: [microsoft/TRELLIS.2#147](https://github.com/microsoft/TRELL
 ## Stage 2 TRELLIS Settings (validated)
 
 - **VRAM:** After Stage 1, `foulward_gen.py` **always** stops ComfyUI (`pkill` + optional `/api/quit`) and **polls `nvidia-smi`** until used VRAM &lt; 12 GB (or timeout) before loading TRELLIS — FLUX.1-dev (~16+ GB resident) and TRELLIS.2-4B cannot coexist on 24 GB. To skip shutdown (only safe with a **small** image model, e.g. FLUX.1-schnell fp8): `export SKIP_COMFYUI_SHUTDOWN=1`.
-- **Stage 2 (multi-variant):** `generate_mesh_variants(n_variants=N)` runs TRELLIS N times with different random seeds and decimates each. Default `N_MESH_VARIANTS=5`. The user is prompted to pick one; batch runs auto-select candidate 1 (`AUTO_SELECT_CANDIDATE=1`). Candidates are stored in both `/tmp/fw_{slug}_candidates/` (ephemeral) and `art/gen3d_candidates/{slug}/` (permanent). `meta.json` sidecar tracks the selection.
+- **Stage 2 (multi-variant):** `generate_mesh_variants(n_variants=N)` runs TRELLIS N times with different random seeds and decimates each. Default `N_MESH_VARIANTS=5`. The user is prompted to pick one; batch runs auto-select candidate 1 (`AUTO_SELECT_CANDIDATE=1`). Candidates are stored in both **`local/gen3d/staging/fw_{slug}_candidates/`** (large scratch; gitignored) and `art/gen3d_candidates/{slug}/` (permanent review copies). `meta.json` sidecar tracks the selection.
 - **Stage 2b (decimation):** `decimate_glb` preserves UV/PBR textures. Strategy: Open3D QEM decimation (correctly targets face count even on non-manifold TRELLIS meshes), then scipy `cKDTree` nearest-vertex UV re-projection from the original high-res mesh. Output includes `TextureVisuals` + embedded `PBRMaterial` baseColorTexture. **Do NOT revert to plain Open3D decimation** — it stripped all UV data.
 - **Pre-decimation:** `o_voxel.postprocess.to_glb` runs with `decimation_target=100000` (env: `FOULWARD_TRELLIS_PREDECIMATE`, default 100000). This reduces the raw TRELLIS GLB from ~38 MB to ~4 MB before the `decimate_glb` step. Increase to 1000000 for maximum source detail.
 - **Seed:** `image_to_glb` accepts `seed: int | None`. `None` → random 32-bit seed. Seed is passed to TRELLIS and logged (`[TRELLIS] seed=...`). Same image + same seed → same geometry.
@@ -76,11 +85,67 @@ Candidates live at `art/gen3d_candidates/{slug}/candidate_{N}_decimated.glb`.
 
 | Variable | Meaning |
 |---|---|
-| `SKIP_STAGE1=1` | Skip ComfyUI image generation (use existing `/tmp/fw_{slug}_front_nobg.png`) |
+| `SKIP_STAGE1=1` | Skip ComfyUI image generation; uses `fw_{slug}_front_clean.png` if it exists, else falls back to `fw_{slug}_front_nobg.png` with a warning |
 | `SKIP_STAGE2=1` | Skip TRELLIS mesh generation; requires `SELECTED_GLB=<path>` |
 | `SELECTED_GLB=<path>` | Absolute path to the already-decimated GLB to feed into stage 3 |
 
 Invoke gen3d with: `$FOULWARD_PYTHON tools/gen3d/foulward_gen.py "Unit Name" faction asset_type`
+
+### Rigging env vars
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `FOULWARD_RIG_BACKEND` | unset (priority order) | `unirig` = force UniRig only; `mixamo` = force Mixamo only; unset = UniRig → Mixamo → unrigged copy |
+| `UNIRIG_REPO` | required for UniRig | Absolute path to the `~/UniRig-repo` checkout (set in `~/.foulwardsecrets`) |
+| `UNIRIG_WEIGHTS` | required for UniRig | Absolute path to `~/UniRig` weights dir (set in `~/.foulwardsecrets`) |
+
+#### UniRig pipeline (run from `UNIRIG_REPO` as CWD)
+
+UniRig is a **3-step shell script pipeline** — all three must succeed for the rig to be accepted:
+
+```bash
+# Step 1 — predict bone positions
+conda run -n trellis2 bash launch/inference/generate_skeleton.sh \
+  --input <glb> --output <tmp_skeleton.fbx>
+
+# Step 2 — predict skinning weights
+conda run -n trellis2 bash launch/inference/generate_skin.sh \
+  --input <tmp_skeleton.fbx> --output <tmp_skin.fbx>
+
+# Step 3 — merge back onto source GLB
+conda run -n trellis2 bash launch/inference/merge.sh \
+  --source <tmp_skin.fbx> --target <glb> --output <out_path>
+```
+
+**Pre-flight (run once after cloning UniRig):**
+```bash
+# Patch extract.sh to use Blender's bundled Python
+BLENDER_PY=$(blender --background --python-expr "import sys; print(sys.executable)" -- 2>/dev/null \
+  | grep -v "^Blender\|^Fra\|^Al\|found\|Warning\|Error" | tail -1)
+sed -i "s|python -m src.data.extract|$BLENDER_PY -m src.data.extract|g" \
+  ~/UniRig-repo/launch/inference/extract.sh
+
+# Verify smoke test passes on bundled giraffe first
+cd ~/UniRig-repo
+conda run -n trellis2 bash launch/inference/generate_skeleton.sh \
+  --input examples/giraffe.glb --output results/giraffe_skeleton.fbx
+```
+
+### Mesh quality gate env vars
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `FOULWARD_MESH_QUALITY_GATE` | `5000` | Non-manifold edge count above which a variant is labelled `[LOW QUALITY]` in the selection prompt. Does not hard-reject. |
+
+### Weapon generation gate
+
+**Weapons must NOT be generated via TRELLIS.** TRELLIS produces poor results for thin
+elongated geometry (swords, staves, bows, axes). Author weapons in **Blender** or via
+**Tripo3D**, then place the GLB directly at `art/generated/weapons/<slug>.glb`.
+
+`WEAPON_SLUGS` is derived from `WEAPON_ASSIGNMENTS` in `foulward_gen.py`. Running
+`foulward_gen.py` for a weapon slug without `FOULWARD_WEAPON_TRELLIS=1` prints a warning
+and exits early. The `generate_all.sh` weapon `run` lines are commented out.
 
 ## Previously broken (fixed — do not revert)
 
@@ -115,9 +180,9 @@ Load this skill when generating **placeholder or batch 3D assets** for Foul Ward
 
 1. **2D reference** — ComfyUI + **FLUX.1 [dev]** + three CivitAI LoRAs.  
    Prompt is built from: `description (from unit_descriptions.py or unit_name)` + `FACTION_ANCHORS[faction]` + `STYLE_FOOTER` (LoRA triggers baked in).
-2. **Image → mesh** — TRELLIS.2 (`conda` env `trellis2`).
-3. **Rig** — Blender GLB↔FBX; humanoids via **Mixamo** automation when `MIXAMO_EMAIL`/`MIXAMO_PASSWORD` env vars are set; buildings skip rig; falls back to unrigged GLB silently if Mixamo fails.
-4. **Animation** — Blender merges FBX clips from `anim_library/`; see `ANIM_NAME_MAP` in `stage4_anim.py`.
+2. **Image → mesh** — TRELLIS.2 (`conda` env `trellis2`). Returns `(candidates, quality_labels)` tuple; `quality_labels` annotates `[LOW QUALITY]` entries above `MESH_QUALITY_GATE`.
+3. **Rig** — **UniRig** (primary, always attempted first); Mixamo Selenium bot (secondary, only if UniRig fails and credentials are set); unrigged GLB copy (always last resort). Buildings skip rig. See `FOULWARD_RIG_BACKEND` below.
+4. **Animation** — Blender merges FBX clips from `anim_library/`; see `ANIM_NAME_MAP` in `stage4_anim.py`. Stage 4 degrades gracefully: if zero clips are found in `anim_library/`, Blender is skipped and the rigged GLB is copied unchanged.
 5. **Drop** — Copy `{slug}.glb` to `art/generated/{enemies|allies|buildings|bosses}/`.
 
 ## How to run (single unit)
@@ -231,8 +296,36 @@ Flat files (matches `rigged_visual_wiring.gd` and `generation_log.json`):
 - `res://art/generated/allies/{slug}.glb`
 - `res://art/generated/buildings/{slug}.glb`
 - `res://art/generated/bosses/{slug}.glb`
+- `res://art/generated/weapons/{slug}.glb`  ← manually authored, not TRELLIS-generated
 
 After export, **reload the Godot project** so `.import` updates.
+
+## Weapon attachment (Godot)
+
+`scripts/art/weapon_attachment.gd` (`class_name WeaponAttachment`) provides:
+
+```gdscript
+# Loads weapon GLB and attaches it to the correct bone via BoneAttachment3D
+WeaponAttachment.attach(character_root: Node3D, weapon_slug: String, bone_name: String) -> Node3D
+```
+
+`scripts/art/rigged_visual_wiring.gd` exposes:
+
+```gdscript
+const WEAPON_ASSIGNMENTS: Dictionary   # entity_id → [[weapon_slug, bone_name], ...]
+static func attach_weapons(entity_id: String, character_root: Node3D) -> void
+```
+
+Call `RiggedVisualWiring.attach_weapons(entity_id, character_root)` after
+`mount_glb_scene()` to wire all weapons for an entity. Silently no-ops for unknown IDs
+and missing GLBs.
+
+## Architecture / planning docs
+
+| Doc | Purpose |
+|-----|---------|
+| `docs/gen3d/ARCHER_IK_PLAN.md` | orc_archer bow IK: node tree, SkeletonIK3D config, string morph target, deferred implementation checklist |
+| `docs/gen3d/BUILDING_ANIM_PLAN.md` | Building animation approach: idle (synthesised), active (manual FBX), destroyed (morph target), Stage 4 changes required |
 
 ## Animation clip names
 
@@ -256,8 +349,12 @@ Align Mixamo filenames in `tools/gen3d/anim_library/` with `ANIM_NAME_MAP` in `s
 | Stage 2 **CUDA OOM** with ComfyUI up | Default: `foulward_gen.py` stops ComfyUI after Stage 1 to free VRAM; or stop ComfyUI manually before TRELLIS. |
 | **White mesh / untextured GLB** | Root cause was Open3D stripping UV on rebuild. Fixed (Prompt 86): `decimate_glb` now uses Open3D + cKDTree UV re-projection. If it recurs, run `_check_glb_has_texture(raw_glb)` on the TRELLIS output first. |
 | Decimated GLB white but raw is textured | Verify `pipeline/stage2_mesh.py` `decimate_glb` exports via `trimesh.Scene(geometry={...}).export(out, file_type="glb")` — not `mesh.export(out)` which loses materials. |
-| Mixamo fails (UI change / login) | Env vars set; bot may break — pipeline silently writes the unrigged GLB so the run still completes |
-| No animations | Populate `anim_library/` with Mixamo FBX files using the names in `ANIM_NAME_MAP` |
+| UniRig fails on a box/placeholder mesh | Acceptable; pipeline falls through to unrigged copy. Verify giraffe smoke test passes before filing a bug. |
+| UniRig: `UNIRIG_REPO` not set | Add `export UNIRIG_REPO=$HOME/UniRig-repo` to `~/.foulwardsecrets` |
+| UniRig: `extract.sh` uses bare `python` | Patch: `sed -i "s|python -m src.data.extract|<blender_py> -m src.data.extract|g" launch/inference/extract.sh` |
+| Mixamo fails (UI change / login) | Env vars set; bot may break — pipeline silently falls back to UniRig then unrigged copy |
+| No animations | Populate `anim_library/` with Mixamo FBX files using the names in `ANIM_NAME_MAP`; Stage 4 skips Blender and copies the rigged GLB unchanged if zero clips are found |
+| Stage 4 prints "0 found, N missing" | `anim_library/` is empty; download FBX clips from Mixamo (FBX for Unity, T-pose, 30fps) |
 | Godot doesn't pick up the GLB | `Project → Reload Current Project` or focus editor; ensure `rigged_visual_wiring.gd` maps the `entity_id` to the new path |
 | Humanoid arms look mangled | Add `T-pose, arms extended horizontally` to the description in `unit_descriptions.py` and re-run |
 

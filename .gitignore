@@ -49,6 +49,18 @@ docs/DOCS_DUMP.md
 # Empty / transient local dirs (not game code)
 simbot_runs/
 
+# Gen3D local artifacts — large PNG/GLB/session outputs (never commit; see docs/GEN3D_LOCAL_ARTIFACTS.md)
+local/gen3d/
+
+# Generated art (2D/3D pipeline drops) — not committed until production picks; see docs/GEN3D_LOCAL_ARTIFACTS.md
+# Force-add only: art/generated/.gitkeep, art/gen3d_previews/.gitkeep, art/gen3d_candidates/.gitkeep
+art/generated/
+art/gen3d_previews/
+art/gen3d_candidates/
+
+# UniRig local temp (only applies if UniRig-repo lives under this workspace)
+UniRig-repo/tmp/
+
 # Godot C# build artifacts
 .mono/
 .godot/mono/

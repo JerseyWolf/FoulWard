@@ -187,17 +187,23 @@ def generate_reference_sheet(
         workflow: dict[str, Any] = json.load(f)
 
     full_prompt: str = (
-        f"Character design turnaround sheet, front view, right side view, back view, "
-        f"isolated on white background.\n{unit_name}.\n{faction_block}\n{style_footer}"
+        f"{unit_name}.\n{faction_block}\n{style_footer}"
     )
     workflow = build_workflow_with_loras(workflow, full_prompt, faction)
 
     base: str = f"http://127.0.0.1:{port}"
-    r: requests.Response = requests.post(
-        f"{base}/prompt",
-        json={"prompt": workflow},
-        timeout=60,
-    )
+    try:
+        r: requests.Response = requests.post(
+            f"{base}/prompt",
+            json={"prompt": workflow},
+            timeout=60,
+        )
+    except requests.exceptions.ConnectionError as exc:
+        raise RuntimeError(
+            f"Cannot reach ComfyUI at {base} (connection refused or unreachable). "
+            "Start ComfyUI on that port before running foulward_gen.py, or set SKIP_STAGE1=1 "
+            "if reference PNGs already exist under local/gen3d/staging/."
+        ) from exc
     r.raise_for_status()
     data: dict[str, Any] = r.json()
     prompt_id: str | None = data.get("prompt_id")
@@ -250,17 +256,14 @@ def generate_reference_sheet(
 
 def crop_front_view(sheet_path: str, out_path: str) -> str:
     """
-    Crop the leftmost third of a front/side/back turnaround sheet.
+    Crop the front-view panel from a 2-panel front+back reference sheet.
+    Takes the LEFT HALF of the image — front view is always on the left.
 
-    ComfyUI / FLUX workflow produces a hires sheet (typically 2048² after upscale)
-    with three views laid out
-    horizontally left-to-right (front, side, back), each panel
-    approximately one third of the sheet width (e.g. ~682 px at 2048²).
-    This function extracts only the front view for TRELLIS input; see
-    ``docs/PROMPT_87_IMPLEMENTATION.md`` for the 2026-04-20 input-format A/B.
+    Note: Previously took left third (w // 3) for the old 3-panel turnaround sheet.
+    Updated for the current 2-panel STYLE_FOOTER (front left, back right).
 
     Args:
-        sheet_path: Path to the full turnaround sheet PNG.
+        sheet_path: Path to the full 2-panel sheet PNG.
         out_path:   Where to save the cropped front-view PNG.
 
     Returns:
@@ -268,8 +271,7 @@ def crop_front_view(sheet_path: str, out_path: str) -> str:
     """
     img = Image.open(sheet_path)
     w, h = img.size
-    # Front view is the leftmost third of the sheet
-    front = img.crop((0, 0, w // 3, h))
+    front = img.crop((0, 0, w // 2, h))
     front.save(out_path)
     return out_path
 

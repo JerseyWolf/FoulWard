@@ -1079,6 +1079,17 @@ These sections describe the complete main-menu → mission → between-mission �
 - `tests/test_building_repair.gd` (`TestBuildingRepair`) — 4 tests covering lowest-HP-pct targeting, 50%-heal amount, blocked-when-no-damage, indestructible-building ignored.
 - `tests/test_shop_rotation.gd` (`TestShopRotation`) — 8 tests: `get_daily_items` count range, determinism, day variance, guaranteed consumable/equipment, capped-consumable exclusion, empty when no consumable bucket, SimBot `difficulty_target` on three `StrategyProfile` `.tres`.
 
+## 2026-04-21 Gen3D local artifacts (gitignored bulk output)
+
+- **`docs/GEN3D_LOCAL_ARTIFACTS.md`** — policy: large PNG/GLB/log output under **`local/gen3d/`** (`.gitignore` + `.cursorignore`); `foulward_gen.py` uses **`local/gen3d/staging/`** for pipeline scratch.
+- **`tools/gen3d/scripts/ab_test_batch.py`**, **`tools/gen3d/scripts/prepare_trellis_ab_variants.py`** — A/B harness; default output root **`local/gen3d/ab_test/`**.
+- **`HOW_IT_WORKS.md`** §6, **`AGENTS.md`** Key Documents, **`FOUL_WARD_MASTER_DOC.md`** §22, **`.cursor/skills/gen3d/SKILL.md`**, **`docs/README.md`**, **`INDEX_SHORT.md`** — synced to the above.
+
+## 2026-04-21 Generated art dirs (gitignored)
+
+- **`art/generated/`**, **`art/gen3d_previews/`**, **`art/gen3d_candidates/`** — added to **`.gitignore`** / **`.cursorignore`**; tracked **`.gitkeep`** files only so folders exist on clone. Pipeline and Godot still use `res://art/generated/...` at runtime locally.
+- **`docs/GEN3D_LOCAL_ARTIFACTS.md`**, **`INDEX_SHORT.md`**, **`HOW_IT_WORKS.md`** §6, **`FOUL_WARD_MASTER_DOC.md`** §22, **`AGENTS.md`**, **`.cursor/skills/gen3d/SKILL.md`** — updated for the above.
+
 ## 2026-04-20 Prompt 89 delta (documentation + file-tree sync)
 
 - Refreshed **`FOUL_WARD_MASTER_DOC.md`** §22 — gen3d orchestration is **in-repo** under `res://tools/gen3d/` (ComfyUI / TRELLIS / Blender / Mixamo remain external installs). Documented **`art/gen3d_candidates/`**, **`art/gen3d_previews/`**, **`orc_berserker.glb`** in generated-enemy list.
@@ -1094,7 +1105,7 @@ These sections describe the complete main-menu → mission → between-mission �
 - `_decimate_o3d(vertices, faces, target_faces)` — helper: geometry-only Open3D QEM, returns `(verts, faces, normals)`.
 - `image_to_glb(image_path, out_path, model_id, tri_budget, seed=None)` — added `seed` param (None→random 32-bit). Sets `torch.manual_seed` + `cuda.manual_seed_all` before `pipeline.run`. Passes `seed` to TRELLIS. Respects `FOULWARD_TRELLIS_PREDECIMATE` env var (default 100000; reduces raw GLB from ~38 MB to ~4 MB before our `decimate_glb` step).
 - `_check_glb_has_texture(path)` — returns `True` if GLB has UV map or multi-color vertex data. Used per-variant inside `generate_mesh_variants`.
-- `generate_mesh_variants(image_path, out_dir, model_id, tri_budget, n_variants=5, slug, project_root)` — runs TRELLIS N times with different seeds; decimates each; writes to `/tmp/fw_{slug}_candidates/` (ephemeral) AND `art/gen3d_candidates/{slug}/` (permanent). Returns list of `/tmp` decimated paths.
+- `generate_mesh_variants(image_path, out_dir, model_id, tri_budget, n_variants=5, slug, project_root)` — runs TRELLIS N times with different seeds; decimates each; writes to `local/gen3d/staging/fw_{slug}_candidates/` (large scratch; gitignored) AND `art/gen3d_candidates/{slug}/` (permanent). Returns list of staging decimated paths.
 
 ### tools/gen3d/foulward_gen.py
 - `select_candidate(candidates, slug, project_root, auto=False)` — interactive or auto (AUTO_SELECT_CANDIDATE=1) variant picker; writes `selected.glb` to `art/gen3d_candidates/{slug}/`.

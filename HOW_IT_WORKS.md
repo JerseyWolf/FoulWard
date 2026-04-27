@@ -872,12 +872,14 @@ flowchart TB
 ## 6. The gen3d pipeline
 
 Source: `tools/gen3d/` (in-repo scripts), `.cursor/skills/gen3d/SKILL.md`
-(~270-line skill), `docs/FUTURE_3D_MODELS_PLAN.md` (art roadmap), `launch.sh`
-(orchestration).
+(~270-line skill), `docs/FUTURE_3D_MODELS_PLAN.md` (art roadmap), `docs/GEN3D_LOCAL_ARTIFACTS.md`
+(local bulk output policy), `launch.sh` (orchestration).
 
 This is an independent five-stage pipeline that turns a prompt line into a
 rigged, animated `.glb` on disk under `art/generated/{enemies,allies,
 buildings,bosses}/<slug>.glb`. It's fully local, no paid APIs.
+
+**Generated art** — **`art/generated/`**, **`art/gen3d_previews/`**, **`art/gen3d_candidates/`**, plus **`local/gen3d/`** — are **gitignored and cursorignored** (2D/3D pipeline drops stay local until production assets are chosen; see `docs/GEN3D_LOCAL_ARTIFACTS.md`). `foulward_gen.py` still writes final `{slug}.glb` into `art/generated/...` at runtime on your machine.
 
 ### 6.1 Five stages
 

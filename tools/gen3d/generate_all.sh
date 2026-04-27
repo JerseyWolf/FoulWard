@@ -7,6 +7,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$SCRIPT_DIR"
 
 : "${FOULWARD_PYTHON:=python3}"
@@ -26,7 +27,8 @@ ensure_comfyui() {
         return 0
     fi
     echo "Starting ComfyUI (--lowvram) on 127.0.0.1:8188..."
-    nohup "$FOULWARD_PYTHON" "$HOME/ComfyUI/main.py" --listen 127.0.0.1 --port 8188 --lowvram >/tmp/comfyui.log 2>&1 &
+    mkdir -p "$REPO_ROOT/local/gen3d/logs"
+    nohup "$FOULWARD_PYTHON" "$HOME/ComfyUI/main.py" --listen 127.0.0.1 --port 8188 --lowvram >>"$REPO_ROOT/local/gen3d/logs/comfyui.log" 2>&1 &
     sleep 15
     curl -s "http://127.0.0.1:8188/system_stats" | python3 -c "import sys, json; json.load(sys.stdin); print('ComfyUI ready')" || {
         echo "ComfyUI failed to start"
@@ -44,12 +46,24 @@ run() {
     "$FOULWARD_PYTHON" "$SCRIPT_DIR/foulward_gen.py" "$unit_name" "$faction" "$asset_type"
 }
 
-# ── Weapons (building type = no rig, geometry only) ──────────────────────
-run "weapon_iron_shovel" buildings building
-run "weapon_crossbow" buildings building
-run "weapon_stone_staff" buildings building
-run "weapon_iron_cleaver" buildings building
-run "weapon_iron_maul" buildings building
-run "weapon_skull_staff" buildings building
-run "weapon_bone_recurve_bow" buildings building
-run "weapon_dual_axes" buildings building
+# ── Weapons — DO NOT generate via TRELLIS ────────────────────────────────
+#
+# TRELLIS produces poor results for thin elongated geometry (swords, staves,
+# bows, axes). Weapon assets should be authored manually in Blender or via
+# Tripo3D, then placed directly into art/generated/weapons/<slug>.glb.
+#
+# Once authored, the pipeline picks them up automatically via WeaponAttachment
+# (scripts/art/weapon_attachment.gd) and the WEAPON_ASSIGNMENTS table in
+# foulward_gen.py / rigged_visual_wiring.gd.
+#
+# To run anyway (not recommended): set FOULWARD_WEAPON_TRELLIS=1 and
+# uncomment the lines below.
+#
+# run "weapon_iron_shovel" buildings building
+# run "weapon_crossbow" buildings building
+# run "weapon_stone_staff" buildings building
+# run "weapon_iron_cleaver" buildings building
+# run "weapon_iron_maul" buildings building
+# run "weapon_skull_staff" buildings building
+# run "weapon_bone_recurve_bow" buildings building
+# run "weapon_dual_axes" buildings building

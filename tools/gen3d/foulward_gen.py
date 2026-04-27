@@ -15,6 +15,7 @@ Usage (``foulward_gen.py`` lives in ``tools/gen3d/``; repo root is two levels ab
   $FOULWARD_PYTHON foulward_gen.py "orc grunt" orc_raiders enemy
 
 Stages: 2D reference → 3D mesh → rig → animate → copy into Godot art/generated/.
+Intermediates (PNG/GLB scratch) go to ``local/gen3d/staging/`` (gitignored; see docs/GEN3D_LOCAL_ARTIFACTS.md).
 
 VRAM handoff (24 GB cards, FLUX.1-dev + TRELLIS.2-4B):
     ComfyUI holds ~16+ GB after Stage 1; TRELLIS needs ~14–18 GB. The pipeline always stops
@@ -35,12 +36,23 @@ from pathlib import Path
 _GEN3D_ROOT: Path = Path(__file__).resolve().parent
 # foulward_gen.py is at tools/gen3d/foulward_gen.py → repo root is parents[2]
 _REPO_ROOT: Path = Path(__file__).resolve().parents[2]
+# Large 2D/3D intermediates live under local/gen3d/ (gitignored; see docs/GEN3D_LOCAL_ARTIFACTS.md)
+_LOCAL_GEN3D_ROOT: Path = _REPO_ROOT / "local" / "gen3d"
 if str(_GEN3D_ROOT) not in sys.path:
     sys.path.insert(0, str(_GEN3D_ROOT))
 
 from pipeline.secrets_loader import load_foulward_secrets
+from pipeline.stage2_mesh import TRELLIS_DECIMATE_TARGET
 
 load_foulward_secrets()
+
+
+def _ensure_local_gen3d_staging() -> Path:
+    """Create ``local/gen3d/staging`` (and ``logs``) for PNG/GLB scratch files — never commit this tree."""
+    staging: Path = _LOCAL_GEN3D_ROOT / "staging"
+    staging.mkdir(parents=True, exist_ok=True)
+    (_LOCAL_GEN3D_ROOT / "logs").mkdir(parents=True, exist_ok=True)
+    return staging
 
 
 def wait_for_vram_free(threshold_gb: float = 12.0, timeout_s: int = 120, poll_interval_s: int = 3) -> bool:
@@ -78,16 +90,16 @@ GEN3D_ROOT: str = str(_GEN3D_ROOT)
 COMFYUI_PORT: int = 8188
 TRELLIS_MODEL: str = "microsoft/TRELLIS.2-4B"
 
-# TRELLIS_INPUT_FORMAT — determined by A/B test on 2026-04-20 (TRELLIS.2-4B, seed=42).
-# Winner: front panel only (left third of 3-view Comfy hires sheet), rembg + hard alpha,
-#         then square prep resize to 768 px, RGB to the sampler (see prepare_trellis_input).
-# v3b dec non-manifold edges @10k faces: 9310 (matched to_glb: texture 512, predec 50k) vs v4 9472, v5 9874.
-# Full-sheet v1/v2 ~9791–9840 at default to_glb; still risks multi-body reconstruction visually.
-# Square prep size matches ``FOULWARD_TRELLIS_INPUT_EDGE`` (default 768 in stage2_mesh).
+# TRELLIS_INPUT_FORMAT — STYLE_FOOTER yields a 2-panel front+back sheet; crop left half,
+# rembg + hard alpha on that panel only, then square prep resize (see prepare_trellis_input).
+# Square prep edge matches ``FOULWARD_TRELLIS_INPUT_EDGE`` (default 768 in stage2_mesh).
 _trellis_edge: int = int(os.environ.get("FOULWARD_TRELLIS_INPUT_EDGE", "768"))
 TRELLIS_INPUT_SIZE: tuple[int, int] = (_trellis_edge, _trellis_edge)
 TRELLIS_INPUT_MODE: str = "RGB"  # tensor fed to TRELLIS after prepare_trellis_input
-TRELLIS_CROP_TO_FRONT: bool = True  # crop_front_view: left third of turnaround sheet
+# True: crop_front_view() extracts the left half of the 2-panel front+back sheet
+# before rembg runs. The new STYLE_FOOTER generates front (left) + back (right).
+# NEVER feed the full 2-panel sheet to TRELLIS — it generates a double-character mesh.
+TRELLIS_CROP_TO_FRONT: bool = True
 
 MIXAMO_EMAIL: str = os.environ.get("MIXAMO_EMAIL", "")
 MIXAMO_PASSWORD: str = os.environ.get("MIXAMO_PASSWORD", "")
@@ -97,15 +109,15 @@ MIXAMO_PASSWORD: str = os.environ.get("MIXAMO_PASSWORD", "")
 # strong shape readability. Detailed surface texture is baked in post; TRELLIS
 # needs clean geometry input.
 STYLE_FOOTER: str = (
-    "Game character concept art. Clean simple silhouette. "
-    "Flat color regions with minimal surface detail. "
-    "No engravings, no surface patterns, no fine texture. "
-    "Strong readable shape from a distance. "
-    "White background. Front view only, full body, T-pose, "
-    "arms slightly extended from body. No cast shadows. "
-    "Style: simplified Warhammer Fantasy, chunky proportions, "
-    "dark humor tone. Matte colors. "
-    "DO NOT show multiple views. Single front-facing character only."
+    "Game character concept art. "
+    "Exactly TWO views side by side on a single white background: "
+    "LEFT HALF is the complete full-body FRONT VIEW in T-pose. "
+    "RIGHT HALF is the complete full-body BACK VIEW in T-pose. "
+    "Arms slightly extended from body in both views. "
+    "Flat color regions. No engravings, no surface patterns, no fine surface texture. "
+    "Strong readable silhouette. No cast shadows. No background elements. "
+    "Style: simplified Warhammer Fantasy, chunky proportions, dark humor tone. "
+    "Matte colors only. No perspective distortion."
 )
 
 FACTION_ANCHORS: dict[str, str] = {
@@ -149,6 +161,13 @@ WEAPON_ASSIGNMENTS: dict[str, list[tuple[str, str]]] = {
     "orc_shaman_boar_rider": [("weapon_skull_staff", "RightHand")],
     "herald_of_worms": [("weapon_skull_staff", "RightHand")],
 }
+
+# Derived set of weapon asset slugs from WEAPON_ASSIGNMENTS values.
+# TRELLIS handles thin elongated geometry (swords, staves, bows) very poorly.
+# These slugs are blocked from the TRELLIS pipeline unless FOULWARD_WEAPON_TRELLIS=1.
+WEAPON_SLUGS: frozenset[str] = frozenset(
+    weapon_slug for pairs in WEAPON_ASSIGNMENTS.values() for weapon_slug, _ in pairs
+)
 
 
 def canonical_slug(unit_name: str) -> str:
@@ -208,6 +227,7 @@ def select_candidate(
     slug: str,
     project_root: str,
     auto: bool = False,
+    quality_labels: dict[int, str] | None = None,
 ) -> tuple[str, int]:
     """
     Present the N candidate GLBs to the user and let them pick one.
@@ -218,16 +238,20 @@ def select_candidate(
     candidate 1 without prompting.
 
     Args:
-        candidates:    List of decimated candidate GLB paths (from generate_mesh_variants).
-        slug:          Asset slug (e.g. "orc_grunt").
-        project_root:  Godot project root path.
-        auto:          If True, skip the prompt and select candidate 1.
+        candidates:     List of decimated candidate GLB paths (from generate_mesh_variants).
+        slug:           Asset slug (e.g. "orc_grunt").
+        project_root:   Godot project root path.
+        auto:           If True, skip the prompt and select candidate 1.
+        quality_labels: Optional dict mapping 1-based index → quality annotation string
+                        (e.g. ``{2: "[LOW QUALITY — 8500 NM edges]"}``). Printed beside
+                        each entry so the user can make an informed choice.
 
     Returns:
         (selected_path, chosen_index) — path to the selected GLB and its 1-based index.
     """
     import shutil
 
+    labels: dict[int, str] = quality_labels or {}
     dest_dir: str = os.path.join(project_root, "art", "gen3d_candidates", slug)
     os.makedirs(dest_dir, exist_ok=True)
 
@@ -238,7 +262,8 @@ def select_candidate(
         # Candidates were already copied during generate_mesh_variants; skip if present.
         if not os.path.exists(dst):
             shutil.copy2(p, dst)
-        print(f"    [{i}] {dst}")
+        suffix: str = f"  {labels[i]}" if i in labels else ""
+        print(f"    [{i}] {dst}{suffix}")
     print(f"{'=' * 60}")
 
     chosen: int
@@ -291,13 +316,23 @@ def run_pipeline(unit_name: str, faction: str, asset_type: str = "enemy") -> Non
     if description != unit_name:
         print(f"[desc] Using bank description for `{slug}` ({len(description)} chars)\n")
 
+    # Weapon gate: TRELLIS handles thin elongated geometry very poorly (swords, staves, bows).
+    # Block weapon slugs unless the user explicitly sets FOULWARD_WEAPON_TRELLIS=1.
+    if slug in WEAPON_SLUGS and os.environ.get("FOULWARD_WEAPON_TRELLIS", "0") != "1":
+        print(f"[WARNING] '{slug}' is a weapon asset. TRELLIS handles thin geometry poorly.")
+        print("[WARNING] Author weapons in Blender or Tripo3D instead of TRELLIS.")
+        print("[WARNING] Set FOULWARD_WEAPON_TRELLIS=1 to suppress this gate and proceed anyway.")
+        return
+
     decimate_targets: dict[str, int] = {
-        "enemy": 10000,
-        "ally": 10000,
+        "enemy": TRELLIS_DECIMATE_TARGET,
+        "ally": TRELLIS_DECIMATE_TARGET,
         "building": 8000,
         "boss": 20000,
     }
-    target_faces: int = decimate_targets.get(asset_type, 10000)
+    target_faces: int = decimate_targets.get(asset_type, TRELLIS_DECIMATE_TARGET)
+
+    staging: Path = _ensure_local_gen3d_staging()
 
     # ── Skip-stage env vars (used by promote_candidate.py to re-run 3-5 only) ──
     skip_stage1: bool = os.environ.get("SKIP_STAGE1", "0") == "1"
@@ -305,28 +340,39 @@ def run_pipeline(unit_name: str, faction: str, asset_type: str = "enemy") -> Non
     selected_glb_env: str = os.environ.get("SELECTED_GLB", "").strip()
 
     # ── Stage 1 — 2D reference sheet ────────────────────────────────────────
-    nobg_path: str = f"/tmp/fw_{slug}_front_nobg.png"
-    clean_path: str = f"/tmp/fw_{slug}_front_clean.png"
+    nobg_path: str = str(staging / f"fw_{slug}_front_nobg.png")
+    clean_path: str = str(staging / f"fw_{slug}_front_clean.png")
+    # mesh_image_path is resolved below: clean_path when available, nobg_path as fallback.
     mesh_image_path: str = nobg_path
 
     if skip_stage1:
         print("[1/5] SKIP_STAGE1=1 — skipping ComfyUI image generation")
+        if Path(clean_path).is_file():
+            mesh_image_path = clean_path
+        else:
+            print(f"[1/5] WARNING: clean_path not found ({clean_path}), falling back to nobg_path")
+            mesh_image_path = nobg_path
     else:
         img_path: str = generate_reference_sheet(
             description,
             faction_block,
             STYLE_FOOTER,
-            out_path=f"/tmp/fw_{slug}_ref.png",
+            out_path=str(staging / f"fw_{slug}_ref.png"),
             port=COMFYUI_PORT,
             faction=faction,
         )
         print(f"[1/5] Reference sheet saved: {img_path}")
 
-        front_path: str = f"/tmp/fw_{slug}_front.png"
-        crop_front_view(img_path, front_path)
-        print(f"[1b]  Front view cropped: {front_path}")
+        if TRELLIS_CROP_TO_FRONT:
+            front_path: str = str(staging / f"fw_{slug}_front.png")
+            crop_front_view(img_path, front_path)
+            print(f"[1b]  Front view cropped: {front_path}")
+            sheet_for_rembg: str = front_path
+        else:
+            sheet_for_rembg = img_path
+            print(f"[1b]  Full sheet for rembg (TRELLIS_CROP_TO_FRONT=False): {sheet_for_rembg}")
 
-        remove_background(front_path, nobg_path)
+        remove_background(sheet_for_rembg, nobg_path)
         print(f"[1c]  Background removed: {nobg_path}")
 
         # Stage 1d — binarise alpha to remove semi-transparent fringe pixels
@@ -343,9 +389,11 @@ def run_pipeline(unit_name: str, faction: str, asset_type: str = "enemy") -> Non
     else:
         n_variants: int = int(os.environ.get("N_MESH_VARIANTS", "5"))
         auto_select: bool = os.environ.get("AUTO_SELECT_CANDIDATE", "0") == "1"
-        candidates_dir: str = f"/tmp/fw_{slug}_candidates"
+        candidates_dir: str = str(staging / f"fw_{slug}_candidates")
 
-        candidate_paths: list[str] = generate_mesh_variants(
+        candidate_paths: list[str]
+        quality_labels: dict[int, str]
+        candidate_paths, quality_labels = generate_mesh_variants(
             mesh_image_path,
             out_dir=candidates_dir,
             model_id=TRELLIS_MODEL,
@@ -361,6 +409,7 @@ def run_pipeline(unit_name: str, faction: str, asset_type: str = "enemy") -> Non
             slug=slug,
             project_root=GODOT_ROOT,
             auto=auto_select,
+            quality_labels=quality_labels,
         )
         print(f"[2b]  Selected variant {chosen_idx}: {selected_glb}")
 
@@ -385,7 +434,7 @@ def run_pipeline(unit_name: str, faction: str, asset_type: str = "enemy") -> Non
     # ── Stage 3 — rigging (selected variant only) ────────────────────────────
     glb_rigged: str = rig_model(
         selected_glb,
-        out_path=f"/tmp/fw_{slug}_rigged.glb",
+        out_path=str(staging / f"fw_{slug}_rigged.glb"),
         mixamo_email=MIXAMO_EMAIL,
         mixamo_password=MIXAMO_PASSWORD,
         asset_type=asset_type,
@@ -398,7 +447,7 @@ def run_pipeline(unit_name: str, faction: str, asset_type: str = "enemy") -> Non
         glb_rigged,
         clips=anim_clips,
         anim_library_dir=anim_library_dir,
-        out_path=f"/tmp/fw_{slug}_final.glb",
+        out_path=str(staging / f"fw_{slug}_final.glb"),
     )
     print(f"[4/5] Animated GLB: {glb_final}")
 

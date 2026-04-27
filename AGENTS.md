@@ -170,6 +170,7 @@ MCP verification after every session:
 | `README.md` (repo root) | GitHub landing; links `HOW_IT_WORKS.md` / `INTERVIEW_CHEATSHEET.md` |
 | `HOW_IT_WORKS.md` (repo root) | Engineering-scaffolding walkthrough (interviews) |
 | `docs/archived/prompts/` | Full `PROMPT_*` session-log history |
+| `docs/GEN3D_LOCAL_ARTIFACTS.md` | Gen3D + generated art: `local/gen3d/`, `art/generated/`, `art/gen3d_previews/`, `art/gen3d_candidates/` are gitignored / cursorignored |
 
 ---
 

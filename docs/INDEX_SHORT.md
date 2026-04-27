@@ -109,9 +109,13 @@ tools/gen3d/pipeline/stage4_anim.py	tools/gen3d/pipeline/stage4_anim.py	Prompt 8
 tools/gen3d/pipeline/stage5_drop.py	tools/gen3d/pipeline/stage5_drop.py	Prompt 89: `drop_to_godot` — copy final `{slug}.glb` into `art/generated/<category>/`.
 tools/gen3d/pipeline/secrets_loader.py	tools/gen3d/pipeline/secrets_loader.py	Prompt 89: `load_foulward_secrets()` — parse `~/.foulward_secrets`; mirrors `HF_TOKEN` → `HUGGING_FACE_HUB_TOKEN` when needed.
 tools/gen3d/scripts/trellis2_input_ab_variant.py	tools/gen3d/scripts/trellis2_input_ab_variant.py	Prompt 89: CLI subprocess helper for TRELLIS input A/B (pad image → raw + decimated GLB + JSON report).
-art/gen3d_candidates/	art/gen3d_candidates/	Prompt 89: per-unit mesh variant dirs (`candidate_*_decimated.glb`, `selected.glb`, `meta.json`) — permanent review copies beside `/tmp` runs.
-art/gen3d_previews/	art/gen3d_previews/	Prompt 89: reference PNGs (`fw_<unit>_ref.png`) for batch gen3d units.
-art/generated/generation_log.json	res://art/generated/generation_log.json	Batch export inventory (entity_id, paths, animation_count, has_rig); optional `godot_mcp.reload_project` metadata.
+tools/gen3d/scripts/ab_test_batch.py	tools/gen3d/scripts/ab_test_batch.py	TRELLIS input-format A/B batch: 5 variants × 5 seeds → `local/gen3d/ab_test/` CSV + GLBs (uses `pipeline.stage2_mesh`).
+tools/gen3d/scripts/prepare_trellis_ab_variants.py	tools/gen3d/scripts/prepare_trellis_ab_variants.py	Builds five PNG variants (V1–V5) from one cleaned RGBA source for A/B harnesses.
+docs/GEN3D_LOCAL_ARTIFACTS.md	docs/GEN3D_LOCAL_ARTIFACTS.md	Policy: bulk gen3d PNG/GLB/log output under `local/gen3d/` (gitignored, cursorignored); staging + optional `ab_test/`.
+art/gen3d_candidates/	art/gen3d_candidates/	Per-slug mesh variants — **gitignored** (local only); see `docs/GEN3D_LOCAL_ARTIFACTS.md`. Large TRELLIS scratch also in `local/gen3d/staging/`.
+art/gen3d_previews/	art/gen3d_previews/	Reference PNGs (`fw_<unit>_ref.png`) — **gitignored** (local only); see `docs/GEN3D_LOCAL_ARTIFACTS.md`.
+art/generated/	art/generated/	Godot drop zone for `{slug}.glb` etc. — **gitignored** (local only); `foulward_gen.py` still writes here at runtime.
+art/generated/generation_log.json	res://art/generated/generation_log.json	Batch export inventory (written by tooling) — **gitignored** like other `art/generated/` files; see `docs/GEN3D_LOCAL_ARTIFACTS.md`.
 FUTURE_3D_MODELS_PLAN.md	docs/FUTURE_3D_MODELS_PLAN.md	Production 3D + hub portrait roadmap; placeholder table from `generation_log.json`; **§4 Modular Building Kit** (Prompt 32); **§5 Terrain System** (Prompt 33); scene art audit appendix (Prompt 29 refresh); PhysicalBone3D + AnimationPlayer wiring notes.
 MainRoot	res://scripts/main_root.gd	Applies root window content scale at startup (stretch fix for Godot 4.4+).
 SCENES (runtime instantiated or statically placed)

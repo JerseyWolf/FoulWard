@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Stage 3: GLB → FBX (Blender) → Mixamo rig (optional) → GLB."""
+"""Stage 3: GLB → rigged GLB via UniRig (primary) or Mixamo (fallback) or unrigged copy."""
 
 from __future__ import annotations
 
@@ -9,6 +9,166 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+
+# ---------------------------------------------------------------------------
+# UniRig
+# ---------------------------------------------------------------------------
+
+def rig_with_unirig(glb_path: Path, out_path: Path) -> bool:
+    """
+    Rig a GLB using the local UniRig inference pipeline.
+
+    UniRig is a 3-step shell script pipeline run from UNIRIG_REPO as the
+    working directory:
+      1. generate_skeleton.sh  — predicts bone positions
+      2. generate_skin.sh      — predicts skinning weights
+      3. merge.sh              — merges skeleton + skin back onto the source GLB
+
+    All three steps run via ``conda run -n trellis2 bash ...`` so that the
+    correct PyTorch + CUDA environment is active.
+
+    Args:
+        glb_path:  Absolute path to the source (unrigged) GLB.
+        out_path:  Where to write the final rigged GLB.
+
+    Returns:
+        True if out_path exists and has non-zero size after all three steps.
+        False on any failure — never raises, so the caller can fall through
+        to the next backend.
+    """
+    unirig_repo_raw: str = os.environ.get("UNIRIG_REPO", "").strip()
+    if not unirig_repo_raw:
+        print("[stage3_rig] UNIRIG_REPO env var not set — skipping UniRig")
+        return False
+
+    unirig_repo: Path = Path(unirig_repo_raw).expanduser().resolve()
+    if not unirig_repo.is_dir():
+        print(f"[stage3_rig] UNIRIG_REPO directory not found: {unirig_repo}")
+        return False
+
+    # UniRig extract.sh respects BLENDER_BIN (same default as many Linux installs).
+    os.environ.setdefault("BLENDER_BIN", "/usr/bin/blender")
+
+    glb_s: str = str(glb_path)
+    out_s: str = str(out_path)
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="fw_unirig_") as tmp:
+            tmp_path: Path = Path(tmp)
+            skeleton_fbx: str = str(tmp_path / "skeleton.fbx")
+            skin_fbx: str = str(tmp_path / "skin.fbx")
+
+            # Step 1 — skeleton prediction
+            print("[stage3_rig] UniRig step 1/3: generate_skeleton")
+            r1: subprocess.CompletedProcess[str] = subprocess.run(
+                [
+                    "conda", "run", "-n", "trellis2", "bash",
+                    "launch/inference/generate_skeleton.sh",
+                    "--input", glb_s,
+                    "--output", skeleton_fbx,
+                ],
+                cwd=str(unirig_repo),
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+            if r1.returncode != 0:
+                print(f"[stage3_rig] UniRig skeleton failed (rc={r1.returncode}):\n{r1.stderr[-1200:]}")
+                return False
+            sk_path: Path = Path(skeleton_fbx)
+            if not sk_path.is_file() or sk_path.stat().st_size == 0:
+                print(
+                    "[stage3_rig] UniRig skeleton output missing or empty after step 1 "
+                    "(generate_skeleton.sh may have returned 0 on error)"
+                )
+                out_tail: str = (r1.stdout or "")[-3000:]
+                err_tail: str = (r1.stderr or "")[-3000:]
+                if out_tail.strip():
+                    print(f"[stage3_rig] generate_skeleton stdout (tail):\n{out_tail}")
+                if err_tail.strip():
+                    print(f"[stage3_rig] generate_skeleton stderr (tail):\n{err_tail}")
+                return False
+
+            # Step 2 — skin prediction
+            print("[stage3_rig] UniRig step 2/3: generate_skin")
+            r2: subprocess.CompletedProcess[str] = subprocess.run(
+                [
+                    "conda", "run", "-n", "trellis2", "bash",
+                    "launch/inference/generate_skin.sh",
+                    "--input", skeleton_fbx,
+                    "--output", skin_fbx,
+                ],
+                cwd=str(unirig_repo),
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+            if r2.returncode != 0:
+                print(f"[stage3_rig] UniRig skin failed (rc={r2.returncode}):\n{r2.stderr[-600:]}")
+                return False
+            skin_path: Path = Path(skin_fbx)
+            if not skin_path.is_file() or skin_path.stat().st_size == 0:
+                print(
+                    "[stage3_rig] UniRig skin output missing or empty after step 2 "
+                    "(generate_skin.sh may have returned 0 on error)"
+                )
+                out_tail2: str = (r2.stdout or "")[-3000:]
+                err_tail2: str = (r2.stderr or "")[-3000:]
+                if out_tail2.strip():
+                    print(f"[stage3_rig] generate_skin stdout (tail):\n{out_tail2}")
+                if err_tail2.strip():
+                    print(f"[stage3_rig] generate_skin stderr (tail):\n{err_tail2}")
+                return False
+
+            # Step 3 — merge skeleton + skin back onto original GLB
+            print("[stage3_rig] UniRig step 3/3: merge")
+            r3: subprocess.CompletedProcess[str] = subprocess.run(
+                [
+                    "conda", "run", "-n", "trellis2", "bash",
+                    "launch/inference/merge.sh",
+                    "--source", skin_fbx,
+                    "--target", glb_s,
+                    "--output", out_s,
+                ],
+                cwd=str(unirig_repo),
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+            if r3.returncode != 0:
+                print(f"[stage3_rig] UniRig merge failed (rc={r3.returncode}):\n{r3.stderr[-600:]}")
+                return False
+            if not Path(out_s).is_file() or Path(out_s).stat().st_size == 0:
+                print(
+                    "[stage3_rig] UniRig merge output missing or empty after step 3 "
+                    "(merge may have returned 0 on error)"
+                )
+                out_tail3: str = (r3.stdout or "")[-3000:]
+                err_tail3: str = (r3.stderr or "")[-3000:]
+                if out_tail3.strip():
+                    print(f"[stage3_rig] merge stdout (tail):\n{out_tail3}")
+                if err_tail3.strip():
+                    print(f"[stage3_rig] merge stderr (tail):\n{err_tail3}")
+                return False
+
+    except subprocess.TimeoutExpired:
+        print("[stage3_rig] UniRig step timed out (600s)")
+        return False
+    except Exception as exc:
+        print(f"[stage3_rig] UniRig unexpected error: {exc}")
+        return False
+
+    if out_path.exists() and out_path.stat().st_size > 0:
+        print(f"[stage3_rig] UniRig succeeded: {out_path}")
+        return True
+
+    print(f"[stage3_rig] UniRig merge produced no output at {out_path}")
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Mixamo (secondary / legacy)
+# ---------------------------------------------------------------------------
 
 def _load_mixamo_credentials() -> tuple[str, str]:
     """
@@ -103,6 +263,46 @@ bpy.ops.export_scene.gltf(
     )
 
 
+def _rig_with_mixamo(src: Path, dst: Path, email: str, password: str) -> bool:
+    """
+    Attempt Mixamo Selenium rig. Returns True on success, False on any failure.
+    """
+    with tempfile.TemporaryDirectory(prefix="fw_mixamo_") as tmp:
+        tmp_path: Path = Path(tmp)
+        fbx_raw: Path = tmp_path / "mesh_raw.fbx"
+        _blender_glb_to_fbx(src, fbx_raw)
+
+        rigged_fbx: Path = tmp_path / "mesh_rigged.fbx"
+        try:
+            bot = None  # type: ignore[var-annotated]
+            try:
+                from calapy.mixamo import MixamoBot  # type: ignore[import-not-found]
+                bot = MixamoBot(email=email, password=password)
+            except ImportError:
+                try:
+                    from mixamo_bot import MixamoBot  # type: ignore[import-not-found]
+                    bot = MixamoBot(email=email, password=password)
+                except ImportError:
+                    bot = None
+            if bot is not None and hasattr(bot, "upload_and_rig"):
+                bot.upload_and_rig(str(fbx_raw), str(rigged_fbx))  # type: ignore[misc]
+            else:
+                raise RuntimeError("MixamoBot not available — install Mixamo automation package.")
+        except Exception as exc:
+            print(f"[stage3_rig] Mixamo automation failed ({exc})")
+            return False
+
+        if rigged_fbx.is_file():
+            _blender_fbx_to_glb(rigged_fbx, dst)
+            return dst.is_file() and dst.stat().st_size > 0
+
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
 def rig_model(
     glb_path: str,
     out_path: str,
@@ -111,11 +311,17 @@ def rig_model(
     asset_type: str = "enemy",
 ) -> str:
     """
-    Rig humanoids via Mixamo when credentials are available; buildings copy GLB unchanged.
+    Rig a GLB using the configured backend priority order.
 
-    Credentials are loaded from ``~/.foulward_secrets`` or environment variables via
-    ``_load_mixamo_credentials()`` if the caller does not pass them. The caller-supplied
-    ``mixamo_email`` / ``mixamo_password`` args take precedence (backwards compatible).
+    Backend selection (via ``FOULWARD_RIG_BACKEND`` env var):
+      - ``unirig``  — force UniRig only; skip Mixamo even if creds are set
+      - ``mixamo``  — force Mixamo only; skip UniRig
+      - unset / any other value — default priority:
+          1. UniRig (always attempted first)
+          2. Mixamo (only if UniRig returns False AND credentials are available)
+          3. Unrigged GLB copy (always last resort)
+
+    Buildings skip rigging and are always copied unchanged.
     """
     src: Path = Path(glb_path).resolve()
     dst: Path = Path(out_path).resolve()
@@ -125,49 +331,38 @@ def rig_model(
         shutil.copy2(src, dst)
         return str(dst)
 
-    # Caller may pass empty strings when foulward_gen reads from module-level vars
-    # before secrets_loader runs; fall back to _load_mixamo_credentials() silently.
-    if not mixamo_email or not mixamo_password:
-        try:
-            mixamo_email, mixamo_password = _load_mixamo_credentials()
-        except RuntimeError as exc:
-            print(f"[stage3_rig] {exc}")
-            print("[stage3_rig] Skipping Mixamo rig — copying unrigged GLB.")
+    backend: str = os.environ.get("FOULWARD_RIG_BACKEND", "").strip().lower()
+
+    # ── UniRig attempt ───────────────────────────────────────────────────────
+    if backend != "mixamo":
+        if rig_with_unirig(src, dst):
+            return str(dst)
+        if backend == "unirig":
+            print("[stage3_rig] UniRig failed and FOULWARD_RIG_BACKEND=unirig — no fallback.")
             shutil.copy2(src, dst)
             return str(dst)
+        print("[stage3_rig] UniRig failed; trying Mixamo fallback...")
 
-    with tempfile.TemporaryDirectory(prefix="fw_mixamo_") as tmp:
-        tmp_path: Path = Path(tmp)
-        fbx_raw: Path = tmp_path / "mesh_raw.fbx"
-        _blender_glb_to_fbx(src, fbx_raw)
-
-        rigged_fbx: Path = tmp_path / "mesh_rigged.fbx"
-        try:
-            # Package layout varies; try common entry points
-            bot = None  # type: ignore[var-annotated]
+    # ── Mixamo attempt ───────────────────────────────────────────────────────
+    if backend != "unirig":
+        # Resolve credentials: caller args take precedence, then secrets file.
+        email: str = mixamo_email
+        pw: str = mixamo_password
+        if not email or not pw:
             try:
-                from calapy.mixamo import MixamoBot  # type: ignore[import-not-found]
+                email, pw = _load_mixamo_credentials()
+            except RuntimeError as exc:
+                print(f"[stage3_rig] {exc}")
+                email, pw = "", ""
 
-                bot = MixamoBot(email=mixamo_email, password=mixamo_password)
-            except ImportError:
-                try:
-                    from mixamo_bot import MixamoBot  # type: ignore[import-not-found]
+        if email and pw:
+            if _rig_with_mixamo(src, dst, email, pw):
+                return str(dst)
+            print("[stage3_rig] Mixamo failed; falling back to unrigged copy.")
+        else:
+            print("[stage3_rig] Mixamo credentials not set; skipping Mixamo.")
 
-                    bot = MixamoBot(email=mixamo_email, password=mixamo_password)
-                except ImportError:
-                    bot = None
-            if bot is not None and hasattr(bot, "upload_and_rig"):
-                bot.upload_and_rig(str(fbx_raw), str(rigged_fbx))  # type: ignore[misc]
-            else:
-                raise RuntimeError("MixamoBot not available — install Mixamo automation package.")
-        except Exception as exc:
-            print(f"[stage3_rig] Mixamo automation failed ({exc}); copying unrigged GLB.")
-            shutil.copy2(src, dst)
-            return str(dst)
-
-        if rigged_fbx.is_file():
-            _blender_fbx_to_glb(rigged_fbx, dst)
-            return str(dst)
-
-        shutil.copy2(src, dst)
-        return str(dst)
+    # ── Last resort: unrigged copy ───────────────────────────────────────────
+    print("[stage3_rig] Copying unrigged GLB as final fallback.")
+    shutil.copy2(src, dst)
+    return str(dst)

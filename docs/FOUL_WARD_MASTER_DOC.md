@@ -1071,9 +1071,11 @@ Duplicate cost scaling: linear per `BuildingData.building_id`. Sell refund: `sel
 | 4 | `tools/gen3d/pipeline/stage4_anim.py` | Mixamo automation | Upload FBX → download animated FBX |
 | 5 | `tools/gen3d/pipeline/stage5_drop.py` | — | Drop final GLB to `res://art/generated/<category>/<slug>.glb` |
 
-**Intermediate / review paths (in repo):** `art/gen3d_candidates/{slug}/` (mesh variants, `selected.glb`, `meta.json`), `art/gen3d_previews/` (reference PNGs for batch units).
+**Intermediate / review paths (working tree, not committed):** `art/gen3d_candidates/{slug}/`, `art/gen3d_previews/` — same policy as `art/generated/`: **gitignored** until production picks; see `docs/GEN3D_LOCAL_ARTIFACTS.md`.
 
-**GLB output path (in repo):** `art/generated/{enemies,allies,buildings,bosses}/{slug}.glb` (flat, auto-imported by Godot).
+**Large scratch (working tree, not committed):** `local/gen3d/` — staging PNGs/GLBs, optional A/B harness output, ComfyUI logs. `foulward_gen.py` writes pipeline scratch under `local/gen3d/staging/`.
+
+**GLB output path (runtime; not in Git):** `art/generated/{enemies,allies,buildings,bosses}/{slug}.glb` (flat, auto-imported by Godot when present locally).
 
 **Generated assets (representative; as of 2026-04-20):**
 - Enemies: `orc_grunt.glb`, `orc_brute.glb`, `orc_berserker.glb`, `orc_archer.glb`, `bat_swarm.glb`, `goblin_firebug.glb`, `plague_zombie.glb`, `orc_warboss.glb`, `herald_of_worms.glb`
@@ -1969,3 +1971,542 @@ public partial class DamageCalculator : Node
 | `FoulWard.csproj` | C# project file — `dotnet build` before GdUnit when `.cs` changes |
 | `CREDITS.md` (repo root) | Third-party / technique credits for C# modules |
 | `docs/PROMPT_[N]_IMPLEMENTATION.md` (10-file rolling window) · `docs/archived/prompts/PROMPT_*_IMPLEMENTATION.md` (full history) | Per-session implementation logs |
+
+---
+
+## SECTION 31 — FRAMEWORK EVOLUTION PLAN
+
+> Appended **2026-04-27** as a strategic forward-plan addendum.
+> This section sits **after** the existing numbered §1-§34 and intentionally re-uses the
+> "SECTION 31" heading per the planning brief — it does not replace §31 *Formally Cut
+> Features*. Subsections below are numbered 31.1-31.11 to keep the section self-contained.
+
+---
+
+### 31.1 — AUDIT FINDINGS
+
+Audit performed 2026-04-27 against the live repo. **All "EXISTS IN CODE" markers were verified by reading the file or running a search.**
+
+| System | Status | Location in repo | Notes |
+|---|---|---|---|
+| RAG stack (Chroma + Ollama + LangGraph) | EXISTS IN CODE (out-of-tree) | `~/LLM/rag_mcp_server.py`, `~/LLM/index.py`, `~/LLM/rag_db/` (gitignored) | LangChain (not LlamaIndex). 4 collections. Embedding `nomic-embed-text`. LLM `qwen2.5:3b`. SqliteSaver checkpointer at `~/LLM/rag_memory.db`. |
+| RAG MCP server registration | EXISTS IN CODE | `.cursor/mcp.json` (`foulward-rag` entry) | Tools: `query_project_knowledge`, `get_recent_simbot_summary`. Optional — agent must not block if down. |
+| Alternate RAG copy in repo | EXISTS IN CODE (orphan) | `new_rag_mpc/rag_mcp_server.py` | Older standalone copy. Not wired in `.cursor/mcp.json`; can be deleted or hardened. |
+| RAG indexer | EXISTS IN CODE | `~/LLM/index.py` | Hash-cached incremental indexer. CLI: `--force`, `--stats`. |
+| RAG auto-update on SimBot run | NOT YET IMPLEMENTED | — | `simbot_logs` collection ingests `~/FoulWard/logs/*.json|*.csv`, but SimBot writes to `user://simbot/logs/` — no copy/upload trigger exists. |
+| SimBot core | EXISTS IN CODE | `scripts/sim_bot.gd` (`class_name SimBot`) | Resource-driven via `StrategyProfile` `.tres`. |
+| SimBot loadouts | EXISTS IN CODE | `scripts/simbot/simbot_loadouts.gd` | 3 named tower presets (`balanced`, `summoner_heavy`, `artillery_air`). |
+| SimBot CLI driver | EXISTS IN CODE | `autoloads/auto_test_driver.gd` | Flags: `--autotest`, `--simbot_profile=<id>`, `--simbot_runs=<N>`, `--simbot_seed=<S>`, `--simbot_balance_sweep`. |
+| SimBot multi-instance / parallel runner | NOT YET IMPLEMENTED | — | `run_batch()` is a sequential loop in one process. No port management, no headless harness for >1 game. |
+| Dynamic-strategy AI (MCTS / RL) | NOT YET IMPLEMENTED | — | All decisions are scripted from `StrategyProfile`. No state-space search anywhere. |
+| Economy / balance analyser | EXISTS IN CODE | `tools/simbot_balance_report.py` | Reads `building_summary.csv` recursively, emits markdown + status CSV. Tags: `OVERTUNED`/`UNDERTUNED`/`BASELINE`/`UNTESTED`. |
+| Balance report → RAG feedback loop | NOT YET IMPLEMENTED | — | Manual: agent reads report; `simbot_logs` collection is unrelated to the balance report's output dir. |
+| GdUnit4 test suite | EXISTS IN CODE | `tests/`, `tools/run_gdunit*.sh` | 665 cases / 8-way parallel runner. |
+| CI/CD (GdUnit + SimBot on PR) | NOT YET IMPLEMENTED | — | No `.github/` directory, no `.gitlab-ci.yml`, no `Jenkinsfile`. |
+| MCP servers configured | EXISTS IN CODE | `.cursor/mcp.json` | 6 servers — see §31.2. |
+| Custom Foul Ward MCP (game-tool exposing) | NOT YET IMPLEMENTED | — | Only RAG is custom; no `add_unit`, `run_simbot`, `validate_signals`, etc. tools exposed. |
+| Gen3D orchestrator | EXISTS IN CODE | `tools/gen3d/foulward_gen.py` | 5-stage pipeline. Single command per asset. |
+| Gen3D Stage 1 (FLUX turnaround) | EXISTS IN CODE | `tools/gen3d/pipeline/stage1_turnaround.py`, `tools/gen3d/workflows/turnaround_flux*.json` | ComfyUI + FLUX.1-dev + 3 LoRAs. |
+| Gen3D Stage 2 (TRELLIS.2 mesh) | EXISTS IN CODE | `tools/gen3d/pipeline/stage2_mesh.py` | TRELLIS.2-image-large (4B). VRAM-managed. |
+| Gen3D Stage 3 (rigging) | EXISTS IN CODE | `tools/gen3d/pipeline/stage3_rig.py` | UniRig primary, Mixamo Selenium fallback, unrigged copy last-resort. |
+| Gen3D Stage 4 (animation merge) | EXISTS IN CODE | `tools/gen3d/pipeline/stage4_anim.py` | Blender-driven; reads FBX clips from `anim_library/` named per Mixamo export convention. |
+| Gen3D Stage 5 (Godot drop) | EXISTS IN CODE | `tools/gen3d/pipeline/stage5_godot_drop.py` | Copies final GLB into `art/generated/<faction>/<asset>/`. |
+| Mixamo dependency | EXISTS IN CODE | `stage3_rig.py` (Selenium fallback), `stage4_anim.py` (`ANIM_NAME_MAP` keys = Mixamo export filenames) | Stage 4 *requires* clips to be exported in Mixamo's filename convention even if rigging used UniRig. |
+| Mesh2Motion integration | NOT YET IMPLEMENTED | — | Zero references in repo (`rg -i mesh2motion` → 0 hits). |
+| ComfyUI workflow JSON | EXISTS IN CODE | `tools/gen3d/workflows/turnaround_flux.json`, `turnaround_flux_no_loras.json`, `turnaround_flux_with_loras.json` | API-format workflows used by `comfy_client.py`. |
+| Audio generation pipeline (AudioCraft / MusicGen) | NOT YET IMPLEMENTED | — | Zero references in repo. No `audio_library/`, no AudioCraft scripts. |
+| Adaptive music runtime | NOT YET IMPLEMENTED | — | No `AudioStreamInteractive` resources, no Mixing Desk addon. Music is currently single-track per scene. |
+| Docker (any container) | NOT YET IMPLEMENTED | — | No `Dockerfile`, no `docker-compose.yml`, no `.dockerignore` anywhere in repo or 2-level parent search. |
+| Framework: SignalBus template | EXISTS IN CODE | `autoloads/signal_bus.gd` (77 signals) | Already battle-tested — a clean copy is the framework's seed. |
+| Framework: HexGrid | EXISTS IN CODE | `scripts/hex_grid.gd` (3 rings × 14 = 42 slots) | Foul Ward-specific shape; needs generalisation pass for the framework. |
+| Framework: FSM scaffold | PARTIAL | Per-class state machines exist (`scripts/enemies/`, `scripts/allies/`); no shared FSM base | A `Beehave`-style helper is missing. |
+| Framework: FOW / Minimap / RTS Camera | NOT YET IMPLEMENTED | — | Foul Ward camera is fixed to the keep; no minimap. |
+| Framework: Steering / Beehave / HTN | NOT YET IMPLEMENTED | — | All AI is hand-rolled per enemy/ally script. |
+| Framework: Godot Gameplay Systems (OctoD GAS) | NOT YET IMPLEMENTED | — | Status effects use bespoke arrays in `EnemyBase`. |
+| Framework: Dialogue Manager | EXISTS IN CODE | `autoloads/dialogue_manager.gd` + `resources/dialogue/*.tres` | Foul Ward's own minimal manager — not the third-party "Dialogue Manager" addon. |
+| Framework: Quest System / Card Framework | NOT YET IMPLEMENTED | — | Out of scope for current MVP. |
+| Framework: Gaea / Province Map Builder | NOT YET IMPLEMENTED | — | World map is hand-authored. |
+| Framework: Terrain3D / Sky3D | NOT YET IMPLEMENTED | — | Foul Ward uses single static arena meshes. |
+| Framework: Day/Night + TimeTick | PARTIAL | `CampaignManager.current_day` is a discrete counter | No real-time day/night cycle, no TimeTick autoload. |
+| Framework: Rollback netcode / GodotSteam | NOT YET IMPLEMENTED | — | Single-player offline. |
+| Framework: Mod loader (GML) | NOT YET IMPLEMENTED | — | No mod surface. |
+| Framework: Replay recorder + GIF export | NOT YET IMPLEMENTED | — | SimBot logs metrics only; no input-tape replay. |
+| MVP: Tower Defense (Foul Ward lite) | EXISTS IN CODE | The repo itself | Already 50-day TD; the "lite" cut is a doc/scope question, not a code question. |
+| MVP: RTS / Card Roguelite / Grand Strategy | NOT YET IMPLEMENTED | — | New games, not features. |
+| Community: docs site, CONTRIBUTING, demo video pipeline | NOT YET IMPLEMENTED | — | Repo has `README.md`, `HOW_IT_WORKS.md`, `INTERVIEW_CHEATSHEET.md` only. |
+
+---
+
+### 31.2 — MCP INVENTORY
+
+Verified directly from `.cursor/mcp.json` plus `addons/godot_mcp/skills.md` and `addons/gdai-mcp-plugin-godot/`.
+
+| Name | Free / Paid | Purpose | Framework features it enables | Replaceable by custom Foul Ward MCP? |
+|---|---|---|---|---|
+| `godot-mcp-pro` | **Paid** (vendor source at `../foulward-mcp-servers/godot-mcp-pro/`, not in repo) | 162 tools driving the live Godot 4 editor over WebSocket :6505 — scene CRUD, script editing, playtest, screenshots, frame capture, animation tracks, UI building, audio buses, profiling | Editor automation, scaffold-new-entity, automated scene QA, screenshot diff regression | **No.** Replicating 162 editor tools is out of scope; keep as a standing dependency. |
+| `gdai-mcp-godot` | **Paid** (vendor at `../foulward-mcp-servers/gdai-mcp-godot/`; bridge stub `addons/gdai-mcp-plugin-godot/` lives in repo) | Python ↔ Godot HTTP API bridge :3571 for GDExtension-side runtime introspection | Live error pulling, lightweight `get_godot_errors`, runtime property reads | **Partial.** A custom MCP can wrap the same HTTP API for the small subset we use (`get_godot_errors`, `get_scene_tree`) without paying for unused tools. |
+| `sequential-thinking` | Free (npm package, runs via local `tools/mcp-support/`) | Multi-step reasoning scratchpad | Planning, design tradeoffs, debugging chains | **No** — generic reasoning aid, keep it. |
+| `filesystem-workspace` | Free (Anthropic reference MCP) | Broad workspace FS access outside the active project | Cross-project edits, vendor symlinks | **No** — generic. |
+| `github` | Free (Anthropic reference MCP, requires `GITHUB_PERSONAL_ACCESS_TOKEN`) | Issues, PRs, releases, workflow runs | CI status, PR babysitting, issue triage | **No** — generic. |
+| `foulward-rag` | **Custom (free, in-house)** | Project RAG — `query_project_knowledge`, `get_recent_simbot_summary` | Architecture lookup, balance summaries, signal docs retrieval | **Already custom.** Will be **subsumed** into the future Foul Ward MCP (§31.7) as two of its tools; the RAG retriever stays in `~/LLM/`, only the wiring layer moves. |
+
+**Conclusion:** the two paid editor MCPs stay; the three Anthropic reference MCPs stay; the custom Foul Ward MCP described in §31.7 absorbs `foulward-rag` and adds game-specific tools (`run_simbot`, `import_3d_asset`, `validate_signals`, …) that today have no MCP surface.
+
+---
+
+### 31.3 — 3D ART PIPELINE: CURRENT STATE & MIGRATION PATH
+
+#### 31.3.1 — Current pipeline (verified, file by file)
+
+| Stage | Script | What it does today |
+|---|---|---|
+| Orchestrator | `tools/gen3d/foulward_gen.py` | CLI `python -m tools.gen3d.foulward_gen "<name>" <faction> <asset_type>`. Manages VRAM (waits until ≥12 GB free before TRELLIS), runs Stages 1→5 sequentially, logs to `local/gen3d/runs/`. |
+| Stage 1 | `tools/gen3d/pipeline/stage1_turnaround.py` + `comfy_client.py` + `workflows/turnaround_flux*.json` | Submits a FLUX.1-dev turnaround prompt to ComfyUI :8188; outputs front/3-quarter/side reference PNGs into `art/gen3d_previews/`. |
+| Stage 2 | `tools/gen3d/pipeline/stage2_mesh.py` + `mesh_post.py` | Calls TRELLIS.2-image-large-4B on the chosen reference; decimates the mesh, normalises scale, exports `.glb`. **Weapon gate** rejects ultra-thin geometries before TRELLIS runs. |
+| Stage 3 | `tools/gen3d/pipeline/stage3_rig.py` | Tries **UniRig** first (3-shell-script pipeline gated by `$UNIRIG_REPO`). On failure, falls back to **Mixamo** via Selenium login (`MIXAMO_EMAIL`, `MIXAMO_PASSWORD`). On total failure, copies the unrigged GLB. |
+| Stage 4 | `tools/gen3d/pipeline/stage4_anim.py` | Scans `anim_library/` for FBX clips named per `ANIM_NAME_MAP` (e.g. `Idle.fbx`, `Walking.fbx`, `Attack01.fbx`, `Death.fbx`). Blender CLI merges them onto the rigged GLB. If no clips found, copies rigged GLB unchanged. |
+| Stage 5 | `tools/gen3d/pipeline/stage5_godot_drop.py` | Copies the final GLB into `art/generated/<faction>/<asset>/` (gitignored). The agent then runs Godot's import pipeline manually. |
+
+#### 31.3.2 — Mixamo dependency map (exact replacement targets)
+
+| Touch point | File | Lines / symbol | What Mixamo does |
+|---|---|---|---|
+| Credential loading | `tools/gen3d/pipeline/stage3_rig.py` | `_load_mixamo_credentials()` (~L173-213) | Reads `MIXAMO_EMAIL` / `MIXAMO_PASSWORD` from env or `~/.foulward_gen3d.env`. |
+| Selenium upload + auto-rig | `tools/gen3d/pipeline/stage3_rig.py` | `_rig_with_mixamo()` (~L266-307) | Uploads GLB, performs auto-rig, downloads rigged FBX. |
+| Animation library convention | `tools/gen3d/pipeline/stage4_anim.py` | `ANIM_NAME_MAP` (top of file) | Expects FBX filenames straight out of Mixamo export (`Idle.fbx`, `Walking.fbx`, `Attack01.fbx`, …). |
+| Animation merge | `tools/gen3d/pipeline/stage4_anim.py` | `_merge_animations_blender()` | Calls Blender headless with the FBX clips listed above. |
+| Documentation | `tools/gen3d/anim_library/README.md`, `PHASE_D_REPORT.md`, `AUDIT_REPORT.md` | Mixamo workflow text | Docs assume Mixamo as canonical clip source. |
+| Open question logged in §33 | `MASTER_DOC` row "Gen3D Stage 3 (Mixamo rigging)" | n/a | Notes that Mixamo creds are unavailable locally → Arnulf shipped with 0 anims. |
+
+UniRig itself is **not** Mixamo and is the desired primary path; the Mixamo coupling is purely in **rigging fallback** + **animation source**.
+
+#### 31.3.3 — Mesh2Motion drop-in plan
+
+**What changes:**
+
+1. New module `tools/gen3d/pipeline/stage3_rig_mesh2motion.py` that exposes the same public surface as `stage3_rig.py::rig_glb(input_glb, output_glb, asset_type)`.
+2. `stage3_rig.py` becomes a dispatcher: `RIG_BACKEND` env var (`unirig` | `mesh2motion` | `mixamo` | `unrigged`) selects the strategy. Default flips to `unirig → mesh2motion → unrigged`. **Mixamo path is retained** but moved off the default chain so existing creds-bearing users still work.
+3. `tools/gen3d/anim_library/` gains a `mesh2motion/` subfolder. `ANIM_NAME_MAP` is extended (not replaced) with a parallel `MESH2MOTION_ANIM_NAME_MAP` keyed off Mesh2Motion's clip naming, and `stage4_anim.py` picks the map matching `RIG_BACKEND`.
+4. `foulward_gen.py` adds `--rig-backend` CLI flag and surfaces it in the run-log JSON.
+
+**What stays the same:**
+
+- Stages 1, 2, 5 unchanged.
+- VRAM management policy unchanged.
+- The "weapon gate" stays in Stage 2.
+- `art/generated/` layout, Godot drop step, and `local/gen3d/runs/` log format unchanged.
+
+#### 31.3.4 — Single-command target (`studio.py`)
+
+`tools/studio.py` (NEW) — one command end-to-end:
+
+```bash
+python -m tools.studio "Stoneward Sentinel" \
+  --faction crusader --asset character \
+  --rig-backend mesh2motion --auto-import-godot
+```
+
+Required behaviour:
+
+1. Health-check ComfyUI :8188 → start it via `tools/comfy_launch.sh` if down.
+2. Run `foulward_gen.py` Stages 1-5.
+3. Health-check the Foul Ward MCP server (§31.7) → invoke `import_3d_asset` to register the new GLB in Godot's import database (uses `godot-mcp-pro` editor tools under the hood).
+4. Append a row to `local/studio/manifest.csv`: timestamp, name, faction, asset_type, rig_backend, glb_path, import_status.
+5. Exit non-zero on any stage failure with the failing stage's log path printed to stderr.
+
+#### 31.3.5 — Audio pipeline (slot for AudioCraft)
+
+Currently absent. Target slot:
+
+| Stage | Tool | Output |
+|---|---|---|
+| Prompt → SFX | `tools/audio/stage1_audiocraft_sfx.py` (AudioCraft `audiogen-medium`) | 16-bit 44.1 kHz `.wav` into `art/audio_candidates/sfx/<category>/` |
+| Prompt → music stem | `tools/audio/stage1_audiocraft_music.py` (AudioCraft `musicgen-medium`) | Stems (drum/bass/lead/pad) as separate `.wav` files |
+| Encode | `tools/audio/stage2_encode.py` | `ffmpeg`-driven Vorbis `.ogg` (Godot's preferred streamable format) |
+| Drop | `tools/audio/stage3_godot_drop.py` | Copies into `art/audio_generated/<sfx|music>/<faction>/<name>/` and emits a `.tres` `AudioStream` resource alongside |
+
+`studio.py` learns to dispatch `--asset audio_sfx` / `--asset music_stem` to this pipeline. AudioCraft inference uses the same VRAM-budget guard (§31.6) as TRELLIS — they will not co-run.
+
+---
+
+### 31.4 — RAG SYSTEM: CURRENT STATE & EXPANSION PLAN
+
+#### 31.4.1 — Current state (read from `~/LLM/index.py` + `~/LLM/rag_mcp_server.py`)
+
+- **Stack:** ChromaDB (`PersistentClient` at `~/LLM/rag_db/`) + LangChain (`langchain_ollama`, `langchain_text_splitters`, `BM25Retriever`) + LangGraph (`StateGraph` with `SqliteSaver` at `~/LLM/rag_memory.db`).
+- **Embeddings:** `nomic-embed-text` via Ollama at `localhost:11434`.
+- **LLM:** `qwen2.5:3b` via `ChatOllama`.
+- **Retrieval:** Hybrid — semantic (Chroma) + BM25, weighted at `SEMANTIC_WEIGHT` and merged.
+- **Collections:** `architecture` (`docs/*.md` + 5 root docs), `code` (`scripts/*.gd`), `resources` (`resources/*.tres`), `simbot_logs` (`logs/*.json|*.csv`).
+- **Query interface:** MCP tool only — `query_project_knowledge(question, domain="all")` and `get_recent_simbot_summary(n_runs=3)` exposed via the `foulward-rag` server in `.cursor/mcp.json`. **No GDScript caller, no CLI caller other than the MCP stdio entrypoint.**
+- **Update mechanism:** Manual — `python ~/LLM/index.py [--force]` with hash-cache short-circuit.
+
+#### 31.4.2 — Three-corpus target architecture
+
+The current 4 collections collapse into **three named RAGs** with explicit ingestion triggers:
+
+| RAG | Chroma collection name | Source corpus | Ingestion trigger |
+|---|---|---|---|
+| **Framework RAG** | `fw_framework` | All `.gd` + `.tscn` + `.cs` + `addons/` plus `docs/CONVENTIONS.md`, `docs/ARCHITECTURE.md`, `docs/INDEX_*` | Git pre-commit hook + nightly cron |
+| **Balance RAG** | `fw_balance` | `resources/buildings/*.tres`, `resources/enemies/*.tres`, `resources/spells/*.tres`, **plus** SimBot `building_summary.csv` / `wave_summary.csv` aggregates and `tools/output/simbot_balance_status.csv` | Auto-triggered at end of every SimBot batch run via §31.5.4 pipeline |
+| **Game Design RAG** | `fw_design` | `docs/FOUL_WARD_MASTER_DOC.md`, `HOW_IT_WORKS.md`, `INTERVIEW_CHEATSHEET.md`, `docs/FUTURE_*`, dialogue resource text fields | Manual + git pre-commit on these specific paths |
+
+The current `architecture` / `code` / `resources` / `simbot_logs` collections become an internal implementation detail of `fw_framework` + `fw_balance`.
+
+#### 31.4.3 — Embedding model recommendation
+
+**Keep `nomic-embed-text`** (768 dim, Apache-2.0, currently working). Reason: it already indexes the codebase incrementally; switching to `mxbai-embed-large` (1024 dim) would double-cost a forced reindex and add ~33% query latency without measurable retrieval gain on a corpus this size (~5-15 k chunks). Reserve `mxbai-embed-large` for the **Game Design RAG** specifically if retrieval quality on prose is found lacking after 2 weeks of usage — it is markedly stronger on long-form English than `nomic-embed-text`.
+
+#### 31.4.4 — Custom MCP exposure
+
+Both the existing `foulward-rag` server and any successor expose RAG via three tools (replacing the current two):
+
+- `query_framework(question)` → `fw_framework`
+- `query_balance(question, days_back: int = 7)` → `fw_balance` filtered by `last_modified`
+- `query_design(question)` → `fw_design`
+
+These three become tools 4-6 of the custom Foul Ward MCP described in §31.7 — the standalone `foulward-rag` server stays as a fallback and dev-loop tool.
+
+---
+
+### 31.5 — AUTOMATED TESTING SYSTEM: CURRENT STATE & EXPANSION PLAN
+
+#### 31.5.1 — Current SimBot capabilities (verified)
+
+- **Living at:** `scripts/sim_bot.gd` (`class_name SimBot`), entry-driver `autoloads/auto_test_driver.gd` (`AutoTestDriver`).
+- **CLI flags (auto_test_driver.gd):**
+  - `--autotest` — generic scripted run, prints `[AUTOTEST] PASS/FAIL/TIMEOUT`.
+  - `--simbot_profile=<id>` — single mission with the named `StrategyProfile.tres`.
+  - `--simbot_runs=<N>` — number of runs (default 1).
+  - `--simbot_seed=<S>` — RNG seed.
+  - `--simbot_balance_sweep` — multi-profile sweep across all profiles in `resources/simbot_profiles/`.
+- **Outputs (CSV columns at `user://simbot/logs/simbot_balance_log.csv`):**
+  `profile_id, run_index, seed_value, result, waves_cleared, final_wave, enemies_killed, tower_hp_start, tower_hp_end, gold_earned, building_material_spent, spell_casts, duration_seconds`
+- **Auxiliary outputs:** `building_summary.csv`, `wave_summary.csv` written by `CombatStatsTracker` per run.
+- **Decision surface:** mercenary purchases, building placements (via `simbot_loadouts.gd`), spell casts.
+
+#### 31.5.2 — Multi-instance parallel runner (NEW)
+
+`tools/simbot_swarm.py` — orchestrates **N parallel headless Godot processes**.
+
+- **Process count default:** `min(8, max(1, cpu_count() // 2))`.
+- **Per-process isolation:** each process gets a unique `--simbot_seed`, its own `XDG_DATA_HOME` (so `user://` directories don't collide), and a derived `simbot_run_id` (`UUIDv4`).
+- **Port management:** SimBot itself is fully offline — no ports needed for game logic. The only port concern is the `gdai-mcp-godot` plugin; the swarm runner sets `GODOT_DISABLE_GDAI_MCP=1` per-child so plugins don't fight over :3571.
+- **Aggregation:** all child CSVs are streamed to a single `tools/output/simbot_swarm_<timestamp>/aggregate.csv` and the per-run subfolders preserved for the SimBot → RAG step.
+
+#### 31.5.3 — Dynamic-strategy AI tester (MCTS-light) (NEW)
+
+Replaces the static `StrategyProfile` for "exploration" runs.
+
+- **State input format (per decision):**
+  ```
+  {
+    "wave": int,
+    "gold": int, "building_material": int, "research_material": int,
+    "tower_hp_pct": float,
+    "filled_slots": [building_id, ...],
+    "empty_slots_by_ring": {ring: count, ...},
+    "enemies_alive": int,
+    "spell_cooldowns": {spell_id: float, ...},
+    "active_allies": [ally_id, ...]
+  }
+  ```
+- **Action space:** discrete — `BUILD(building_id, slot_id)`, `SELL(slot_id)`, `CAST(spell_id)`, `HIRE_MERC(merc_id)`, `NOOP`. Pruned by affordability + slot validity before search.
+- **Search:** UCB1 MCTS with **simulation-via-fast-forward** — child sims run the *deterministic core* of `WaveManager` for K=1 wave instead of full game (≈100× speedup). Tree depth capped at `MCTS_DEPTH=3` waves.
+- **Output:** the policy chosen at each decision is logged alongside the alternatives considered, so balance authors can read *why* the bot picked an action.
+
+#### 31.5.4 — SimBot → RAG pipeline (NEW)
+
+End-of-batch hook:
+
+1. `simbot_swarm.py` calls `tools/simbot_balance_report.py` on `aggregate.csv` → produces `simbot_balance_report.md`.
+2. Hook script `tools/simbot_index_to_rag.py` then:
+   - copies the per-run JSON/CSV bundles into `~/FoulWard/logs/simbot_runs/<timestamp>/` (the path `index.py` already scans).
+   - calls `python ~/LLM/index.py` (incremental → only the new bundle is embedded).
+   - emits one *summary* document per batch into `fw_balance` with metadata `{kind: "balance_summary", batch_id, top_overtuned: [...], top_undertuned: [...]}`.
+3. Optional: triggers a Qwen analysis query via the MCP tool `query_balance("Compare batch <id> against the previous 3 batches")` and stores the answer in `tools/output/simbot_swarm_<timestamp>/qwen_analysis.md`.
+
+#### 31.5.5 — Replay + GIF export pipeline (NEW)
+
+- SimBot gains an `--simbot_record_inputs=<path>` flag (writes a JSON tape of every decision and RNG draw).
+- New tool `tools/simbot_replay.py` consumes the tape and re-runs the game **once** with `--render` and Godot's `--write-movie <out.png-sequence>` + `ffmpeg` to produce an MP4 + a 10-fps GIF.
+- The GIF is the canonical artefact for the docs site (§31.10) — every PR that changes balance auto-regenerates it.
+
+#### 31.5.6 — Economy optimiser loop (NEW)
+
+`tools/economy_optimiser.py` — closes the loop:
+
+```
+while not converged:
+    swarm.run(N=64)
+    report = balance_report.parse(aggregate.csv)
+    suggestions = propose_param_changes(report)   # rule-based, see below
+    apply_to_resources(suggestions)               # writes .tres files via DataManager API
+    git_diff_summary()
+```
+
+**Rule-based proposer (no LLM in the loop):**
+- `OVERTUNED` building → +10% `gold_cost` OR -10% `damage`, alternating each iteration.
+- `UNDERTUNED` building → -10% `gold_cost` OR +10% `damage`.
+- Bounded by min/max guardrails per building category from `resources/balance/guardrails.tres` (NEW, `[PLANNED]`).
+- Convergence: all buildings within ±25% of median `damage_per_gold`, sustained for 2 consecutive batches.
+
+Optimiser runs are gated behind a `git checkout -b balance/auto-<timestamp>` so they never mutate `main`.
+
+---
+
+### 31.6 — DOCKER ARCHITECTURE PLAN
+
+Two containers, both NEW.
+
+#### 31.6.1 — `foulward-dev`
+
+- **Purpose:** reproducible Godot 4.4 + .NET 8 + GdUnit4 + Python 3.11 (RAG client) build/test environment.
+- **Base image:** `mcr.microsoft.com/dotnet/sdk:8.0-jammy` + manually layered Godot 4.4-stable headless Linux binary (downloaded in build).
+- **Volume mounts (compose):**
+  - `./:/workspace:rw` — repo root.
+  - `~/.cache/godot:/root/.cache/godot:rw` — Godot import cache, persists between runs.
+  - `~/LLM:/llm:rw` — RAG state (read-write for `index.py` runs).
+- **Entry commands:**
+  - default `bash`.
+  - `foulward-dev build` → `dotnet build FoulWard.csproj`.
+  - `foulward-dev test [unit|parallel|quick]` → calls `tools/run_gdunit_*.sh`.
+  - `foulward-dev simbot <profile>` → headless `--simbot_profile=<id>`.
+  - `foulward-dev rag-index` → `python /llm/index.py`.
+
+#### 31.6.2 — `foulward-art`
+
+- **Purpose:** GPU container for FLUX.1-dev + TRELLIS.2 + Mesh2Motion + AudioCraft.
+- **Base image:** `nvidia/cuda:12.4.0-cudnn-devel-ubuntu22.04` + `python:3.11`.
+- **GPU passthrough:** `runtime: nvidia` in compose, `gpus: all`. `NVIDIA_VISIBLE_DEVICES=all`, `NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics`.
+- **Pinned deps:** `transformers==4.56.0` (matches `tools/gen3d/SKILL.md`), `torch>=2.4` CUDA 12.4 wheels, ComfyUI git-pinned, TRELLIS.2 git-pinned, AudioCraft git-pinned.
+- **Model download entrypoint:** `art-bootstrap` script — first-run downloads FLUX.1-dev, TRELLIS.2-image-large-4B, AudioCraft `audiogen-medium` + `musicgen-medium` weights into a **named volume** `foulward-models:/models` (NOT into the image — keeps the image at ~8 GB, models at ~80 GB live in a volume).
+- **Volume mounts:**
+  - `foulward-models:/models:rw` — model weights.
+  - `./art/generated:/out/generated:rw` — pipeline output, written back to host.
+  - `./local/gen3d:/out/runs:rw` — run logs.
+  - `./tools/gen3d:/work:ro` — pipeline scripts.
+- **Entry commands:**
+  - `art-comfyui` → starts ComfyUI server on :8188.
+  - `art-gen <name> <faction> <asset_type> [--rig-backend …]` → invokes `foulward_gen.py`.
+  - `art-audio <name> <category> [--type sfx|music]` → invokes the §31.3.5 audio pipeline.
+  - `art-bootstrap` → idempotent model download.
+
+#### 31.6.3 — `.env` template (`/.env.example`)
+
+```env
+# VRAM management
+GEN3D_VRAM_BUDGET_GB=24
+GEN3D_TRELLIS_MIN_FREE_GB=12
+GEN3D_AUDIOCRAFT_MIN_FREE_GB=8
+
+# Model selection
+FLUX_MODEL=flux1-dev.safetensors
+TRELLIS_MODEL=trellis2-image-large-4B
+AUDIOCRAFT_SFX_MODEL=audiogen-medium
+AUDIOCRAFT_MUSIC_MODEL=musicgen-medium
+RAG_EMBED_MODEL=nomic-embed-text
+RAG_LLM_MODEL=qwen2.5:3b
+
+# Rigging backend
+RIG_BACKEND=unirig            # unirig | mesh2motion | mixamo | unrigged
+UNIRIG_REPO=/opt/unirig
+MESH2MOTION_REPO=/opt/mesh2motion
+MIXAMO_EMAIL=
+MIXAMO_PASSWORD=
+
+# Ports
+COMFYUI_PORT=8188
+OLLAMA_PORT=11434
+GDAI_MCP_PORT=3571
+GODOT_MCP_PRO_PORT=6505
+
+# Paths
+FOULWARD_LOG_ROOT=./local
+FOULWARD_GENERATED_ROOT=./art/generated
+```
+
+#### 31.6.4 — First-run experience
+
+`docker-compose up` first time:
+
+1. Image builds run in parallel (`dev` and `art`).
+2. `foulward-art` starts → runs `art-bootstrap` automatically because the `foulward-models` volume is empty → ~80 GB download with progress bars (≈ 30-60 min on a fast link). User sees a single "Downloading FLUX.1-dev (16 GB)…" style log.
+3. `foulward-dev` starts → runs `foulward-dev rag-index` (incremental, fast on first empty cache because no source files have been hashed yet → indexes everything once, ~3 min).
+4. Both containers print their ready banner: `[dev] ready — try: docker compose exec dev foulward-dev test quick` / `[art] ready — try: docker compose exec art art-gen "Test Goblin" goblinkin character`.
+5. `studio.py` from the host can now drive both containers via `docker compose exec` calls without the user re-installing Python deps locally.
+
+---
+
+### 31.7 — CUSTOM MCP SERVER SPEC
+
+**Server name:** `foulward` (registered in `.cursor/mcp.json` as a 7th entry; coexists with the existing `foulward-rag` until parity is reached, then `foulward-rag` is removed).
+
+**Transport:** **stdio** (Cursor connects stdio MCPs without extra config; HTTP requires keeping a long-lived service alive). All other Foul Ward MCPs are stdio — keep the convention.
+
+**Language:** Python 3.11 with the official `mcp` SDK (Anthropic, MIT). Lives at `tools/foulward_mcp/server.py` with module entries in `tools/foulward_mcp/tools/`.
+
+**Tool list (15 — all tools wrap an existing CLI/HTTP client; no business logic in the MCP itself):**
+
+| # | Tool | Wraps | What it does |
+|---|---|---|---|
+| 1 | `add_unit(unit_id, role, faction, base_stats)` | `tools/foulward_mcp/scaffolders/unit.py` | Generates `EnemyData.tres` or `AllyData.tres`, registers in `INDEX_*`, opens a PR-ready diff. |
+| 2 | `add_building(building_id, category, slot_size, gold_cost, damage)` | scaffolder | Generates `BuildingData.tres`, slot icon stub, updates `BuildingType` enum if missing. |
+| 3 | `run_tests(suite='quick' | 'unit' | 'parallel' | 'sequential')` | `tools/run_gdunit_*.sh` | Runs the appropriate GdUnit script, returns pass/fail counts and failure summary. |
+| 4 | `query_rag(question, corpus='framework' | 'balance' | 'design')` | `~/LLM/rag_mcp_server.py` (in-process) | Replaces `query_project_knowledge` with corpus selection. |
+| 5 | `read_master_doc(section)` | `docs/FOUL_WARD_MASTER_DOC.md` | Returns a single numbered section by `§N.M`. |
+| 6 | `validate_signals()` | `tools/foulward_mcp/validators/signal_check.py` | Asserts SignalBus signal count matches docs and that all signals are past-tense snake_case. |
+| 7 | `get_balance_report(latest=True)` | `tools/output/simbot_balance_report.md` | Returns the latest report text + status CSV summary. |
+| 8 | `run_simbot(profile_id, runs=10, seed=None, swarm=False)` | `tools/simbot_swarm.py` (or single Godot child) | Returns aggregate metrics; on `swarm=True`, blocks until all children finish. |
+| 9 | `import_3d_asset(glb_path, category, faction, name)` | `godot-mcp-pro` (proxied) | Drops GLB into `art/generated/` AND triggers Godot's import pipeline + creates the `.tscn` skeleton. |
+| 10 | `generate_character(name, faction, asset_type='character', rig_backend=None)` | `tools/studio.py` | Invokes Stages 1-5 end-to-end; streams stage logs. |
+| 11 | `generate_sfx(prompt, category, duration_s=2.0)` | `tools/audio/stage1_audiocraft_sfx.py` | Returns the resulting `.ogg` path. |
+| 12 | `generate_music_stem(prompt, stem_role, length_s=30.0, key='Cmin')` | `tools/audio/stage1_audiocraft_music.py` | Returns the resulting stem path. |
+| 13 | `add_signal(signal_name, payload_typedef)` | scaffolder | Inserts the signal into `signal_bus.gd`, bumps the count in `AGENTS.md` and `MASTER_DOC.md` and `signal-bus/SKILL.md`, validates past-tense naming. |
+| 14 | `check_resource_schema(resource_path)` | validator | Confirms a `.tres` matches the schema for its declared `[gd_resource type="…"]` (catches the `gold_cost` vs `build_gold_cost` class of bugs). |
+| 15 | `get_scene_tree(scene_path=None)` | `godot-mcp-pro` (proxied) | Mandatory pre-flight per `mcp-workflow` skill; proxied so agents in headless contexts can still query without the editor running. |
+
+**Implementation notes:**
+
+- Each tool is one file under `tools/foulward_mcp/tools/` with a `register(mcp)` function — keeps the server file under 100 lines.
+- The MCP server *only* shells out / wraps; **no game logic ever leaves the Godot side**.
+- ChromaDB Python client is reused in-process for tools 4 (no IPC). SimBot is shelled out as a child process. Studio.py is shelled out so VRAM budget guards are honoured. Editor-touching tools (9, 15) proxy to `godot-mcp-pro` over its WebSocket — the server requires an open editor for those tools, the rest work headless.
+
+---
+
+### 31.8 — ADAPTIVE MUSIC SYSTEM PLAN
+
+**Runtime engine:** `AudioStreamInteractive` (Godot 4.3+ stdlib resource).
+
+**Stem layering / mixing:** **Godot Mixing Desk** (kyzfrintin, MIT, `addons/mixing-desk/`) for fade curves and stem cross-bus routing. New autoload `MusicDirector` (`autoloads/music_director.gd`, **post-MVP**) holds the AudioStreamInteractive and listens to SignalBus for state transitions.
+
+**SignalBus signals that drive transitions** (all already declared in `autoloads/signal_bus.gd` — verified count 77):
+
+| Signal | Music transition target |
+|---|---|
+| `mission_started` | → `mission_intro` clip (one-shot, then enter `build_phase_calm`) |
+| `build_phase_started` | → `build_phase_calm` |
+| `wave_started` | → `combat_layer_low` |
+| `wave_intensity_increased` (if not present, add via `add_signal`) | → `combat_layer_mid` |
+| `boss_spawned` | → `combat_layer_boss` |
+| `tower_hp_critical` (if not present, add via `add_signal`) | → `combat_layer_panic` |
+| `wave_cleared` | → `combat_resolution` (one-shot) → `build_phase_calm` |
+| `mission_won` | → `mission_won_stinger` |
+| `mission_failed` | → `mission_failed_stinger` |
+
+Two new signals (`wave_intensity_increased`, `tower_hp_critical`) are tracked as PLANNED — they require the standard add-signal procedure (bump counts in `AGENTS.md`, `MASTER_DOC`, and `signal-bus/SKILL.md`).
+
+**AudioCraft generation workflow (per faction / per mission tier):**
+
+1. Write a prompt brief (`tools/audio/briefs/<faction>_<tier>.md`) — natural-language tempo/key/instrumentation guidance.
+2. `art-audio <name> music --stem <role>` for each of `drums`, `bass`, `lead`, `pad`. Each call yields a 30-second stem.
+3. Encode to Vorbis `.ogg`.
+4. Drop into `art/audio_generated/music/<faction>/<tier>/{drums|bass|lead|pad}.ogg`.
+5. `tools/audio/stage4_make_interactive_resource.py` builds the `AudioStreamInteractive` `.tres` with named clip-ids matching the SignalBus state names.
+
+**Naming conventions for generated audio files:**
+
+- SFX: `art/audio_generated/sfx/<category>/<asset>__<descriptor>__<seed>.ogg`
+  e.g. `sfx/buildings/arrow_tower__shoot__a91b.ogg`
+- Music stems: `art/audio_generated/music/<faction>/<tier>/<role>.ogg`
+  e.g. `music/crusader/wave_boss/lead.ogg`
+- Stingers: `art/audio_generated/music/<faction>/stingers/<event>.ogg`
+  e.g. `music/crusader/stingers/mission_won.ogg`
+- All filenames are `[a-z0-9_]+` only (Godot import-safe; no spaces).
+
+---
+
+### 31.9 — MVP GAME PLAN
+
+#### 31.9.1 — Foul Ward Lite (Tower Defense)
+
+- **Genre:** real-time tower defense.
+- **Core mechanic loop:** the player aims Florence's two weapons manually while building/upgrading turrets between waves; survive 10 days to see the credits roll.
+- **Systems required from framework:** SignalBus, HexGrid, Resource templates, Dialogue Manager, EconomyManager, save/load, headless test harness.
+- **New systems NOT in the framework:** none — this MVP **is** the framework's reference game.
+- **Definition of done:** all 10 days playable end-to-end with at least 6 buildings, 8 enemies, 2 spells, 1 boss, 1 ally (Arnulf), GdUnit green, SimBot batch report shows no `OVERTUNED`/`UNDERTUNED` outliers.
+- **Estimated dev weeks with full framework in place:** 0 (already exists; "lite" is a scope cut, not a build).
+
+#### 31.9.2 — Tiny RTS
+
+- **Genre:** small-scale real-time strategy.
+- **Core mechanic loop:** harvest resources, build a base, train units, and destroy the enemy base on a single map.
+- **Systems required from framework:** SignalBus, FSM, Steering AI / Beehave, RTS camera, FOW, minimap, EconomyManager.
+- **New systems NOT in the framework:** unit selection (drag-box + control groups), production queue UI.
+- **Definition of done:** 1 race, 6 unit types, 3 building types, 1 working AI opponent at single difficulty, FOW + minimap functional.
+- **Estimated dev weeks with full framework in place:** 6.
+
+#### 31.9.3 — Card Roguelite
+
+- **Genre:** Slay-the-Spire-style deckbuilder.
+- **Core mechanic loop:** play cards from a hand to defeat enemies, then choose one of three rewards on a node-based map.
+- **Systems required from framework:** SignalBus, Resource templates, Dialogue Manager, save/load, headless test harness.
+- **New systems NOT in the framework:** Card framework (hand/deck/discard/exhaust), node-graph map runner, status-effect engine.
+- **Definition of done:** 1 character, 60 cards, 30 enemies, 3 acts, full Ascension-equivalent difficulty selector, run-history persistence.
+- **Estimated dev weeks with full framework in place:** 10.
+
+#### 31.9.4 — Grand Strategy
+
+- **Genre:** province-based grand strategy.
+- **Core mechanic loop:** manage a kingdom across years on a province map; balance economy, military, and diplomacy with neighbours.
+- **Systems required from framework:** SignalBus, EconomyManager, save/load, Dialogue Manager, Resource templates, Day/Night + TimeTick calendar.
+- **New systems NOT in the framework:** Province Map Builder, diplomacy state machine, multi-currency expansion of EconomyManager (gold + manpower + prestige + influence), AI nation simulator.
+- **Definition of done:** 30-province map, 4 AI nations, 5 win conditions (conquest / diplomatic / economic / cultural / score), save survives quit-and-resume.
+- **Estimated dev weeks with full framework in place:** 16.
+
+---
+
+### 31.10 — BUILD ORDER & DEPENDENCIES
+
+Strict topological ordering. Phases marked **‖** can be parallelised with the prior phase.
+
+| Phase | Task | Blocks | Est. weeks | Owner |
+|---|---|---|---|---|
+| **0** | Lock current Foul Ward MVP feature-complete; freeze `main` for breaking changes | All future phases | 1 | you |
+| **1** | Docker `foulward-dev` container (§31.6.1) | All host-machine reproducibility from here on | 1 | you |
+| **1‖** | Docker `foulward-art` container (§31.6.2) — runs in parallel with Phase 1 | Audio + Mesh2Motion work | 1 | you |
+| **2** | Custom Foul Ward MCP skeleton with tools 3, 4, 5, 7, 8 (test/RAG/doc/balance/simbot) | Tools 1, 2, 6, 9-15; CI; MVP work | 1 | you |
+| **2‖** | RAG migration to 3-corpus model (§31.4) | Custom MCP tool 4; balance loop | 1 | you |
+| **3** | SimBot multi-instance runner (§31.5.2) | Dynamic-strategy tester; CI integration | 1 | you |
+| **4** | SimBot → RAG pipeline + balance report automation (§31.5.4) | Economy optimiser loop | 1 | you |
+| **4‖** | CI/CD: GitHub Actions running `foulward-dev test parallel` + `simbot run` on every PR | Future PRs from contributors | 1 | you |
+| **5** | Mesh2Motion drop-in for Stage 3 + Stage 4 (§31.3.3) | `studio.py` end-to-end | 2 | you |
+| **5‖** | AudioCraft SFX + music pipeline (§31.3.5) | Adaptive music runtime | 2 | you |
+| **6** | `studio.py` single-command orchestrator (§31.3.4) | Custom MCP tools 9-12 | 1 | you |
+| **7** | Dynamic-strategy tester (MCTS-light) (§31.5.3) | Economy optimiser | 2 | you |
+| **8** | Economy optimiser loop (§31.5.6) | Balance-tuning automation | 1 | you |
+| **9** | Adaptive music runtime: `MusicDirector` autoload + Mixing Desk integration (§31.8) | Polish phases for all MVPs | 2 | you |
+| **10** | Custom MCP tools 1, 2, 6, 9, 13, 14, 15 (scaffolders, validators, editor proxies) | Scaffolding-driven contributor workflow | 2 | you |
+| **11** | Framework extraction: SignalBus template, FSM scaffold, Resource templates as a separate addon repo | Other MVPs | 2 | you |
+| **11‖** | Community: Astro Starlight docs site, `CONTRIBUTING.md`, demo-video pipeline using §31.5.5 GIF tool | Contributor onboarding | 2 | you + community |
+| **12** | Framework: HexGrid generalisation, FOW, Minimap, RTS camera (RTS prerequisites) | RTS MVP | 3 | you |
+| **12‖** | Framework: Steering AI / Beehave / HTN integrations | RTS MVP | 2 | you / community |
+| **13** | RTS MVP (§31.9.2) | — | 6 | community-leadable, you-reviewed |
+| **14** | Framework: Card framework, Quest System | Card Roguelite MVP | 3 | community-leadable |
+| **15** | Card Roguelite MVP (§31.9.3) | — | 10 | community-leadable |
+| **16** | Framework: Province Map Builder, Day/Night + TimeTick, expanded EconomyManager | Grand Strategy MVP | 4 | community-leadable |
+| **17** | Grand Strategy MVP (§31.9.4) | — | 16 | community-leadable |
+
+**Total elapsed time on critical path (excluding parallelised phases):** ~32 weeks for everything through MVP 4.
+
+---
+
+### 31.11 — OPEN QUESTIONS
+
+Things the codebase alone can't answer. Each question lists the exact code reference that triggered it.
+
+| # | Question | Code reference | Who decides |
+|---|---|---|---|
+| 1 | `tools/gen3d/pipeline/stage3_rig.py` `_load_mixamo_credentials()` reads `MIXAMO_EMAIL` / `MIXAMO_PASSWORD`. Once Mesh2Motion ships in §31.3.3, do we **delete** the Mixamo Selenium fallback entirely or keep it as `RIG_BACKEND=mixamo` opt-in? | `stage3_rig.py` ~L173-307 | you | Answer: Leave Mixamo in, but make it so it is not used and not called anywhere in actual code, I think it would be better to use the more reliable option, but leave it be in case someone wants to use it? Unless deleting it altogether would make more sense. What is the better option?
+| 2 | `tools/gen3d/pipeline/stage4_anim.py` `ANIM_NAME_MAP` keys are Mixamo-export filenames. Does Mesh2Motion's CLI emit FBX clips with the same names or do we need a per-backend map? | `stage4_anim.py` top-of-file | art lead / Mesh2Motion docs | Answer: to be decided. What is the better option?
+| 3 | `tools/gen3d/SKILL.md` pins `transformers==4.56.0`. Is this a TRELLIS.2-only constraint, or also a FLUX/AudioCraft constraint? Decision affects whether `foulward-art` can use one Python env or needs sub-envs per stage. | `.cursor/skills/gen3d/SKILL.md` | dev (verify against TRELLIS.2 + AudioCraft + ComfyUI requirements) | Answer: Please explain
+| 4 | `~/LLM/index.py` line 32 hard-codes `FOULWARD_ROOT = Path.home() / "FoulWard"` but the live repo is at `~/workspace/foul-ward/FoulWard`. Was the indexer pointed at a **symlink**, an **older clone**, or is the path drifted? Affects whether `simbot_logs` are actually being indexed today. | `~/LLM/index.py` L32 | dev | Answer: The path needs to be adjusted to the new folder structure that uses docker anyway, so irrelevant, but should probably be path independent and relate to the relative path of the whole WOLF project root.
+| 5 | Repo contains `new_rag_mpc/rag_mcp_server.py` — is this a deliberate alternate or dead code? `.cursor/mcp.json` only points at `~/LLM/rag_mcp_server.py`. Decision: delete from repo, or promote it as the canonical in-tree RAG and retire `~/LLM` copy? | `new_rag_mpc/`, `.cursor/mcp.json` | you | Answer: I need help deciding.
+| 6 | `tools/simbot_balance_report.py` reads `building_summary.csv` files but the path is currently passed as a CLI argument with no default — what is the **canonical** SimBot output root (`user://simbot/logs/`) translation when running through Docker? Affects swarm runner volume mounts. | `tools/simbot_balance_report.py`, `simbot.gd::_on_run_completed` | you | Answer: The path needs to be adjusted to the new folder structure that uses docker anyway, so irrelevant, but should probably be path independent and relate to the relative path of the whole WOLF project root.
+| 7 | Two of the SignalBus signals proposed in §31.8 (`wave_intensity_increased`, `tower_hp_critical`) are not currently declared (count remains 77). Confirm they should be added as **passive signals** emitted by `WaveManager` / `BuildingBase`(tower) respectively, not new responsibilities of the music director. | `autoloads/signal_bus.gd` | you | Answer: To be decided at architure planning phase and adjusted. music director idea was discussed with older version of MASTER_DOC.
+| 8 | `addons/godot_mcp/` is the godot-mcp-pro **client-side plugin** living in-repo, while the server-side cwd in `.cursor/mcp.json` points at `../foulward-mcp-servers/godot-mcp-pro`. Should the `foulward` custom MCP also follow the split-repo pattern (server outside repo) or live entirely in `tools/foulward_mcp/`? | `.cursor/mcp.json`, `addons/godot_mcp/` | you | Answer: I don't know, please help me decide?
+| 9 | `auto_test_driver.gd` flag set is the source of truth — but `autotest`, `simbot_balance_sweep`, and `simbot_profile` paths print to stdout while GDAI requires stdout to be JSON-RPC clean. Is the test driver ever launched from inside an MCP-attached editor, or only from CLI? Affects whether stdout is safe. | `auto_test_driver.gd`, `mcp-workflow/SKILL.md` "GDAI stdout/stderr Rule" | dev | Answer: Please help me decide.
+| 10 | `local/`, `art/generated/`, `art/gen3d_previews/`, `art/gen3d_candidates/` are gitignored per `docs/GEN3D_LOCAL_ARTIFACTS.md`. For the docs-site GIF pipeline (§31.5.5), where do generated GIFs live — committed to a `docs/site/assets/` folder, or hosted via GitHub Pages artefacts? | `docs/GEN3D_LOCAL_ARTIFACTS.md` | you | Answer: Not commited anywhere yet, we're at the testing phase to save transfer and space on github. Please propose better solution.
+| 11 | No `.github/` directory exists. Is GitHub Actions the chosen CI host, or is this project planning to use a different CI (Forgejo Actions, GitLab CI, Buildkite)? Affects Phase 4‖ in §31.10. | (absence of `.github/`) | you | Answer: Github is currently used, but please suggest better option for this project scope.
+| 12 | `.cursor/mcp.json` uses paid `godot-mcp-pro` and `gdai-mcp-godot`. For community contributors who don't have those licences, what is the **degraded-mode** plan — does the custom Foul Ward MCP need to provide free fallbacks for `get_scene_tree` and `get_godot_errors`, or do contributors live without those tools? | `.cursor/mcp.json` | you | Answer: We will need to use free option of those, but leave comments that these are good alternatives. If it will degrade the experience, place free alternatives in project, but also assume that the paid MCPs can be used.
+

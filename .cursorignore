@@ -1,0 +1,8 @@
+# Large local-only trees (keep Cursor indexing fast)
+local/gen3d/
+
+# Pipeline-generated art (same as .gitignore — not indexed until production picks)
+art/generated/
+art/gen3d_previews/
+art/gen3d_candidates/
+

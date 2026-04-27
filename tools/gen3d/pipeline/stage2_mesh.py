@@ -19,12 +19,72 @@ from __future__ import annotations
 import json
 import os
 import struct
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 import shutil
 import trimesh
+
+# TRELLIS input square edge after pad (see tools/gen3d/scripts/trellis2_input_ab_variant.py A/B 2026-04-20).
+# Community often uses ~770; front-only + 768 beat 770 and full-sheet configs on decimated NM proxy.
+TRELLIS_INPUT_SIZE: int = int(os.environ.get("FOULWARD_TRELLIS_INPUT_EDGE", "768"))
+# Mesh quality gate: candidates with more non-manifold edges than this are labelled [LOW QUALITY]
+# in the variant-selection prompt. Does not hard-reject; user still picks from all variants.
+MESH_QUALITY_GATE: int = int(os.environ.get("FOULWARD_MESH_QUALITY_GATE", "5000"))
+# 25k faces: empirically chosen as the lowest target that preserves
+# major features (fingers, ears, tusks, weapon edges) on TRELLIS.2-4B output.
+# Developer should re-evaluate after visual inspection of C2 decimation ladder.
+# Override with FOULWARD_TRELLIS_DECIMATE_TARGET env var.
+TRELLIS_DECIMATE_TARGET: int = int(os.environ.get("FOULWARD_TRELLIS_DECIMATE_TARGET", "25000"))
+# Texture bake resolution: 2048 for production quality
+TEXTURE_RESOLUTION: int = 2048
+# TRELLIS sparse / slat sampler steps — lower reduces internal-structure hallucination.
+TRELLIS_SAMPLER_STEPS: int = int(os.environ.get("FOULWARD_TRELLIS_SAMPLER_STEPS", "8"))
+TRELLIS_SPARSE_GUIDANCE: float = float(os.environ.get("FOULWARD_TRELLIS_SPARSE_GUIDANCE", "5.0"))
+TRELLIS_SLAT_GUIDANCE: float = float(os.environ.get("FOULWARD_TRELLIS_SLAT_GUIDANCE", "2.0"))
+
+
+def count_nonmanifold_edges(mesh_path: str) -> int:
+    """
+    Count non-manifold edges in a GLB using Open3D.
+
+    A non-manifold edge is shared by more than two faces (or exactly one face on
+    a non-boundary mesh). Lower counts indicate cleaner topology suitable for
+    rigging and real-time use. Used to label [LOW QUALITY] variants above
+    MESH_QUALITY_GATE in the selection prompt.
+
+    Returns 0 on any load / import failure so the pipeline never hard-crashes
+    on a bad mesh — the variant is still offered to the user.
+    """
+    try:
+        import numpy as np
+        import open3d as o3d
+
+        scene: Any = trimesh.load(mesh_path, process=False, force="scene")
+        if isinstance(scene, trimesh.Scene):
+            meshes: list[trimesh.Trimesh] = [
+                g for g in scene.geometry.values() if isinstance(g, trimesh.Trimesh)
+            ]
+            combined: trimesh.Trimesh = (
+                trimesh.util.concatenate(meshes) if len(meshes) > 1 else meshes[0]
+            )
+        else:
+            combined = scene  # type: ignore[assignment]
+
+        o3d_mesh: o3d.geometry.TriangleMesh = o3d.geometry.TriangleMesh()
+        o3d_mesh.vertices = o3d.utility.Vector3dVector(
+            np.asarray(combined.vertices, dtype=np.float64)
+        )
+        o3d_mesh.triangles = o3d.utility.Vector3iVector(
+            np.asarray(combined.faces, dtype=np.int32)
+        )
+        nm_edges: list[Any] = o3d_mesh.get_non_manifold_edges(allow_boundary_edges=False)
+        return int(len(nm_edges))
+    except Exception as exc:
+        print(f"[quality] count_nonmanifold_edges failed for {mesh_path}: {exc}")
+        return 0
 
 
 def remove_background(image_path: str, out_path: str) -> str:
@@ -145,7 +205,53 @@ def _decimate_o3d(
     return verts_out, faces_out, normals_out
 
 
-def decimate_glb(input_path: str, out_path: str, target_faces: int = 10000) -> str:
+def _decimate_blender(input_path: str, output_path: str, target_faces: int) -> bool:
+    """
+    Attempt Blender headless decimation. Returns True on success, False on any failure.
+    Preserves UV seams and handles non-manifold TRELLIS topology correctly.
+    Falls back to Open3D if Blender is not found or the subprocess fails.
+    """
+    blender_bin: str = shutil.which("blender") or "/usr/bin/blender"
+    if not blender_bin or not Path(blender_bin).exists():
+        print("[decimate] Blender binary not found, falling back to Open3D")
+        return False
+
+    script: str = str(Path(__file__).parent / "blender_decimate.py")
+    if not Path(script).is_file():
+        print(f"[decimate] blender_decimate.py not found at {script}, falling back to Open3D")
+        return False
+
+    try:
+        result: subprocess.CompletedProcess[str] = subprocess.run(
+            [
+                blender_bin,
+                "--background",
+                "--python",
+                script,
+                "--",
+                input_path,
+                output_path,
+                str(target_faces),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        if "BLENDER_DECIMATE_OK" in result.stdout and Path(output_path).exists():
+            print(f"[decimate] Blender succeeded: {output_path}")
+            return True
+        print(f"[decimate] Blender failed.\nSTDOUT (last 1000):\n{result.stdout[-1000:]}")
+        print(f"STDERR (last 500):\n{result.stderr[-500:]}")
+        return False
+    except subprocess.TimeoutExpired:
+        print("[decimate] Blender timed out (180s), falling back to Open3D")
+        return False
+    except Exception as exc:
+        print(f"[decimate] Blender subprocess error: {exc}, falling back to Open3D")
+        return False
+
+
+def decimate_glb(input_path: str, out_path: str, target_faces: int = TRELLIS_DECIMATE_TARGET) -> str:
     """
     Decimate a GLB mesh to approximately target_faces triangles while
     preserving UV maps, vertex colors, and PBR materials.
@@ -166,11 +272,17 @@ def decimate_glb(input_path: str, out_path: str, target_faces: int = 10000) -> s
     Args:
         input_path:   Path to raw GLB from TRELLIS.
         out_path:     Where to save the decimated GLB.
-        target_faces: Target triangle count. Default 10000 for standard units.
+        target_faces: Target triangle count. Default ``TRELLIS_DECIMATE_TARGET`` (25k).
 
     Returns:
         out_path after saving.
     """
+    # Try Blender decimation first — it preserves UV seams and handles
+    # non-manifold TRELLIS topology. Falls back to Open3D if unavailable.
+    if _decimate_blender(str(input_path), str(out_path), target_faces):
+        return str(out_path)
+    print("[decimate] Using Open3D fallback decimation")
+
     import numpy as np
     from scipy.spatial import cKDTree
 
@@ -250,15 +362,6 @@ def decimate_glb(input_path: str, out_path: str, target_faces: int = 10000) -> s
     return out_path
 
 
-# TRELLIS input square edge after pad (see tools/gen3d/scripts/trellis2_input_ab_variant.py A/B 2026-04-20).
-# Community often uses ~770; front-only + 768 beat 770 and full-sheet configs on decimated NM proxy.
-TRELLIS_INPUT_SIZE: int = int(os.environ.get("FOULWARD_TRELLIS_INPUT_EDGE", "768"))
-# Texture bake resolution: 2048 for production quality
-TEXTURE_RESOLUTION: int = 2048
-# TRELLIS sparse / slat sampler steps — lower reduces internal-structure hallucination.
-TRELLIS_SAMPLER_STEPS: int = int(os.environ.get("FOULWARD_TRELLIS_SAMPLER_STEPS", "8"))
-TRELLIS_SPARSE_GUIDANCE: float = float(os.environ.get("FOULWARD_TRELLIS_SPARSE_GUIDANCE", "5.0"))
-TRELLIS_SLAT_GUIDANCE: float = float(os.environ.get("FOULWARD_TRELLIS_SLAT_GUIDANCE", "2.0"))
 def _trellis_repo_root() -> str:
     raw: str = os.environ.get("FOULWARD_TRELLIS_REPO", str(Path.home() / "TRELLIS.2"))
     return str(Path(raw).expanduser().resolve())
@@ -532,33 +635,36 @@ def generate_mesh_variants(
     image_path: str,
     out_dir: str,
     model_id: str = "microsoft/TRELLIS.2-4B",
-    tri_budget: int = 10000,
+    tri_budget: int = TRELLIS_DECIMATE_TARGET,
     n_variants: int = 5,
     slug: str = "unit",
     project_root: str = "",
-) -> list[str]:
+) -> tuple[list[str], dict[int, str]]:
     """
     Run TRELLIS N times on the same input image with different random seeds,
     producing N candidate GLBs. Each variant is immediately decimated and
     copied to two locations:
 
-      - ``out_dir/candidate_{i}_decimated.glb``   (ephemeral working dir in /tmp)
+      - ``out_dir/candidate_{i}_decimated.glb``   (working dir under ``local/gen3d/staging/``)
       - ``{project_root}/art/gen3d_candidates/{slug}/candidate_{i}_decimated.glb``
-        (permanent project storage — kept across reboots for post-run review)
+        (second copy for local review — directory is gitignored; see ``docs/GEN3D_LOCAL_ARTIFACTS.md``)
 
     Raw per-variant GLBs are deleted after decimation to save disk space.
 
     Args:
         image_path:    Path to the front-view RGBA PNG (background removed).
-        out_dir:       Working directory for raw + decimated candidates (e.g. /tmp/fw_slug_candidates).
+        out_dir:       Working directory for raw + decimated candidates (e.g. ``local/gen3d/staging/fw_slug_candidates``).
         model_id:      HuggingFace model ID for TRELLIS.2.
         tri_budget:    Target triangle count for each decimated candidate.
         n_variants:    Number of mesh variants to generate. Default 5.
-        slug:          Asset slug (e.g. "orc_grunt") used for the permanent storage path.
-        project_root:  Godot project root path. If empty, permanent copy is skipped.
+        slug:          Asset slug (e.g. "orc_grunt") used for the ``art/gen3d_candidates/`` copy.
+        project_root:  Godot project root path. If empty, the gen3d_candidates copy is skipped.
 
     Returns:
-        List of ``n_variants`` paths to decimated candidate GLBs in *out_dir*.
+        Tuple of:
+        - List of ``n_variants`` paths to decimated candidate GLBs in *out_dir*.
+        - Dict mapping 1-based variant index → quality label string (e.g. ``"[LOW QUALITY]"``
+          when non-manifold edge count exceeds ``MESH_QUALITY_GATE``).
     """
     import os
     import random
@@ -566,13 +672,14 @@ def generate_mesh_variants(
 
     os.makedirs(out_dir, exist_ok=True)
 
-    # Set up permanent storage dir alongside ephemeral /tmp working dir
+    # Second copy under art/gen3d_candidates/ (local-only; not in Git)
     permanent_dir: str = ""
     if project_root:
         permanent_dir = os.path.join(project_root, "art", "gen3d_candidates", slug)
         os.makedirs(permanent_dir, exist_ok=True)
 
     candidates: list[str] = []
+    quality_labels: dict[int, str] = {}
     for i in range(1, n_variants + 1):
         print(f"\n[Stage 2] ── Variant {i}/{n_variants} ──")
         seed: int = random.randint(0, 2**32 - 1)
@@ -593,20 +700,28 @@ def generate_mesh_variants(
         print(f"[Stage 2] Decimating candidate {i} → {tri_budget} faces...")
         decimate_glb(raw, decimated, target_faces=tri_budget)
 
+        # Mesh quality gate: count non-manifold edges on the decimated result
+        nm_count: int = count_nonmanifold_edges(decimated)
+        print(f"[Stage 2] Candidate {i} non-manifold edges: {nm_count} (gate={MESH_QUALITY_GATE})")
+        if nm_count > MESH_QUALITY_GATE:
+            label: str = f"[LOW QUALITY — {nm_count} NM edges]"
+            quality_labels[i] = label
+            print(f"[Stage 2] WARNING: candidate {i} exceeds quality gate: {label}")
+
         try:
             os.remove(raw)
         except OSError:
             pass
 
-        # Permanent project copy — write immediately so it survives a /tmp wipe
+        # Review copy under art/gen3d_candidates/ (gitignored)
         if permanent_dir:
             perm_path: str = os.path.join(permanent_dir, f"candidate_{i}_decimated.glb")
             shutil.copy2(decimated, perm_path)
             print(f"[Stage 2] Candidate {i} saved: {decimated}")
-            print(f"[Stage 2]   permanent copy:   {perm_path}")
+            print(f"[Stage 2]   review copy:   {perm_path}")
         else:
             print(f"[Stage 2] Candidate {i} ready: {decimated}")
 
         candidates.append(decimated)
 
-    return candidates
+    return candidates, quality_labels
